@@ -1,0 +1,48 @@
+# .NET Core
+bin/
+obj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files
+.vs/
+.vscode/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# NuGet packages
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Logs
+*.log
+
+# Personal settings
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+~$*
+
+# Visual Studio Profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
