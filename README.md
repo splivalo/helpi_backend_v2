@@ -368,15 +368,24 @@ CREATE TABLE ContactInfo (
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    address TEXT NOT NULL,
+    gender ENUM('Male', 'Female') NOT NULL,
+    
+    -- Location Fields 
+    google_place_id VARCHAR(255) NOT NULL,  
+    full_address TEXT NOT NULL,
+    city_id INT NOT NULL,  
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    
+  
     city VARCHAR(100),
     state CHAR(2),
     postal_code VARCHAR(20),
     country CHAR(2) DEFAULT 'US',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_contact_search (last_name, first_name)
+    INDEX idx_contact_search (last_name, first_name),
+    FOREIGN KEY (city_id) REFERENCES Cities(id),
 );
-
 -- SERVICE PROVIDERS (STUDENTS)
 CREATE TABLE Students (
     id INT PRIMARY KEY,
@@ -659,21 +668,6 @@ CREATE TABLE Cities (
     SPATIAL INDEX(bounds)
 );
 
--- MODIFIED USER LOCATION TABLE
-CREATE TABLE UserLocation (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    entity_type ENUM('student', 'senior') NOT NULL,
-    entity_id INT NOT NULL,  -- ID from either Students or Seniors table
-    google_place_id VARCHAR(255) NOT NULL,  -- From address autocomplete
-    full_address TEXT NOT NULL,
-    city_id INT NOT NULL,  -- Resolved from Google Places data
-    latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(11, 8) NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (city_id) REFERENCES Cities(city_id),
-    UNIQUE KEY unique_entity_location (entity_type, entity_id)
-);
 
 -- SERVICE AVAILABILITY TRACKING
 CREATE TABLE ServiceRegions (
