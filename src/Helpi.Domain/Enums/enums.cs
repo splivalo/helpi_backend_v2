@@ -1,0 +1,135 @@
+namespace Helpi.Domain.Enums
+{
+    public enum UserType
+    {
+        Admin,
+        Student,
+        Customer
+    }
+
+    public enum VerificationStatus
+    {
+        Pending,
+        Verified,
+        Suspended
+    }
+
+    public enum Relationship
+    {
+        Self,
+        Spouse,
+        Parent,
+        Relative,
+        Other
+    }
+
+    public enum NotificationMethod
+    {
+        Email,
+        Sms,
+        Push
+    }
+
+    public enum PaymentProcessor
+    {
+        Stripe,
+        Paypal
+    }
+
+    public enum OrderStatus
+    {
+        Pending,
+        Accepted,
+        InProgress,
+        Completed,
+        Cancelled
+    }
+
+    public enum RecurrencePattern
+    {
+        Daily,
+        Weekly,
+        Biweekly,
+        Monthly
+    }
+
+    public enum JobRequestStatus
+    {
+        Pending,
+        Accepted,
+        Declined,
+        Expired
+    }
+
+    public enum AssignmentStatus
+    {
+        Pending,
+        Accepted,
+        Declined,
+        Canceled,
+        Completed
+    }
+
+    public enum TerminationReason
+    {
+        Completed,
+        StudentQuit,
+        SeniorCanceled,
+        SystemTerminated
+    }
+
+    public enum JobInstanceStatus
+    {
+        Upcoming,
+        InProgress,
+        Completed,
+        Cancelled
+    }
+
+    public enum SubstitutionStatus
+    {
+        Original,
+        NeedsSubstitute,
+        Substituted
+    }
+
+    public enum PaymentStatus
+    {
+        Pending,
+        Processing,
+        Succeeded,
+        Failed,
+        Refunded
+    }
+
+    public enum ReplacementInitiator
+    {
+        System,
+        Senior,
+        Student
+    }
+
+    public enum InvoiceStatus
+    {
+        Pending,
+        Sent,
+        Viewed,
+        Paid,
+        Overdue
+    }
+
+    public enum EmailStatus
+    {
+        Queued,
+        Sent,
+        Delivered,
+        Opened,
+        Failed
+    }
+
+    public enum Gender
+    {
+        Male,
+        Female
+    }
+}

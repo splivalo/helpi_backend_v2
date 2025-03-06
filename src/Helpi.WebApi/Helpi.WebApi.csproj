@@ -11,4 +11,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Helpi.Application\Helpi.Application.csproj" />
+    <ProjectReference Include="..\Helpi.Infrastructure\Helpi.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

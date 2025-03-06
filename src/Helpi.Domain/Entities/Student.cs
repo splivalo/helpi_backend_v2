@@ -1,0 +1,28 @@
+using System.ComponentModel.DataAnnotations;
+using Helpi.Domain.Enums;
+
+namespace Helpi.Domain.Entities
+{
+    public class Student
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [MaxLength(20)]
+        public string StudentNumber { get; set; } = null!;
+        public int FacultyId { get; set; }
+        public DateTime DateRegistered { get; set; } = DateTime.UtcNow;
+        public int ContactId { get; set; }
+        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
+        public DateOnly? BackgroundCheckDate { get; set; }
+
+        // [Precision(3, 2)]
+        public decimal AverageRating { get; set; } = 0.00m;
+
+        public User User { get; set; } = null!;
+        public ContactInfo Contact { get; set; } = null!;
+        public Faculty Faculty { get; set; } = null!;
+        public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();
+        public ICollection<StudentAvailabilitySlot> AvailabilitySlots { get; set; } = new List<StudentAvailabilitySlot>();
+    }
+}
