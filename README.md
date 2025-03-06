@@ -1,5 +1,5 @@
 ```bash
-Helpi.Solution/
+Helpi.Backend/
 │
 ├── Helpi.Domain/           # Core entities, value objects
 │   ├── Entities/
