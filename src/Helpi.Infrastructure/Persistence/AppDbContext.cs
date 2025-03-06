@@ -1,15 +1,59 @@
 
 using Helpi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Infrastructure.Persistence;
+namespace Helpi.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
 
+    // Core Identity & Authentication
     public DbSet<User> Users { get; set; }
+    // public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+    // Contact Information
+    public DbSet<ContactInfo> ContactInfos { get; set; }
+
+    // Academic Structure
+    public DbSet<Student> Students { get; set; }
+    public DbSet<Faculty> Faculties { get; set; }
+    public DbSet<StudentContract> StudentContracts { get; set; }
+
+    // Customer Relationships
+    public DbSet<Customer> Customers { get; set; }
+    public DbSet<Senior> Seniors { get; set; }
+
+    // Payment System
+    public DbSet<PaymentMethod> PaymentMethods { get; set; }
+    public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+
+    // Service Catalog
+    public DbSet<ServiceCategory> ServiceCategories { get; set; }
+    public DbSet<Service> Services { get; set; }
+    public DbSet<StudentService> StudentServices { get; set; }
+
+    // Availability & Scheduling
+    public DbSet<StudentAvailabilitySlot> StudentAvailabilitySlots { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderSchedule> OrderSchedules { get; set; }
+
+    // Job Management
+    public DbSet<JobRequest> JobRequests { get; set; }
+    public DbSet<ScheduleAssignment> ScheduleAssignments { get; set; }
+    public DbSet<JobInstance> JobInstances { get; set; }
+    public DbSet<ScheduleAssignmentReplacement> ScheduleAssignmentReplacements { get; set; }
+
+    // Feedback & Billing
+    public DbSet<Review> Reviews { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<InvoiceEmail> InvoiceEmails { get; set; }
+
+    // Geographic Data
+    public DbSet<City> Cities { get; set; }
+    public DbSet<ServiceRegion> ServiceRegions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -22,21 +66,83 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
+
+
+
+
+        // // Configure entity mappings here
+        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // base.OnModelCreating(modelBuilder);
+
+        base.OnModelCreating(modelBuilder);
+
+        // Apply all entity configurations
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Spatial configuration for PostgreSQL
+        modelBuilder.HasPostgresExtension("postgis");
+
+        // Configure complex relationships
+        modelBuilder.Entity<StudentService>()
+            .HasKey(ss => new { ss.StudentId, ss.ServiceId });
+
+        modelBuilder.Entity<ScheduleAssignmentReplacement>()
+            .HasOne(sar => sar.OriginalAssignment)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ScheduleAssignmentReplacement>()
+            .HasOne(sar => sar.NewAssignment)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure spatial index for Cities
         modelBuilder.Entity<City>(entity =>
-{
-    entity.HasIndex(c => c.GooglePlaceId).IsUnique();
-    // entity.HasIndex(c => c.Bounds).IsSpatial(); // TODO:
-});
+           {
+               entity.HasIndex(c => c.GooglePlaceId).IsUnique();
+               // entity.HasIndex(c => c.Bounds).IsSpatial(); // TODO:
+           });
+
+        // Configure JSON column for Senior special requirements
+        modelBuilder.Entity<Senior>()
+            .Property(s => s.SpecialRequirements)
+            .HasColumnType("jsonb");
 
         modelBuilder.Entity<ServiceRegion>(entity =>
-        {
-            entity.HasIndex(sr => new { sr.CityId, sr.ServiceId }).IsUnique();
-        });
-
-        // Configure entity mappings here
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        base.OnModelCreating(modelBuilder);
+            {
+                entity.HasIndex(sr => new { sr.CityId, sr.ServiceId }).IsUnique();
+            });
     }
 
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateOnly>()
+            .HaveConversion<DateOnlyConverter>()
+            .HaveColumnType("date");
+
+        configurationBuilder.Properties<TimeOnly>()
+            .HaveConversion<TimeOnlyConverter>()
+            .HaveColumnType("time");
+    }
+
+}
+
+
+
+// DateOnly/TimeOnly converters for EF Core 8+
+public class DateOnlyConverter : ValueConverter<DateOnly, DateTime>
+{
+    public DateOnlyConverter() : base(
+        d => d.ToDateTime(TimeOnly.MinValue),
+        d => DateOnly.FromDateTime(d))
+    { }
+}
+
+public class TimeOnlyConverter : ValueConverter<TimeOnly, TimeSpan>
+{
+    public TimeOnlyConverter() : base(
+        t => t.ToTimeSpan(),
+        t => TimeOnly.FromTimeSpan(t))
+    { }
 }
