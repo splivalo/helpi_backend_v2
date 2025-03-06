@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
@@ -9,6 +11,8 @@ namespace Helpi.Domain.Entities
         public int ContactId { get; set; }
         public Relationship Relationship { get; set; }
 
+        [Column(TypeName = "jsonb")]
+        public JsonDocument? SpecialRequirements { get; set; }
         public Customer Customer { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
         public ICollection<Order> Orders { get; set; } = new List<Order>();

@@ -19,12 +19,12 @@
 # for entity in "${entities[@]}"; do
 #     filePath="$folder/$entity.cs"
 #     if [ ! -f "$filePath" ]; then
-#         echo "namespace $namespace{
+#         echo "namespace $namespace;
 
 # public class $entity
 # {
 #     public int Id { get; set; }
-# }}" > "$filePath"
+# }" > "$filePath"
 #         echo "Created: $filePath"
 #     else
 #         echo "Skipped: $filePath (Already Exists)"
