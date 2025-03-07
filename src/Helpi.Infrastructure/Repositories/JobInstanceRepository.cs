@@ -19,7 +19,7 @@ public class JobInstanceRepository : IJobInstanceRepository
 
         public async Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId)
             => await _context.JobInstances
-                .Where(ji => ji.AssignmentId == assignmentId)
+                .Where(ji => ji.ScheduleAssignmentId == assignmentId)
                 .ToListAsync();
 
         public async Task<IEnumerable<JobInstance>> GetUpcomingJobsAsync(DateTime cutoff)

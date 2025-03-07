@@ -1,3 +1,5 @@
+
+using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces;
 using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
@@ -22,6 +24,9 @@ public static class DependencyInjection
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
                 o => o.UseNetTopologySuite()));
+
+
+
 
         // Register all repositories
         services.AddScoped<IUserRepository, UserRepository>();
@@ -49,6 +54,24 @@ public static class DependencyInjection
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IServiceRegionRepository, ServiceRegionRepository>();
 
+        /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):
+        //         var repositoryTypes = Assembly.GetAssembly(typeof(AppDbContext))!
+        //     .GetTypes()
+        //     .Where(t => t.IsClass && 
+        //                !t.IsAbstract && 
+        //                t.Name.EndsWith("Repository"));
+
+        // foreach (var repoType in repositoryTypes)
+        // {
+        //     var interfaceType = repoType.GetInterfaces()
+        //         .First(i => i.Name == $"I{repoType.Name}");
+
+        //     services.AddScoped(interfaceType, repoType);
+        // }
+
         return services;
     }
+
+
+
 }

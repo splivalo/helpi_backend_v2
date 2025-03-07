@@ -10,6 +10,8 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
 
+    // public AppDbContext() { }
+
     // Core Identity & Authentication
     public DbSet<User> Users { get; set; }
     // public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -57,8 +59,13 @@ public class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+
+        // Connection string
+        string connectionString = "Host=localhost;Port=5432;Database=HelpiDB;";
+        // string connectionString = "Host=localhost;Port=5432;Database=HelpiDB;Username=myuser;Password=mypassword;";
+
         optionsBuilder.UseNpgsql(
-            "YourConnectionString",
+            connectionString,
             o => o.UseNetTopologySuite()
         );
     }
@@ -100,7 +107,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<City>(entity =>
            {
                entity.HasIndex(c => c.GooglePlaceId).IsUnique();
-               // entity.HasIndex(c => c.Bounds).IsSpatial(); // TODO:
+               entity.HasIndex(c => c.Bounds).HasMethod("GIST");
            });
 
         // Configure JSON column for Senior special requirements
@@ -112,6 +119,25 @@ public class AppDbContext : DbContext
             {
                 entity.HasIndex(sr => new { sr.CityId, sr.ServiceId }).IsUnique();
             });
+
+        modelBuilder.Entity<JobInstance>(entity =>
+{
+    entity.HasOne(j => j.Assignment)          // JobInstance has one ScheduleAssignment
+          .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
+          .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
+});
+
+        modelBuilder.Entity<User>()
+                  .HasOne(u => u.Customer)
+                  .WithOne(c => c.User)
+                  .HasForeignKey<Customer>(c => c.Id)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+        .HasOne(s => s.Student)
+        .WithOne(s => s.User)
+        .HasForeignKey<Student>(s => s.Id)
+        .OnDelete(DeleteBehavior.Cascade);
     }
 
 

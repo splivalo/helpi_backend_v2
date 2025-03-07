@@ -41,5 +41,8 @@ public class StudentRepository : IStudentRepository
                 await _context.SaveChangesAsync();
         }
 
-
+        public Task GetByFacultyAsync(int facultyId)
+        {
+                throw new NotImplementedException();
+        }
 }

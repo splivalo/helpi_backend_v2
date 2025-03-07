@@ -6,7 +6,7 @@ namespace Helpi.Domain.Entities
     public class JobInstance
     {
         public int Id { get; set; }
-        public int AssignmentId { get; set; }
+        public int ScheduleAssignmentId { get; set; }
         public int? OriginalAssignmentId { get; set; }
         public DateOnly ScheduledDate { get; set; }
         public TimeOnly StartTime { get; set; }

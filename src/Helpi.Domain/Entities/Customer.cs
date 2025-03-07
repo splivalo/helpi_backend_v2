@@ -7,7 +7,7 @@ namespace Helpi.Domain.Entities
     public class Customer
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; set; } // user id
         public int ContactId { get; set; }
         public NotificationMethod PreferredNotificationMethod { get; set; } = NotificationMethod.Email;
 

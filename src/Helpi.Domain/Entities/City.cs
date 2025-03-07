@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using NetTopologySuite.Geometries;
 
 namespace Helpi.Domain.Entities
 {
@@ -13,7 +14,7 @@ namespace Helpi.Domain.Entities
         [MaxLength(255)]
         public string OfficialName { get; set; } = null!;
 
-        public NetTopologySuite.Geometries.Polygon Bounds { get; set; } = null!;
+        public Polygon Bounds { get; set; } = null!;
         public bool IsServiced { get; set; } = false;
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 
