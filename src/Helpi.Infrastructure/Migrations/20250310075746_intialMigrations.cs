@@ -6,10 +6,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Helpi.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class intialMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -660,6 +662,23 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "Invoices",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Faculties",
+                columns: new[] { "Id", "FacultyName" },
+                values: new object[,]
+                {
+                    { 1, "Business and Economics" },
+                    { 2, "Education" },
+                    { 3, "Engineering" },
+                    { 4, "Health Sciences" },
+                    { 5, "Law" },
+                    { 6, "Medicine" },
+                    { 7, "Science" },
+                    { 8, "Social Sciences" },
+                    { 9, "Computer Science" },
+                    { 10, "Arts and Humanities" }
                 });
 
             migrationBuilder.CreateIndex(

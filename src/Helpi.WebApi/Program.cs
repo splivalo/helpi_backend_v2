@@ -1,7 +1,7 @@
 
 
+
 using Helpi.Application;
-using Helpi.Application.Common.Mappings;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -14,8 +14,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250307132149_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250310075746_intialMigrations")]
+    partial class intialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -174,6 +174,58 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Faculties");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            FacultyName = "Business and Economics"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            FacultyName = "Education"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            FacultyName = "Engineering"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            FacultyName = "Health Sciences"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            FacultyName = "Law"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            FacultyName = "Medicine"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            FacultyName = "Science"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            FacultyName = "Social Sciences"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            FacultyName = "Computer Science"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            FacultyName = "Arts and Humanities"
+                        });
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
