@@ -16,6 +16,14 @@ public class ContactInfoDto
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public string? State { get; set; }
+
+    [MaxLength(20)]
+    public string? PostalCode { get; set; }
+
+    [MaxLength(2)]
+    public string Country { get; set; } = "US";
 }
 
 public class ContactInfoCreateDto

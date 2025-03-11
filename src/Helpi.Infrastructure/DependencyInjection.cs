@@ -1,11 +1,17 @@
 
+using System.Text;
 using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces;
+using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
+using Helpi.Infrastructure.Seeds;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure;
 
@@ -23,12 +29,13 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
-                o => o.UseNetTopologySuite()));
+                o => o.UseNetTopologySuite()), ServiceLifetime.Scoped);
 
 
 
 
         // Register all repositories
+        services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
@@ -74,4 +81,37 @@ public static class DependencyInjection
 
 
 
+
+    public static IServiceCollection AddIdentityServices(
+          this IServiceCollection services, IConfiguration configuration)
+    {
+
+
+        services.AddIdentity<User, IdentityRole<int>>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = configuration["JwtSettings:Issuer"],
+                    ValidAudience = configuration["JwtSettings:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]))
+                };
+            });
+
+        services.AddAuthorization();
+
+        // TODO: seeders
+        services.AddTransient<RoleSeeder>();
+        services.AddTransient<CitySeeder>();
+
+        return services;
+    }
 }

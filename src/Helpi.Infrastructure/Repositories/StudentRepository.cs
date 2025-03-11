@@ -12,6 +12,8 @@ public class StudentRepository : IStudentRepository
 
         public StudentRepository(AppDbContext context) => _context = context;
 
+
+
         public async Task<Student> GetByIdAsync(int id) => await _context.Students
             .Include(s => s.Contact)
             .FirstOrDefaultAsync(s => s.Id == id);
@@ -45,4 +47,6 @@ public class StudentRepository : IStudentRepository
         {
                 throw new NotImplementedException();
         }
+
+
 }

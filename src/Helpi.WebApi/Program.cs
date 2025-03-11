@@ -2,6 +2,8 @@
 
 
 using Helpi.Application;
+using Helpi.Infrastructure.Seeds;
+using Helpi.WebApi.Middleware;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,8 +22,7 @@ builder.Services
 builder.Services.AddApplication();
 
 
-
-
+builder.Services.AddIdentityServices(builder.Configuration);
 
 
 
@@ -35,8 +36,27 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+/// TODO: seeders
+using (var scope = app.Services.CreateScope())
+{
+    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+    await roleSeeder.SeedRolesAsync();
+
+    //
+    var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();
+    await citySeeder.SeedAsync();
+}
+
+
+
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseHttpsRedirection();
 
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.MapControllers();

@@ -28,7 +28,7 @@ namespace Helpi.Domain.Entities
         [MaxLength(100)]
         public string? City { get; set; }
 
-        [MaxLength(2)]
+
         public string? State { get; set; }
 
         [MaxLength(20)]

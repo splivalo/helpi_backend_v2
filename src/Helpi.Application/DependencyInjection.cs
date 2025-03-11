@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
 
         // Register all services
+        services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
         services.AddScoped<ContactInfoService>();
         services.AddScoped<StudentService>();

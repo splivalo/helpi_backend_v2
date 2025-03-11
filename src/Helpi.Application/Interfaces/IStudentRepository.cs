@@ -12,4 +12,5 @@ public interface IStudentRepository
     Task UpdateAsync(Student student);
     Task DeleteAsync(Student student);
     Task GetByFacultyAsync(int facultyId);
+
 }
