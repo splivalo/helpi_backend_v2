@@ -48,7 +48,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-
+app.UseRouting();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

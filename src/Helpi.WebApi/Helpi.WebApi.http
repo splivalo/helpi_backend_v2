@@ -88,6 +88,7 @@ Content-Type: {{contentType}}
 
 ### Extract the student token for later use
 @studentToken = {{loginStudent.response.body.token}}
+@studentUserId = {{loginStudent.response.body.userId}}
 
 ### Login with customer credentials
 # @name loginCustomer
@@ -101,17 +102,22 @@ Content-Type: {{contentType}}
 
 ### Extract the customer token for later use
 @customerToken = {{loginCustomer.response.body.token}}
+@customerUserId = {{loginCustomer.response.body.userId}}
 
 ### =============================================
 ### Protected Endpoints - Student Access
 ### =============================================
 
-### Access student profile (using student token)
-GET {{baseUrl}}/Students/profile
+### Access student  (using student token)
+GET {{baseUrl}}/students/{{studentUserId}}
+Authorization: Bearer {{studentToken}}
+
+### Access student  (using student token)
+GET {{baseUrl}}/students
 Authorization: Bearer {{studentToken}}
 
 ### Update student profile
-PUT {{baseUrl}}/Students/profile
+PUT {{baseUrl}}/students/profile
 Authorization: Bearer {{studentToken}}
 Content-Type: {{contentType}}
 

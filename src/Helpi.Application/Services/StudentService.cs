@@ -20,10 +20,18 @@ public class StudentService
                 _mapper = mapper;
         }
 
-        public async Task<List<StudentDto>> GetAllStudentsAsync() { return null; }
+        public async Task<List<StudentDto>> GetAllStudentsAsync()
+        {
+                var students = await _repository.GetAllStudentsAsync();
+                return _mapper.Map<List<StudentDto>>(students);
+        }
 
-        public async Task<StudentDto> GetStudentByIdAsync(int id) =>
-            _mapper.Map<StudentDto>(await _repository.GetByIdAsync(id));
+        public async Task<StudentDto> GetStudentByIdAsync(int id)
+        {
+                var student = await _repository.GetByIdAsync(id);
+                return _mapper.Map<StudentDto>(student);
+        }
+
 
         public async Task<StudentDto> CreateStudentAsync(StudentCreateDto dto)
         {

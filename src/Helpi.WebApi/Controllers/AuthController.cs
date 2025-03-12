@@ -2,6 +2,7 @@ using Helpi.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Helpi.Application.Services;
 
+
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
@@ -69,6 +70,7 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             token = result.Token,
+            userId = result.UserId,
             message = result.Message
         });
     }

@@ -2,11 +2,12 @@
 using Helpi.Application.DTOs;
 using Helpi.Application.Services;
 using Helpi.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/students")]
 public class StudentsController : ControllerBase
@@ -15,8 +16,22 @@ public class StudentsController : ControllerBase
 
         public StudentsController(StudentService service) => _service = service;
 
-        [HttpGet] public async Task<ActionResult<List<StudentDto>>> GetAll() => Ok(await _service.GetAllStudentsAsync());
-        [HttpGet("{id}")] public async Task<ActionResult<StudentDto>> GetById(int id) => Ok(await _service.GetStudentByIdAsync(id));
+        [HttpGet]
+        public async Task<ActionResult<List<StudentDto>>> GetAll()
+        {
+                var students = await _service.GetAllStudentsAsync();
+                return Ok(students);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<StudentDto>> GetById(int id)
+        {
+
+                var student = await _service.GetStudentByIdAsync(id);
+                return Ok(student);
+        }
         [HttpPost] public async Task<ActionResult<StudentDto>> Create(StudentCreateDto dto) => CreatedAtAction(nameof(GetById), new { id = (await _service.CreateStudentAsync(dto)).Id }, dto);
-        [HttpPatch("{id}/verification")] public async Task<IActionResult> UpdateVerification(int id, [FromBody] VerificationStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
+
+        [HttpPatch("{id}/verification")]
+        public async Task<IActionResult> UpdateVerification(int id, [FromBody] VerificationStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
 }

@@ -48,25 +48,25 @@ namespace Helpi.Application.Services
 
 
 
-        public async Task<(bool Success, string Token, string Message)> Login(LoginDto dto)
+        public async Task<(bool Success, string Token, int UserId, string Message)> Login(LoginDto dto)
         {
             // Find user by email
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
-                return (false, string.Empty, "Invalid email or password");
+                return (false, string.Empty, -1, "Invalid email or password");
             }
 
             // Check password
             var result = await _userManager.CheckPasswordAsync(user, dto.Password);
             if (!result)
             {
-                return (false, string.Empty, "Invalid email or password");
+                return (false, string.Empty, -1, "Invalid email or password");
             }
 
             // Generate token
             var token = await GenerateJwtToken(user);
-            return (true, token, "Login successful");
+            return (true, token, user.Id, "Login successful");
         }
 
 

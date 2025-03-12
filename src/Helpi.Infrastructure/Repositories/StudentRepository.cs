@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -14,12 +15,26 @@ public class StudentRepository : IStudentRepository
 
 
 
-        public async Task<Student> GetByIdAsync(int id) => await _context.Students
-            .Include(s => s.Contact)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        public async Task<Student> GetByIdAsync(int id)
+        {
+                var student = await _context.Students.Include(s => s.Contact).SingleOrDefaultAsync(s => s.Id == id);
 
-        public async Task<Student> GetByStudentNumberAsync(string studentNumber)
-            => await _context.Students.FirstOrDefaultAsync(s => s.StudentNumber == studentNumber);
+                if (student == null)
+                {
+                        throw new NotFoundException(nameof(Student), id);
+
+                }
+
+                return student;
+
+
+        }
+
+        public async Task<Student?> GetByStudentNumberAsync(string studentNumber)
+        {
+                return await _context.Students.SingleOrDefaultAsync(s => s.StudentNumber == studentNumber);
+
+        }
 
         public async Task<IEnumerable<Student>> GetByVerificationStatusAsync(VerificationStatus status)
             => await _context.Students.Where(s => s.VerificationStatus == status).ToListAsync();
@@ -48,5 +63,9 @@ public class StudentRepository : IStudentRepository
                 throw new NotImplementedException();
         }
 
+        public async Task<IEnumerable<Student>> GetAllStudentsAsync()
+        {
+                return await _context.Students.Include(s => s.Contact).ToListAsync();
+        }
 
 }
