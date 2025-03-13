@@ -4,7 +4,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IStudentServiceRepository
 {
-    Task<StudentService> GetByIdAsync(int studentId, int serviceId);
+    Task<StudentService?> GetByIdAsync(int studentId, int serviceId);
     Task<IEnumerable<StudentService>> GetByStudentAsync(int studentId);
     Task<IEnumerable<StudentService>> GetByServiceAsync(int serviceId);
     Task<StudentService> AddAsync(StudentService studentService);

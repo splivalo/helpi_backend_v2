@@ -128,6 +128,7 @@ public static class DependencyInjection
         // TODO: seeders
         services.AddTransient<RoleSeeder>();
         services.AddTransient<CitySeeder>();
+        services.AddTransient<ServiceDataSeeder>();
 
         return services;
     }

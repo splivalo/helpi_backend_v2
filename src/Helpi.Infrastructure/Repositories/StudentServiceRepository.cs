@@ -12,9 +12,11 @@ public class StudentServiceRepository : IStudentServiceRepository
 
         public StudentServiceRepository(AppDbContext context) => _context = context;
 
-        public async Task<StudentService> GetByIdAsync(int studentId, int serviceId)
-            => await _context.StudentServices
-                .FirstOrDefaultAsync(ss => ss.StudentId == studentId && ss.ServiceId == serviceId);
+        public async Task<StudentService?> GetByIdAsync(int studentId, int serviceId)
+        {
+                return await _context.StudentServices
+                .SingleOrDefaultAsync(ss => ss.StudentId == studentId && ss.ServiceId == serviceId);
+        }
 
         public async Task<IEnumerable<StudentService>> GetByStudentAsync(int studentId)
             => await _context.StudentServices.Where(ss => ss.StudentId == studentId).ToListAsync();

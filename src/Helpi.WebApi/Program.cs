@@ -45,6 +45,11 @@ using (var scope = app.Services.CreateScope())
     //
     var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();
     await citySeeder.SeedAsync();
+
+
+    var serviceDataSeeder = scope.ServiceProvider.GetRequiredService<ServiceDataSeeder>();
+    await serviceDataSeeder.SeedAsync();
+
 }
 
 

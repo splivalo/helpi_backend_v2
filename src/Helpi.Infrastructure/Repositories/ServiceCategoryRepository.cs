@@ -12,14 +12,16 @@ public class ServiceCategoryRepository : IServiceCategoryRepository
         public ServiceCategoryRepository(AppDbContext context) => _context = context;
 
         public async Task<ServiceCategory> GetByIdAsync(int id)
-            => await _context.ServiceCategories.FindAsync(id);
+        {
+                return await _context.ServiceCategories.FindAsync(id);
+        }
 
-        public async Task<ServiceCategory> GetByNameAsync(string name)
-            => await _context.ServiceCategories
-                .FirstOrDefaultAsync(sc => sc.Name == name);
+
 
         public async Task<IEnumerable<ServiceCategory>> GetAllAsync()
-            => await _context.ServiceCategories.ToListAsync();
+        {
+                return await _context.ServiceCategories.ToListAsync();
+        }
 
         public async Task<ServiceCategory> AddAsync(ServiceCategory category)
         {
