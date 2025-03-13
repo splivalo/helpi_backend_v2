@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -9,6 +10,8 @@ public class CustomerDto
     public int Id { get; set; }
     public NotificationMethod PreferredNotificationMethod { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
+
+    public ICollection<Senior> Seniors { get; set; } = new List<Senior>();
 }
 
 public class CustomerCreateDto

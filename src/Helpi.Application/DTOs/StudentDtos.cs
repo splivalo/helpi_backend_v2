@@ -5,7 +5,7 @@ namespace Helpi.Application.DTOs;
 
 public class StudentDto
 {
-    public int Id { get; set; }
+    public int UserId { get; set; }
     public string StudentNumber { get; set; } = null!;
     public int FacultyId { get; set; }
     public DateTime DateRegistered { get; set; }

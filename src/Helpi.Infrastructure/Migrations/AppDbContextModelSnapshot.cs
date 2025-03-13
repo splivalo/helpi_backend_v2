@@ -33,12 +33,12 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Polygon>("Bounds")
                         .IsRequired()
                         .HasColumnType("geometry");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("GooglePlaceId")
                         .IsRequired()
@@ -72,10 +72,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
@@ -137,7 +133,7 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.Customer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ContactId")
@@ -146,7 +142,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("PreferredNotificationMethod")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.HasIndex("ContactId")
                         .IsUnique();
@@ -793,7 +789,7 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.Student", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("AverageRating")
@@ -819,7 +815,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("VerificationStatus")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.HasIndex("ContactId")
                         .IsUnique();
@@ -831,11 +827,8 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.StudentAvailabilitySlot", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("StudentId")
                         .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<byte>("DayOfWeek")
                         .HasColumnType("smallint");
@@ -846,12 +839,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("StudentId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId");
+                    b.HasKey("StudentId", "DayOfWeek");
 
                     b.ToTable("StudentAvailabilitySlots");
                 });
@@ -1116,13 +1104,13 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.ContactInfo", b =>
                 {
-                    b.HasOne("Helpi.Domain.Entities.City", "CityNavigation")
+                    b.HasOne("Helpi.Domain.Entities.City", "City")
                         .WithMany("ContactInfos")
                         .HasForeignKey("CityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CityNavigation");
+                    b.Navigation("City");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Customer", b =>
@@ -1133,15 +1121,13 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.User", "User")
+                    b.HasOne("Helpi.Domain.Entities.User", null)
                         .WithOne("Customer")
-                        .HasForeignKey("Helpi.Domain.Entities.Customer", "Id")
+                        .HasForeignKey("Helpi.Domain.Entities.Customer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Contact");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
@@ -1351,15 +1337,13 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.Customer", "Customer")
+                    b.HasOne("Helpi.Domain.Entities.Customer", null)
                         .WithMany("Seniors")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Contact");
-
-                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Service", b =>
@@ -1406,17 +1390,15 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.User", "User")
+                    b.HasOne("Helpi.Domain.Entities.User", null)
                         .WithOne("Student")
-                        .HasForeignKey("Helpi.Domain.Entities.Student", "Id")
+                        .HasForeignKey("Helpi.Domain.Entities.Student", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Contact");
 
                     b.Navigation("Faculty");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.StudentAvailabilitySlot", b =>
@@ -1444,7 +1426,7 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.StudentService", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.Service", "Service")
-                        .WithMany("StudentServices")
+                        .WithMany()
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1579,8 +1561,6 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("StudentServices");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ServiceCategory", b =>

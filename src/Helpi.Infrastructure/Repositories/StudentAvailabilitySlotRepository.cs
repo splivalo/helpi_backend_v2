@@ -11,24 +11,36 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
 
         public StudentAvailabilitySlotRepository(AppDbContext context) => _context = context;
 
-        public async Task<StudentAvailabilitySlot> GetByIdAsync(int id)
-            => await _context.StudentAvailabilitySlots.FindAsync(id);
+        public async Task<StudentAvailabilitySlot?> GetByIdAsync(int studentId, byte dayOfWeek)
+        {
+                return await _context.StudentAvailabilitySlots
+                        .SingleOrDefaultAsync(s => s.StudentId == studentId
+                         && s.DayOfWeek == dayOfWeek);
+
+        }
 
         public async Task<IEnumerable<StudentAvailabilitySlot>> GetByStudentAsync(int studentId)
-            => await _context.StudentAvailabilitySlots
-                .Where(s => s.StudentId == studentId)
-                .ToListAsync();
+        {
+                return await _context.StudentAvailabilitySlots
+                 .Where(s => s.StudentId == studentId)
+                 .ToListAsync();
+        }
 
-        public async Task<IEnumerable<StudentAvailabilitySlot>> GetByDayAndTimeAsync(int studentId, DayOfWeek day, TimeOnly start, TimeOnly end)
-            => await _context.StudentAvailabilitySlots
-                .Where(s => s.StudentId == studentId &&
-                    s.DayOfWeek == (byte)day &&
-                    s.StartTime <= end &&
-                    s.EndTime >= start)
-                .ToListAsync();
+        public async Task<IEnumerable<StudentAvailabilitySlot>> GetByDayAndTimeRangeAsync(int studentId, DayOfWeek day, TimeOnly start, TimeOnly end)
+        {
+                return await _context.StudentAvailabilitySlots
+                        .Where(s => s.StudentId == studentId &&
+                        s.DayOfWeek == (byte)day &&
+                        s.StartTime <= end &&
+                        s.EndTime >= start)
+                        .ToListAsync();
+        }
 
         public async Task<StudentAvailabilitySlot> AddAsync(StudentAvailabilitySlot slot)
         {
+                // _context.Attach(new Student { UserId = slot.StudentId });
+                // _context.Entry(slot).Property(x => x.StudentId).IsModified = false;
+
                 await _context.StudentAvailabilitySlots.AddAsync(slot);
                 await _context.SaveChangesAsync();
                 return slot;

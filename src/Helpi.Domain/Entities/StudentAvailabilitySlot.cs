@@ -1,9 +1,15 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Helpi.Domain.Entities
 {
 
+    /// <summary>
+    /// Primary key =DayOfWeek + StudentId 
+    /// </summary>
     public class StudentAvailabilitySlot
     {
-        public int Id { get; set; }
+
+        [ForeignKey(nameof(Student))]
         public int StudentId { get; set; }
         public byte DayOfWeek { get; set; }
         public TimeOnly StartTime { get; set; }

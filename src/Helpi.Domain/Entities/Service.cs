@@ -16,7 +16,7 @@ namespace Helpi.Domain.Entities
         public short MinDuration { get; set; }
 
         public ServiceCategory Category { get; set; } = null!;
-        public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();
+        // public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

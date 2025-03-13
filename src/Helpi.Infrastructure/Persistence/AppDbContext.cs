@@ -91,7 +91,16 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // Spatial configuration for PostgreSQL
         modelBuilder.HasPostgresExtension("postgis");
 
-        // Configure complex relationships
+
+        modelBuilder.Entity<StudentAvailabilitySlot>()
+       .HasKey(s => new { s.StudentId, s.DayOfWeek });
+
+        modelBuilder.Entity<StudentAvailabilitySlot>()
+            .HasOne(s => s.Student)
+            .WithMany(st => st.AvailabilitySlots)
+            .HasForeignKey(s => s.StudentId);
+
+
         modelBuilder.Entity<StudentService>()
             .HasKey(ss => new { ss.StudentId, ss.ServiceId });
 
@@ -129,17 +138,17 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
           .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
 });
 
-        modelBuilder.Entity<User>()
-                  .HasOne(u => u.Customer)
-                  .WithOne(c => c.User)
-                  .HasForeignKey<Customer>(c => c.Id)
-                  .OnDelete(DeleteBehavior.Cascade);
+        // modelBuilder.Entity<User>()
+        //           .HasOne(u => u.Customer)
+        //           .WithOne(c => c.User)
+        //           .HasForeignKey<Customer>(c => c.Id)
+        //           .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<User>()
-        .HasOne(s => s.Student)
-        .WithOne(s => s.User)
-        .HasForeignKey<Student>(s => s.Id)
-        .OnDelete(DeleteBehavior.Cascade);
+        // modelBuilder.Entity<User>()
+        // .HasOne(s => s.Student)
+        // .WithOne(s => s.User)
+        // .HasForeignKey<Student>(s => s.Id)
+        // .OnDelete(DeleteBehavior.Cascade);
     }
 
 

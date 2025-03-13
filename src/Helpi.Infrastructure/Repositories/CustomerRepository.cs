@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -12,11 +13,17 @@ public class CustomerRepository : ICustomerRepository
 
         public CustomerRepository(AppDbContext context) => _context = context;
 
-        public async Task<Customer> GetByIdAsync(int id)
-            => await _context.Customers
-                .Include(c => c.Contact)
-                .Include(c => c.Seniors)
-                .FirstOrDefaultAsync(c => c.Id == id);
+        public async Task<Customer?> GetByIdAsync(int id)
+        {
+                var customer = await _context.Customers
+                  .Include(c => c.Contact)
+                  .Include(c => c.Seniors)
+                  .ThenInclude(s => s.Contact)
+                  .SingleOrDefaultAsync(c => c.UserId == id);
+
+
+                return customer;
+        }
 
         public async Task<Customer> GetByContactIdAsync(int contactId)
             => await _context.Customers
@@ -45,4 +52,13 @@ public class CustomerRepository : ICustomerRepository
                 _context.Customers.Remove(customer);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
+        {
+                return await _context.Customers
+                        .IgnoreAutoIncludes()
+                        .Include(c => c.Contact)
+                        .ToListAsync();
+        }
+
 }

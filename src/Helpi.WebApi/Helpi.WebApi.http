@@ -112,12 +112,8 @@ Content-Type: {{contentType}}
 GET {{baseUrl}}/students/{{studentUserId}}
 Authorization: Bearer {{studentToken}}
 
-### Access student  (using student token)
-GET {{baseUrl}}/students
-Authorization: Bearer {{studentToken}}
-
 ### Update student profile
-PUT {{baseUrl}}/students/profile
+PUT {{baseUrl}}/Students/profile
 Authorization: Bearer {{studentToken}}
 Content-Type: {{contentType}}
 

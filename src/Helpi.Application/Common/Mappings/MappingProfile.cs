@@ -1,5 +1,6 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
+using Helpi.Application.DTOs.Auth;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Common.Mappings;
@@ -8,15 +9,25 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
+
+
         // User Mappings
         CreateMap<User, UserDto>();
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
 
+
+
         // ContactInfo Mappings
         CreateMap<ContactInfo, ContactInfoDto>();
         CreateMap<ContactInfoCreateDto, ContactInfo>();
         CreateMap<ContactInfoUpdateDto, ContactInfo>();
+
+        // 
+        CreateMap<ContactInfo, StudentRegisterDto>();
+        CreateMap<StudentRegisterDto, ContactInfo>();
+
+
 
         // Student Mappings
         CreateMap<Student, StudentDto>()
@@ -36,7 +47,8 @@ public class MappingProfile : Profile
 
         // Customer Mappings
         CreateMap<Customer, CustomerDto>()
-            .ForMember(dest => dest.Contact, opt => opt.MapFrom(src => src.Contact));
+            .ForMember(dest => dest.Contact, opt => opt.MapFrom(src => src.Contact))
+            .ForMember(dest => dest.Seniors, opt => opt.MapFrom(src => src.Seniors));
         CreateMap<CustomerCreateDto, Customer>();
         CreateMap<CustomerUpdateDto, Customer>();
 

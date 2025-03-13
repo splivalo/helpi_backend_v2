@@ -6,7 +6,7 @@ namespace Helpi.Domain.Entities
     public class Student
     {
         [Key]
-        public int Id { get; set; }
+        public int UserId { get; set; }
 
         [MaxLength(20)]
         public string StudentNumber { get; set; } = null!;
@@ -19,7 +19,7 @@ namespace Helpi.Domain.Entities
         // [Precision(3, 2)]
         public decimal AverageRating { get; set; } = 0.00m;
 
-        public User User { get; set; } = null!;
+        // public User User { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
         public Faculty Faculty { get; set; } = null!;
         public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();

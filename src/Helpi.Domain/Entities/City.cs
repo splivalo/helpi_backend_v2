@@ -16,7 +16,7 @@ namespace Helpi.Domain.Entities
 
         public Polygon Bounds { get; set; } = null!;
         public bool IsServiced { get; set; } = false;
-        public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<ContactInfo> ContactInfos { get; set; } = new List<ContactInfo>();
         public ICollection<ServiceRegion> ServiceRegions { get; set; } = new List<ServiceRegion>();

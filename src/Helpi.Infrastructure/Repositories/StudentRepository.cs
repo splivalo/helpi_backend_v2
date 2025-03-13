@@ -17,7 +17,7 @@ public class StudentRepository : IStudentRepository
 
         public async Task<Student> GetByIdAsync(int id)
         {
-                var student = await _context.Students.Include(s => s.Contact).SingleOrDefaultAsync(s => s.Id == id);
+                var student = await _context.Students.Include(s => s.Contact).SingleOrDefaultAsync(s => s.UserId == id);
 
                 if (student == null)
                 {

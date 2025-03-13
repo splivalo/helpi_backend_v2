@@ -30,7 +30,13 @@ public class StudentsController : ControllerBase
                 var student = await _service.GetStudentByIdAsync(id);
                 return Ok(student);
         }
-        [HttpPost] public async Task<ActionResult<StudentDto>> Create(StudentCreateDto dto) => CreatedAtAction(nameof(GetById), new { id = (await _service.CreateStudentAsync(dto)).Id }, dto);
+        [HttpPost]
+        public async Task<ActionResult<StudentDto>> Create(StudentCreateDto dto)
+        {
+
+                var student = await _service.CreateStudentAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = student.UserId }, dto);
+        }
 
         [HttpPatch("{id}/verification")]
         public async Task<IActionResult> UpdateVerification(int id, [FromBody] VerificationStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }

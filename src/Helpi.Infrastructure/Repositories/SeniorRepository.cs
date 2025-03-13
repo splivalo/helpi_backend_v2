@@ -12,11 +12,11 @@ public class SeniorRepository : ISeniorRepository
 
         public SeniorRepository(AppDbContext context) => _context = context;
 
-        public async Task<Senior> GetByIdAsync(int id)
-            => await _context.Seniors
-                .Include(s => s.Contact)
-                .Include(s => s.Customer)
-                .FirstOrDefaultAsync(s => s.Id == id);
+        public async Task<Senior?> GetByIdAsync(int id)
+        {
+                return await _context.Seniors
+                 .Include(s => s.Contact).SingleOrDefaultAsync(s => s.Id == id);
+        }
 
         public async Task<IEnumerable<Senior>> GetByCustomerIdAsync(int customerId)
             => await _context.Seniors

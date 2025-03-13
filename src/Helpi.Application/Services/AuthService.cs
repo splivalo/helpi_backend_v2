@@ -3,6 +3,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Helpi.Application.DTOs.Auth;
 using Helpi.Application.Interfaces;
 
@@ -27,17 +28,18 @@ namespace Helpi.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IAuthRepository _authRepository;
 
-
+        private readonly IMapper _mapper;
 
         private readonly string _secretKey;
         private readonly string _issuer;
         private readonly string _audience;
 
-        public AuthService(UserManager<User> userManager, IConfiguration configuration, IAuthRepository authRepository)
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, IAuthRepository authRepository, IMapper mapper)
         {
             _userManager = userManager;
             _configuration = configuration;
             _authRepository = authRepository;
+            _mapper = mapper;
 
 
             _secretKey = _configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret Key is not configured");
@@ -162,7 +164,7 @@ namespace Helpi.Application.Services
 
                 var customer = new Customer
                 {
-                    Id = user.Id,
+                    UserId = user.Id,
                     PreferredNotificationMethod = customerRegistrationDto.PreferredNotificationMethod,
 
                 };
@@ -193,23 +195,9 @@ namespace Helpi.Application.Services
                 var user = await _CreateUser(registerDto.Email, registerDto.UserType, registerDto.Password);
 
                 // Create contact info for the user
-                var contactInfo = new ContactInfo
-                {
+                var contactInfo = _mapper.Map<ContactInfo>(registerDto);
 
-                    FirstName = registerDto.FirstName,
-                    LastName = registerDto.LastName,
-                    Phone = registerDto.Phone,
-                    Gender = registerDto.Gender,
-                    GooglePlaceId = registerDto.GooglePlaceId,
-                    FullAddress = registerDto.FullAddress,
-                    CityId = registerDto.CityId,
-                    Latitude = registerDto.Latitude,
-                    Longitude = registerDto.Longitude,
-                    City = registerDto.City,
-                    State = registerDto.State,
-                    PostalCode = registerDto.PostalCode,
-                    Country = registerDto.Country
-                };
+
 
                 if (!registerDto.FacultyId.HasValue)
                 {
@@ -218,7 +206,7 @@ namespace Helpi.Application.Services
 
                 var student = new Student
                 {
-                    Id = user.Id,
+                    UserId = user.Id,
                     StudentNumber = registerDto.StudentNumber!,
                     FacultyId = registerDto.FacultyId.Value,
                 };

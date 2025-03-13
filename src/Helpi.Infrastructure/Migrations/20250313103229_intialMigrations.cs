@@ -73,7 +73,7 @@ namespace Helpi.Infrastructure.Migrations
                     OfficialName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Bounds = table.Column<Polygon>(type: "geometry", nullable: false),
                     IsServiced = table.Column<bool>(type: "boolean", nullable: false),
-                    AddedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -225,10 +225,9 @@ namespace Helpi.Infrastructure.Migrations
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     FullAddress = table.Column<string>(type: "text", nullable: false),
-                    CityId = table.Column<int>(type: "integer", nullable: false),
                     Latitude = table.Column<decimal>(type: "numeric", nullable: false),
                     Longitude = table.Column<decimal>(type: "numeric", nullable: false),
-                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CityId = table.Column<int>(type: "integer", nullable: false),
                     State = table.Column<string>(type: "text", nullable: true),
                     PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Country = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
@@ -271,16 +270,16 @@ namespace Helpi.Infrastructure.Migrations
                 name: "Customers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     PreferredNotificationMethod = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Customers", x => x.Id);
+                    table.PrimaryKey("PK_Customers", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_Customers_AspNetUsers_Id",
-                        column: x => x.Id,
+                        name: "FK_Customers_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -296,7 +295,7 @@ namespace Helpi.Infrastructure.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
                     StudentNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     FacultyId = table.Column<int>(type: "integer", nullable: false),
                     DateRegistered = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -307,10 +306,10 @@ namespace Helpi.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Students", x => x.Id);
+                    table.PrimaryKey("PK_Students", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_Students_AspNetUsers_Id",
-                        column: x => x.Id,
+                        name: "FK_Students_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -375,7 +374,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_PaymentMethods_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -403,7 +402,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_Seniors_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -411,8 +410,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "StudentAvailabilitySlots",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     DayOfWeek = table.Column<byte>(type: "smallint", nullable: false),
                     StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
@@ -420,12 +417,12 @@ namespace Helpi.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudentAvailabilitySlots", x => x.Id);
+                    table.PrimaryKey("PK_StudentAvailabilitySlots", x => new { x.StudentId, x.DayOfWeek });
                     table.ForeignKey(
                         name: "FK_StudentAvailabilitySlots_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -448,7 +445,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_StudentContracts_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -473,7 +470,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_StudentServices_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -561,7 +558,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_JobRequests_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -594,7 +591,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_ScheduleAssignments_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -687,7 +684,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_PaymentTransactions_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_PaymentTransactions_JobInstances_JobInstanceId",
@@ -735,7 +732,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_Reviews_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1008,11 +1005,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_Services_CategoryId",
                 table: "Services",
                 column: "CategoryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StudentAvailabilitySlots_StudentId",
-                table: "StudentAvailabilitySlots",
-                column: "StudentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentContracts_StudentId",

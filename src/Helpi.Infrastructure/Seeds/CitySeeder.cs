@@ -39,7 +39,7 @@ namespace Helpi.Infrastructure.Seeds
                         new Coordinate(15.87, 45.75) // Close the polygon
                     })),
                     IsServiced = true,
-                    AddedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 },
                 new City
                 {
@@ -54,7 +54,7 @@ namespace Helpi.Infrastructure.Seeds
                         new Coordinate(16.4, 43.5) // Close the polygon
                     })),
                     IsServiced = true,
-                    AddedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 }
             };
 

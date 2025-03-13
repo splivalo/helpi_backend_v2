@@ -21,13 +21,9 @@ namespace Helpi.Domain.Entities
         public string GooglePlaceId { get; set; } = null!;
 
         public string FullAddress { get; set; } = null!;
-        public int CityId { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-
-        [MaxLength(100)]
-        public string? City { get; set; }
-
+        public int CityId { get; set; }
 
         public string? State { get; set; }
 
@@ -39,7 +35,8 @@ namespace Helpi.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public City CityNavigation { get; set; } = null!;
+        public City City { get; set; } = null!;
+
         public Student Student { get; set; } = null!;
         public Customer Customer { get; set; } = null!;
         public Senior Senior { get; set; } = null!;
