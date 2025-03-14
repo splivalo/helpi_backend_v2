@@ -52,19 +52,41 @@ Helpi is an app that connects **seniors** who need services with **students** wh
 
 ## 🔄 **Use Case Flow: Senior Places a Service Order**
 ### **Flow:**
-1. **Senior selects a service** from available categories.
-2. **Senior picks time slots** (specific days & times).
-3. **System verifies if students are available** in the requested area (`ServiceRegions` check).
-4. **Order is created** (`Orders` table entry added).
-5. **Schedules are generated** (`OrderSchedules` entries).
-6. **Matching system starts**:
-   - Finds **available students** (`StudentAvailabilitySlots`).
-   - Sends **job requests** (`JobRequests` table).
-   - If the student does not accept within **10 minutes**, another student is notified.
-7. **Student accepts the request** (`ScheduleAssignments` entry created).
-8. **Service is executed** (`JobInstances` entry created when work starts).
-9. **Senior is charged** (`PaymentTransactions` entry created).
-10. **Invoice is generated & sent** (`Invoices` and `InvoiceEmails`).
+1. **Senior selects services**:
+   - Senior selects one or more services from available categories.
+
+2. **Senior picks time slots**:
+   - Senior chooses specific days and times for the service bundle.
+
+3. **System verifies**:
+   - Services are available in the senior's area (`ServiceRegions`).
+   - Students qualified for all services exist in the region.
+
+4. **Order is created**:
+   - Master record is created in `Orders`.
+   - Service details are stored in `OrderServices` (service list + quantities).
+   - Schedules are generated (`OrderSchedules` entries for chosen slots).
+
+5. **Matching system starts**:
+   - Finds students available for all ordered services.
+   - Checks `StudentAvailabilitySlots` and qualifications.
+   - Sends job requests (`JobRequests` table).
+   - Auto-retries with new students every 10 minutes if unaccepted.
+
+6. **Student accepts request**:
+   - `ScheduleAssignments` links student to the entire order.
+
+7. **Services executed**:
+   - Single `JobInstances` entry per scheduled time slot.
+   - Tracks completion of all services in that slot.
+
+8. **Senior charged**:
+   - `PaymentTransactions` aggregates costs from all services.
+   - Charged 10 minutes before each service slot.
+
+9. **Invoice generated**:
+   - Consolidated `Invoices` for all services in the order.
+   - Sent via `InvoiceEmails`.
 
 ---
 
@@ -72,7 +94,8 @@ Helpi is an app that connects **seniors** who need services with **students** wh
 | Table | Purpose |
 |-------|---------|
 | `Orders` | Stores the senior's service request, type, and status. |
-| `OrderSchedules` | Defines the specific **days and times** the service will occur. |
+|  `OrderServices`  | Lists services in order + price snapshots   |
+| `OrderSchedules` |  Defines the specific **days and times** the services will occur. |
 | `ServiceRegions` | Ensures that the requested service is available in the senior's area. |
 | `JobRequests` | Tracks job offers sent to students. |
 | `ScheduleAssignments` | Assigns students to services based on availability. |
@@ -388,7 +411,7 @@ CREATE TABLE ContactInfo (
 );
 -- SERVICE PROVIDERS (STUDENTS)
 CREATE TABLE Students (
-    id INT PRIMARY KEY,
+    UserId INT PRIMARY KEY,
     student_number VARCHAR(20) NOT NULL UNIQUE,  
     faculty_id INT NOT NULL,              
     date_registered DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -415,16 +438,16 @@ CREATE TABLE StudentContracts (
     effective_date DATE NOT NULL,
     expiration_date DATE,
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id) REFERENCES Students(id),
+    FOREIGN KEY (student_id) REFERENCES Students(UserId),
     INDEX idx_contract_expiry (expiration_date)
 );
 
 -- SERVICE CONSUMERS
 CREATE TABLE Customers (
-    id INT PRIMARY KEY,
+    UserId INT PRIMARY KEY,
     contact_id INT NOT NULL,
     preferred_notification_method ENUM('email', 'sms', 'push') DEFAULT 'email',
-    FOREIGN KEY (id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY (id) REFERENCES Users(UserId) ON DELETE CASCADE,
     FOREIGN KEY (contact_id) REFERENCES ContactInfo(id)
 );
 
@@ -435,7 +458,7 @@ CREATE TABLE Seniors (
     contact_id INT NOT NULL,
     relationship ENUM('self', 'spouse', 'parent', 'relative', 'other') NOT NULL,
     special_requirements JSON,
-    FOREIGN KEY (customer_id) REFERENCES Customers(id),
+    FOREIGN KEY (customer_id) REFERENCES Customers(UserId),
     FOREIGN KEY (contact_id) REFERENCES ContactInfo(id),
     INDEX idx_senior_relationship (customer_id, relationship)
 );
@@ -448,7 +471,7 @@ CREATE TABLE PaymentMethods (
     token VARCHAR(255) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES Customers(id),
+    FOREIGN KEY (customer_id) REFERENCES Customers(UserId),
     INDEX idx_default_payment (customer_id, is_default)
 );
 
@@ -476,18 +499,18 @@ CREATE TABLE StudentServices (
     service_id INT NOT NULL,
     experience_years TINYINT,
     PRIMARY KEY (student_id, service_id),
-    FOREIGN KEY (student_id) REFERENCES Students(id),
+    FOREIGN KEY (student_id) REFERENCES Students(UserId),
     FOREIGN KEY (service_id) REFERENCES Services(id)
 );
 
 -- AVAILABILITY MANAGEMENT
 CREATE TABLE StudentAvailabilitySlots (
-    id INT PRIMARY KEY AUTO_INCREMENT,
     student_id INT NOT NULL,
     day_of_week TINYINT NOT NULL CHECK (0 <= day_of_week <= 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    FOREIGN KEY (student_id) REFERENCES Students(id),
+     PRIMARY KEY (student_id, day_of_week),
+    FOREIGN KEY (student_id) REFERENCES Students(UserId),
     CONSTRAINT CHK_ValidSlot CHECK (start_time < end_time),
     INDEX idx_availability_slots (student_id, day_of_week)
 );
@@ -505,7 +528,7 @@ CREATE TABLE Orders (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (senior_id) REFERENCES Seniors(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES Services(service_id) ON DELETE CASCADE
+    FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
 );
 
 -- Scheduling System
@@ -531,7 +554,7 @@ CREATE TABLE JobRequests (
     is_emergency_sub BOOLEAN NOT NULL DEFAULT FALSE,
     priority_level TINYINT DEFAULT 1,
     FOREIGN KEY (order_schedule_id) REFERENCES OrderSchedules(id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Students(id) ON DELETE CASCADE
+    FOREIGN KEY (student_id) REFERENCES Students(UserId) ON DELETE CASCADE
 );
 
 -- Assignment Tracking
@@ -620,7 +643,7 @@ CREATE TABLE Reviews (
     comment TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (senior_id) REFERENCES Seniors(id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Students(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES Students(UserId) ON DELETE CASCADE,
     FOREIGN KEY (job_instance_id) REFERENCES JobInstances(id) ON DELETE CASCADE
 );
 
@@ -679,5 +702,11 @@ CREATE TABLE ServiceRegions (
     FOREIGN KEY (city_id) REFERENCES Cities(id),
     FOREIGN KEY (service_id) REFERENCES Services(id)
 );
+
+
+
+
+
+
 
 ```
