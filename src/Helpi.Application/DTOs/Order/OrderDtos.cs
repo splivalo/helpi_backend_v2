@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Helpi.Domain.Enums;
 
-namespace Helpi.Application.DTOs;
+namespace Helpi.Application.DTOs.Order;
 
 public class OrderDto
 {
@@ -11,7 +11,8 @@ public class OrderDto
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
-    public ServiceDto Service { get; set; } = null!;
+    public ICollection<OrderServiceDto> Services { get; set; } = new List<OrderServiceDto>();
+    public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }
 
 public class OrderCreateDto
@@ -26,6 +27,9 @@ public class OrderCreateDto
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
+
+    public ICollection<OrderServiceCreateDto> Services { get; set; } = new List<OrderServiceCreateDto>();
+    public ICollection<OrderScheduleCreateDto> Schedules { get; set; } = new List<OrderScheduleCreateDto>();
 }
 
 public class OrderUpdateDto

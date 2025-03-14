@@ -12,12 +12,14 @@ public class OrderRepository : IOrderRepository
 
         public OrderRepository(AppDbContext context) => _context = context;
 
-        public async Task<Order> GetByIdAsync(int id)
-            => await _context.Orders
+        public async Task<Order?> GetByIdAsync(int id)
+        {
+                return await _context.Orders
                 .Include(o => o.Senior)
-                .Include(o => o.Service)
+                .Include(o => o.Services)
                 .Include(o => o.Schedules)
                 .FirstOrDefaultAsync(o => o.Id == id);
+        }
 
         public async Task<IEnumerable<Order>> GetBySeniorAsync(int seniorId)
             => await _context.Orders
@@ -29,10 +31,10 @@ public class OrderRepository : IOrderRepository
                 .Where(o => o.Status == status)
                 .ToListAsync();
 
-        public async Task<Order> AddAsync(Order order)
+        public async Task<Order> AddNoSaveAsync(Order order)
         {
                 await _context.Orders.AddAsync(order);
-                await _context.SaveChangesAsync();
+
                 return order;
         }
 
@@ -47,4 +49,12 @@ public class OrderRepository : IOrderRepository
                 _context.Orders.Remove(order);
                 await _context.SaveChangesAsync();
         }
+
+        public Task AddServicesToOrderAsync(int orderId, IEnumerable<OrderService> services)
+        {
+                throw new NotImplementedException();
+        }
+
+
+
 }

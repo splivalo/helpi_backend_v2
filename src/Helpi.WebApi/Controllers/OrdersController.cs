@@ -1,6 +1,7 @@
 
-using Helpi.Application.DTOs;
+using Helpi.Application.DTOs.Order;
 using Helpi.Application.Services;
+using Helpi.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
@@ -10,10 +11,42 @@ namespace Helpi.WebApi.Controllers;
 [Route("api/orders")]
 public class OrdersController : ControllerBase
 {
-        private readonly OrderService _service;
+        private readonly OrdersService _ordersService;
 
-        public OrdersController(OrderService service) => _service = service;
+        public OrdersController(OrdersService ordersService) => _ordersService = ordersService;
 
-        [HttpGet("senior/{seniorId}")] public async Task<ActionResult<List<OrderDto>>> GetBySenior(int seniorId) => Ok(await _service.GetOrdersBySeniorAsync(seniorId));
-        [HttpPost] public async Task<ActionResult<OrderDto>> Create(OrderCreateDto dto) => CreatedAtAction(nameof(GetBySenior), new { seniorId = dto.SeniorId }, await _service.CreateOrderAsync(dto));
+        [HttpPost]
+        public async Task<IActionResult> CreateOrder([FromBody] OrderCreateDto orderCreateDto)
+        {
+                try
+                {
+                        var order = await _ordersService.CreateOrderAsync(orderCreateDto);
+                        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
+                }
+                catch (DomainException ex)
+                {
+                        return BadRequest(new { error = ex.Message });
+                }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetOrder(int id)
+        {
+                var order = await _ordersService.GetOrderByIdAsync(id);
+                if (order == null) return NotFound();
+                return Ok(order);
+        }
+
+        [HttpGet("senior/{seniorId}")]
+        public async Task<ActionResult<List<OrderDto>>> GetBySenior(int seniorId)
+        {
+                var orders = await _ordersService.GetOrdersBySeniorAsync(seniorId);
+                return Ok(orders);
+        }
+        [HttpPost]
+        public async Task<ActionResult<OrderDto>> Create(OrderCreateDto dto)
+        {
+                var order = await _ordersService.CreateOrderAsync(dto);
+                return CreatedAtAction(nameof(GetBySenior), new { seniorId = dto.SeniorId }, order);
+        }
 }

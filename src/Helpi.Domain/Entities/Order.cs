@@ -18,6 +18,9 @@ namespace Helpi.Domain.Entities
 
         public Senior Senior { get; set; } = null!;
         public Service Service { get; set; } = null!;
+
+
+        public ICollection<OrderService> Services { get; set; } = new List<OrderService>();
         public ICollection<OrderSchedule> Schedules { get; set; } = new List<OrderSchedule>();
     }
 }

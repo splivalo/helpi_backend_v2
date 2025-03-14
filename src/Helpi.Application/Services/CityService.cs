@@ -17,7 +17,9 @@ public class CityService
         }
 
         public async Task<List<CityDto>> GetAllCitiesAsync()
-        {        // _mapper.Map<List<CityDto>>(await _repository.GetAllAsync());
+        {
+
+                //  _mapper.Map<List<CityDto>>(await _repository.GetAllAsync());
                 return null;
         }
 

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Auth;
+using Helpi.Application.DTOs.Order;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Common.Mappings;
@@ -85,9 +86,17 @@ public class MappingProfile : Profile
 
         // Order Mappings
         CreateMap<Order, OrderDto>()
-            .ForMember(dest => dest.Service, opt => opt.MapFrom(src => src.Service));
+            .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Services));
         CreateMap<OrderCreateDto, Order>();
         CreateMap<OrderUpdateDto, Order>();
+
+        CreateMap<OrderServiceCreateDto, Domain.Entities.OrderService>()
+         .ForMember(dest => dest.OrderId, opt => opt.Ignore());
+
+        CreateMap<OrderService, OrderServiceDto>()
+            .ForMember(dest => dest.Service, opt => opt.MapFrom(src => src.Service));
+
+
 
         // OrderSchedule Mappings
         CreateMap<OrderSchedule, OrderScheduleDto>();

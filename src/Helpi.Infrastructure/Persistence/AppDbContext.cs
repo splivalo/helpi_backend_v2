@@ -42,6 +42,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Availability & Scheduling
     public DbSet<StudentAvailabilitySlot> StudentAvailabilitySlots { get; set; }
     public DbSet<Order> Orders { get; set; }
+
+    public DbSet<OrderService> OrderServices { get; set; }
     public DbSet<OrderSchedule> OrderSchedules { get; set; }
 
     // Job Management

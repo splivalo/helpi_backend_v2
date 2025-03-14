@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Helpi.Application.DTOs;
+namespace Helpi.Application.DTOs.Order;
 
 
 public class OrderScheduleDto
