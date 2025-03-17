@@ -40,25 +40,25 @@ namespace Helpi.Infrastructure.Seeds
                 var services = new List<Service>
                 {
                     // Health & Wellness
-                    new() { Id = 1, Name = "Doctor Consultation", BasePrice = 50m, MinDuration = 30, CategoryId = 1 },
-                    new() { Id = 2, Name = "Physical Therapy", BasePrice = 40m, MinDuration = 45, CategoryId = 1 },
-                    new() { Id = 3, Name = "Medication Delivery", BasePrice = 20m, MinDuration = 0, CategoryId = 1 },
-                    new() { Id = 4, Name = "Nutrition Counseling", BasePrice = 35m, MinDuration = 60, CategoryId = 1 },
-                    new() { Id = 5, Name = "Mental Health Support", BasePrice = 45m, MinDuration = 50, CategoryId = 1 },
+                    new() { Id = 1, Name = "Doctor Consultation", CategoryId = 1 },
+                    new() { Id = 2, Name = "Physical Therapy", CategoryId = 1 },
+                    new() { Id = 3, Name = "Medication Delivery", CategoryId = 1 },
+                    new() { Id = 4, Name = "Nutrition Counseling", CategoryId = 1 },
+                    new() { Id = 5, Name = "Mental Health Support", CategoryId = 1 },
 
                     // Home Assistance
-                    new() { Id = 6, Name = "House Cleaning", BasePrice = 30m, MinDuration = 60, CategoryId = 2 },
-                    new() { Id = 7, Name = "Grocery Shopping", BasePrice = 25m, MinDuration = 45, CategoryId = 2 },
-                    new() { Id = 8, Name = "Laundry Service", BasePrice = 20m, MinDuration = 90, CategoryId = 2 },
-                    new() { Id = 9, Name = "Gardening Help", BasePrice = 35m, MinDuration = 60, CategoryId = 2 },
-                    new() { Id = 10, Name = "Handyman Repairs", BasePrice = 50m, MinDuration = 90, CategoryId = 2 },
+                    new() { Id = 6, Name = "House Cleaning", CategoryId = 2 },
+                    new() { Id = 7, Name = "Grocery Shopping", CategoryId = 2 },
+                    new() { Id = 8, Name = "Laundry Service", CategoryId = 2 },
+                    new() { Id = 9, Name = "Gardening Help", CategoryId = 2 },
+                    new() { Id = 10, Name = "Handyman Repairs", CategoryId = 2 },
 
                     // Companionship
-                    new() { Id = 11, Name = "Daily Check-ins", BasePrice = 15m, MinDuration = 30, CategoryId = 3 },
-                    new() { Id = 12, Name = "Reading Assistance", BasePrice = 20m, MinDuration = 45, CategoryId = 3 },
-                    new() { Id = 13, Name = "Social Outings", BasePrice = 40m, MinDuration = 120, CategoryId = 3 },
-                    new() { Id = 14, Name = "Hobby Support", BasePrice = 30m, MinDuration = 60, CategoryId = 3 },
-                    new() { Id = 15, Name = "Technology Help", BasePrice = 25m, MinDuration = 45, CategoryId = 3 }
+                    new() { Id = 11, Name = "Daily Check-ins", CategoryId = 3 },
+                    new() { Id = 12, Name = "Reading Assistance", CategoryId = 3 },
+                    new() { Id = 13, Name = "Social Outings", CategoryId = 3 },
+                    new() { Id = 14, Name = "Hobby Support", CategoryId = 3 },
+                    new() { Id = 15, Name = "Technology Help", CategoryId = 3 }
                 };
 
                 _context.Services.AddRange(services);

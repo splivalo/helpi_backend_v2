@@ -93,6 +93,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // Spatial configuration for PostgreSQL
         modelBuilder.HasPostgresExtension("postgis");
 
+        // Configure composite primary key
+        modelBuilder.Entity<OrderService>().HasKey(os => new { os.OrderId, os.ServiceId });
+
 
         modelBuilder.Entity<StudentAvailabilitySlot>()
        .HasKey(s => new { s.StudentId, s.DayOfWeek });

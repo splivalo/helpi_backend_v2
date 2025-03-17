@@ -2,11 +2,12 @@
 using Helpi.Application.DTOs.Order;
 using Helpi.Application.Services;
 using Helpi.Domain.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/orders")]
 public class OrdersController : ControllerBase
@@ -16,16 +17,16 @@ public class OrdersController : ControllerBase
         public OrdersController(OrdersService ordersService) => _ordersService = ordersService;
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] OrderCreateDto orderCreateDto)
+        public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] OrderCreateDto orderCreateDto)
         {
                 try
                 {
                         var order = await _ordersService.CreateOrderAsync(orderCreateDto);
                         return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
                 }
-                catch (DomainException ex)
+                catch
                 {
-                        return BadRequest(new { error = ex.Message });
+                        throw;
                 }
         }
 
@@ -43,10 +44,5 @@ public class OrdersController : ControllerBase
                 var orders = await _ordersService.GetOrdersBySeniorAsync(seniorId);
                 return Ok(orders);
         }
-        [HttpPost]
-        public async Task<ActionResult<OrderDto>> Create(OrderCreateDto dto)
-        {
-                var order = await _ordersService.CreateOrderAsync(dto);
-                return CreatedAtAction(nameof(GetBySenior), new { seniorId = dto.SeniorId }, order);
-        }
+
 }

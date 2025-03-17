@@ -1,4 +1,5 @@
 using Helpi.Application.Interfaces;
+using Helpi.Domain.Exceptions;
 using Helpi.Infrastructure.Persistence;
 
 namespace Helpi.Infrastructure.Repositories;

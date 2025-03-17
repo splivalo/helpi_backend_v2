@@ -1,6 +1,6 @@
 
 using AutoMapper;
-using Helpi.Application.DTOs;
+using Helpi.Application.DTOs.Order;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 
@@ -23,7 +23,7 @@ public class OrderScheduleService
         public async Task<OrderScheduleDto> CreateScheduleAsync(OrderScheduleCreateDto dto)
         {
                 var schedule = _mapper.Map<OrderSchedule>(dto);
-                await _repository.AddAsync(schedule);
+                await _repository.AddNoSaveAsync(schedule);
                 return _mapper.Map<OrderScheduleDto>(schedule);
         }
 }

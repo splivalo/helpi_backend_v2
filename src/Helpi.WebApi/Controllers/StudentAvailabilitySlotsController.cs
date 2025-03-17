@@ -21,6 +21,7 @@ public class StudentAvailabilitySlotsController : ControllerBase
                 return Ok(await _service.GetSlotsByStudentAsync(studentId));
         }
 
+        [HttpGet("student/{studentId}/dayOfWeek/{dayOfWeek}")]
         public async Task<ActionResult<StudentAvailabilitySlotDto>> GetByIdAsync(int studentId, byte dayOfWeek)
         {
                 var slot = await _service.GetByIdAsync(studentId, dayOfWeek);

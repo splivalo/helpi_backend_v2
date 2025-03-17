@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250313181421_intialMigrations")]
+    [Migration("20250317112809_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -413,7 +413,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("SeniorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ServiceId")
+                    b.Property<int?>("ServiceId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("StartDate")
@@ -465,6 +465,21 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderSchedules");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.OrderService", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("OrderId", "ServiceId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("OrderServices");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
@@ -717,14 +732,8 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("BasePrice")
-                        .HasColumnType("numeric");
-
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
-
-                    b.Property<short>("MinDuration")
-                        .HasColumnType("smallint");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1207,15 +1216,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.Service", "Service")
+                    b.HasOne("Helpi.Domain.Entities.Service", null)
                         .WithMany("Orders")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ServiceId");
 
                     b.Navigation("Senior");
-
-                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.OrderSchedule", b =>
@@ -1227,6 +1232,23 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.OrderService", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.Order", null)
+                        .WithMany("OrderServices")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Helpi.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
@@ -1541,6 +1563,8 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.Order", b =>
                 {
+                    b.Navigation("OrderServices");
+
                     b.Navigation("Schedules");
                 });
 

@@ -35,6 +35,7 @@ public static class DependencyInjection
 
 
         // Register all repositories
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
@@ -49,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IStudentServiceRepository, StudentServiceRepository>();
         services.AddScoped<IStudentAvailabilitySlotRepository, StudentAvailabilitySlotRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderServiceRepository, OrderServiceRepository>();
         services.AddScoped<IOrderScheduleRepository, OrderScheduleRepository>();
         services.AddScoped<IJobRequestRepository, JobRequestRepository>();
         services.AddScoped<IScheduleAssignmentRepository, ScheduleAssignmentRepository>();

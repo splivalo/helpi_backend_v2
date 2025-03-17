@@ -251,9 +251,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    BasePrice = table.Column<decimal>(type: "numeric", nullable: false),
-                    MinDuration = table.Column<short>(type: "smallint", nullable: false)
+                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -481,14 +479,14 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
-                    ServiceId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     IsRecurring = table.Column<bool>(type: "boolean", nullable: false),
                     RecurrencePattern = table.Column<int>(type: "integer", nullable: true),
                     StartDate = table.Column<DateTime>(type: "date", nullable: true),
                     EndDate = table.Column<DateTime>(type: "date", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ServiceId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -503,8 +501,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_Orders_Services_ServiceId",
                         column: x => x.ServiceId,
                         principalTable: "Services",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -527,6 +524,30 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_OrderSchedules_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderServices",
+                columns: table => new
+                {
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
+                    ServiceId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderServices", x => new { x.OrderId, x.ServiceId });
+                    table.ForeignKey(
+                        name: "FK_OrderServices_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderServices_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -923,6 +944,11 @@ namespace Helpi.Infrastructure.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrderServices_ServiceId",
+                table: "OrderServices",
+                column: "ServiceId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PaymentMethods_CustomerId",
                 table: "PaymentMethods",
                 column: "CustomerId");
@@ -1051,6 +1077,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "JobRequests");
+
+            migrationBuilder.DropTable(
+                name: "OrderServices");
 
             migrationBuilder.DropTable(
                 name: "Reviews");

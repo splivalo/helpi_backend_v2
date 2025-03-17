@@ -31,8 +31,11 @@ public class OrdersService
                 _mapper = mapper;
         }
 
-        public async Task<List<OrderDto>> GetOrdersBySeniorAsync(int seniorId) =>
-            _mapper.Map<List<OrderDto>>(await _orderRepository.GetBySeniorAsync(seniorId));
+        public async Task<List<OrderDto>> GetOrdersBySeniorAsync(int seniorId)
+        {
+                var orders = await _orderRepository.GetBySeniorAsync(seniorId);
+                return _mapper.Map<List<OrderDto>>(orders);
+        }
 
         public async Task<OrderDto> CreateOrderAsync(OrderCreateDto orderCreateDto)
         {
@@ -41,17 +44,26 @@ public class OrdersService
                         // === 1. Create Order ===
                         var order = _mapper.Map<Order>(orderCreateDto);
 
-                        await _orderRepository.AddNoSaveAsync(order);
+                        order = await _orderRepository.AddNoSaveAsync(order);
 
                         // === 2. Add Services ===
-                        var orderServices = orderCreateDto.Services.Select(orderServiceCreateDto
-                        => _mapper.Map<OrderService>(orderServiceCreateDto));
+                        var orderServices = orderCreateDto.Services.Select(orderServiceCreateDto =>
+                                {
+                                        var orderService = _mapper.Map<OrderService>(orderServiceCreateDto);
+                                        orderService.OrderId = order.Id; // Link to the created order
+                                        return orderService;
+                                }).ToList();
+
 
                         await _orderServiceRepository.AddRangeNoSaveAsync(orderServices);
 
                         // === 3. Add Schedules ===
-                        var orderSchedules = orderCreateDto.Schedules.Select(orderScheduleCreateDto
-                        => _mapper.Map<OrderSchedule>(orderScheduleCreateDto));
+                        var orderSchedules = orderCreateDto.Schedules.Select(orderScheduleCreateDto =>
+                                {
+                                        var orderSchedule = _mapper.Map<OrderSchedule>(orderScheduleCreateDto);
+                                        orderSchedule.OrderId = order.Id; // Link to the created order
+                                        return orderSchedule;
+                                }).ToList();
 
                         await _scheduleRepository.AddRangeNoSaveAsync(orderSchedules);
 

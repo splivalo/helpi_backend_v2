@@ -14,9 +14,6 @@ namespace Helpi.Domain.Entities
         [MaxLength(255)]
         public string Name { get; set; } = null!;
 
-        // [Precision(10, 2)]
-        public decimal BasePrice { get; set; }
-        public short MinDuration { get; set; }
 
         public ServiceCategory Category { get; set; } = null!;
         // public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();

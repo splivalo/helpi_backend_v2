@@ -16,24 +16,33 @@ public class OrderRepository : IOrderRepository
         {
                 return await _context.Orders
                 .Include(o => o.Senior)
-                .Include(o => o.Services)
+                .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public async Task<IEnumerable<Order>> GetBySeniorAsync(int seniorId)
-            => await _context.Orders
+        {
+
+                var orders = await _context.Orders
                 .Where(o => o.SeniorId == seniorId)
+                .Include(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(o => o.Schedules)
                 .ToListAsync();
 
+                return orders;
+        }
         public async Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status)
             => await _context.Orders
                 .Where(o => o.Status == status)
+                .Include(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(o => o.Schedules)
                 .ToListAsync();
 
         public async Task<Order> AddNoSaveAsync(Order order)
         {
                 await _context.Orders.AddAsync(order);
+                await _context.SaveChangesAsync();
 
                 return order;
         }

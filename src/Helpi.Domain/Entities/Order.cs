@@ -7,7 +7,6 @@ namespace Helpi.Domain.Entities
     {
         public int Id { get; set; }
         public int SeniorId { get; set; }
-        public int ServiceId { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public bool IsRecurring { get; set; }
         public RecurrencePattern? RecurrencePattern { get; set; }
@@ -17,10 +16,9 @@ namespace Helpi.Domain.Entities
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public Senior Senior { get; set; } = null!;
-        public Service Service { get; set; } = null!;
 
 
-        public ICollection<OrderService> Services { get; set; } = new List<OrderService>();
+        public ICollection<OrderService> OrderServices { get; set; } = new List<OrderService>();
         public ICollection<OrderSchedule> Schedules { get; set; } = new List<OrderSchedule>();
     }
 }

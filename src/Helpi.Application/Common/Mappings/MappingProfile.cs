@@ -3,6 +3,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Auth;
 using Helpi.Application.DTOs.Order;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 
 namespace Helpi.Application.Common.Mappings;
 
@@ -85,23 +86,32 @@ public class MappingProfile : Profile
         CreateMap<StudentAvailabilitySlotUpdateDto, StudentAvailabilitySlot>();
 
         // Order Mappings
-        CreateMap<Order, OrderDto>()
-            .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Services));
-        CreateMap<OrderCreateDto, Order>();
-        CreateMap<OrderUpdateDto, Order>();
+        CreateMap<OrderCreateDto, Order>()
+              .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => OrderStatus.Pending))
+              .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+              .ForMember(dest => dest.OrderServices, opt => opt.Ignore())
+              .ForMember(dest => dest.Schedules, opt => opt.Ignore());
 
-        CreateMap<OrderServiceCreateDto, Domain.Entities.OrderService>()
-         .ForMember(dest => dest.OrderId, opt => opt.Ignore());
+        CreateMap<Order, OrderDto>()
+             .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.OrderServices.Select(os => os.Service)))
+            .ForMember(dest => dest.Schedules, opt => opt.MapFrom(src => src.Schedules));
+
+
+
+        // OrderService Mappings
+        CreateMap<OrderServiceCreateDto, OrderService>()
+            .ForMember(dest => dest.OrderId, opt => opt.Ignore());
 
         CreateMap<OrderService, OrderServiceDto>()
             .ForMember(dest => dest.Service, opt => opt.MapFrom(src => src.Service));
-
 
 
         // OrderSchedule Mappings
         CreateMap<OrderSchedule, OrderScheduleDto>();
         CreateMap<OrderScheduleCreateDto, OrderSchedule>();
         CreateMap<OrderScheduleUpdateDto, OrderSchedule>();
+
+
 
         // JobRequest Mappings
         CreateMap<JobRequest, JobRequestDto>();

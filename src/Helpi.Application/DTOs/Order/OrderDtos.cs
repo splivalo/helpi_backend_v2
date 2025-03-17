@@ -11,7 +11,7 @@ public class OrderDto
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
-    public ICollection<OrderServiceDto> Services { get; set; } = new List<OrderServiceDto>();
+    public ICollection<ServiceDto> Services { get; set; } = new List<ServiceDto>();
     public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }
 
@@ -19,9 +19,6 @@ public class OrderCreateDto
 {
     [Required]
     public int SeniorId { get; set; }
-
-    [Required]
-    public int ServiceId { get; set; }
 
     public bool IsRecurring { get; set; }
     public RecurrencePattern? RecurrencePattern { get; set; }

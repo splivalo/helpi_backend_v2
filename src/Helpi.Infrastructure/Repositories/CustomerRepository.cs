@@ -58,7 +58,10 @@ public class CustomerRepository : ICustomerRepository
                 return await _context.Customers
                         .IgnoreAutoIncludes()
                         .Include(c => c.Contact)
+                        .Include(c => c.Seniors)
+                        .ThenInclude(s => s.Contact)
                         .ToListAsync();
         }
 
 }
+
