@@ -1,6 +1,7 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Auth;
+using Helpi.Application.DTOs.JobRequest;
 using Helpi.Application.DTOs.Order;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -115,8 +116,14 @@ public class MappingProfile : Profile
 
         // JobRequest Mappings
         CreateMap<JobRequest, JobRequestDto>();
+
         CreateMap<JobRequestCreateDto, JobRequest>();
         CreateMap<JobRequestUpdateDto, JobRequest>();
+
+        CreateMap<RespondToJobRequestDto, JobRequest>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.JobRequestId))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src =>
+                src.isAccepted ? JobRequestStatus.Accepted : JobRequestStatus.Declined));
 
         // ScheduleAssignment Mappings
         CreateMap<ScheduleAssignment, ScheduleAssignmentDto>();

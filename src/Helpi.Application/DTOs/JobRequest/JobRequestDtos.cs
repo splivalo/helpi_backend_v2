@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Helpi.Domain.Enums;
 
-namespace Helpi.Application.DTOs;
+namespace Helpi.Application.DTOs.JobRequest;
 
 
 public class JobRequestDto
@@ -27,5 +27,31 @@ public class JobRequestCreateDto
 
 public class JobRequestUpdateDto
 {
+
+
+    [Required]
+    public int JobRequestId { get; set; }
+
+    [Required]
+    public int StudentId { get; set; }
+
     public JobRequestStatus? Status { get; set; }
+
+
+    public string? RejectionReason { get; set; }
+}
+
+public class RespondToJobRequestDto
+{
+
+
+    [Required]
+    public int JobRequestId { get; set; }
+
+    [Required]
+    public int StudentId { get; set; }
+
+    public bool isAccepted { get; set; }
+
+    public string? RejectionReason { get; set; }
 }

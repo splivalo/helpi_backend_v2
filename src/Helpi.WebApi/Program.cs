@@ -1,6 +1,4 @@
 
-
-
 using Helpi.Application;
 using Helpi.Infrastructure.Seeds;
 using Helpi.WebApi.Middleware;
@@ -24,7 +22,7 @@ builder.Services.AddApplication();
 
 builder.Services.AddIdentityServices(builder.Configuration);
 
-
+builder.Services.AddHangfireServices(builder.Configuration);
 
 
 var app = builder.Build();
@@ -53,7 +51,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+app.UseHangfireDashboard();
+
+
 app.UseRouting();
+
+
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

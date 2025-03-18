@@ -1,19 +1,55 @@
 
-using Helpi.Application.DTOs;
+using Helpi.Application.DTOs.JobRequest;
+using Helpi.Application.Exceptions;
 using Helpi.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
 
 
+[Authorize]
 [ApiController]
 [Route("api/job-requests")]
 public class JobRequestsController : ControllerBase
 {
-        private readonly JobRequestService _service;
+        private readonly JobRequestService _jobRequestService;
 
-        public JobRequestsController(JobRequestService service) => _service = service;
+        public JobRequestsController(JobRequestService jobRequestService) => _jobRequestService = jobRequestService;
 
-        [HttpGet("pending")] public async Task<ActionResult<List<JobRequestDto>>> GetPending() => Ok(await _service.GetPendingRequestsAsync());
-        [HttpPost] public async Task<ActionResult<JobRequestDto>> Create(JobRequestCreateDto dto) => CreatedAtAction(nameof(GetPending), await _service.CreateJobRequestAsync(dto));
+
+        [HttpPost]
+        public async Task<ActionResult<JobRequestDto>> Create(JobRequestCreateDto dto)
+        {
+
+                var jobRequest = await _jobRequestService.CreateJobRequestAsync(dto);
+                return CreatedAtAction(nameof(GetStudentPendingRequests), new { id = dto.StudentId }, jobRequest);
+        }
+
+        [HttpGet("pending/student/{studentId}")]
+        public async Task<ActionResult<JobRequestDto>> GetStudentPendingRequests(int studentId)
+        {
+                var requests = await _jobRequestService.GetStudentPendingRequests(studentId);
+                return Ok(requests);
+        }
+
+
+        [HttpPut("respond")]
+        public async Task<ActionResult<JobRequestDto>> RespondToJobRequest(
+            [FromBody] RespondToJobRequestDto respondToJobRequestDto)
+        {
+                try
+                {
+                        var jobRequestDto = await _jobRequestService.RespondToJobRequestAsync(respondToJobRequestDto);
+
+                        return Ok(jobRequestDto);
+
+                }
+                catch (NotFoundException ex)
+                {
+                        return NotFound(new { Error = ex.Message });
+                }
+        }
+
+
 }

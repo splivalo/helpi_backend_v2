@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250318132936_intialMigrations")]
+    [Migration("20250318195352_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -371,6 +371,12 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<byte>("PriorityLevel")
                         .HasColumnType("smallint");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");

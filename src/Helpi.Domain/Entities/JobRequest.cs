@@ -9,6 +9,8 @@ namespace Helpi.Domain.Entities
         public int OrderScheduleId { get; set; }
         public int StudentId { get; set; }
         public JobRequestStatus Status { get; set; } = JobRequestStatus.Pending;
+        public DateTime? RespondedAt { get; set; }
+        public string? RejectionReason { get; set; }
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
         public DateTime ExpiresAt { get; set; }
         public bool IsEmergencySub { get; set; } = false;

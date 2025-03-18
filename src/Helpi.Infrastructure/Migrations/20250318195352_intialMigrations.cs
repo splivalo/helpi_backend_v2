@@ -561,6 +561,8 @@ namespace Helpi.Infrastructure.Migrations
                     OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    RespondedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectionReason = table.Column<string>(type: "text", nullable: true),
                     SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsEmergencySub = table.Column<bool>(type: "boolean", nullable: false),

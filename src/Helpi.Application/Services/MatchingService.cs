@@ -1,8 +1,9 @@
 
 
 
-using Hangfire;
+
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
@@ -17,12 +18,16 @@ public class MatchingService : IMatchingService
     private readonly INotificationService _notificationService;
     private readonly IOrderRepository _orderRepository;
 
+
+    private readonly IMatchingBackgroundJobs _matchingBackgroundJobs;
+
     public MatchingService(
         StudentAvailabilitySlotService studentAvailabilityService,
         INotificationService notificationService,
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
-        IJobRequestRepository jobRequestRepository
+        IJobRequestRepository jobRequestRepository,
+        IMatchingBackgroundJobs matchingBackgroundJobs
         )
     {
 
@@ -31,6 +36,7 @@ public class MatchingService : IMatchingService
         _orderRepository = orderRepository;
         _studentRepository = studentRepository;
         _jobRequestRepository = jobRequestRepository;
+        _matchingBackgroundJobs = matchingBackgroundJobs;
     }
 
     public async Task InitiateMatchingProcessAsync(int orderId)
@@ -51,7 +57,7 @@ public class MatchingService : IMatchingService
     private void ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
     {
         // Implementation depends on your scheduler 
-        BackgroundJob.Schedule(() => FindAndNotifyStudentsAsync(orderId), executionTime);
+        _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(orderId, executionTime);
     }
 
     public async Task FindAndNotifyStudentsAsync(int orderId)

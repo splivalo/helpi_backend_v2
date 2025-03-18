@@ -1,8 +1,9 @@
 
 using System.Text;
-using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Domain.Entities;
+using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
 using Helpi.Infrastructure.Seeds;
@@ -33,6 +34,7 @@ public static class DependencyInjection
 
 
 
+        services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
 
         // Register all repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

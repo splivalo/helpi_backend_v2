@@ -369,6 +369,12 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<byte>("PriorityLevel")
                         .HasColumnType("smallint");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");
 

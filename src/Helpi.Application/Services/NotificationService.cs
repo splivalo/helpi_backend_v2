@@ -4,8 +4,10 @@ using Helpi.Application.Interfaces.Services;
 namespace Helpi.Application.Services;
 public class NotificationService : INotificationService
 {
-    public Task<bool> SendJobRequestNotification(int userId, int orderScheduleId, DateTime expiresAt)
+    public async Task<bool> SendJobRequestNotification(int userId, int orderScheduleId, DateTime expiresAt)
     {
-        throw new NotImplementedException();
+
+        // throw new NotImplementedException();
+        return await Task.FromResult(true);
     }
 }

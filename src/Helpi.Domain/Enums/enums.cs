@@ -58,7 +58,7 @@ namespace Helpi.Domain.Enums
         Pending,
         Accepted,
         Declined,
-        Expired
+        AssignedToOther
     }
 
     public enum AssignmentStatus
