@@ -12,11 +12,13 @@ public class JobRequestRepository : IJobRequestRepository
 
         public JobRequestRepository(AppDbContext context) => _context = context;
 
-        public async Task<JobRequest> GetByIdAsync(int id)
-            => await _context.JobRequests
+        public async Task<JobRequest?> GetByIdAsync(int id)
+        {
+                return await _context.JobRequests
                 .Include(jr => jr.OrderSchedule)
                 .Include(jr => jr.Student)
                 .FirstOrDefaultAsync(jr => jr.Id == id);
+        }
 
         public async Task<IEnumerable<JobRequest>> GetPendingRequestsAsync()
             => await _context.JobRequests
@@ -46,4 +48,15 @@ public class JobRequestRepository : IJobRequestRepository
                 _context.JobRequests.Remove(request);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task<List<int>> NotifiedStudentIds(int orderScheduleId)
+        {
+                var notifiedStudentIds = await _context.JobRequests
+                        .Where(jr => jr.OrderScheduleId == orderScheduleId)
+                        .Select(jr => jr.StudentId)
+                        .ToListAsync();
+
+                return notifiedStudentIds;
+        }
+
 }

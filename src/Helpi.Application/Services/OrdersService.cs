@@ -2,6 +2,7 @@
 using AutoMapper;
 using Helpi.Application.DTOs.Order;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Exceptions;
 
@@ -17,18 +18,24 @@ public class OrdersService
         private readonly IOrderServiceRepository _orderServiceRepository;
         private readonly IMapper _mapper;
 
+        private readonly IMatchingService _matchingService;
+
         private readonly IUnitOfWork _unitOfWork;
 
         public OrdersService(IOrderRepository orderRepository,
         IOrderScheduleRepository scheduleRepository,
         IOrderServiceRepository orderServiceRepository,
-        IUnitOfWork unitOfWork, IMapper mapper)
+        IUnitOfWork unitOfWork, IMapper mapper,
+        IMatchingService matchingService
+
+        )
         {
                 _orderRepository = orderRepository;
                 _scheduleRepository = scheduleRepository;
                 _orderServiceRepository = orderServiceRepository;
                 _unitOfWork = unitOfWork;
                 _mapper = mapper;
+                _matchingService = matchingService;
         }
 
         public async Task<List<OrderDto>> GetOrdersBySeniorAsync(int seniorId)
@@ -71,7 +78,7 @@ public class OrdersService
                         await _unitOfWork.SaveChangesAsync();
 
                         // === 5. Matich service ===
-                        /// TODO:
+                        await _matchingService.InitiateMatchingProcessAsync(order.Id);
 
                         return _mapper.Map<OrderDto>(order);
                 }

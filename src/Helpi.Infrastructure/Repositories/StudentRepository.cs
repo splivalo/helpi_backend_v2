@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Collections.Generic;
 using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -68,4 +69,18 @@ public class StudentRepository : IStudentRepository
                 return await _context.Students.Include(s => s.Contact).ToListAsync();
         }
 
+        public async Task<List<Student>> UnnotifiedStudentsOfferingServices(
+                List<int> serviceIds,
+                List<int> notifiedStudentIds)
+        {
+                var students = await _context.Students
+                        .Where(s => !notifiedStudentIds.Contains(s.UserId))
+                        .Where(s => s.StudentServices
+                                .Select(ss => ss.ServiceId)
+                                .Distinct()
+                                .Count(serviceId => serviceIds.Contains(serviceId)) == serviceIds.Count)
+                        .ToListAsync();
+
+                return students;
+        }
 }

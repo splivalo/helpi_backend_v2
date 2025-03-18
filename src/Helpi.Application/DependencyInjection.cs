@@ -1,5 +1,6 @@
 
 using Helpi.Application.Common.Mappings;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,8 @@ public static class DependencyInjection
 
         // Register all services
         services.AddScoped<AuthService>();
+        services.AddScoped<IMatchingService, MatchingService>();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<UserService>();
         services.AddScoped<ContactInfoService>();
         services.AddScoped<StudentService>();

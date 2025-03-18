@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250317112809_intialMigrations")]
+    [Migration("20250318132936_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
