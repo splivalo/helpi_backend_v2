@@ -20,7 +20,9 @@ public class ServiceCategoryRepository : IServiceCategoryRepository
 
         public async Task<IEnumerable<ServiceCategory>> GetAllAsync()
         {
-                return await _context.ServiceCategories.ToListAsync();
+                return await _context.ServiceCategories
+                .Include(sc => sc.Services)
+                .ToListAsync();
         }
 
         public async Task<ServiceCategory> AddAsync(ServiceCategory category)

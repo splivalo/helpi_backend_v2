@@ -12,9 +12,9 @@ public class ContactInfoRepository : IContactInfoRepository
         public ContactInfoRepository(AppDbContext context) => _context = context;
 
         public async Task<ContactInfo> GetByIdAsync(int id) => await _context.ContactInfos.FindAsync(id);
-        public async Task<IEnumerable<ContactInfo>> SearchByNameAsync(string lastName, string firstName)
+        public async Task<IEnumerable<ContactInfo>> SearchByFullNameAsync(string fullName)
             => await _context.ContactInfos
-                .Where(c => c.LastName.Contains(lastName) && c.FirstName.Contains(firstName))
+                .Where(c => c.FullName.Contains(fullName))
                 .ToListAsync();
         public async Task<ContactInfo> AddAsync(ContactInfo contactInfo)
         {

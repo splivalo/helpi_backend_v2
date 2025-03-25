@@ -1,0 +1,21 @@
+
+using Hangfire;
+using Helpi.Application.Interfaces.Services;
+
+namespace Helpi.Infrastructure.BackgroundJobs.Jobs;
+
+public class JobInstanceJobs : IJobInstanceJobs
+{
+
+
+    public void GenerateFutureJobInstances()
+    {
+        RecurringJob.AddOrUpdate<RecurringJobService>(
+     "generate-job-instances",
+     s => s.GenerateFutureJobInstances(),
+     Cron.Daily); // Runs daily to check for new instances
+
+    }
+
+
+}

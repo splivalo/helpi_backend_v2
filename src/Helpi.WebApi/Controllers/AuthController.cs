@@ -71,6 +71,7 @@ public class AuthController : ControllerBase
         {
             token = result.Token,
             userId = result.UserId,
+            userType = result.UserType,
             message = result.Message
         });
     }

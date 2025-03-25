@@ -30,6 +30,19 @@ public class StudentServicesController : ControllerBase
 
         }
 
+        [HttpPost("bulk")]
+        public async Task<ActionResult<List<StudentServiceDto>>> AddRange(List<StudentServiceCreateDto> dtos)
+        {
+                if (dtos == null || dtos.Count == 0)
+                {
+                        return BadRequest("No services provided.");
+                }
+
+                var studentServices = await _service.AddServicesToStudentAsync(dtos);
+                return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, studentServices);
+        }
+
+
         [HttpDelete("student/{studentId}/service/{serviceId}")]
         public async Task<IActionResult> Remove(int studentId, int serviceId)
         {

@@ -27,10 +27,10 @@ public class MappingProfile : Profile
         CreateMap<ContactInfoUpdateDto, ContactInfo>();
 
         // 
-        CreateMap<ContactInfo, StudentRegisterDto>();
-        CreateMap<StudentRegisterDto, ContactInfo>();
+        CreateMap<ContactInfoDto, ContactInfo>();
 
-
+        CreateMap<StudentRegisterDto, Student>()
+              .ForMember(dest => dest.Contact, opt => opt.MapFrom(src => src.ContactInfo));
 
         // Student Mappings
         CreateMap<Student, StudentDto>()
@@ -67,7 +67,8 @@ public class MappingProfile : Profile
         CreateMap<PaymentMethodUpdateDto, PaymentMethod>();
 
         // ServiceCategory Mappings
-        CreateMap<ServiceCategory, ServiceCategoryDto>();
+        CreateMap<ServiceCategory, ServiceCategoryDto>()
+           .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Services));
         CreateMap<ServiceCategoryCreateDto, ServiceCategory>();
         CreateMap<ServiceCategoryUpdateDto, ServiceCategory>();
 

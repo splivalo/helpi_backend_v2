@@ -22,11 +22,16 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 .Where(sa => sa.StudentId == studentId)
                 .ToListAsync();
 
-        public async Task<IEnumerable<ScheduleAssignment>> GetActiveAssignmentsAsync()
-            => await _context.ScheduleAssignments
-                .Where(sa => sa.Status == AssignmentStatus.Accepted ||
-                    sa.Status == AssignmentStatus.Pending)
-                .ToListAsync();
+        public async Task<List<ScheduleAssignment>> GetActiveAssignmentsAsync()
+        {
+                return await _context.ScheduleAssignments
+               .Include(sa => sa.OrderSchedule.Order)
+               .Include(sa => sa.JobInstances)
+               .Where(sa => sa.IsTemporary == false &&
+                            sa.OrderSchedule.Order.IsRecurring &&
+                            sa.OrderSchedule.Order.Status == OrderStatus.Acitve)
+               .ToListAsync();
+        }
 
         public async Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment)
         {

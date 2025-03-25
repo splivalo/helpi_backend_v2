@@ -31,6 +31,14 @@ public class StudentServiceRepository : IStudentServiceRepository
                 return studentService;
         }
 
+        public async Task<List<StudentService>> AddRangeAsync(List<StudentService> studentServices)
+        {
+                await _context.StudentServices.AddRangeAsync(studentServices);
+                await _context.SaveChangesAsync();
+                return studentServices;
+        }
+
+
         public async Task UpdateAsync(StudentService studentService)
         {
                 _context.StudentServices.Update(studentService);

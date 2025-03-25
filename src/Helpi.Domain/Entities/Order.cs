@@ -10,8 +10,8 @@ namespace Helpi.Domain.Entities
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public bool IsRecurring { get; set; }
         public RecurrencePattern? RecurrencePattern { get; set; }
-        public DateOnly? StartDate { get; set; }
-        public DateOnly? EndDate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

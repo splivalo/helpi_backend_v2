@@ -219,8 +219,8 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FirstName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    LastName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -482,8 +482,8 @@ namespace Helpi.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     IsRecurring = table.Column<bool>(type: "boolean", nullable: false),
                     RecurrencePattern = table.Column<int>(type: "integer", nullable: true),
-                    StartDate = table.Column<DateTime>(type: "date", nullable: true),
-                    EndDate = table.Column<DateTime>(type: "date", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "date", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "date", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ServiceId = table.Column<int>(type: "integer", nullable: true)

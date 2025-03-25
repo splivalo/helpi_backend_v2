@@ -1,5 +1,6 @@
 
 using Helpi.Application;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Infrastructure.Seeds;
 using Helpi.WebApi.Middleware;
 using Infrastructure;
@@ -34,6 +35,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHangfireDashboard();
+
 /// TODO: seeders
 using (var scope = app.Services.CreateScope())
 {
@@ -50,8 +53,14 @@ using (var scope = app.Services.CreateScope())
 
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
+    jobInstanceJobs.GenerateFutureJobInstances();
+}
 
-app.UseHangfireDashboard();
+
+
 
 
 app.UseRouting();

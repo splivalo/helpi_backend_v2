@@ -40,7 +40,7 @@ namespace Helpi.Domain.Enums
     {
         Pending,
         Accepted,
-        InProgress,
+        Acitve,
         Completed,
         Cancelled
     }

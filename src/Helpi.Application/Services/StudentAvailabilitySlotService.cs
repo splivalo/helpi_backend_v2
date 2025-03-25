@@ -38,10 +38,19 @@ public class StudentAvailabilitySlotService
         public async Task<StudentAvailabilitySlotDto> CreateSlotAsync(StudentAvailabilitySlotCreateDto dto)
         {
                 var slot = _mapper.Map<StudentAvailabilitySlot>(dto);
-                Console.WriteLine(slot);
                 await _repository.AddAsync(slot);
                 return _mapper.Map<StudentAvailabilitySlotDto>(slot);
         }
+
+        public async Task<List<StudentAvailabilitySlotDto>> CreateSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
+        {
+
+                var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
+                await _repository.AddRangeAsync(slots);
+                return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
+
+        }
+
 
         public async Task<StudentAvailabilitySlotDto> UpdateSlotAsync(int studentId, byte dayOfWeek, StudentAvailabilitySlotUpdateDto dto)
         {

@@ -8,6 +8,8 @@ public interface IStudentServiceRepository
     Task<IEnumerable<StudentService>> GetByStudentAsync(int studentId);
     Task<IEnumerable<StudentService>> GetByServiceAsync(int serviceId);
     Task<StudentService> AddAsync(StudentService studentService);
+    Task<List<StudentService>> AddRangeAsync(List<StudentService> studentServices);
+
     Task UpdateAsync(StudentService studentService);
     Task DeleteAsync(int studentId, int serviceId);
 }

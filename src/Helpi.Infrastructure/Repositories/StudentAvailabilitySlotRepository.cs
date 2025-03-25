@@ -46,6 +46,13 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
                 return slot;
         }
 
+        public async Task<List<StudentAvailabilitySlot>> AddRangeAsync(List<StudentAvailabilitySlot> slots)
+        {
+                await _context.StudentAvailabilitySlots.AddRangeAsync(slots);
+                await _context.SaveChangesAsync();
+                return slots;
+        }
+
         public async Task UpdateAsync(StudentAvailabilitySlot slot)
         {
                 _context.StudentAvailabilitySlots.Update(slot);
@@ -57,4 +64,6 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
                 _context.StudentAvailabilitySlots.Remove(slot);
                 await _context.SaveChangesAsync();
         }
+
+
 }

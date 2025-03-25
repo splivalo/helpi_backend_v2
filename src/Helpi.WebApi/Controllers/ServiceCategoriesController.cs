@@ -15,6 +15,8 @@ public class ServiceCategoriesController : ControllerBase
 
         public ServiceCategoriesController(ServiceCategoryService service) => _service = service;
 
+
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<ServiceCategoryDto>>> GetAll()
         {

@@ -141,6 +141,9 @@ public class JobRequestRepository : IJobRequestRepository
                 jobRequest.Status = JobRequestStatus.Accepted;
                 jobRequest.RespondedAt = DateTime.UtcNow;
 
+
+
+
                 await _unitOfWork.SaveChangesAsync();
 
 
@@ -150,6 +153,11 @@ public class JobRequestRepository : IJobRequestRepository
 
                 return jobRequest;
         }
+
+
+
+
+
 
         private async Task<bool> IsScheduleSlotAvailable(int orderScheduleId)
         {

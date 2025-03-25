@@ -47,5 +47,13 @@ public class JobInstanceRepository : IJobInstanceRepository
                 _context.JobInstances.Remove(instance);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task AddRangeAsync(List<JobInstance> jobInstances)
+        {
+                await _context.JobInstances.AddRangeAsync(jobInstances);
+                await _context.SaveChangesAsync();
+        }
+
+
 }
 

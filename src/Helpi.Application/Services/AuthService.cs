@@ -50,25 +50,25 @@ namespace Helpi.Application.Services
 
 
 
-        public async Task<(bool Success, string Token, int UserId, string Message)> Login(LoginDto dto)
+        public async Task<(bool Success, string Token, int UserId, UserType UserType, string Message)> Login(LoginDto dto)
         {
             // Find user by email
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
-                return (false, string.Empty, -1, "Invalid email or password");
+                return (false, string.Empty, -1, UserType.Student, "Invalid email or password");
             }
 
             // Check password
             var result = await _userManager.CheckPasswordAsync(user, dto.Password);
             if (!result)
             {
-                return (false, string.Empty, -1, "Invalid email or password");
+                return (false, string.Empty, -1, UserType.Student, "Invalid email or password");
             }
 
             // Generate token
             var token = await GenerateJwtToken(user);
-            return (true, token, user.Id, "Login successful");
+            return (true, token, user.Id, user.UserType, "Login successful");
         }
 
 
@@ -129,8 +129,7 @@ namespace Helpi.Application.Services
                 var customerContactInfo = new ContactInfo
                 {
 
-                    FirstName = customerContactInfoDto.FirstName,
-                    LastName = customerContactInfoDto.LastName,
+                    FullName = customerContactInfoDto.FullName,
                     Phone = customerContactInfoDto.Phone,
                     Gender = customerContactInfoDto.Gender,
                     GooglePlaceId = customerContactInfoDto.GooglePlaceId,
@@ -148,8 +147,7 @@ namespace Helpi.Application.Services
                 var seniorContactInfo = new ContactInfo
                 {
 
-                    FirstName = seniorContactInfoDto.FirstName,
-                    LastName = seniorContactInfoDto.LastName,
+                    FullName = seniorContactInfoDto.FullName,
                     Phone = seniorContactInfoDto.Phone,
                     Gender = seniorContactInfoDto.Gender,
                     GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
@@ -195,7 +193,7 @@ namespace Helpi.Application.Services
                 var user = await _CreateUser(registerDto.Email, registerDto.UserType, registerDto.Password);
 
                 // Create contact info for the user
-                var contactInfo = _mapper.Map<ContactInfo>(registerDto);
+                var contactInfo = _mapper.Map<ContactInfo>(registerDto.ContactInfo);
 
 
 
@@ -210,7 +208,7 @@ namespace Helpi.Application.Services
                     StudentNumber = registerDto.StudentNumber!,
                     FacultyId = registerDto.FacultyId.Value,
                 };
-                Console.WriteLine("---->?3");
+
                 await _authRepository.RegisterStudent(student, contactInfo);
 
                 return (true, "Student registered successfully");

@@ -14,6 +14,8 @@ public static class DependencyInjection
 
         // Register all services
         services.AddScoped<AuthService>();
+        services.AddScoped<RecurringJobService>();
+        services.AddScoped<IRecurrenceDateGenerator, RecurrenceDateGenerator>();
         services.AddScoped<IMatchingService, MatchingService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<UserService>();

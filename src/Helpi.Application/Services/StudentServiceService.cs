@@ -24,6 +24,16 @@ public class StudentServiceService
                 return _mapper.Map<StudentServiceDto>(studentService);
         }
 
+        public async Task<List<StudentServiceDto>> AddServicesToStudentAsync(List<StudentServiceCreateDto> dtos)
+        {
+                var studentServices = dtos.Select(_mapper.Map<StudentService>).ToList();
+
+                await _repository.AddRangeAsync(studentServices);
+
+                return studentServices.Select(_mapper.Map<StudentServiceDto>).ToList();
+        }
+
+
         public async Task<List<StudentServiceDto>> GetByStudentAsync(int studentId)
         {
                 var studentServices = await _repository.GetByStudentAsync(studentId);

@@ -47,6 +47,18 @@ public class StudentAvailabilitySlotsController : ControllerBase
                 return CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, slot);
         }
 
+        [HttpPost("bulk")]
+        public async Task<ActionResult<List<StudentAvailabilitySlotDto>>> CreateRange(List<StudentAvailabilitySlotCreateDto> dtos)
+        {
+                if (dtos == null || dtos.Count == 0)
+                {
+                        return BadRequest("No slots provided.");
+                }
+
+                var slots = await _service.CreateSlotsAsync(dtos);
+                return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, slots);
+        }
+
         [HttpPut("{studentId}/{dayOfWeek}")]
         public async Task<ActionResult<StudentAvailabilitySlotDto>> Update(int studentId, byte dayOfWeek, [FromBody] StudentAvailabilitySlotUpdateDto dto)
         {

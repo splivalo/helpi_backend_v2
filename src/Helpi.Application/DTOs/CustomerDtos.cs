@@ -7,7 +7,7 @@ namespace Helpi.Application.DTOs;
 // CustomerDtos.cs
 public class CustomerDto
 {
-    public int Id { get; set; }
+    public int UserId { get; set; }
     public NotificationMethod PreferredNotificationMethod { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 
