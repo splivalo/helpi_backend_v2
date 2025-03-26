@@ -16,9 +16,11 @@ public class CustomerRepository : ICustomerRepository
         public async Task<Customer?> GetByIdAsync(int id)
         {
                 var customer = await _context.Customers
+                  .AsNoTracking()
                   .Include(c => c.Contact)
                   .Include(c => c.Seniors)
                   .ThenInclude(s => s.Contact)
+                  .IgnoreAutoIncludes()
                   .SingleOrDefaultAsync(c => c.UserId == id);
 
 

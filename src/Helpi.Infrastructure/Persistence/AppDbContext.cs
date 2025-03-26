@@ -94,6 +94,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
            v => DateTime.SpecifyKind(v, DateTimeKind.Utc) // Convert to UTC when reading
        );
 
+
+
         // Apply all entity configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 

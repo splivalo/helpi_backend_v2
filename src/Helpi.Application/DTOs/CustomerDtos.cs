@@ -11,7 +11,7 @@ public class CustomerDto
     public NotificationMethod PreferredNotificationMethod { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 
-    public ICollection<Senior> Seniors { get; set; } = new List<Senior>();
+    public ICollection<SeniorDto> Seniors { get; set; } = new List<SeniorDto>();
 }
 
 public class CustomerCreateDto
