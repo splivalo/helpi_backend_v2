@@ -37,6 +37,7 @@ namespace Helpi.Domain.Entities
 
         public City City { get; set; } = null!;
 
+        public Admin Admin { get; set; } = null!;
         public Student Student { get; set; } = null!;
         public Customer Customer { get; set; } = null!;
         public Senior Senior { get; set; } = null!;

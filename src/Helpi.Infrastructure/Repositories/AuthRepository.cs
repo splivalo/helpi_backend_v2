@@ -3,8 +3,6 @@ namespace Helpi.Infrastructure.Repositories;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
 
 public class AuthRepository : IAuthRepository
 {
@@ -62,21 +60,7 @@ public class AuthRepository : IAuthRepository
             // Commit the transaction
             await transaction.CommitAsync();
 
-            // 1) customer is the senior
-            // customer.Contact = customerContactInfo;
 
-            // senior.Contact = seniorContactInfo;
-
-            // customer.Seniors.Add(senior);
-
-
-            // _context.Set<Customer>().Add(customer);
-
-
-
-            // // Save all changes
-            // await _context.SaveChangesAsync();
-            // await transaction.CommitAsync();
         }
         catch (Exception)
         {
@@ -84,4 +68,29 @@ public class AuthRepository : IAuthRepository
             throw;
         }
     }
+
+    public async Task RegisterAdmin(Admin admin, ContactInfo contactInfo)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            // Set the relationship
+            admin.Contact = contactInfo;
+
+
+            _context.Set<Admin>().Add(admin);
+
+            // Save all changes
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
 }

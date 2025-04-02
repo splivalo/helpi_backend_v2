@@ -17,6 +17,22 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    [HttpPost("register/admin")]
+    public async Task<IActionResult> RegisterAdmin(AdminRegisterDto dto)
+    {
+        var result = await _authService.RegisterAdmin(dto);
+
+
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(new
+        {
+            message = result.Message
+        });
+    }
     [HttpPost("register/student")]
     public async Task<IActionResult> RegisterStudent(StudentRegisterDto dto)
     {
@@ -36,6 +52,9 @@ public class AuthController : ControllerBase
             message = result.Message
         });
     }
+
+
+
     [HttpPost("register/customer")]
     public async Task<IActionResult> RegisterCustomer(CustomerRegisterDto dto)
     {

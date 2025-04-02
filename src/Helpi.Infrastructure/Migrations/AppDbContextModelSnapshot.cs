@@ -25,6 +25,25 @@ namespace Helpi.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+
+                    b.Property<int>("ContactId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("ContactId")
+                        .IsUnique();
+
+                    b.ToTable("Admin");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
                 {
                     b.Property<int>("Id")
@@ -1115,6 +1134,17 @@ namespace Helpi.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.ContactInfo", "Contact")
+                        .WithOne("Admin")
+                        .HasForeignKey("Helpi.Domain.Entities.Admin", "ContactId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Contact");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.ContactInfo", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.City", "City")
@@ -1528,6 +1558,9 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.ContactInfo", b =>
                 {
+                    b.Navigation("Admin")
+                        .IsRequired();
+
                     b.Navigation("Customer")
                         .IsRequired();
 

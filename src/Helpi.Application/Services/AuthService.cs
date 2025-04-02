@@ -211,8 +211,6 @@ namespace Helpi.Application.Services
         }
         public async Task<(bool Success, string Message)> RegisterStudent(StudentRegisterDto registerDto)
         {
-
-
             try
             {
 
@@ -279,5 +277,31 @@ namespace Helpi.Application.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<(bool Success, string Message)> RegisterAdmin(AdminRegisterDto dto)
+        {
+            try
+            {
+
+                var user = await _CreateUser(dto.Email, dto.UserType, dto.Password);
+
+                // Create contact info for the user
+                var contactInfo = _mapper.Map<ContactInfo>(dto.ContactInfo);
+
+                var admin = new Admin
+                {
+                    UserId = user.Id,
+                };
+
+                await _authRepository.RegisterAdmin(admin, contactInfo);
+
+                return (true, "Admin registered successfully");
+
+            }
+            catch (Exception ex)
+            {
+
+                return (false, $"Registration failed: {ex.Message}");
+            }
+        }
     }
 }
