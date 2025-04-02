@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Helpi.Application.DTOs.Order;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs.JobRequest;
@@ -7,10 +8,15 @@ namespace Helpi.Application.DTOs.JobRequest;
 public class JobRequestDto
 {
     public int Id { get; set; }
+
+    public int OrderScheduleId { get; set; }
+    public int StudentId { get; set; }
     public JobRequestStatus Status { get; set; }
     public DateTime SentAt { get; set; }
     public DateTime ExpiresAt { get; set; }
     public bool IsEmergencySub { get; set; }
+
+    public OrderScheduleDto OrderSchedule { get; set; } = null!;
 }
 
 public class JobRequestCreateDto

@@ -32,6 +32,12 @@ public class JobRequestService
 
         }
 
+        public async Task<List<JobRequestDto>> GetStudentRequests(int studentId)
+        {
+                var jobRequestsDtos = await _jobRequestRepository.GetStudentRequests(studentId);
+                return _mapper.Map<List<JobRequestDto>>(jobRequestsDtos);
+        }
+
         public async Task<JobRequestDto> CreateJobRequestAsync(JobRequestCreateDto dto)
         {
                 var request = _mapper.Map<JobRequest>(dto);
@@ -93,5 +99,6 @@ public class JobRequestService
                 await _jobInstanceRepository.AddRangeAsync(jobInstances);
 
         }
+
 
 }

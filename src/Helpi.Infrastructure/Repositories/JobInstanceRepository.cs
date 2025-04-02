@@ -22,6 +22,15 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Where(ji => ji.ScheduleAssignmentId == assignmentId)
                 .ToListAsync();
 
+
+        public async Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId)
+        {
+                return await _context.JobInstances
+                     .Where(j => j.Assignment.StudentId == studentId)
+                     .AsNoTracking()
+                     .ToListAsync();
+        }
+
         public async Task<IEnumerable<JobInstance>> GetUpcomingJobsAsync(DateTime cutoff)
             => await _context.JobInstances
                 .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(DateTime.UtcNow) &&

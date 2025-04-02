@@ -27,9 +27,16 @@ public class JobRequestsController : ControllerBase
         }
 
         [HttpGet("pending/student/{studentId}")]
-        public async Task<ActionResult<JobRequestDto>> GetStudentPendingRequests(int studentId)
+        public async Task<ActionResult<List<JobRequestDto>>> GetStudentPendingRequests(int studentId)
         {
                 var requests = await _jobRequestService.GetStudentPendingRequests(studentId);
+                return Ok(requests);
+        }
+
+        [HttpGet("student/{studentId}")]
+        public async Task<ActionResult<List<JobRequestDto>>> GetStudentRequests(int studentId)
+        {
+                var requests = await _jobRequestService.GetStudentRequests(studentId);
                 return Ok(requests);
         }
 

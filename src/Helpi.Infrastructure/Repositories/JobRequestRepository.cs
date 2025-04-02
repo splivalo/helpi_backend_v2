@@ -28,13 +28,19 @@ public class JobRequestRepository : IJobRequestRepository
         }
 
         public async Task<IEnumerable<JobRequest>> GetPendingRequestsAsync()
-            => await _context.JobRequests
-                .Where(jr => jr.Status == JobRequestStatus.Pending)
-                .ToListAsync();
+        {
+                return await _context.JobRequests
+                        .Where(jr => jr.Status == JobRequestStatus.Pending)
+                        .Include(jr => jr.OrderSchedule)
+                         .AsNoTracking()
+                        .ToListAsync();
+        }
 
         public async Task<IEnumerable<JobRequest>> GetExpiredRequestsAsync()
             => await _context.JobRequests
                 .Where(jr => jr.ExpiresAt < DateTime.UtcNow)
+                .Include(jr => jr.OrderSchedule)
+                .AsNoTracking()
                 .ToListAsync();
 
         public async Task<JobRequest> AddAsync(JobRequest request)
@@ -67,10 +73,23 @@ public class JobRequestRepository : IJobRequestRepository
         }
 
         public async Task<List<JobRequest>> GetStudentPendingRequests(int studentId)
-        => await _context.JobRequests
+        {
+                return await _context.JobRequests
                 .Where(jr => jr.StudentId == studentId)
                 .Where(jr => jr.Status == JobRequestStatus.Pending)
+                .Include(jr => jr.OrderSchedule)
+                .AsNoTracking()
                 .ToListAsync();
+        }
+
+        public async Task<List<JobRequest>> GetStudentRequests(int studentId)
+        {
+                return await _context.JobRequests
+               .Where(jr => jr.StudentId == studentId)
+               .Include(jr => jr.OrderSchedule)
+               .AsNoTracking()
+               .ToListAsync();
+        }
 
         public async Task<JobRequest> RespondToJobRequestAsync(JobRequest resJobRequest)
         {
@@ -204,7 +223,6 @@ public class JobRequestRepository : IJobRequestRepository
 
                 return jobRequest;
         }
-
 
 
 

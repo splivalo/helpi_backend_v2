@@ -39,7 +39,6 @@ namespace Helpi.Domain.Enums
     public enum OrderStatus
     {
         Pending,
-        Accepted,
         Acitve,
         Completed,
         Cancelled

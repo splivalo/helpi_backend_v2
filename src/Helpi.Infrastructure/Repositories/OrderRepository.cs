@@ -28,6 +28,7 @@ public class OrderRepository : IOrderRepository
                 .Where(o => o.SeniorId == seniorId)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules)
+                .AsNoTracking()
                 .ToListAsync();
 
                 return orders;

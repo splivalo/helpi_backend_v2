@@ -11,6 +11,8 @@ public interface IJobRequestRepository
     Task DeleteAsync(JobRequest request);
     Task<List<int>> NotifiedStudentIds(int orderScheduleId);
     Task<List<JobRequest>> GetStudentPendingRequests(int studentId);
+
+    Task<List<JobRequest>> GetStudentRequests(int studentId);
     Task<JobRequest> RespondToJobRequestAsync(JobRequest jobRequest);
 
 }

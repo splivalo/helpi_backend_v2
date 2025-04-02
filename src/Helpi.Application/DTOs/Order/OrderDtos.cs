@@ -6,6 +6,7 @@ namespace Helpi.Application.DTOs.Order;
 public class OrderDto
 {
     public int Id { get; set; }
+    public int SeniorId { get; set; }
     public OrderStatus Status { get; set; }
     public bool IsRecurring { get; set; }
     public RecurrencePattern? RecurrencePattern { get; set; }

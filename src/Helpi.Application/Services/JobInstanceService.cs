@@ -1,4 +1,5 @@
 
+using System.Runtime.ConstrainedExecution;
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
@@ -18,8 +19,17 @@ public class JobInstanceService
                 _mapper = mapper;
         }
 
-        public async Task<List<JobInstanceDto>> GetJobInstancesByAssignmentAsync(int assignmentId) =>
-            _mapper.Map<List<JobInstanceDto>>(await _repository.GetByAssignmentAsync(assignmentId));
+        public async Task<List<JobInstanceDto>> GetJobInstancesByAssignmentAsync(int assignmentId)
+        {
+
+                return _mapper.Map<List<JobInstanceDto>>(await _repository.GetByAssignmentAsync(assignmentId));
+        }
+
+        public async Task<List<JobInstanceDto>> GetJobInstancesByStudentAsync(int studentId)
+        {
+                var jobInstances = await _repository.GetJobInstancesByStudentAsync(studentId);
+                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+        }
 
         //     public async Task<JobInstanceDto> CreateJobInstanceAsync(JobInstanceCreateDto dto)
         //     {
@@ -27,4 +37,5 @@ public class JobInstanceService
         //         await _repository.AddAsync(instance);
         //         return _mapper.Map<JobInstanceDto>(instance);
         //     }
+
 }
