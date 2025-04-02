@@ -1,6 +1,7 @@
 
 using Helpi.Application;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
 using Helpi.WebApi.Middleware;
 using Infrastructure;
@@ -25,6 +26,8 @@ builder.Services.AddIdentityServices(builder.Configuration);
 
 builder.Services.AddHangfireServices(builder.Configuration);
 
+
+FirebaseConfiguration.InitializeFirebase(builder.Configuration);
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 using Helpi.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Helpi.Application.Services;
+using FirebaseAdmin.Auth;
 
 
 [ApiController]
@@ -72,6 +73,7 @@ public class AuthController : ControllerBase
             token = result.Token,
             userId = result.UserId,
             userType = result.UserType,
+            firebaseToken = result.firebaseToken,
             message = result.Message
         });
     }

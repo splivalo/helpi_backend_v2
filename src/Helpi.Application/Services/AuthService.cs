@@ -6,6 +6,7 @@ using System.Text;
 using AutoMapper;
 using Helpi.Application.DTOs.Auth;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -27,6 +28,7 @@ namespace Helpi.Application.Services
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IAuthRepository _authRepository;
+        private readonly IFirebaseService _firebaseService;
 
         private readonly IMapper _mapper;
 
@@ -34,11 +36,16 @@ namespace Helpi.Application.Services
         private readonly string _issuer;
         private readonly string _audience;
 
-        public AuthService(UserManager<User> userManager, IConfiguration configuration, IAuthRepository authRepository, IMapper mapper)
+        public AuthService(UserManager<User> userManager,
+        IConfiguration configuration,
+         IAuthRepository authRepository,
+          IMapper mapper,
+        IFirebaseService firebaseService)
         {
             _userManager = userManager;
             _configuration = configuration;
             _authRepository = authRepository;
+            _firebaseService = firebaseService;
             _mapper = mapper;
 
 
@@ -50,25 +57,44 @@ namespace Helpi.Application.Services
 
 
 
-        public async Task<(bool Success, string Token, int UserId, UserType UserType, string Message)> Login(LoginDto dto)
+        public async Task<(bool Success, string Token, int UserId, UserType UserType, string firebaseToken, string Message)> Login(LoginDto dto)
         {
             // Find user by email
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
-                return (false, string.Empty, -1, UserType.Student, "Invalid email or password");
+                return (false, string.Empty, -1, UserType.Student, "", "Invalid email or password");
             }
 
             // Check password
             var result = await _userManager.CheckPasswordAsync(user, dto.Password);
             if (!result)
             {
-                return (false, string.Empty, -1, UserType.Student, "Invalid email or password");
+                return (false, string.Empty, -1, UserType.Student, "", "Invalid email or password");
             }
 
             // Generate token
             var token = await GenerateJwtToken(user);
-            return (true, token, user.Id, user.UserType, "Login successful");
+
+
+            var firebase_uid = user.Id.ToString();
+            var firbase_claims = _firbaseUserClaims(user);
+            var firebaseToken = await _firebaseService.GenerateCustomTokenAsync(firebase_uid, firbase_claims);
+
+            return (true, token, user.Id, user.UserType, firebaseToken, "Login successful");
+        }
+
+        public Dictionary<string, dynamic> _firbaseUserClaims(User user)
+        {
+
+            var claims = new Dictionary<string, dynamic>
+            {
+                {"userType",user.UserType},
+                {"backendUserId",user.Id}
+            };
+
+            return claims;
+
         }
 
 

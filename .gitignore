@@ -46,3 +46,6 @@ x86/
 *.vsp
 *.vspx
 *.sap
+
+
+credentials/
