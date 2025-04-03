@@ -29,6 +29,28 @@ builder.Services.AddHangfireServices(builder.Configuration);
 
 FirebaseConfiguration.InitializeFirebase(builder.Configuration);
 
+
+builder.Services.AddCors(options =>
+{
+
+
+
+    options.AddPolicy("AllowFlutterWeb",
+ policy => policy
+     .WithOrigins("http://localhost:59013")
+     .AllowAnyMethod()
+     .AllowAnyHeader()
+    );
+
+    /// todo : remove in prod
+    options.AddPolicy("AllowAll", policy => policy
+     .AllowAnyOrigin()  // For development only! Replace with your Flutter web URL in production.
+     .AllowAnyMethod()
+     .AllowAnyHeader());
+});
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -63,6 +85,23 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+
+
+app.UseCors("AllowFlutterLocalhost");
+app.UseCors("AllowAll");
+app.UseCors("AllowAllForPreflight"); // Apply CORS middleware early in the pipeline
+
+app.Use(async (context, next) =>
+{
+
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204; // No Content
+        await context.Response.CompleteAsync();
+        return; // Short-circuit the pipeline for OPTIONS
+    }
+    await next();
+});
 
 
 
