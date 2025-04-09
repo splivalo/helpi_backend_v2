@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250402123522_intialMigrations")]
+    [Migration("20250409134134_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -238,6 +238,19 @@ namespace Helpi.Infrastructure.Migrations
                             Id = 10,
                             FacultyName = "Arts and Humanities"
                         });
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "Token");
+
+                    b.ToTable("FcmTokens");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
@@ -1176,6 +1189,15 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Contact");
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.User", null)
+                        .WithMany("fcmTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
@@ -1644,6 +1666,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Student");
+
+                    b.Navigation("fcmTokens");
                 });
 #pragma warning restore 612, 618
         }

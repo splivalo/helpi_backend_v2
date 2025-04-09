@@ -214,6 +214,24 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FcmTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    Token = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FcmTokens", x => new { x.UserId, x.Token });
+                    table.ForeignKey(
+                        name: "FK_FcmTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ContactInfos",
                 columns: table => new
                 {
@@ -1101,6 +1119,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "FcmTokens");
 
             migrationBuilder.DropTable(
                 name: "InvoiceEmails");

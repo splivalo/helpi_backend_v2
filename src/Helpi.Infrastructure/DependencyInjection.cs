@@ -39,6 +39,7 @@ public static class DependencyInjection
 
 
 
+        services.AddScoped<IFcmTokensRepository, FcmTokensRepository>();
         services.AddScoped<IMailerLiteService, MailerLiteService>();
         services.AddHttpClient<MailerLiteService>();
         services.AddScoped<IFirebaseService, FirebaseService>();

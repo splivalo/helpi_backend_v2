@@ -237,6 +237,19 @@ namespace Helpi.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "Token");
+
+                    b.ToTable("FcmTokens");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
                 {
                     b.Property<int>("Id")
@@ -1173,6 +1186,15 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Contact");
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.User", null)
+                        .WithMany("fcmTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
@@ -1641,6 +1663,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Student");
+
+                    b.Navigation("fcmTokens");
                 });
 #pragma warning restore 612, 618
         }

@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
     // Contact Information
     public DbSet<ContactInfo> ContactInfos { get; set; }
+    public DbSet<FcmToken> FcmTokens { get; set; }
 
     // Academic Structure
     public DbSet<Student> Students { get; set; }
@@ -106,6 +107,13 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<OrderService>().HasKey(os => new { os.OrderId, os.ServiceId });
 
 
+        // fcm token
+        modelBuilder.Entity<FcmToken>()
+     .HasKey(t => new { t.UserId, t.Token });
+
+
+
+
         modelBuilder.Entity<StudentAvailabilitySlot>()
        .HasKey(s => new { s.StudentId, s.DayOfWeek });
 
@@ -151,6 +159,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
           .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
           .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
 });
+
+
 
         // modelBuilder.Entity<User>()
         //           .HasOne(u => u.Customer)
