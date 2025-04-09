@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AutoMapper;
+using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Auth;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -29,6 +30,7 @@ namespace Helpi.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IAuthRepository _authRepository;
         private readonly IFirebaseService _firebaseService;
+        private readonly IMailerLiteService _mailerLiteService;
 
         private readonly IMapper _mapper;
 
@@ -40,12 +42,15 @@ namespace Helpi.Application.Services
         IConfiguration configuration,
          IAuthRepository authRepository,
           IMapper mapper,
-        IFirebaseService firebaseService)
+        IFirebaseService firebaseService,
+       IMailerLiteService mailerLiteService
+       )
         {
             _userManager = userManager;
             _configuration = configuration;
             _authRepository = authRepository;
             _firebaseService = firebaseService;
+            _mailerLiteService = mailerLiteService;
             _mapper = mapper;
 
 
@@ -99,7 +104,7 @@ namespace Helpi.Application.Services
 
 
 
-        public async Task<User> _CreateUser(string email, UserType userType, string password)
+        public async Task<User> _CreateUser(string name, string email, UserType userType, string password)
         {
 
             // Check if user already exists
@@ -136,18 +141,24 @@ namespace Helpi.Application.Services
                 throw new Exception($"Failed to role based on UserType: {errors}");
             }
 
+
+            _addSubscriberToMailerLite(name, email, userType);
+
+
             return user;
 
 
 
         }
+
+
         public async Task<(bool Success, string Message)> RegisterCustomer(CustomerRegisterDto customerRegistrationDto)
         {
 
 
             try
             {
-                var user = await _CreateUser(customerRegistrationDto.Email, customerRegistrationDto.UserType, customerRegistrationDto.Password);
+                var user = await _CreateUser(customerRegistrationDto.ContactInfo.FullName, customerRegistrationDto.Email, customerRegistrationDto.UserType, customerRegistrationDto.Password);
 
                 var customerContactInfoDto = customerRegistrationDto.ContactInfo;
 
@@ -214,7 +225,7 @@ namespace Helpi.Application.Services
             try
             {
 
-                var user = await _CreateUser(registerDto.Email, registerDto.UserType, registerDto.Password);
+                var user = await _CreateUser(registerDto.ContactInfo.FullName, registerDto.Email, registerDto.UserType, registerDto.Password);
 
                 // Create contact info for the user
                 var contactInfo = _mapper.Map<ContactInfo>(registerDto.ContactInfo);
@@ -282,7 +293,7 @@ namespace Helpi.Application.Services
             try
             {
 
-                var user = await _CreateUser(dto.Email, dto.UserType, dto.Password);
+                var user = await _CreateUser(dto.ContactInfo.FullName, dto.Email, dto.UserType, dto.Password);
 
                 // Create contact info for the user
                 var contactInfo = _mapper.Map<ContactInfo>(dto.ContactInfo);
@@ -303,5 +314,26 @@ namespace Helpi.Application.Services
                 return (false, $"Registration failed: {ex.Message}");
             }
         }
+
+        public async Task _addSubscriberToMailerLite(string name, string email, UserType userType)
+        {
+            if (userType == UserType.Student || userType == UserType.Customer)
+            {
+                var group = userType == UserType.Student ? "Students" : "Customers";
+
+                var mailerLiteSubscriber = new MailerLiteSubscriberDto
+                {
+                    Email = email,
+                    Name = name,
+                    Group = group,
+                };
+
+                await _mailerLiteService.AddSubscriberAsync(mailerLiteSubscriber);
+            }
+
+        }
     }
+
+
+
 }

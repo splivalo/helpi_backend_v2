@@ -9,6 +9,7 @@ using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
 using Helpi.Infrastructure.Seeds;
 using Helpi.Infrastructure.Services;
+using MailerLiteIntegration.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,10 @@ public static class DependencyInjection
 
 
 
+
+
+        services.AddScoped<IMailerLiteService, MailerLiteService>();
+        services.AddHttpClient<MailerLiteService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
         services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
