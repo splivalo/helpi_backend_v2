@@ -1,4 +1,6 @@
 
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Helpi.Application;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Infrastructure.Configuration;
@@ -29,6 +31,10 @@ builder.Services.AddHangfireServices(builder.Configuration);
 
 FirebaseConfiguration.InitializeFirebase(builder.Configuration);
 
+
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<OrderCreateDtoValidator>();
 
 builder.Services.AddCors(options =>
 {
