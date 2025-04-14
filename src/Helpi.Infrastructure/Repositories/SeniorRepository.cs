@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Collections.Generic;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -46,4 +47,13 @@ public class SeniorRepository : ISeniorRepository
                 _context.Seniors.Remove(senior);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Senior>> GetBySeniorsAsync()
+        {
+                return await _context.Seniors
+                .Include(s => s.Contact)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
 }

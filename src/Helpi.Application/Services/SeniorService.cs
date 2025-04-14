@@ -18,8 +18,12 @@ public class SeniorService
                 _mapper = mapper;
         }
 
-        public async Task<List<SeniorDto>> GetSeniorsByCustomerAsync(int customerId) =>
-            _mapper.Map<List<SeniorDto>>(await _repository.GetByCustomerIdAsync(customerId));
+        public async Task<List<SeniorDto>> GetSeniorsByCustomerAsync(int customerId)
+        {
+                var seniors = await _repository.GetByCustomerIdAsync(customerId);
+
+                return _mapper.Map<List<SeniorDto>>(seniors);
+        }
 
         public async Task<SeniorDto> CreateSeniorAsync(SeniorCreateDto dto)
         {
@@ -27,4 +31,12 @@ public class SeniorService
                 await _repository.AddAsync(senior);
                 return _mapper.Map<SeniorDto>(senior);
         }
+
+        public async Task<List<SeniorDto>> GetBySeniorsAsync()
+        {
+                var seniors = await _repository.GetBySeniorsAsync();
+
+                return _mapper.Map<List<SeniorDto>>(seniors);
+        }
+
 }
