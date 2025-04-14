@@ -48,7 +48,7 @@ public class SeniorRepository : ISeniorRepository
                 await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Senior>> GetBySeniorsAsync()
+        public async Task<List<Senior>> GetSeniorsAsync()
         {
                 return await _context.Seniors
                 .Include(s => s.Contact)

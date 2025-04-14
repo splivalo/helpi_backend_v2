@@ -11,6 +11,6 @@ public interface ISeniorRepository
     Task<Senior> AddAsync(Senior senior);
     Task UpdateAsync(Senior senior);
     Task DeleteAsync(Senior senior);
-    Task<List<Senior>> GetBySeniorsAsync();
+    Task<List<Senior>> GetSeniorsAsync();
 
 }

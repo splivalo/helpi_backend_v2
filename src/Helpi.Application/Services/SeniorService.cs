@@ -34,7 +34,7 @@ public class SeniorService
 
         public async Task<List<SeniorDto>> GetBySeniorsAsync()
         {
-                var seniors = await _repository.GetBySeniorsAsync();
+                var seniors = await _repository.GetSeniorsAsync();
 
                 return _mapper.Map<List<SeniorDto>>(seniors);
         }
