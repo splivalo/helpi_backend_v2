@@ -64,6 +64,7 @@ public class RecurringJobService
             {
                 jobInstances.Add(new JobInstance
                 {
+                    SeniorId = order.SeniorId,
                     ScheduleAssignmentId = assignment.Id,
                     ScheduledDate = date,
                     StartTime = assignment.OrderSchedule.StartTime,

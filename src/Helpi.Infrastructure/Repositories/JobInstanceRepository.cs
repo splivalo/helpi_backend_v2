@@ -31,6 +31,16 @@ public class JobInstanceRepository : IJobInstanceRepository
                      .ToListAsync();
         }
 
+        public async Task<IEnumerable<JobInstance>> GetJobInstances()
+        {
+                return await _context.JobInstances
+                    .AsNoTracking()
+                    .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                    .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                    .ToListAsync();
+
+        }
+
         public async Task<IEnumerable<JobInstance>> GetUpcomingJobsAsync(DateTime cutoff)
             => await _context.JobInstances
                 .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(DateTime.UtcNow) &&
@@ -62,6 +72,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 await _context.JobInstances.AddRangeAsync(jobInstances);
                 await _context.SaveChangesAsync();
         }
+
 
 
 }

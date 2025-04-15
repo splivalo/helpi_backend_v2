@@ -661,6 +661,7 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SeniorId = table.Column<int>(type: "integer", nullable: false),
                     ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
                     OriginalAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
@@ -683,6 +684,12 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_JobInstances_ScheduleAssignments_ScheduleAssignmentId",
                         column: x => x.ScheduleAssignmentId,
                         principalTable: "ScheduleAssignments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobInstances_Seniors_SeniorId",
+                        column: x => x.SeniorId,
+                        principalTable: "Seniors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -962,6 +969,11 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_JobInstances_ScheduleAssignmentId",
                 table: "JobInstances",
                 column: "ScheduleAssignmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobInstances_SeniorId",
+                table: "JobInstances",
+                column: "SeniorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobRequests_OrderScheduleId",

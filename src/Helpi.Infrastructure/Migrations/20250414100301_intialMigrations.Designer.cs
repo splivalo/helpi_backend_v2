@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250409134134_intialMigrations")]
+    [Migration("20250414100301_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -364,6 +364,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("date");
 
+                    b.Property<int>("SeniorId")
+                        .HasColumnType("integer");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -378,6 +381,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("OriginalAssignmentId");
 
                     b.HasIndex("ScheduleAssignmentId");
+
+                    b.HasIndex("SeniorId");
 
                     b.ToTable("JobInstances");
                 });
@@ -1240,9 +1245,17 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
+                        .WithMany()
+                        .HasForeignKey("SeniorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Assignment");
 
                     b.Navigation("OriginalAssignment");
+
+                    b.Navigation("Senior");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>

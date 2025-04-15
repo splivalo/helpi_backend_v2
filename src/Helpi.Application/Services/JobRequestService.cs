@@ -87,6 +87,7 @@ public class JobRequestService
                 {
                         jobInstances.Add(new JobInstance
                         {
+                                SeniorId = order.SeniorId,
                                 ScheduleAssignmentId = assignment.Id,
                                 ScheduledDate = date,
                                 StartTime = jobRequest.OrderSchedule.StartTime,

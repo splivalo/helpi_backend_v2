@@ -361,6 +361,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("date");
 
+                    b.Property<int>("SeniorId")
+                        .HasColumnType("integer");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -375,6 +378,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("OriginalAssignmentId");
 
                     b.HasIndex("ScheduleAssignmentId");
+
+                    b.HasIndex("SeniorId");
 
                     b.ToTable("JobInstances");
                 });
@@ -1237,9 +1242,17 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
+                        .WithMany()
+                        .HasForeignKey("SeniorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Assignment");
 
                     b.Navigation("OriginalAssignment");
+
+                    b.Navigation("Senior");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>

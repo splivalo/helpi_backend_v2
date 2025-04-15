@@ -1,3 +1,4 @@
+using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -15,6 +16,8 @@ public class JobInstanceDto
     public DateTime? ActualStartTime { get; set; }
     public DateTime? ActualEndTime { get; set; }
     public JobInstanceStatus Status { get; set; }
+
+    public SeniorDto Senior { get; set; } = null!;
 }
 
 public class JobInstanceUpdateDto
