@@ -15,4 +15,6 @@ public interface IStudentRepository
     Task DeleteAsync(Student student);
     Task GetByFacultyAsync(int facultyId);
     Task<List<Student>> UnnotifiedStudentsOfferingServices(List<int> serviceIds, List<int> notifiedStudentIds);
+    Task<List<Student>> GetAvailableStudentsForOrderSchedule(int orderScheduleId);
+
 }

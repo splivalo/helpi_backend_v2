@@ -46,4 +46,11 @@ public class StudentService
                 student.VerificationStatus = status;
                 await _repository.UpdateAsync(student);
         }
+
+        public async Task<List<StudentDto>> GetAvailableStudentsForOrderSchedule(int orderScheduleId)
+        {
+                var students = await _repository.GetAvailableStudentsForOrderSchedule(orderScheduleId);
+                return _mapper.Map<List<StudentDto>>(students);
+        }
+
 }

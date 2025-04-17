@@ -38,6 +38,12 @@ public class JobInstanceService
                 return _mapper.Map<List<JobInstanceDto>>(jobInstances);
         }
 
+        public async Task<List<JobInstanceDto>> GetSeniorCompletedJobInstances(int seniorId)
+        {
+                var jobInstances = await _repository.GetSeniorCompletedJobInstances(seniorId);
+                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+        }
+
 
         //     public async Task<JobInstanceDto> CreateJobInstanceAsync(JobInstanceCreateDto dto)
         //     {
@@ -45,5 +51,6 @@ public class JobInstanceService
         //         await _repository.AddAsync(instance);
         //         return _mapper.Map<JobInstanceDto>(instance);
         //     }
+
 
 }

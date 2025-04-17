@@ -24,5 +24,7 @@ namespace Helpi.Domain.Entities
         public Faculty Faculty { get; set; } = null!;
         public ICollection<StudentService> StudentServices { get; set; } = new List<StudentService>();
         public ICollection<StudentAvailabilitySlot> AvailabilitySlots { get; set; } = new List<StudentAvailabilitySlot>();
+
+        public ICollection<ScheduleAssignment> ScheduleAssignments { get; set; } = new List<ScheduleAssignment>();
     }
 }

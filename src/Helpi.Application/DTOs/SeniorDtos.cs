@@ -8,6 +8,7 @@ namespace Helpi.Application.DTOs;
 public class SeniorDto
 {
     public int Id { get; set; }
+    public int CustomerId { get; set; }
     public Relationship Relationship { get; set; }
     public JsonDocument? SpecialRequirements { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;

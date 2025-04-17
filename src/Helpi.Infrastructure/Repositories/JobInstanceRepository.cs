@@ -13,9 +13,11 @@ public class JobInstanceRepository : IJobInstanceRepository
         public JobInstanceRepository(AppDbContext context) => _context = context;
 
         public async Task<JobInstance> GetByIdAsync(int id)
-            => await _context.JobInstances
+        {
+                return await _context.JobInstances
                 .Include(ji => ji.Assignment)
                 .FirstOrDefaultAsync(ji => ji.Id == id);
+        }
 
         public async Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId)
             => await _context.JobInstances
@@ -46,6 +48,9 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(DateTime.UtcNow) &&
                     ji.Status == JobInstanceStatus.Upcoming &&
                     ji.StartTime <= TimeOnly.FromDateTime(cutoff))
+                .AsNoTracking()
+                .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .ToListAsync();
 
         public async Task<JobInstance> AddAsync(JobInstance instance)
@@ -73,7 +78,15 @@ public class JobInstanceRepository : IJobInstanceRepository
                 await _context.SaveChangesAsync();
         }
 
-
+        public async Task<IEnumerable<JobInstance>> GetSeniorCompletedJobInstances(int seniorId)
+        {
+                return await _context.JobInstances
+                           .AsNoTracking()
+                           .Where(j => j.SeniorId == seniorId && j.Status == JobInstanceStatus.Completed)
+                           .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .ToListAsync();
+        }
 
 }
 

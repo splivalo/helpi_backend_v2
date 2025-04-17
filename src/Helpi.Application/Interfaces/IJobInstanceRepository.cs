@@ -14,6 +14,6 @@ public interface IJobInstanceRepository
     Task AddRangeAsync(List<JobInstance> jobInstances);
     Task UpdateAsync(JobInstance instance);
     Task DeleteAsync(JobInstance instance);
-
+    Task<IEnumerable<JobInstance>> GetSeniorCompletedJobInstances(int seniorId);
 
 }

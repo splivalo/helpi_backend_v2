@@ -23,6 +23,16 @@ public class StudentsController : ControllerBase
                 return Ok(students);
         }
 
+
+
+        [HttpGet("order-schedules/{orderScheduleId}/available-students")]
+        public async Task<ActionResult<List<StudentDto>>> GetAvailableStudentsForOrderSchedule(int orderScheduleId)
+        {
+                var students = await _service.GetAvailableStudentsForOrderSchedule(orderScheduleId);
+                return Ok(students);
+        }
+
+
         [HttpGet("{id}")]
         public async Task<ActionResult<StudentDto>> GetById(int id)
         {

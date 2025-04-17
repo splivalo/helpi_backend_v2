@@ -85,6 +85,7 @@ public class MatchingService : IMatchingService
 
         var notifiedStudentIds = await _jobRequestRepository.NotifiedStudentIds(firstSchedule.Id);
 
+        /// todo: use _studentRepository.GetAvailableStudentsForOrderSchedule to keep logic for finding student in one place
         var students = await _studentRepository.UnnotifiedStudentsOfferingServices(
                                 serviceIds,
                                 notifiedStudentIds

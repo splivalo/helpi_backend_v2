@@ -18,6 +18,8 @@ public class JobInstanceDto
     public JobInstanceStatus Status { get; set; }
 
     public SeniorDto Senior { get; set; } = null!;
+
+    public ScheduleAssignmentDto assignment { get; set; } = null!;
 }
 
 public class JobInstanceUpdateDto

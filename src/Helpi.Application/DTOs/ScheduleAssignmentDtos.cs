@@ -10,6 +10,8 @@ public class ScheduleAssignmentDto
     public AssignmentStatus Status { get; set; }
     public bool IsTemporary { get; set; }
     public DateTime AssignedAt { get; set; }
+
+    public StudentDto Student { get; set; } = null!;
 }
 
 public class ScheduleAssignmentCreateDto

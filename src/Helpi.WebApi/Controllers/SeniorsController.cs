@@ -23,6 +23,13 @@ public class SeniorsController : ControllerBase
                 return Ok(senior);
         }
 
+        [HttpGet("{seniorId}")]
+        public async Task<ActionResult<SeniorDto>> GetBySeniorById(int seniorId)
+        {
+                var senior = await _service.GetBySeniorByIdAsync(seniorId);
+                return Ok(senior);
+        }
+
 
         [HttpGet("customer/{customerId}")]
         public async Task<ActionResult<List<SeniorDto>>> GetByCustomer(int customerId)
