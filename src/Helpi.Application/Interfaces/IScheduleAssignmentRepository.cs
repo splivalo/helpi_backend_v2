@@ -10,4 +10,6 @@ public interface IScheduleAssignmentRepository
     Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment);
     Task UpdateAsync(ScheduleAssignment assignment);
     Task DeleteAsync(ScheduleAssignment assignment);
+    Task<Student?> GetActiveStudentForOrderScheduleAsync(int orderScheduleId);
+
 }

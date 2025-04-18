@@ -7,7 +7,9 @@ namespace Helpi.Domain.Entities
     {
         public int Id { get; set; }
         public int SeniorId { get; set; }
+        public string SeniorFullName { get; set; } = null!;
         public int StudentId { get; set; }
+        public string StudentFullName { get; set; } = null!;
         public int JobInstanceId { get; set; }
         public byte Rating { get; set; }
 

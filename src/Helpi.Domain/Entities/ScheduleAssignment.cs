@@ -8,7 +8,7 @@ namespace Helpi.Domain.Entities
         public int Id { get; set; }
         public int OrderScheduleId { get; set; }
         public int StudentId { get; set; }
-        public AssignmentStatus Status { get; set; } = AssignmentStatus.Pending;
+        public AssignmentStatus Status { get; set; } = AssignmentStatus.Accepted;
         public bool IsTemporary { get; set; } = false;
         public TerminationReason? TerminationReason { get; set; }
         public DateTime? TerminatedAt { get; set; }

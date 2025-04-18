@@ -51,4 +51,17 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 _context.ScheduleAssignments.Remove(assignment);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task<Student?> GetActiveStudentForOrderScheduleAsync(int orderScheduleId)
+        {
+                return await _context.ScheduleAssignments
+                    .Where(sa => sa.OrderScheduleId == orderScheduleId)
+                    .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                    .OrderByDescending(sa => sa.AcceptedAt) // Get most recent
+                    .Include(sa => sa.Student).ThenInclude(s => s.Contact)
+                    .Select(sa => sa.Student)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+        }
+
 }

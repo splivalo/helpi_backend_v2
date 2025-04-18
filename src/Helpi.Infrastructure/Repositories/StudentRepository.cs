@@ -144,7 +144,8 @@ public class StudentRepository : IStudentRepository
                     sa.OrderSchedule.StartTime < targetEnd &&
                     sa.OrderSchedule.EndTime > targetStart &&
                     sa.Status != AssignmentStatus.Completed &&
-                    sa.Status != AssignmentStatus.Canceled
+                    sa.Status != AssignmentStatus.Canceled &&
+                    sa.Status != AssignmentStatus.Declined
                 ));
 
                 return await query.ToListAsync();

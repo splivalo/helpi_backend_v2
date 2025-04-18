@@ -17,8 +17,11 @@ public class ScheduleAssignmentService
                 _mapper = mapper;
         }
 
-        public async Task<List<ScheduleAssignmentDto>> GetAssignmentsByStudentAsync(int studentId) =>
-            _mapper.Map<List<ScheduleAssignmentDto>>(await _repository.GetByStudentAsync(studentId));
+        public async Task<List<ScheduleAssignmentDto>> GetAssignmentsByStudentAsync(int studentId)
+        {
+                var sa = await _repository.GetByStudentAsync(studentId);
+                return _mapper.Map<List<ScheduleAssignmentDto>>(sa);
+        }
 
         public async Task<ScheduleAssignmentDto> CreateAssignmentAsync(ScheduleAssignmentCreateDto dto)
         {
@@ -26,4 +29,11 @@ public class ScheduleAssignmentService
                 await _repository.AddAsync(assignment);
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
         }
+
+        public async Task<StudentDto> GetActiveStudentForOrderScheduleAsync(int orderScheduleId)
+        {
+                var student = await _repository.GetActiveStudentForOrderScheduleAsync(orderScheduleId);
+                return _mapper.Map<StudentDto>(student);
+        }
+
 }

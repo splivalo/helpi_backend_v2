@@ -43,6 +43,16 @@ public class JobInstanceService
                 var jobInstances = await _repository.GetSeniorCompletedJobInstances(seniorId);
                 return _mapper.Map<List<JobInstanceDto>>(jobInstances);
         }
+        public async Task<List<JobInstanceDto>> GetStudentCompletedJobInstances(int studentId)
+        {
+                var jobInstances = await _repository.GetStudentCompletedJobInstances(studentId);
+                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+        }
+        public async Task<List<JobInstanceDto>> GetStudentUpComingJobInstances(int studentId)
+        {
+                var jobInstances = await _repository.GetStudentUpComingJobInstances(studentId);
+                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+        }
 
 
         //     public async Task<JobInstanceDto> CreateJobInstanceAsync(JobInstanceCreateDto dto)

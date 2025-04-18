@@ -87,6 +87,24 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                            .ToListAsync();
         }
+        public async Task<IEnumerable<JobInstance>> GetStudentCompletedJobInstances(int studentId)
+        {
+                return await _context.JobInstances
+                           .AsNoTracking()
+                           .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Completed)
+                           .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .ToListAsync();
+        }
+        public async Task<IEnumerable<JobInstance>> GetStudentUpComingJobInstances(int studentId)
+        {
+                return await _context.JobInstances
+                           .AsNoTracking()
+                           .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Upcoming)
+                           .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .ToListAsync();
+        }
 
 }
 

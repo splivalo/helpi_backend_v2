@@ -34,6 +34,18 @@ public class JobInstancesController : ControllerBase
                 var jobInstances = await _service.GetSeniorCompletedJobInstances(seniorId);
                 return Ok(jobInstances);
         }
+        [HttpGet("completed/student/{studentId}")]
+        public async Task<ActionResult<List<JobInstanceDto>>> GetStudentCompletedJobInstances(int studentId)
+        {
+                var jobInstances = await _service.GetStudentCompletedJobInstances(studentId);
+                return Ok(jobInstances);
+        }
+        [HttpGet("upcoming/student/{studentId}")]
+        public async Task<ActionResult<List<JobInstanceDto>>> GetStudentUpComingJobInstances(int studentId)
+        {
+                var jobInstances = await _service.GetStudentUpComingJobInstances(studentId);
+                return Ok(jobInstances);
+        }
 
         [HttpGet]
         public async Task<ActionResult<List<JobInstanceDto>>> GetJobInstances()

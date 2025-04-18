@@ -638,8 +638,16 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<byte>("Rating")
                         .HasColumnType("smallint");
 
+                    b.Property<string>("SeniorFullName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("SeniorId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StudentFullName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");
@@ -1391,7 +1399,7 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Helpi.Domain.Entities.Student", "Student")
-                        .WithMany()
+                        .WithMany("ScheduleAssignments")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1667,6 +1675,8 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.Student", b =>
                 {
                     b.Navigation("AvailabilitySlots");
+
+                    b.Navigation("ScheduleAssignments");
 
                     b.Navigation("StudentServices");
                 });

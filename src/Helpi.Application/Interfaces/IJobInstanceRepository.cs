@@ -15,5 +15,7 @@ public interface IJobInstanceRepository
     Task UpdateAsync(JobInstance instance);
     Task DeleteAsync(JobInstance instance);
     Task<IEnumerable<JobInstance>> GetSeniorCompletedJobInstances(int seniorId);
+    Task<IEnumerable<JobInstance>> GetStudentCompletedJobInstances(int studentId);
+    Task<IEnumerable<JobInstance>> GetStudentUpComingJobInstances(int studentId);
 
 }

@@ -774,7 +774,9 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
+                    SeniorFullName = table.Column<string>(type: "text", nullable: false),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
+                    StudentFullName = table.Column<string>(type: "text", nullable: false),
                     JobInstanceId = table.Column<int>(type: "integer", nullable: false),
                     Rating = table.Column<byte>(type: "smallint", nullable: false),
                     Comment = table.Column<string>(type: "text", nullable: true),
