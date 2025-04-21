@@ -78,5 +78,17 @@ public class StudentAvailabilitySlotService
                 await _repository.DeleteAsync(slot);
         }
 
+        public async Task<List<StudentAvailabilitySlotDto>> UpdateSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
+        {
+                var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
+                await _repository.UpdateRangeAsync(slots);
+                return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
+        }
+        public async Task<List<StudentAvailabilitySlotDto>> DeleteSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
+        {
+                var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
+                await _repository.DeleteRangeAsync(slots);
+                return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
+        }
 
 }

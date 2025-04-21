@@ -65,5 +65,17 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
                 await _context.SaveChangesAsync();
         }
 
+        public async Task<List<StudentAvailabilitySlot>> UpdateRangeAsync(List<StudentAvailabilitySlot> slots)
+        {
+                _context.StudentAvailabilitySlots.UpdateRange(slots);
+                await _context.SaveChangesAsync();
+                return slots;
+        }
+        public async Task DeleteRangeAsync(List<StudentAvailabilitySlot> slots)
+        {
+                _context.StudentAvailabilitySlots.RemoveRange(slots);
+                await _context.SaveChangesAsync();
+
+        }
 
 }

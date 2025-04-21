@@ -11,4 +11,7 @@ public interface IStudentAvailabilitySlotRepository
     Task<List<StudentAvailabilitySlot>> AddRangeAsync(List<StudentAvailabilitySlot> slots);
     Task UpdateAsync(StudentAvailabilitySlot slot);
     Task DeleteAsync(StudentAvailabilitySlot slot);
+    Task<List<StudentAvailabilitySlot>> UpdateRangeAsync(List<StudentAvailabilitySlot> slots);
+    Task DeleteRangeAsync(List<StudentAvailabilitySlot> slots);
+
 }
