@@ -12,4 +12,6 @@ public interface IStudentServiceRepository
 
     Task UpdateAsync(StudentService studentService);
     Task DeleteAsync(int studentId, int serviceId);
+    Task DeleteRangeAsync(int studentId, List<int> serviceIds);
+
 }

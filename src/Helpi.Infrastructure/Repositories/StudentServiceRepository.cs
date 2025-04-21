@@ -54,4 +54,19 @@ public class StudentServiceRepository : IStudentServiceRepository
                         await _context.SaveChangesAsync();
                 }
         }
+
+        public async Task DeleteRangeAsync(int studentId, List<int> serviceIds)
+        {
+                var entities = await _context.StudentServices
+                    .Where(s => s.StudentId == studentId && serviceIds.Contains(s.ServiceId))
+                    .ToListAsync();
+
+                if (entities.Any())
+                {
+                        _context.StudentServices.RemoveRange(entities);
+                        await _context.SaveChangesAsync();
+                }
+        }
+
+
 }

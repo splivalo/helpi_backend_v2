@@ -1,6 +1,5 @@
 
 using Helpi.Application.DTOs;
-using Helpi.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,6 +41,13 @@ public class StudentServicesController : ControllerBase
                 return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, studentServices);
         }
 
+
+        [HttpDelete("bulk-remove/student/{studentId}")]
+        public async Task<IActionResult> RemoveRange(int studentId, List<int> serviceIds)
+        {
+                await _service.RemoveServicesFromStudentAsync(studentId, serviceIds);
+                return NoContent();
+        }
 
         [HttpDelete("student/{studentId}/service/{serviceId}")]
         public async Task<IActionResult> Remove(int studentId, int serviceId)

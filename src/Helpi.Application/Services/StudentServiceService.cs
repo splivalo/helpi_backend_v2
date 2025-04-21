@@ -44,4 +44,10 @@ public class StudentServiceService
         {
                 await _repository.DeleteAsync(studentId, serviceId);
         }
+
+        public async Task RemoveServicesFromStudentAsync(int studentId, List<int> serviceIds)
+        {
+                await _repository.DeleteRangeAsync(studentId, serviceIds);
+        }
+
 }
