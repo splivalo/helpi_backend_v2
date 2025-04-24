@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
 
         // Register all services
+        services.AddScoped<IContractNumberService, ContractNumberService>();
         services.AddScoped<AuthService>();
         services.AddScoped<FcmTokensService>();
         services.AddScoped<RecurringJobService>();

@@ -14,6 +14,12 @@ namespace Helpi.Domain.Enums
         Suspended
     }
 
+    public enum ContractStatus
+    {
+        valid,
+        expired
+    }
+
     public enum Relationship
     {
         Self,

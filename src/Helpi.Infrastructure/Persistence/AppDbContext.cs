@@ -18,7 +18,10 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // public DbSet<User> Users { get; set; }
     // public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<ContractNumberSequence> ContractNumberSequences { get; set; }
+
     // Contact Information
+
     public DbSet<ContactInfo> ContactInfos { get; set; }
     public DbSet<FcmToken> FcmTokens { get; set; }
 
@@ -88,6 +91,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
         base.OnModelCreating(modelBuilder);
 
+
+
         modelBuilder.Entity<ContactInfo>()
        .Property(c => c.DateOfBirth)
        .HasConversion(
@@ -104,7 +109,11 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.HasPostgresExtension("postgis");
 
         // Configure composite primary key
-        modelBuilder.Entity<OrderService>().HasKey(os => new { os.OrderId, os.ServiceId });
+        modelBuilder.Entity<OrderService>().HasKey(os => new
+        {
+            os.OrderId,
+            os.ServiceId
+        });
 
 
         // fcm token
@@ -115,7 +124,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
 
         modelBuilder.Entity<StudentAvailabilitySlot>()
-       .HasKey(s => new { s.StudentId, s.DayOfWeek });
+        .HasKey(s => new { s.StudentId, s.DayOfWeek });
 
         modelBuilder.Entity<StudentAvailabilitySlot>()
             .HasOne(s => s.Student)
@@ -154,11 +163,11 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             });
 
         modelBuilder.Entity<JobInstance>(entity =>
-{
-    entity.HasOne(j => j.Assignment)          // JobInstance has one ScheduleAssignment
-          .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
-          .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
-});
+        {
+            entity.HasOne(j => j.Assignment)          // JobInstance has one ScheduleAssignment
+              .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
+              .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
+        });
 
 
 

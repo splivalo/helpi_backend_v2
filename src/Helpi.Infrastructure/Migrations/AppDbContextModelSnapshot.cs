@@ -148,6 +148,22 @@ namespace Helpi.Infrastructure.Migrations
                     b.ToTable("ContactInfos");
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.ContractNumberSequence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("NextNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContractNumberSequences");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Customer", b =>
                 {
                     b.Property<int>("UserId")
@@ -915,11 +931,18 @@ namespace Helpi.Infrastructure.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EffectiveDate")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("ExpirationDate")
+                    b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");

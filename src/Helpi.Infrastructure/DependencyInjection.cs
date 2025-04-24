@@ -9,6 +9,7 @@ using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
 using Helpi.Infrastructure.Seeds;
 using Helpi.Infrastructure.Services;
+using Infrastructure.Persistence.Repositories;
 using MailerLiteIntegration.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -24,10 +25,6 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services, IConfiguration configuration)
     {
-        // services.AddDbContext<AppDbContext>(options =>
-        //     options.UseNpgsql(
-        //         configuration.GetConnectionString("Default"),
-        //         b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         // Register DbContext
         services.AddDbContext<AppDbContext>(options =>
@@ -38,6 +35,8 @@ public static class DependencyInjection
 
 
 
+
+        services.AddScoped<IContractNumberSequenceRepository, ContractNumberSequenceRepository>();
 
         services.AddScoped<IFcmTokensRepository, FcmTokensRepository>();
         services.AddScoped<IMailerLiteService, MailerLiteService>();
@@ -139,10 +138,42 @@ public static class DependencyInjection
 
         services.AddAuthorization();
 
-        // TODO: seeders
+
         services.AddTransient<RoleSeeder>();
+        services.AddTransient<ContractNumberSequenceSeeder>();
+        // TODO: seeders 
         services.AddTransient<CitySeeder>();
         services.AddTransient<ServiceDataSeeder>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddGoogleDriveServices(
+      this IServiceCollection services, IConfiguration configuration)
+    {
+
+        var googleCredentialsJson = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_CREDENTIALS_JSON")
+                                     ??
+                                    configuration["Google:CredentialsJson"];
+
+        if (string.IsNullOrEmpty(googleCredentialsJson))
+        {
+            throw new InvalidOperationException("Google Drive credentials not found in environment variables.");
+        }
+
+        services.Configure<GoogleDriveSettings>(options =>
+        {
+            options.ApplicationName = configuration["GoogleDrive:ApplicationName"] ??
+            throw new InvalidOperationException("GoogleDrive:ApplicationName configuration is missing");
+
+
+            options.BaseFolderId = configuration["GoogleDrive:BaseFolderId"] ??
+            throw new InvalidOperationException("GoogleDrive:BaseFolderId configuration is missing");
+
+            options.CredentialsJson = googleCredentialsJson;
+        });
+
+        services.AddSingleton<IGoogleDriveService, GoogleDriveService>();
 
         return services;
     }

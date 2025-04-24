@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250418144433_intialMigrations")]
+    [Migration("20250423155039_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -149,6 +149,22 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("CityId");
 
                     b.ToTable("ContactInfos");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.ContractNumberSequence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("NextNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContractNumberSequences");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Customer", b =>
@@ -918,11 +934,18 @@ namespace Helpi.Infrastructure.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EffectiveDate")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("ExpirationDate")
+                    b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");

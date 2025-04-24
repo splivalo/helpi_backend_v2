@@ -17,8 +17,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services
-    .AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddGoogleDriveServices(builder.Configuration);
 
 
 builder.Services.AddApplication();
@@ -73,6 +74,9 @@ using (var scope = app.Services.CreateScope())
 {
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
     await roleSeeder.SeedRolesAsync();
+
+    var contractNumberSequenceSeeder = scope.ServiceProvider.GetRequiredService<ContractNumberSequenceSeeder>();
+    await contractNumberSequenceSeeder.SeedAsync();
 
     //
     var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();

@@ -1,20 +1,39 @@
 
 using AutoMapper;
 using Helpi.Application.DTOs;
+using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
 
 public class StudentContractService
 {
         private readonly IStudentContractRepository _repository;
+        private readonly IStudentRepository _studentRepository;
+        private readonly IContractNumberService _contractNumberService;
+        private readonly IGoogleDriveService _googleDriveService;
         private readonly IMapper _mapper;
+        private readonly ILogger<StudentContractService> _logger;
 
-        public StudentContractService(IStudentContractRepository repository, IMapper mapper)
+        public StudentContractService(
+            IStudentContractRepository repository,
+            IStudentRepository studentRepository,
+            IContractNumberService contractNumberService,
+            IGoogleDriveService googleDriveService,
+            IMapper mapper,
+            ILogger<StudentContractService> logger)
         {
                 _repository = repository;
+                _studentRepository = studentRepository;
+                _contractNumberService = contractNumberService;
+                _googleDriveService = googleDriveService;
                 _mapper = mapper;
+                _logger = logger;
         }
 
         public async Task<List<StudentContractDto>> GetContractsByStudentAsync(int studentId) =>
@@ -22,8 +41,193 @@ public class StudentContractService
 
         public async Task<StudentContractDto> CreateContractAsync(StudentContractCreateDto dto)
         {
-                var contract = _mapper.Map<StudentContract>(dto);
+                var student = await GetAndValidateStudentAsync(dto.StudentId);
+
+                // Generate contract number
+                var contractNumber = await _contractNumberService.GetNextContractNumberAsync();
+
+                // Build file metadata
+                var (folderName, fileName) = BuildFileMetadata(student, contractNumber);
+
+                // Process and upload file
+                var contractFile = await ReadFileContent(dto.ContractFile[0]);
+                var cloudPath = await _googleDriveService.UploadContractAsync(
+                    folderName,
+                    contractFile,
+                    fileName
+                );
+
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var isValid = dto.ExpirationDate > today;
+                var status = isValid ? ContractStatus.valid : ContractStatus.expired;
+
+                var contract = new StudentContract
+                {
+                        StudentId = dto.StudentId,
+                        CloudPath = cloudPath,
+                        Status = status,
+                        EffectiveDate = dto.EffectiveDate,
+                        ExpirationDate = dto.ExpirationDate,
+                        ContractNumber = contractNumber.ToString()
+                };
+
                 await _repository.AddAsync(contract);
+                _logger.LogInformation("Created contract {ContractNumber} for student {StudentId}", contractNumber, dto.StudentId);
+
                 return _mapper.Map<StudentContractDto>(contract);
+        }
+
+        public async Task<StudentContractDto> UpdateContractAsync(int contractId, StudentContractUpdateDto dto)
+        {
+                var contract = await GetAndValidateContractAsync(contractId);
+
+
+                // If there's a new contract file, upload it
+                if (dto.NewContractFile != null)
+                {
+                        var student = await _studentRepository.GetByIdAsync(dto.StudentId);
+                        var contractNumber = int.Parse(contract.ContractNumber);
+
+                        // Build file metadata
+                        var (folderName, fileName) = BuildFileMetadata(student, contractNumber);
+
+                        // Delete old file and upload new one
+                        await ReplaceContractFileAsync(contract.CloudPath, dto.NewContractFile, folderName, fileName);
+
+                        // Update cloud path in contract
+                        contract.CloudPath = await GetContractCloudPathAsync(folderName, fileName);
+                }
+
+
+
+                if (dto.EffectiveDate.HasValue)
+                {
+                        contract.EffectiveDate = dto.EffectiveDate.Value;
+                }
+
+                if (dto.ExpirationDate.HasValue)
+                {
+                        contract.ExpirationDate = dto.ExpirationDate.Value;
+                }
+
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var isValid = dto.ExpirationDate > today;
+                var status = isValid ? ContractStatus.valid : ContractStatus.expired;
+                contract.Status = status;
+
+
+
+                await _repository.UpdateAsync(contract);
+                _logger.LogInformation("Updated contract {ContractId} for student {StudentId}", contractId, dto.StudentId);
+
+                return _mapper.Map<StudentContractDto>(contract);
+        }
+
+        public async Task DeleteContractAsync(int id)
+        {
+                // var contract = await GetAndValidateContractAsync(id);
+
+                // // Delete the file from Google Drive
+                // try
+                // {
+                //         await _googleDriveService.DeleteFileAsync(contract.CloudPath);
+                // }
+                // catch (Exception ex)
+                // {
+                //         // Log but continue - we still want to delete the database record
+                //         _logger.LogWarning(ex, "Failed to delete contract file from cloud storage: {CloudPath}", contract.CloudPath);
+                // }
+
+                // // Delete the contract record
+                // await _repository.DeleteAsync(contract);
+                // _logger.LogInformation("Deleted contract {ContractId}", id);
+        }
+
+        public async Task<StudentContractDto> GetContractByIdAsync(int id)
+        {
+                var contract = await GetAndValidateContractAsync(id);
+                return _mapper.Map<StudentContractDto>(contract);
+        }
+
+        public async Task<IEnumerable<StudentContractDto>> GetContractsByStudentIdAsync(int studentId)
+        {
+                var contracts = await _repository.GetByStudentIdAsync(studentId);
+                return _mapper.Map<IEnumerable<StudentContractDto>>(contracts);
+        }
+
+        // public async Task<byte[]> DownloadContractAsync(int id)
+        // {
+        // var contract = await GetAndValidateContractAsync(id);
+        // return await _googleDriveService.DownloadFileAsync(contract.CloudPath);
+        // }
+
+
+
+        private async Task<Student> GetAndValidateStudentAsync(int studentId)
+        {
+                var student = await _studentRepository.GetByIdAsync(studentId);
+
+                if (student == null)
+                {
+                        throw new NotFoundException("Student", studentId);
+                }
+
+                return student;
+        }
+
+        private async Task<StudentContract> GetAndValidateContractAsync(int contractId)
+        {
+                var contract = await _repository.GetByIdAsync(contractId);
+
+                if (contract == null)
+                {
+                        throw new NotFoundException("Contract", contractId);
+                }
+
+                return contract;
+        }
+
+        private (string folderName, string fileName) BuildFileMetadata(Student student, int contractNumber)
+        {
+                var currentYear = DateTime.UtcNow.Year;
+                var folderName = $"{student.Contact.FullName}-{student.StudentNumber}";
+                var fileName = $"{contractNumber}-{student.StudentNumber}-{currentYear}.pdf";
+
+                return (folderName, fileName);
+        }
+
+        private async Task<string> GetContractCloudPathAsync(string folderName, string fileName)
+        {
+                return $"{folderName}/{fileName}"; // todo
+        }
+
+        private async Task ReplaceContractFileAsync(string oldCloudPath, IFormFile newFile, string folderName, string fileName)
+        {
+                try
+                {
+                        // Delete the old contract file
+                        // await _googleDriveService.DeleteFileAsync(oldCloudPath);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogWarning(ex, "Failed to delete old contract file: {CloudPath}", oldCloudPath);
+
+                }
+
+                // Upload the new file
+                var contractFile = await ReadFileContent(newFile);
+                await _googleDriveService.UploadContractAsync(
+                    folderName,
+                    contractFile,
+                    fileName
+                );
+        }
+
+
+        private async Task<byte[]> ReadFileContent(IFormFile file)
+        {
+                await using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream);
+                return memoryStream.ToArray();
         }
 }

@@ -81,6 +81,19 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ContractNumberSequences",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NextNumber = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContractNumberSequences", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Faculties",
                 columns: table => new
                 {
@@ -468,9 +481,11 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    ContractNumber = table.Column<string>(type: "text", nullable: false),
                     CloudPath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     EffectiveDate = table.Column<DateTime>(type: "date", nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "date", nullable: true),
+                    ExpirationDate = table.Column<DateTime>(type: "date", nullable: false),
                     UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -1133,6 +1148,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "ContractNumberSequences");
 
             migrationBuilder.DropTable(
                 name: "FcmTokens");
