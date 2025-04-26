@@ -16,6 +16,11 @@ public class ContactInfosController : ControllerBase
 
         [HttpGet("{id}")] public async Task<ActionResult<ContactInfoDto>> GetById(int id) => Ok(await _service.GetContactInfoByIdAsync(id));
         [HttpPost] public async Task<ActionResult<ContactInfoDto>> Create(ContactInfoCreateDto dto) => CreatedAtAction(nameof(GetById), new { id = (await _service.CreateContactInfoAsync(dto)).Id }, dto);
-        [HttpPut("{id}")] public async Task<IActionResult> Update(int id, ContactInfoUpdateDto dto) { await _service.UpdateContactInfoAsync(id, dto); return NoContent(); }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, ContactInfoUpdateDto dto)
+        {
+                await _service.UpdateContactInfoAsync(id, dto);
+                return NoContent();
+        }
         [HttpDelete("{id}")] public async Task<IActionResult> Delete(int id) { await _service.DeleteContactInfoAsync(id); return NoContent(); }
 }

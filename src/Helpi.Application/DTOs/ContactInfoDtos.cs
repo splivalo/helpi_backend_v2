@@ -10,6 +10,7 @@ public class ContactInfoDto
 
     public DateTime DateOfBirth { get; set; }
     public string Phone { get; set; } = null!;
+    public string? Email { get; set; }
     public Gender Gender { get; set; }
     public string GooglePlaceId { get; set; } = null!;
     public string FullAddress { get; set; } = null!;
@@ -39,6 +40,8 @@ public class ContactInfoCreateDto
     [Phone]
     [MaxLength(20)]
     public string Phone { get; set; } = null!;
+
+
 
     [Required]
     public Gender Gender { get; set; }

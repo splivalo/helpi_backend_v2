@@ -106,6 +106,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
                     b.Property<string>("FullAddress")
                         .IsRequired()
                         .HasColumnType("text");

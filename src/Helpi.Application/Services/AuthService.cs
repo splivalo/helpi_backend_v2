@@ -168,6 +168,7 @@ namespace Helpi.Application.Services
 
                     FullName = customerContactInfoDto.FullName,
                     Phone = customerContactInfoDto.Phone,
+                    Email = customerRegistrationDto.Email,
                     Gender = customerContactInfoDto.Gender,
                     GooglePlaceId = customerContactInfoDto.GooglePlaceId,
                     FullAddress = customerContactInfoDto.FullAddress,
@@ -186,6 +187,7 @@ namespace Helpi.Application.Services
 
                     FullName = seniorContactInfoDto.FullName,
                     Phone = seniorContactInfoDto.Phone,
+                    Email = customerRegistrationDto.Email,
                     Gender = seniorContactInfoDto.Gender,
                     GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
                     FullAddress = seniorContactInfoDto.FullAddress,
@@ -229,7 +231,7 @@ namespace Helpi.Application.Services
 
                 // Create contact info for the user
                 var contactInfo = _mapper.Map<ContactInfo>(registerDto.ContactInfo);
-
+                contactInfo.Email = registerDto.Email;
 
 
                 if (!registerDto.FacultyId.HasValue)

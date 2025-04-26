@@ -253,6 +253,7 @@ namespace Helpi.Infrastructure.Migrations
                     FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: true),
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     FullAddress = table.Column<string>(type: "text", nullable: false),

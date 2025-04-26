@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250423155039_intialMigrations")]
+    [Migration("20250424090657_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -108,6 +108,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
 
                     b.Property<string>("FullAddress")
                         .IsRequired()

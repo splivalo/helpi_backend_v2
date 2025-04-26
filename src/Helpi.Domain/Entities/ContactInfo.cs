@@ -15,6 +15,8 @@ namespace Helpi.Domain.Entities
 
         [MaxLength(20)]
         public string Phone { get; set; } = null!;
+
+        public string? Email { get; set; }
         public Gender Gender { get; set; }
 
         [MaxLength(255)]
