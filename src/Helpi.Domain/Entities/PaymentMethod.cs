@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+
+
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
@@ -7,14 +8,24 @@ namespace Helpi.Domain.Entities
     public class PaymentMethod
     {
         public int Id { get; set; }
-        public int CustomerId { get; set; }
-        public PaymentProcessor Processor { get; set; }
+        public int UserId { get; set; } // customer or student
 
-        [MaxLength(255)]
-        public string Token { get; set; } = null!;
+        public string? Brand { get; set; }
+        public string? Last4 { get; set; }
+        public int? ExpiryMonth { get; set; }
+        public int? ExpiryYear { get; set; }
+
+
+        public PaymentProcessor PaymentProcessor { get; set; } // "Stripe", "PayPal", etc.
+        public string? ProcessorToken { get; set; }  // Eg Stripe PaymentMethodID 
+
         public bool IsDefault { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
-        public Customer Customer { get; set; } = null!;
+
+        public User User { get; set; } = null!; // customer or student
+
+        public ICollection<PaymentTransaction> Transactions { get; set; } = new List<PaymentTransaction>();
     }
 }

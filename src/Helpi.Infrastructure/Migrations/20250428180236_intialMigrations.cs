@@ -245,6 +245,32 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PaymentProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    PaymentProcessor = table.Column<int>(type: "integer", nullable: false),
+                    StripeCustomerId = table.Column<string>(type: "text", nullable: true),
+                    StripeConnectAccountId = table.Column<string>(type: "text", nullable: true),
+                    IsPayoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LastPayoutDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DefaultPaymentMethodId = table.Column<string>(type: "text", nullable: true),
+                    PreferredPayoutMethod = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PaymentProfiles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ContactInfos",
                 columns: table => new
                 {
@@ -410,21 +436,32 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    CustomerId = table.Column<int>(type: "integer", nullable: false),
-                    Processor = table.Column<int>(type: "integer", nullable: false),
-                    Token = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    Brand = table.Column<string>(type: "text", nullable: true),
+                    Last4 = table.Column<string>(type: "text", nullable: true),
+                    ExpiryMonth = table.Column<int>(type: "integer", nullable: true),
+                    ExpiryYear = table.Column<int>(type: "integer", nullable: true),
+                    PaymentProcessor = table.Column<int>(type: "integer", nullable: false),
+                    ProcessorToken = table.Column<string>(type: "text", nullable: true),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CustomerUserId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PaymentMethods", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PaymentMethods_Customers_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "Customers",
-                        principalColumn: "UserId",
+                        name: "FK_PaymentMethods_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PaymentMethods_Customers_CustomerUserId",
+                        column: x => x.CustomerUserId,
+                        principalTable: "Customers",
+                        principalColumn: "UserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -1024,9 +1061,19 @@ namespace Helpi.Infrastructure.Migrations
                 column: "ServiceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PaymentMethods_CustomerId",
+                name: "IX_PaymentMethods_CustomerUserId",
                 table: "PaymentMethods",
-                column: "CustomerId");
+                column: "CustomerUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentMethods_UserId",
+                table: "PaymentMethods",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentProfiles_UserId",
+                table: "PaymentProfiles",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PaymentTransactions_CustomerId",
@@ -1164,6 +1211,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "OrderServices");
+
+            migrationBuilder.DropTable(
+                name: "PaymentProfiles");
 
             migrationBuilder.DropTable(
                 name: "Reviews");

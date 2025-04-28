@@ -14,14 +14,14 @@ public class PaymentMethodRepository : IPaymentMethodRepository
         public async Task<PaymentMethod> GetByIdAsync(int id)
             => await _context.PaymentMethods.FindAsync(id);
 
-        public async Task<IEnumerable<PaymentMethod>> GetByCustomerIdAsync(int customerId)
+        public async Task<IEnumerable<PaymentMethod>> GetByUserIdAsync(int userId)
             => await _context.PaymentMethods
-                .Where(pm => pm.CustomerId == customerId)
+                .Where(pm => pm.UserId == userId)
                 .ToListAsync();
 
-        public async Task<PaymentMethod> GetDefaultPaymentMethodAsync(int customerId)
+        public async Task<PaymentMethod> GetDefaultPaymentMethodAsync(int userId)
             => await _context.PaymentMethods
-                .FirstOrDefaultAsync(pm => pm.CustomerId == customerId && pm.IsDefault);
+                .FirstOrDefaultAsync(pm => pm.UserId == userId && pm.IsDefault);
 
         public async Task<PaymentMethod> AddAsync(PaymentMethod paymentMethod)
         {

@@ -19,6 +19,11 @@ public class MappingProfile : Profile
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
 
+        CreateMap<PaymentProfile, PaymentProfileDto>();
+        CreateMap<CreatePaymentProfileDto, PaymentProfile>();
+        CreateMap<UpdatePaymentProfileDto, PaymentProfile>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
 
 
         // ContactInfo Mappings

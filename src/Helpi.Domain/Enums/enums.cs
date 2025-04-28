@@ -101,7 +101,7 @@ namespace Helpi.Domain.Enums
     {
         Pending,
         Processing,
-        Succeeded,
+        Paid,
         Failed,
         Refunded
     }

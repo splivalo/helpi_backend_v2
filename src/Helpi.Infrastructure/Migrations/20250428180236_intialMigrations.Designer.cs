@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250424090657_intialMigrations")]
+    [Migration("20250428180236_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -550,28 +550,85 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Brand")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CustomerId")
+                    b.Property<int?>("CustomerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExpiryMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExpiryYear")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("Processor")
+                    b.Property<string>("Last4")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PaymentProcessor")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<string>("ProcessorToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("PaymentMethods");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.PaymentProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DefaultPaymentMethodId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPayoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastPayoutDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PaymentProcessor")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PreferredPayoutMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StripeConnectAccountId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StripeCustomerId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PaymentProfiles");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentTransaction", b =>
@@ -1356,13 +1413,28 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
                 {
-                    b.HasOne("Helpi.Domain.Entities.Customer", "Customer")
+                    b.HasOne("Helpi.Domain.Entities.Customer", null)
                         .WithMany("PaymentMethods")
-                        .HasForeignKey("CustomerId")
+                        .HasForeignKey("CustomerUserId");
+
+                    b.HasOne("Helpi.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Customer");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.PaymentProfile", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.User", "User")
+                        .WithMany("PaymentProfiles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentTransaction", b =>
@@ -1380,7 +1452,7 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Helpi.Domain.Entities.PaymentMethod", "PaymentMethod")
-                        .WithMany()
+                        .WithMany("Transactions")
                         .HasForeignKey("PaymentMethodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1681,6 +1753,11 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("JobRequests");
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
+                {
+                    b.Navigation("Transactions");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.ScheduleAssignment", b =>
                 {
                     b.Navigation("JobInstances");
@@ -1713,6 +1790,8 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.User", b =>
                 {
                     b.Navigation("Customer");
+
+                    b.Navigation("PaymentProfiles");
 
                     b.Navigation("Student");
 

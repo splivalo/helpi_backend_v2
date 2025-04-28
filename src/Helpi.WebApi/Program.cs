@@ -22,7 +22,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddGoogleDriveServices(builder.Configuration);
 
 
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 
 
 builder.Services.AddIdentityServices(builder.Configuration);

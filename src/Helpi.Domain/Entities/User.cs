@@ -20,5 +20,7 @@ namespace Helpi.Domain.Entities
 
         public ICollection<FcmToken> fcmTokens { get; set; } = new List<FcmToken>();
 
+        public ICollection<PaymentProfile> PaymentProfiles { get; set; } = new List<PaymentProfile>();
+
     }
 }

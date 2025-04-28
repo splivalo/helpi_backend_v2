@@ -2,6 +2,7 @@
 using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Helpi.Application;
@@ -9,10 +10,12 @@ namespace Helpi.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
 
+        ConfigureStripe(configuration);
         // Register all services
+        services.AddScoped<IPaymentService, StripePaymentService>();
         services.AddScoped<IContractNumberService, ContractNumberService>();
         services.AddScoped<AuthService>();
         services.AddScoped<FcmTokensService>();
@@ -49,6 +52,19 @@ public static class DependencyInjection
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
         return services;
+    }
+
+    private static void ConfigureStripe(IConfiguration configuration)
+    {
+        var stripeSecretKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
+            ?? configuration["Stripe:SecretKey"];
+
+        if (string.IsNullOrWhiteSpace(stripeSecretKey))
+        {
+            throw new InvalidOperationException("Stripe Secret Key is not configured.");
+        }
+
+        Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
     }
 
 }

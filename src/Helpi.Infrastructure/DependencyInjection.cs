@@ -36,6 +36,7 @@ public static class DependencyInjection
 
 
 
+        services.AddScoped<IPaymentProfileRepository, PaymentProfileRepository>();
         services.AddScoped<IContractNumberSequenceRepository, ContractNumberSequenceRepository>();
 
         services.AddScoped<IFcmTokensRepository, FcmTokensRepository>();
