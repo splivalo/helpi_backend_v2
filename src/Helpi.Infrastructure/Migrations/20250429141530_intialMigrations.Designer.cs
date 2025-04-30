@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250428180236_intialMigrations")]
+    [Migration("20250429141530_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -564,6 +564,12 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int?>("ExpiryYear")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("IsAcctive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");

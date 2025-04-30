@@ -444,6 +444,8 @@ namespace Helpi.Infrastructure.Migrations
                     PaymentProcessor = table.Column<int>(type: "integer", nullable: false),
                     ProcessorToken = table.Column<string>(type: "text", nullable: true),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsAcctive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CustomerUserId = table.Column<int>(type: "integer", nullable: true)

@@ -3,10 +3,11 @@ using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces.Services
 {
-    public interface IPaymentService
+    public interface IStripePaymentService
     {
         ///  methods for making payments
 
+        Task<string> CreateSetupIntentAsync(User user);
         Task<string> CreateCustomerAsync(User user);
         Task<string> SavePaymentMethodAsync(string customerId, string paymentMethodId);
         Task<string> ChargePaymentAsync(Order order, User user);

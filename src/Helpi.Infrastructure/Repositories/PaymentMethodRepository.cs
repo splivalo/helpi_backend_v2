@@ -41,4 +41,24 @@ public class PaymentMethodRepository : IPaymentMethodRepository
                 _context.PaymentMethods.Remove(paymentMethod);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task AddNoSaveAsync(PaymentMethod paymentMethod)
+        {
+                await _context.PaymentMethods.AddAsync(paymentMethod);
+        }
+
+
+        public async Task UpdateNoSaveAsync(PaymentMethod paymentMethod)
+        {
+
+                _context.PaymentMethods.Update(paymentMethod);
+        }
+
+        public async Task SaveAsync()
+        {
+
+                await _context.SaveChangesAsync();
+        }
+
+
 }

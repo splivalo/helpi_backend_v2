@@ -20,6 +20,8 @@ namespace Helpi.Domain.Entities
         public string? ProcessorToken { get; set; }  // Eg Stripe PaymentMethodID 
 
         public bool IsDefault { get; set; } = false;
+        public bool IsActive { get; set; } = true;
+        public bool IsAcctive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

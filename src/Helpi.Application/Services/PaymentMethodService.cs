@@ -3,6 +3,8 @@ using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
+using Stripe;
 
 namespace Helpi.Application.Services;
 
@@ -11,22 +13,25 @@ public class PaymentMethodService
         private readonly IPaymentMethodRepository _repository;
         private readonly IMapper _mapper;
 
-        public PaymentMethodService(IPaymentMethodRepository repository, IMapper mapper)
+        private readonly IPaymentProfileRepository _paymentProfileRepository;
+
+        public PaymentMethodService(IPaymentMethodRepository repository, IMapper mapper, IPaymentProfileRepository paymentProfileRepository)
         {
                 _repository = repository;
+                _paymentProfileRepository = paymentProfileRepository;
                 _mapper = mapper;
         }
 
-        public async Task<List<PaymentMethodDto>> GetMethodsByCustomerAsync(int customerId)
+        public async Task<List<PaymentMethodDto>> GetMethodsByUserIdAsync(int userId)
         {
 
-                var methods = await _repository.GetByUserIdAsync(customerId);
+                var methods = await _repository.GetByUserIdAsync(userId);
                 return _mapper.Map<List<PaymentMethodDto>>(methods);
         }
 
         public async Task<PaymentMethodDto> AddPaymentMethodAsync(PaymentMethodCreateDto dto)
         {
-                var method = _mapper.Map<PaymentMethod>(dto);
+                var method = _mapper.Map<Domain.Entities.PaymentMethod>(dto);
                 await _repository.AddAsync(method);
                 return _mapper.Map<PaymentMethodDto>(method);
         }
@@ -67,69 +72,80 @@ public class PaymentMethodService
         /// </summary>
         /// <param name="customerId"></param>
         /// <returns></returns>
-        public async Task SyncAllCustomerPaymentMethodsWithStripeAsync(int customerId)
+        public async Task SyncAllPaymentMethodsWithStripeForCustomerAsync(int userId)
         {
-                // var customer = await _dbContext.Customers
-                //     .Include(c => c.PaymentMethods)
-                //     .FirstOrDefaultAsync(c => c.Id == customerId);
 
-                // if (customer == null) return;
+                var localPaymentMethods = await _repository.GetByUserIdAsync(userId);
+                var stripePaymentProfile = await _paymentProfileRepository.GetStipePaymentByUserIdAsync(userId);
 
-                // // Get all payment methods from Stripe
-                // var options = new PaymentMethodListOptions
-                // {
-                //         Customer = customer.StripeCustomerId,
-                //         Type = "card"
-                // };
+                if (stripePaymentProfile == null) return;
 
-                // var stripePaymentMethods = await _stripeClient.PaymentMethods.ListAsync(options);
+                var stripeCustomerId = stripePaymentProfile.StripeCustomerId;
 
-                // // Track which ones we've processed
-                // var processedIds = new HashSet<string>();
+                // Get all payment methods from Stripe
+                var options = new PaymentMethodListOptions
+                {
+                        Customer = stripeCustomerId,
+                        Type = "card"
+                };
 
-                // // Update existing payment methods and add new ones
-                // foreach (var stripePM in stripePaymentMethods)
-                // {
-                //         processedIds.Add(stripePM.Id);
+                var service = new Stripe.PaymentMethodService();
 
-                //         var localPM = customer.PaymentMethods
-                //             .FirstOrDefault(pm => pm.StripePaymentMethodId == stripePM.Id);
+                var stripePaymentMethods = await service.ListAsync(options);
 
-                //         if (localPM != null)
-                //         {
-                //                 // Update existing
-                //                 localPM.Brand = stripePM.Card.Brand;
-                //                 localPM.Last4 = stripePM.Card.Last4;
-                //                 localPM.ExpiryMonth = stripePM.Card.ExpMonth;
-                //                 localPM.ExpiryYear = stripePM.Card.ExpYear;
-                //                 localPM.IsActive = true;
-                //                 localPM.LastSyncedAt = DateTime.UtcNow;
-                //         }
-                //         else
-                //         {
-                //                 // Add new
-                //                 _dbContext.PaymentMethods.Add(new PaymentMethod
-                //                 {
-                //                         CustomerId = customerId,
-                //                         StripePaymentMethodId = stripePM.Id,
-                //                         Brand = stripePM.Card.Brand,
-                //                         Last4 = stripePM.Card.Last4,
-                //                         ExpiryMonth = stripePM.Card.ExpMonth,
-                //                         ExpiryYear = stripePM.Card.ExpYear,
-                //                         IsActive = true
-                //                 });
-                //         }
-                // }
+                // Track which ones we've processed
+                var processedIds = new HashSet<string>();
 
-                // // Mark payment methods that no longer exist in Stripe as inactive
-                // foreach (var paymentMethod in customer.PaymentMethods)
-                // {
-                //         if (!processedIds.Contains(paymentMethod.StripePaymentMethodId))
-                //         {
-                //                 paymentMethod.IsActive = false;
-                //         }
-                // }
+                // Update existing payment methods and add new ones
+                foreach (var stripePM in stripePaymentMethods)
+                {
+                        processedIds.Add(stripePM.Id);
 
-                // await _dbContext.SaveChangesAsync();
+                        var localPM = localPaymentMethods
+                            .FirstOrDefault(pm => pm.ProcessorToken == stripePM.Id);
+
+                        if (localPM != null)
+                        {
+                                // Update existing
+                                localPM.ProcessorToken = stripePM.Id;
+                                localPM.Brand = stripePM.Card.Brand;
+                                localPM.Last4 = stripePM.Card.Last4;
+                                localPM.ExpiryMonth = (int?)stripePM.Card.ExpMonth;
+                                localPM.ExpiryYear = (int?)stripePM.Card.ExpYear;
+                                localPM.IsActive = true;
+
+                                await _repository.UpdateNoSaveAsync(localPM);
+                        }
+                        else
+
+                        {
+                                var newPm = new Domain.Entities.PaymentMethod
+                                {
+                                        UserId = userId,
+                                        PaymentProcessor = PaymentProcessor.Stripe,
+                                        ProcessorToken = stripePM.Id,
+                                        Brand = stripePM.Card.Brand,
+                                        Last4 = stripePM.Card.Last4,
+                                        ExpiryMonth = (int?)stripePM.Card.ExpMonth,
+                                        ExpiryYear = (int?)stripePM.Card.ExpYear,
+                                        IsActive = true
+                                };
+
+
+                                await _repository.AddNoSaveAsync(newPm);
+                        }
+                }
+
+                // Mark payment methods that no longer exist in Stripe as inactive
+                foreach (var paymentMethod in localPaymentMethods)
+                {
+                        if (!processedIds.Contains(paymentMethod.ProcessorToken!))
+                        {
+                                paymentMethod.IsActive = false;
+                                await _repository.UpdateAsync(paymentMethod);
+                        }
+                }
+
+                await _repository.SaveAsync();
         }
 }

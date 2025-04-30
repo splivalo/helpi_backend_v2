@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -19,9 +18,6 @@ public class PaymentMethodDto
     public bool IsDefault { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-
-
-    public User User { get; set; } = null!; // customer or student
 
 }
 
@@ -52,4 +48,9 @@ public class PaymentMethodUpdateDto
 public class SaveStripePaymentMethodDto
 {
     public string PaymentMethodId { get; set; } = null!;
+}
+
+public class StripeSetupIntentResponseDto
+{
+    public string ClientSecret { get; set; } = null!;
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -12,18 +13,18 @@ namespace Helpi.WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/stripe-payment")]
-public class PaymentController : ControllerBase
+public class StripePaymentController : ControllerBase
 {
-    private readonly StripePaymentService _stripeService;
+    private readonly IStripePaymentService _stripeService;
     private readonly IUserRepository _userRepository;
     private readonly IPaymentProfileRepository _paymentProfileRepository;
-    private readonly ILogger<PaymentController> _logger;
+    private readonly ILogger<StripePaymentController> _logger;
 
-    public PaymentController(
-        StripePaymentService stripeService,
+    public StripePaymentController(
+        IStripePaymentService stripeService,
         IUserRepository userRepository,
         IPaymentProfileRepository paymentProfileRepository,
-        ILogger<PaymentController> logger)
+        ILogger<StripePaymentController> logger)
     {
         _stripeService = stripeService;
         _userRepository = userRepository;
@@ -32,7 +33,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("setup-intent")]
-    public async Task<ActionResult> CreateSetupIntent()
+    public async Task<ActionResult<StripeSetupIntentResponseDto>> CreateSetupIntent()
     {
         try
         {
@@ -48,10 +49,10 @@ public class PaymentController : ControllerBase
                 return NotFound("User not found");
             }
 
-            var clientSecret = await _stripeService.CreateSetupIntent(user);
+            var clientSecret = await _stripeService.CreateSetupIntentAsync(user);
 
 
-            return Ok(new { ClientSecret = clientSecret });
+            return Ok(new StripeSetupIntentResponseDto { ClientSecret = clientSecret });
         }
         catch (Exception ex)
         {
@@ -60,39 +61,46 @@ public class PaymentController : ControllerBase
         }
     }
 
-    [HttpPost("save-payment-method")]
-    public async Task<ActionResult> SavePaymentMethod([FromBody] SaveStripePaymentMethodDto request)
-    {
-        try
-        {
-            // Get current user from the token claims
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _userRepository.GetByIdAsync(int.Parse(userId!));
 
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
+    /// <summary>
+    /// Save to local DB
+    /// Note: system automaticall listens to stripe and syncs .. no probalbly no need for this
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    // [HttpPost("save-payment-method")]
+    // public async Task<ActionResult> SavePaymentMethod([FromBody] SaveStripePaymentMethodDto request)
+    // {
+    //     try
+    //     {
+    //         // Get current user from the token claims
+    //         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    //         var user = await _userRepository.GetByIdAsync(int.Parse(userId!));
 
-            var stripePaymentProfile = await _paymentProfileRepository.GetStipePaymentByUserIdAsync(user.Id);
+    //         if (user == null)
+    //         {
+    //             return NotFound("User not found");
+    //         }
 
-            if (stripePaymentProfile == null)
-            {
-                return BadRequest("User does not have a payment profile");
-            }
+    //         var stripePaymentProfile = await _paymentProfileRepository.GetStipePaymentByUserIdAsync(user.Id);
 
-            var paymentMethodId = await _stripeService.SavePaymentMethodAsync(
-                                                        stripePaymentProfile.StripeCustomerId!,
-                                                        request.PaymentMethodId);
+    //         if (stripePaymentProfile == null)
+    //         {
+    //             return BadRequest("User does not have a payment profile");
+    //         }
 
-            return Ok(new { PaymentMethodId = paymentMethodId });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving payment method");
-            return StatusCode(500, "An error occurred while saving payment method");
-        }
-    }
+    //         var paymentMethodId = await _stripeService.SavePaymentMethodAsync(
+    //                                                     stripePaymentProfile.StripeCustomerId!,
+    //                                                     request.PaymentMethodId);
+
+    //         return Ok(new { PaymentMethodId = paymentMethodId });
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _logger.LogError(ex, "Error saving payment method");
+    //         return StatusCode(500, "An error occurred while saving payment method");
+    //     }
+    // }
 
     [HttpGet("payment-methods")]
     public async Task<ActionResult> GetPaymentMethods()

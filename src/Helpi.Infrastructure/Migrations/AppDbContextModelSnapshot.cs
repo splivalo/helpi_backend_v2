@@ -562,6 +562,12 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("ExpiryYear")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsAcctive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 

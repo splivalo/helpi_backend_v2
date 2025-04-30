@@ -10,7 +10,7 @@ using Stripe;
 
 namespace Helpi.Application.Services
 {
-    public class StripePaymentService : IPaymentService
+    public class StripePaymentService : IStripePaymentService
     {
         private readonly IUserRepository _userRepository;
         private readonly IOrderRepository _orderRepository;
@@ -47,8 +47,7 @@ namespace Helpi.Application.Services
                                   ??
                                   configuration["Stripe:SecretKey"];
 
-            if (string.IsNullOrEmpty(stripeSecretKey))
-                throw new ArgumentNullException("Firebase credentials not configured");
+
 
             StripeConfiguration.ApiKey = stripeSecretKey;
 
@@ -214,7 +213,7 @@ namespace Helpi.Application.Services
         }
 
 
-        public async Task<string> CreateSetupIntent(User user)
+        public async Task<string> CreateSetupIntentAsync(User user)
         {
 
 
@@ -242,6 +241,7 @@ namespace Helpi.Application.Services
             var setupIntentService = new SetupIntentService();
             var setupIntent = await setupIntentService.CreateAsync(new SetupIntentCreateOptions
             {
+                PaymentMethodTypes = new List<string> { "card" },
                 Customer = stripePaymentProfile!.StripeCustomerId,
                 Usage = "off_session" // Required for future payments without customer
             });
