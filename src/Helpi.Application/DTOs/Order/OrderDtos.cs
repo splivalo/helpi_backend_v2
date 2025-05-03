@@ -9,6 +9,7 @@ public class OrderDto
     public int SeniorId { get; set; }
     public OrderStatus Status { get; set; }
     public bool IsRecurring { get; set; }
+    public int? PaymentMethodId { get; set; }
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
@@ -22,6 +23,8 @@ public class OrderCreateDto
     public int SeniorId { get; set; }
 
     public bool IsRecurring { get; set; }
+
+    public int? PaymentMethodId { get; set; }
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }

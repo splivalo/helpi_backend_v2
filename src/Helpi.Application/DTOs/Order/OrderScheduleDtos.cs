@@ -14,7 +14,7 @@ public class OrderScheduleDto
 
 public class OrderScheduleCreateDto
 {
-    [Range(0, 6)]
+    [Range(1, 7)]
     public byte DayOfWeek { get; set; }
 
     [Required]

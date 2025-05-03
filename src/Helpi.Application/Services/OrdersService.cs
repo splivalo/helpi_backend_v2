@@ -81,10 +81,26 @@ public class OrdersService
                         // === 4. Commit Transaction ===
                         await _unitOfWork.SaveChangesAsync();
 
-                        // === 5. Matich service ===
-                        await _matchingService.InitiateMatchingProcessAsync(order.Id);
+                        // === 5. Re-fetch Order with related data ===
+                        var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
 
-                        return _mapper.Map<OrderDto>(order);
+                        // === 6. Post-Creation: Trigger Matching (Non-blocking) ===
+                        _ = Task.Run(async () =>
+                        {
+                                try
+                                {
+                                        await _matchingService.InitiateMatchingProcessAsync(order.Id);
+                                }
+                                catch (Exception ex)
+                                {
+                                        //  don't interrupt order creation response
+                                }
+                        });
+
+
+
+
+                        return _mapper.Map<OrderDto>(savedOrder);
                 }
                 catch (Exception ex)
                 {
@@ -99,3 +115,5 @@ public class OrdersService
         }
 
 }
+
+

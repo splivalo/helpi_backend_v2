@@ -10,7 +10,7 @@ namespace Helpi.Domain.Entities
         [MaxLength(255)]
         public string FullName { get; set; } = null!;
 
-        public DateTime DateOfBirth { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
 
         [MaxLength(20)]

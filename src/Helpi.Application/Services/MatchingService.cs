@@ -8,6 +8,8 @@ using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 
 public class MatchingService : IMatchingService
 {
@@ -18,7 +20,7 @@ public class MatchingService : IMatchingService
     private readonly INotificationService _notificationService;
     private readonly IOrderRepository _orderRepository;
 
-
+    private readonly ILogger<MatchingService> _logger;
     private readonly IMatchingBackgroundJobs _matchingBackgroundJobs;
 
     public MatchingService(
@@ -27,7 +29,8 @@ public class MatchingService : IMatchingService
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
         IJobRequestRepository jobRequestRepository,
-        IMatchingBackgroundJobs matchingBackgroundJobs
+        IMatchingBackgroundJobs matchingBackgroundJobs,
+        ILogger<MatchingService> logger
         )
     {
 
@@ -37,20 +40,32 @@ public class MatchingService : IMatchingService
         _studentRepository = studentRepository;
         _jobRequestRepository = jobRequestRepository;
         _matchingBackgroundJobs = matchingBackgroundJobs;
+        _logger = logger;
     }
 
     public async Task InitiateMatchingProcessAsync(int orderId)
     {
-
-        var order = await _orderRepository.GetByIdAsync(orderId);
-
-        if (order?.Status == OrderStatus.Pending)
+        try
         {
-            // Start with first matching attempt
-            await FindAndNotifyStudentsAsync(orderId);
 
-            // Schedule next attempt if needed
-            ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(10));
+            var order = await _orderRepository.GetByIdAsync(orderId);
+
+            if (order?.Status == OrderStatus.Pending)
+            {
+                // Start with first matching attempt
+                await FindAndNotifyStudentsAsync(orderId);
+
+                // Schedule next attempt if needed
+                ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(10));
+            }
+        }
+        catch (Exception ex)
+        {
+            //  Log the error
+            _logger.LogError(ex, "❌ Failed to initiate matching process for order {OrderId}", orderId);
+
+            throw new MatchingException($"Failed to initiate matching process for order {orderId}", ex);
+
         }
     }
 

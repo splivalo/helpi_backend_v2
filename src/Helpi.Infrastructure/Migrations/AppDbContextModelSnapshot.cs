@@ -104,7 +104,7 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
@@ -463,6 +463,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("PaymentMethodId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("RecurrencePattern")
                         .HasColumnType("integer");

@@ -17,6 +17,11 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
             .Must((o, EndDate) => EndDate >= o.StartDate)
             .WithMessage("Order EndDate must be greater than or equal to order StartDate");
 
+        // RuleFor(o => o.PaymentMethodId)
+        // .Cascade(CascadeMode.Stop)
+        // .NotNull().WithMessage("Payment method is required")
+        // .GreaterThan(0).WithMessage("Invalid payment method");
+
 
         RuleFor(o => o.Schedules)
             .Must(schedules => schedules.All(schedule =>

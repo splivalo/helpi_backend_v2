@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250429141530_intialMigrations")]
+    [Migration("20250503121531_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -107,7 +107,7 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
@@ -466,6 +466,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("PaymentMethodId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("RecurrencePattern")
                         .HasColumnType("integer");

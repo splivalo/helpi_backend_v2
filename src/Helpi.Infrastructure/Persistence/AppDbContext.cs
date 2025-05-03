@@ -94,12 +94,12 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
 
 
-        modelBuilder.Entity<ContactInfo>()
-       .Property(c => c.DateOfBirth)
-       .HasConversion(
-           v => v.ToUniversalTime(), // Convert to UTC before saving
-           v => DateTime.SpecifyKind(v, DateTimeKind.Utc) // Convert to UTC when reading
-       );
+        //     modelBuilder.Entity<ContactInfo>()
+        //    .Property(c => c.DateOfBirth)
+        //    .HasConversion(
+        //        v => v.ToUniversalTime(), // Convert to UTC before saving
+        //        v => DateTime.SpecifyKind(v, DateTimeKind.Utc) // Convert to UTC when reading
+        //    );
 
 
 

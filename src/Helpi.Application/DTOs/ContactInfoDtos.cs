@@ -8,7 +8,7 @@ public class ContactInfoDto
     public int Id { get; set; }
     public string FullName { get; set; } = null!;
 
-    public DateTime DateOfBirth { get; set; }
+    public DateOnly DateOfBirth { get; set; }
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
     public Gender Gender { get; set; }
@@ -34,7 +34,7 @@ public class ContactInfoCreateDto
     [MaxLength(255)]
     public string FullName { get; set; } = null!;
 
-    public DateTime DateOfBirth { get; set; }
+    public DateOnly DateOfBirth { get; set; }
 
     [Required]
     [Phone]
