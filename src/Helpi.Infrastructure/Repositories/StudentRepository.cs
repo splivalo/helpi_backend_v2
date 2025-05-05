@@ -69,22 +69,10 @@ public class StudentRepository : IStudentRepository
                 return await _context.Students.Include(s => s.Contact).ToListAsync();
         }
 
-        public async Task<List<Student>> UnnotifiedStudentsOfferingServices(
-                List<int> serviceIds,
-                List<int> notifiedStudentIds)
-        {
-                var students = await _context.Students
-                        .Where(s => !notifiedStudentIds.Contains(s.UserId))
-                        .Where(s => s.StudentServices
-                                .Select(ss => ss.ServiceId)
-                                .Distinct()
-                                .Count(serviceId => serviceIds.Contains(serviceId)) == serviceIds.Count)
-                        .ToListAsync();
 
-                return students;
-        }
-
-        public async Task<List<Student>> GetAvailableStudentsForOrderSchedule(int orderScheduleId)
+        public async Task<List<Student>> FindEligibleStudentsForSchedule(
+            int orderScheduleId,
+            List<int>? notifiedStudentIds = null)
         {
                 // Fetch the target OrderSchedule with required relationships
                 var orderSchedule = await _context.OrderSchedules
@@ -107,7 +95,7 @@ public class StudentRepository : IStudentRepository
                 var targetStart = orderSchedule.StartTime;
                 var targetEnd = orderSchedule.EndTime;
 
-                // Base query for available students
+                // Base query for eligible students
                 var query = _context.Students
                     .Where(s => s.VerificationStatus == VerificationStatus.Verified)
                     .Include(s => s.Contact)
@@ -117,6 +105,12 @@ public class StudentRepository : IStudentRepository
                         .ThenInclude(sa => sa.OrderSchedule)
                     .AsQueryable();
 
+                // Filter out already notified students if a list is provided
+                if (notifiedStudentIds != null && notifiedStudentIds.Any())
+                {
+                        query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
+                }
+
                 // Availability check 
                 query = query.Where(s => s.AvailabilitySlots.Any(a =>
                     a.DayOfWeek == targetDay &&
@@ -124,12 +118,12 @@ public class StudentRepository : IStudentRepository
                     a.EndTime >= targetEnd
                 ));
 
-                // Student must offer all service required by the order
+                // Student must offer ALL services required by the order
                 query = query.Where(s => requiredServiceIds.All(rs =>
                     s.StudentServices.Any(ss => ss.ServiceId == rs)
                 ));
 
-                // Location validation
+                // Location validation 
                 // query = query.Where(s =>
                 //     s.Contact.CityId == seniorCityId &&
                 //     _context.ServiceRegions.Any(sr =>
@@ -147,6 +141,8 @@ public class StudentRepository : IStudentRepository
                     sa.Status != AssignmentStatus.Canceled &&
                     sa.Status != AssignmentStatus.Declined
                 ));
+
+
 
                 return await query.ToListAsync();
         }

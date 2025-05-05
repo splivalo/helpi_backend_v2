@@ -28,7 +28,7 @@ public class StudentsController : ControllerBase
         [HttpGet("order-schedules/{orderScheduleId}/available-students")]
         public async Task<ActionResult<List<StudentDto>>> GetAvailableStudentsForOrderSchedule(int orderScheduleId)
         {
-                var students = await _service.GetAvailableStudentsForOrderSchedule(orderScheduleId);
+                var students = await _service.FindEligibleStudentsForSchedule(orderScheduleId, null);
                 return Ok(students);
         }
 

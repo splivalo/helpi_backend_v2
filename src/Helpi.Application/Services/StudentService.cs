@@ -47,9 +47,9 @@ public class StudentService
                 await _repository.UpdateAsync(student);
         }
 
-        public async Task<List<StudentDto>> GetAvailableStudentsForOrderSchedule(int orderScheduleId)
+        public async Task<List<StudentDto>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds)
         {
-                var students = await _repository.GetAvailableStudentsForOrderSchedule(orderScheduleId);
+                var students = await _repository.FindEligibleStudentsForSchedule(orderScheduleId, notifiedStudentIds);
                 return _mapper.Map<List<StudentDto>>(students);
         }
 

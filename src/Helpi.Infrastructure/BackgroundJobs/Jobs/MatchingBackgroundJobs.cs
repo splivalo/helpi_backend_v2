@@ -15,7 +15,7 @@ public class MatchingBackgroundJobs : IMatchingBackgroundJobs
     public void ScheduleFindAndNotifyStudents(int orderId, DateTime executionTime)
     {
         BackgroundJob.Schedule<IMatchingService>(
-           service => service.FindAndNotifyStudentsAsync(orderId),
+           service => service.InitiateMatchingProcessAsync(orderId),
            executionTime
        );
 
