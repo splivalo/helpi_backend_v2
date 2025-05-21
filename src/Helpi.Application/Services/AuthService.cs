@@ -1,7 +1,8 @@
 
-using System;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
 using Helpi.Application.DTOs;
@@ -87,7 +88,7 @@ namespace Helpi.Application.Services
             var firbase_claims = _firbaseUserClaims(user);
             var firebaseToken = await _firebaseService.GenerateCustomTokenAsync(firebase_uid, firbase_claims);
 
-            return (true, token, user.Id, user.UserType, firebaseToken, "Login successful");
+            return (true, token.AccessToken, user.Id, user.UserType, firebaseToken, "Login successful");
         }
 
         public Dictionary<string, dynamic> _firbaseUserClaims(User user)
@@ -260,7 +261,7 @@ namespace Helpi.Application.Services
         }
 
 
-        public async Task<string> GenerateJwtToken(User user)
+        public async Task<TokenResponseDto> GenerateJwtToken(User user)
         {
             var claims = new List<Claim>
             {
@@ -280,15 +281,41 @@ namespace Helpi.Application.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+
+            var accessTokenExpiry = DateTime.Now.AddHours(1);
+            var refreshTokenExpiry = accessTokenExpiry.AddDays(7);
+
             var token = new JwtSecurityToken(
                 issuer: _issuer,
                 audience: _audience,
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: accessTokenExpiry,
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            var refreshToken = GenerateRefreshToken();
+
+            // todo: need to save refreshToken to a table
+            // await _refreshTokenService.SaveRefreshTokenAsync(user.Id, refreshToken, refreshTokenExpiry);
+
+            return new TokenResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                AccessTokenExpiry = accessTokenExpiry,
+                RefreshTokenExpiry = refreshTokenExpiry,
+            };
+        }
+
+        private string GenerateRefreshToken()
+        {
+
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
         }
 
         public async Task<(bool Success, string Message)> RegisterAdmin(AdminRegisterDto dto)
@@ -335,6 +362,31 @@ namespace Helpi.Application.Services
             }
 
         }
+
+        public async Task<TokenResponseDto> ChangePassword(string userId, ChangePasswordDto dto)
+        {
+            if (dto.NewPassword != dto.ConfirmNewPassword)
+                throw new ArgumentException("New password and confirmation do not match.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                throw new InvalidOperationException("User not found.");
+
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Password change failed: {errors}");
+            }
+
+            // Reissue new JWT
+            var tokenResponseDto = await GenerateJwtToken(user);
+
+            return tokenResponseDto;
+        }
+
     }
 
 

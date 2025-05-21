@@ -1,7 +1,8 @@
 using Helpi.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Helpi.Application.Services;
-using FirebaseAdmin.Auth;
+using System.Security.Claims;
+
 
 
 [ApiController]
@@ -96,4 +97,25 @@ public class AuthController : ControllerBase
             message = result.Message
         });
     }
+
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+
+
+    {
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new InvalidOperationException("User not loggedin.");
+        }
+
+        var tokenResponseDto = await _authService.ChangePassword(userId, dto);
+
+        return Ok(tokenResponseDto);
+    }
+
+
 }

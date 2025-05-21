@@ -64,4 +64,28 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .FirstOrDefaultAsync();
         }
 
+        public async Task<bool> IsScheduleAssigned(int scheduleId)
+        {
+                var activeStatuses = new[]
+                {
+                        AssignmentStatus.Completed,
+                        AssignmentStatus.Accepted
+                };
+
+                return await _context.ScheduleAssignments
+                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId && activeStatuses.Contains(sa.Status));
+        }
+        public async Task<bool> IsScheduleCompleted(int scheduleId)
+        {
+                var activeStatuses = new[]
+                {
+                        AssignmentStatus.Completed,
+                        AssignmentStatus.Accepted
+                };
+
+                return await _context.ScheduleAssignments
+                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId && sa.Status == AssignmentStatus.Completed);
+        }
+
+
 }

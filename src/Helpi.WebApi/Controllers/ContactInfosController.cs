@@ -2,10 +2,11 @@
 using Helpi.Application.DTOs;
 using Helpi.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Helpi.WebApi.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/contact-infos")]
 public class ContactInfosController : ControllerBase

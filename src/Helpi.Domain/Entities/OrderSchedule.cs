@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 namespace Helpi.Domain.Entities
 {
 
@@ -16,7 +17,11 @@ namespace Helpi.Domain.Entities
         public string? CancellationReason { get; set; }
 
         public Order Order { get; set; } = null!;
+
+
         public ICollection<JobRequest> JobRequests { get; set; } = new List<JobRequest>();
         public ICollection<ScheduleAssignment> Assignments { get; set; } = new List<ScheduleAssignment>();
+
+
     }
 }

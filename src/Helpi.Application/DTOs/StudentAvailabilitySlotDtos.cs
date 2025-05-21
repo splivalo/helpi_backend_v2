@@ -15,7 +15,7 @@ public class StudentAvailabilitySlotDto
 
 public class StudentAvailabilitySlotCreateDto
 {
-    [Range(0, 6)]
+    [Range(1, 7)]
     public byte DayOfWeek { get; set; }
 
     public int StudentId { get; set; }

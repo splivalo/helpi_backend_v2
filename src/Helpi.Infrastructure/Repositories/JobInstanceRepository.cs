@@ -15,13 +15,16 @@ public class JobInstanceRepository : IJobInstanceRepository
         public async Task<JobInstance> GetByIdAsync(int id)
         {
                 return await _context.JobInstances
-                .Include(ji => ji.Assignment)
+                .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .FirstOrDefaultAsync(ji => ji.Id == id);
         }
 
         public async Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId)
             => await _context.JobInstances
                 .Where(ji => ji.ScheduleAssignmentId == assignmentId)
+                .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .ToListAsync();
 
 
@@ -29,6 +32,8 @@ public class JobInstanceRepository : IJobInstanceRepository
         {
                 return await _context.JobInstances
                      .Where(j => j.Assignment.StudentId == studentId)
+                     .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                     .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                      .AsNoTracking()
                      .ToListAsync();
         }

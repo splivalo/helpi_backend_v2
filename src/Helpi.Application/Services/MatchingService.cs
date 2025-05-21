@@ -1,21 +1,19 @@
 
+using System.Text.Json;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
-using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Helpi.Application.Services;
+
 public class MatchingService : IMatchingService
 {
     private readonly IJobRequestRepository _jobRequestRepository;
+    private readonly IScheduleAssignmentRepository _scheduleAssignmentRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ISeniorRepository _seniorRepository;
     private readonly StudentAvailabilitySlotService _studentAvailabilityService;
@@ -32,6 +30,7 @@ public class MatchingService : IMatchingService
 
     public MatchingService(
         StudentAvailabilitySlotService studentAvailabilityService,
+        IScheduleAssignmentRepository scheduleAssignmentRepository,
         INotificationService notificationService,
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
@@ -41,6 +40,7 @@ public class MatchingService : IMatchingService
         ILogger<MatchingService> logger)
     {
         _studentAvailabilityService = studentAvailabilityService;
+        _scheduleAssignmentRepository = scheduleAssignmentRepository;
         _notificationService = notificationService;
         _orderRepository = orderRepository;
         _studentRepository = studentRepository;
@@ -48,6 +48,11 @@ public class MatchingService : IMatchingService
         _jobRequestRepository = jobRequestRepository;
         _matchingBackgroundJobs = matchingBackgroundJobs;
         _logger = logger;
+    }
+
+    public void StartMatching(int orderId)
+    {
+        ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
     }
 
     public async Task InitiateMatchingProcessAsync(int orderId)
@@ -62,7 +67,9 @@ public class MatchingService : IMatchingService
                 return;
             }
 
-            if (order.Status == OrderStatus.Pending)
+            var unassignedSchedules = await UnassignedSchedulesAsync(order.Schedules);
+
+            if (unassignedSchedules.Any())
             {
                 // Store attempt count in the order or a separate tracking table
                 int currentAttempt = await GetCurrentMatchingAttemptCount(orderId);
@@ -89,28 +96,45 @@ public class MatchingService : IMatchingService
         }
     }
 
-    private async Task ProcessAllSchedulesAsync(Order order)
+    private async Task<ICollection<OrderSchedule>> UnassignedSchedulesAsync(ICollection<OrderSchedule> schedules)
     {
-        foreach (var schedule in order.Schedules)
+
+        ICollection<OrderSchedule> unassigned = [];
+
+        foreach (var schedule in schedules)
         {
+            if (schedule.IsCancelled) continue;
+
             // Check if schedule is already assigned
-            bool isAssigned = await IsScheduleAssigned(schedule.Id);
+            bool isAssigned = await _scheduleAssignmentRepository.IsScheduleAssigned(schedule.Id);
+
             if (isAssigned)
             {
                 _logger.LogInformation("📅 Schedule {ScheduleId} is already assigned, skipping", schedule.Id);
                 continue;
             }
+            else
+            {
+                _logger.LogInformation("📅⚠️ Schedule {ScheduleId} is not assigned", schedule.Id);
+                unassigned.Add(schedule);
+                continue;
+            }
+
+        }
+
+        return unassigned;
+    }
+
+    private async Task ProcessAllSchedulesAsync(Order order)
+    {
+        foreach (var schedule in order.Schedules)
+        {
 
             await FindAndNotifyStudentsForScheduleAsync(order, schedule);
         }
     }
 
-    private async Task<bool> IsScheduleAssigned(int scheduleId)
-    {
-        // Check if there's an active assignment for this schedule
-        // Implementation depends on your data access layer
-        return await Task.FromResult(false); // Placeholder
-    }
+
 
     public async Task FindAndNotifyStudentsAsync(int orderId)
     {
@@ -151,16 +175,12 @@ public class MatchingService : IMatchingService
             // Take the top N students based on our prioritization
             var studentsToNotify = unnotifiedStudents.Take(_maxConcurrentNotifications).ToList();
 
-            // Send notifications in parallel
-            // var notificationTasks = studentsToNotify.Select(student =>
-            //     TrySendJobRequest(student, schedule)).ToList();
 
-            // await Task.WhenAll(notificationTasks);
 
             // Process each student one at a time to avoid context disposal issues
             foreach (var student in studentsToNotify)
             {
-                await TrySendJobRequest(student, schedule);
+                await TrySendJobRequest(student, order, schedule);
             }
         }
         catch (Exception ex)
@@ -240,17 +260,22 @@ public class MatchingService : IMatchingService
     private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
 
 
-    private async Task<bool> TrySendJobRequest(Student student, OrderSchedule orderSchedule)
+    private async Task<bool> TrySendJobRequest(Student student, Order order, OrderSchedule orderSchedule)
     {
         try
         {
+
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jobRequestExpirationMinutes);
+
             // Create JobRequest entity
             var jobRequest = new JobRequest
             {
                 OrderScheduleId = orderSchedule.Id,
+                OrderId = order.Id,
+                SeniorId = order.SeniorId,
                 StudentId = student.UserId,
                 Status = JobRequestStatus.Pending,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(_jobRequestExpirationMinutes),
+                ExpiresAt = expiresAt,
                 PriorityLevel = 1, // Could vary based on matching attempt number
                 IsEmergencySub = false // Set true for urgent cases
             };
@@ -258,23 +283,31 @@ public class MatchingService : IMatchingService
             await _jobRequestRepository.AddAsync(jobRequest);
 
             // Send notification
-            bool notificationSent = await _notificationService.SendJobRequestNotification(
-                student.UserId,
-                orderSchedule.Id,
-                jobRequest.ExpiresAt);
 
-            if (!notificationSent)
+            var jobRequestNotification = new HNotification
             {
-                // Mark job request as failed if notification fails
+                RecieverUserId = student.UserId,
+                Title = "Job request",
+                Body = $"Expires: {expiresAt:MMM dd, yyyy hh:mm tt}",
+                Type = NotificationType.JobRequest,
+                Payload = JsonSerializer.Serialize(new
+                {
+                    OrderSchedule = orderSchedule.Id,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                })
+            };
 
-                _logger.LogWarning("⚠️ Failed to send notification to student {StudentId} for schedule {ScheduleId}",
-                    student.UserId, orderSchedule.Id);
-            }
-            else
+
+            bool notificationSent = await _notificationService.SendPushNotificationAsync(
+                student.UserId,
+                jobRequestNotification);
+
+            if (notificationSent)
             {
                 _logger.LogInformation("✅ Job request sent to student {StudentId} for schedule {ScheduleId}",
                     student.UserId, orderSchedule.Id);
             }
+
 
             return notificationSent;
         }

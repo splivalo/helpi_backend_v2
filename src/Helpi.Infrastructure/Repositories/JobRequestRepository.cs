@@ -22,8 +22,12 @@ public class JobRequestRepository : IJobRequestRepository
         public async Task<JobRequest?> GetByIdAsync(int id)
         {
                 return await _context.JobRequests
-                .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.OrderSchedule).ThenInclude(os => os.Order)
                 .Include(jr => jr.Student)
+                .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.Order)
+                .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(jr => jr.Id == id);
         }
 
@@ -31,15 +35,15 @@ public class JobRequestRepository : IJobRequestRepository
         {
                 return await _context.JobRequests
                         .Where(jr => jr.Status == JobRequestStatus.Pending)
-                        .Include(jr => jr.OrderSchedule)
-                         .AsNoTracking()
+                        .Include(jr => jr.OrderSchedule).ThenInclude(os => os.Order)
+                        .AsNoTracking()
                         .ToListAsync();
         }
 
         public async Task<IEnumerable<JobRequest>> GetExpiredRequestsAsync()
             => await _context.JobRequests
                 .Where(jr => jr.ExpiresAt < DateTime.UtcNow)
-                .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.OrderSchedule).AsNoTracking()
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -78,6 +82,8 @@ public class JobRequestRepository : IJobRequestRepository
                 .Where(jr => jr.StudentId == studentId)
                 .Where(jr => jr.Status == JobRequestStatus.Pending)
                 .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.Order)
+                .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -87,6 +93,8 @@ public class JobRequestRepository : IJobRequestRepository
                 return await _context.JobRequests
                .Where(jr => jr.StudentId == studentId)
                .Include(jr => jr.OrderSchedule)
+               .Include(jr => jr.Order)
+               .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                .AsNoTracking()
                .ToListAsync();
         }
@@ -99,7 +107,9 @@ public class JobRequestRepository : IJobRequestRepository
                 {
                         var jobRequest = await _context.JobRequests
                              .Include(jr => jr.OrderSchedule)
-                             .ThenInclude(os => os.Order)
+                             .Include(jr => jr.OrderSchedule)
+                             .Include(jr => jr.Order)
+                             .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                              .SingleOrDefaultAsync(jr => jr.Id == resJobRequest.Id);
 
                         if (jobRequest == null)
@@ -215,11 +225,6 @@ public class JobRequestRepository : IJobRequestRepository
 
                 await _context.SaveChangesAsync();
 
-
-
-                // Trigger new matching attempt
-                // BackgroundJob.Enqueue(() =>
-                //     _matchingService.FindAndNotifyStudentsAsync(jobRequest.OrderSchedule.OrderId));
 
                 return jobRequest;
         }

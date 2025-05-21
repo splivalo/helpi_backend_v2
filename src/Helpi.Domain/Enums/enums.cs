@@ -50,12 +50,10 @@ namespace Helpi.Domain.Enums
         Cancelled
     }
 
+
     public enum RecurrencePattern
     {
-        Daily,
         Weekly,
-        Biweekly,
-        Monthly
     }
 
     public enum JobRequestStatus
@@ -135,5 +133,14 @@ namespace Helpi.Domain.Enums
     {
         Male,
         Female
+    }
+
+    public enum NotificationType
+    {
+        General,
+        JobRequest,
+        AssignmentConfirmed,
+        ScheduleChange,
+        PaymentReceipt
     }
 }

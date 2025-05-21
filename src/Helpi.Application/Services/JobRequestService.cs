@@ -14,14 +14,14 @@ public class JobRequestService
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
 
-        private readonly IRecurrenceDateGenerator _dateGenerator;
+        private readonly IRecurringJobService _recurringJobService;
 
-        public JobRequestService(IJobRequestRepository jobRequestRepository, IJobInstanceRepository jobInstanceRepository, IMapper mapper, IRecurrenceDateGenerator dateGenerator)
+        public JobRequestService(IJobRequestRepository jobRequestRepository, IJobInstanceRepository jobInstanceRepository, IMapper mapper, IRecurringJobService recurringJobService)
         {
                 _jobRequestRepository = jobRequestRepository;
                 _jobInstanceRepository = jobInstanceRepository;
                 _mapper = mapper;
-                _dateGenerator = dateGenerator;
+                _recurringJobService = recurringJobService;
         }
 
         public async Task<List<JobRequestDto>> GetStudentPendingRequests(int studentId)
@@ -65,37 +65,9 @@ public class JobRequestService
         public async Task _GenerateJobInstancesAsync(JobRequest jobRequest)
         {
 
-                var order = jobRequest.OrderSchedule.Order;
-
-                DayOfWeek dayOfWeek = (DayOfWeek)jobRequest.OrderSchedule.DayOfWeek;
-
-                var endDate = order.IsRecurring ? order.EndDate : order.StartDate;
-
-                var dates = _dateGenerator.GetDates(
-                        order.StartDate,
-                        endDate,
-                        order.RecurrencePattern ?? RecurrencePattern.Daily,
-                        dayOfWeek,
-                        3
-                        );
-
-                var jobInstances = new List<JobInstance>();
-
                 var assignment = jobRequest.OrderSchedule.Assignments.First();
 
-                foreach (var date in dates)
-                {
-                        jobInstances.Add(new JobInstance
-                        {
-                                SeniorId = order.SeniorId,
-                                ScheduleAssignmentId = assignment.Id,
-                                ScheduledDate = date,
-                                StartTime = jobRequest.OrderSchedule.StartTime,
-                                EndTime = jobRequest.OrderSchedule.EndTime,
-                                Status = JobInstanceStatus.Upcoming
-                        });
-                }
-
+                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment);
 
                 await _jobInstanceRepository.AddRangeAsync(jobInstances);
 

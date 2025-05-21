@@ -11,5 +11,6 @@ public interface IScheduleAssignmentRepository
     Task UpdateAsync(ScheduleAssignment assignment);
     Task DeleteAsync(ScheduleAssignment assignment);
     Task<Student?> GetActiveStudentForOrderScheduleAsync(int orderScheduleId);
-
+    Task<bool> IsScheduleAssigned(int scheduleId);
+    Task<bool> IsScheduleCompleted(int scheduleId);
 }

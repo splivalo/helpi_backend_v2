@@ -29,7 +29,7 @@ public class OrderScheduleRepository : IOrderScheduleRepository
         {
                 return await _context.OrderSchedules
                 .Where(os => os.Order.StartDate <= date &&
-                    (os.Order.EndDate == null || os.Order.EndDate >= date))
+                    (os.Order.EndDate >= date))
                 .ToListAsync();
         }
 

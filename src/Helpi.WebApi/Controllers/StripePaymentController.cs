@@ -2,9 +2,6 @@ using System.Security.Claims;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
-using Helpi.Application.Services;
-using Helpi.Domain.Entities;
-using Helpi.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

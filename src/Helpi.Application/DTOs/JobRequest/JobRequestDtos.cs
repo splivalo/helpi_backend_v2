@@ -10,6 +10,9 @@ public class JobRequestDto
     public int Id { get; set; }
 
     public int OrderScheduleId { get; set; }
+
+    public int OrderId { get; set; }
+    public int SeniorId { get; set; }
     public int StudentId { get; set; }
     public JobRequestStatus Status { get; set; }
     public DateTime SentAt { get; set; }
@@ -17,12 +20,21 @@ public class JobRequestDto
     public bool IsEmergencySub { get; set; }
 
     public OrderScheduleDto OrderSchedule { get; set; } = null!;
+    public OrderDto Order { get; set; } = null!;
+    public SeniorDto Senior { get; set; } = null!;
 }
 
 public class JobRequestCreateDto
 {
     [Required]
     public int OrderScheduleId { get; set; }
+
+    [Required]
+    public int OrderId { get; set; }
+
+
+    [Required]
+    public int SeniorId { get; set; }
 
     [Required]
     public int StudentId { get; set; }

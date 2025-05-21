@@ -85,26 +85,13 @@ public class OrdersService
                         var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
 
                         // === 6. Post-Creation: Trigger Matching (Non-blocking) ===
-                        _ = Task.Run(async () =>
-                        {
-                                try
-                                {
-                                        await _matchingService.InitiateMatchingProcessAsync(order.Id);
-                                }
-                                catch (Exception ex)
-                                {
-                                        //  don't interrupt order creation response
-                                }
-                        });
-
-
-
+                        _matchingService.StartMatching(order.Id);
 
                         return _mapper.Map<OrderDto>(savedOrder);
                 }
                 catch (Exception ex)
                 {
-                        throw new DomainException("Order creation failed", ex);
+                        throw new DomainException("❌ Order creation failed", ex);
                 }
         }
 

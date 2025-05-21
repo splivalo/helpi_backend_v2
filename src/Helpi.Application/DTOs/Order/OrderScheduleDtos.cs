@@ -6,10 +6,12 @@ namespace Helpi.Application.DTOs.Order;
 public class OrderScheduleDto
 {
     public int Id { get; set; }
+
     public byte DayOfWeek { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
     public bool IsCancelled { get; set; }
+
 }
 
 public class OrderScheduleCreateDto

@@ -17,6 +17,14 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
             .Must((o, EndDate) => EndDate >= o.StartDate)
             .WithMessage("Order EndDate must be greater than or equal to order StartDate");
 
+        RuleFor(o => o)
+           .Must(o => !o.IsRecurring || o.EndDate > o.StartDate)
+           .WithMessage("For recurring orders, EndDate must be after StartDate.");
+
+        RuleFor(o => o)
+          .Must(o => !o.IsRecurring || (o.EndDate.DayNumber - o.StartDate.DayNumber) >= 7)
+          .WithMessage("For recurring orders, EndDate must be at least 7 days after StartDate.");
+
         // RuleFor(o => o.PaymentMethodId)
         // .Cascade(CascadeMode.Stop)
         // .NotNull().WithMessage("Payment method is required")

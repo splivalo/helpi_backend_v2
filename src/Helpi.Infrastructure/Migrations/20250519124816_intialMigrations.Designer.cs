@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250503121531_intialMigrations")]
+    [Migration("20250519124816_intialMigrations")]
     partial class intialMigrations
     {
         /// <inheritdoc />
@@ -420,6 +420,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsEmergencySub")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OrderScheduleId")
                         .HasColumnType("integer");
 
@@ -431,6 +434,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SeniorId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");
