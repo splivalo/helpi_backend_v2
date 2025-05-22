@@ -98,6 +98,8 @@ public class RecurringJobService : IRecurringJobService
             var dayOfWeek = (DayOfWeek)assignment.OrderSchedule.DayOfWeek;
 
 
+
+
             _logger.LogInformation("🛠 Generating dates for assignment {AssignmentId} starting from {StartDate}", assignment.Id, startDate);
 
 

@@ -30,6 +30,11 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
         // .NotNull().WithMessage("Payment method is required")
         // .GreaterThan(0).WithMessage("Invalid payment method");
 
+        RuleFor(o => o)
+            .Must(o => o.IsRecurring == (o.RecurrencePattern != null))
+            .WithMessage("If the order is recurring, a recurrence pattern is required. Otherwise, it must be null.");
+
+
 
         RuleFor(o => o.Schedules)
             .Must(schedules => schedules.All(schedule =>
@@ -40,7 +45,7 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
                 // Compare if the end time is greater than the start time
                 return end > start;
             }))
-            .WithMessage("  End time must be greater than start time for all schedules.");
+            .WithMessage("End time must be greater than start time for all schedules.");
 
         RuleFor(o => o.Schedules)
             .Must(schedules => schedules.All(schedule =>
