@@ -18,4 +18,9 @@ public interface IJobInstanceRepository
     Task<IEnumerable<JobInstance>> GetStudentCompletedJobInstances(int studentId);
     Task<IEnumerable<JobInstance>> GetStudentUpComingJobInstances(int studentId);
 
+    Task<JobInstance?> UpdateToInProgressAsync(int jobInstanceId);
+    Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId);
+    Task<List<JobInstance>> GetByDateAsync(DateOnly today);
+    Task SaveChangesAsync();
+
 }

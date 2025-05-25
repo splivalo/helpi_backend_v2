@@ -371,6 +371,18 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
 
+                    b.Property<string>("HangFireEndStatusJobId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HangFirePaymentJobId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HangFireStartStatusJobId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("OriginalAssignmentId")
                         .HasColumnType("integer");
 
@@ -446,7 +458,11 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OrderId");
+
                     b.HasIndex("OrderScheduleId");
+
+                    b.HasIndex("SeniorId");
 
                     b.HasIndex("StudentId");
 
@@ -774,6 +790,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<bool>("IsTemporary")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("OrderScheduleId")
                         .HasColumnType("integer");
@@ -1363,9 +1382,21 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>
                 {
+                    b.HasOne("Helpi.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Helpi.Domain.Entities.OrderSchedule", "OrderSchedule")
                         .WithMany("JobRequests")
                         .HasForeignKey("OrderScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
+                        .WithMany()
+                        .HasForeignKey("SeniorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1375,7 +1406,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Order");
+
                     b.Navigation("OrderSchedule");
+
+                    b.Navigation("Senior");
 
                     b.Navigation("Student");
                 });

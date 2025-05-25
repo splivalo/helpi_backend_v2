@@ -673,6 +673,18 @@ namespace Helpi.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "FK_JobRequests_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_Seniors_SeniorId",
+                        column: x => x.SeniorId,
+                        principalTable: "Seniors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_JobRequests_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
@@ -687,6 +699,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     IsTemporary = table.Column<bool>(type: "boolean", nullable: false),
@@ -720,6 +733,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
                     ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
                     OriginalAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
@@ -728,7 +742,10 @@ namespace Helpi.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     SubstitutionStatus = table.Column<int>(type: "integer", nullable: false),
                     ActualStartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ActualEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    ActualEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    HangFireStartStatusJobId = table.Column<string>(type: "text", nullable: true),
+                    HangFireEndStatusJobId = table.Column<string>(type: "text", nullable: true),
+                    HangFirePaymentJobId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1036,9 +1053,19 @@ namespace Helpi.Infrastructure.Migrations
                 column: "SeniorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_JobRequests_OrderId",
+                table: "JobRequests",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobRequests_OrderScheduleId",
                 table: "JobRequests",
                 column: "OrderScheduleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobRequests_SeniorId",
+                table: "JobRequests",
+                column: "SeniorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobRequests_StudentId",

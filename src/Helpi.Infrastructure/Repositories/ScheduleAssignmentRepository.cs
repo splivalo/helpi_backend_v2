@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -75,6 +76,19 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 return await _context.ScheduleAssignments
                     .AnyAsync(sa => sa.OrderScheduleId == scheduleId && activeStatuses.Contains(sa.Status));
         }
+
+
+        public async Task<bool> IsAllOrderAssignmentsCompleted(int orderId)
+        {
+                var hasActiveAssignments = await _context.ScheduleAssignments.AnyAsync(a =>
+                        a.OrderId == orderId &&
+                        a.Status != AssignmentStatus.Completed &&
+                        a.Status != AssignmentStatus.Canceled
+                );
+
+                return hasActiveAssignments == false;
+
+        }
         public async Task<bool> IsScheduleCompleted(int scheduleId)
         {
                 var activeStatuses = new[]
@@ -85,6 +99,37 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 
                 return await _context.ScheduleAssignments
                     .AnyAsync(sa => sa.OrderScheduleId == scheduleId && sa.Status == AssignmentStatus.Completed);
+        }
+
+        public async Task<ScheduleAssignment?> LoadAssignmentWithIncludes(int assignmentId, AssignmentIncludeOptions options)
+        {
+                var query = _context.ScheduleAssignments.AsQueryable();
+
+                if (options.IncludeStudent)
+                        query = query.Include(o => o.Student).ThenInclude(s => s.Contact);
+
+
+                if (options.JobInstances)
+                        query = query.Include(o => o.JobInstances);
+
+
+                if (options.IncludeSchedules)
+                {
+                        if (options.IncludeScheduleAssignments)
+                        {
+                                query = query
+                                    .Include(o => o.OrderSchedule)
+                                        .ThenInclude(s => s.Assignments);
+                        }
+                        else
+                        {
+                                query = query
+                                    .Include(o => o.OrderSchedule);
+                        }
+                }
+
+
+                return await query.FirstOrDefaultAsync(o => o.Id == assignmentId);
         }
 
 

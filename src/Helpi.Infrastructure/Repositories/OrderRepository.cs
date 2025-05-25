@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -20,6 +21,8 @@ public class OrderRepository : IOrderRepository
                 .Include(o => o.Schedules)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
+
+
 
         public async Task<IEnumerable<Order>> GetBySeniorAsync(int seniorId)
         {
@@ -67,4 +70,42 @@ public class OrderRepository : IOrderRepository
 
 
 
+        public async Task<Order?> LoadOrderWithIncludes(int orderId, OrderIncludeOptions options)
+        {
+                var query = _context.Orders.AsQueryable();
+
+                if (options.Senior)
+                        query = query.Include(o => o.Senior).ThenInclude(s => s.Contact);
+
+                if (options.OrderServices)
+                        query = query.Include(o => o.OrderServices).ThenInclude(os => os.Service);
+
+
+                if (options.Schedules)
+                {
+                        if (options.ScheduleAssignments)
+                        {
+                                if (options.AssignmentsJobInstances)
+                                {
+                                        query = query
+                                       .Include(o => o.Schedules)
+                                           .ThenInclude(s => s.Assignments).ThenInclude(a => a.JobInstances);
+                                }
+                                else
+                                {
+                                        query = query
+                                                                               .Include(o => o.Schedules)
+                                                                                   .ThenInclude(s => s.Assignments);
+                                }
+                        }
+                        else
+                        {
+                                query = query
+                                    .Include(o => o.Schedules);
+                        }
+                }
+
+
+                return await query.FirstOrDefaultAsync(o => o.Id == orderId);
+        }
 }

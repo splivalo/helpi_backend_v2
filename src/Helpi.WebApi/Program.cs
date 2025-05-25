@@ -92,6 +92,7 @@ using (var scope = app.Services.CreateScope())
 {
     var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
     jobInstanceJobs.GenerateFutureJobInstances();
+    jobInstanceJobs.ScheduleDailyStatusUpdates();
 }
 
 

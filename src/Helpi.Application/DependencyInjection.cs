@@ -39,7 +39,7 @@ public static class DependencyInjection
         services.AddScoped<OrderScheduleService>();
         services.AddScoped<JobRequestService>();
         services.AddScoped<ScheduleAssignmentService>();
-        services.AddScoped<JobInstanceService>();
+        services.AddScoped<IJobInstanceService, JobInstanceService>();
         services.AddScoped<PaymentTransactionService>();
         services.AddScoped<ScheduleAssignmentReplacementService>();
         services.AddScoped<ReviewService>();

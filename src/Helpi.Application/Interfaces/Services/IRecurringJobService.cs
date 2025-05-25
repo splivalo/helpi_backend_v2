@@ -10,5 +10,8 @@ namespace Helpi.Application.Interfaces.Services
         List<JobInstance> GenerateInstancesForAssignment(ScheduleAssignment assignment,
         int horizonMonths = 3,
         int generationThresholdDays = 14);
+
+
+        Task ScheduleDailyJobInstanceStatusUpdates();
     }
 }

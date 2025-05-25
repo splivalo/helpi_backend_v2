@@ -141,6 +141,8 @@ namespace Helpi.Domain.Enums
         JobRequest,
         AssignmentConfirmed,
         ScheduleChange,
-        PaymentReceipt
+        PaymentReceipt,
+        JobInProgress
+
     }
 }

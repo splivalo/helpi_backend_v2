@@ -1,10 +1,13 @@
+using System.Text.Json;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 
 namespace Helpi.Application.Services;
+
 public class NotificationService : INotificationService
 {
 
@@ -31,12 +34,24 @@ public class NotificationService : INotificationService
         throw new NotImplementedException();
     }
 
+    private async Task<List<string>> GetUserDeviceFcmTokens(int userId)
+    {
+        var fcmTokens = await _fcmTokensRepository.GetTokensByUserIdAsync(userId);
+        var deviceTokens = fcmTokens.Select(fcmToken => fcmToken.Token).ToList();
+        return deviceTokens;
+    }
+
     public async Task<bool> SendPushNotificationAsync(int userId, HNotification notification)
     {
         try
         {
-            var fcmTokens = await _fcmTokensRepository.GetTokensByUserIdAsync(userId);
-            var deviceTokens = fcmTokens.Select(fcmToken => fcmToken.Token).ToList();
+
+            var deviceTokens = await GetUserDeviceFcmTokens(userId);
+            if (!deviceTokens.Any())
+            {
+                _logger.LogInformation("❌ -- No FCM tokens found for userId: {userId}", userId);
+                return false;
+            }
 
             var hasSuccess = await _firebaseService.SendPushNotificationAsync(deviceTokens, notification);
 
@@ -54,5 +69,43 @@ public class NotificationService : INotificationService
     {
         throw new NotImplementedException();
     }
+
+    public async Task<bool> SendJobStartedNotificationAsync(int userId, JobInstance jobInstance)
+    {
+
+        var notification = new HNotification
+        {
+            RecieverUserId = userId,
+            Title = "Job Started",
+            Body = "Your job is now in progress.",
+            Type = NotificationType.JobInProgress,
+            Payload = JsonSerializer.Serialize(new
+            {
+                RecieverUserId = userId,
+                JobInstanceId = jobInstance.Id,
+            })
+        };
+
+        return await SendPushNotificationAsync(userId, notification);
+    }
+    public async Task<bool> SendJobCompletedNotificationAsync(int userId, JobInstance jobInstance)
+    {
+
+        var notification = new HNotification
+        {
+            RecieverUserId = userId,
+            Title = "Job Ended",
+            Body = "Your job is has completed.",
+            Type = NotificationType.JobInProgress,
+            Payload = JsonSerializer.Serialize(new
+            {
+                RecieverUserId = userId,
+                JobInstanceId = jobInstance.Id,
+            })
+        };
+
+        return await SendPushNotificationAsync(userId, notification);
+    }
+
 
 }

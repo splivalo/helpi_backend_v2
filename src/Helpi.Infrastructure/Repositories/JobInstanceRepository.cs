@@ -17,7 +17,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await _context.JobInstances
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
-                .FirstOrDefaultAsync(ji => ji.Id == id);
+                .SingleAsync(ji => ji.Id == id);
         }
 
         public async Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId)
@@ -110,6 +110,50 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                            .ToListAsync();
         }
+
+        public async Task<JobInstance?> UpdateToInProgressAsync(int jobInstanceId)
+        {
+
+                var instance = await GetByIdAsync(jobInstanceId);
+                if (instance?.Status == JobInstanceStatus.Upcoming)
+                {
+                        instance.Status = JobInstanceStatus.InProgress;
+                        await _context.SaveChangesAsync();
+
+                        return instance;
+                }
+
+                return null;
+        }
+
+        public async Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId)
+        {
+                var instance = await GetByIdAsync(jobInstanceId);
+                if (instance?.Status == JobInstanceStatus.InProgress)
+                {
+                        instance.Status = JobInstanceStatus.Completed;
+                        await _context.SaveChangesAsync();
+
+                        return instance;
+                }
+
+                return null;
+        }
+
+        public async Task<List<JobInstance>> GetByDateAsync(DateOnly today)
+        {
+                return await _context.JobInstances
+                          .Where(j => j.ScheduledDate == today)
+                          .ToListAsync();
+        }
+
+        public async Task SaveChangesAsync()
+        {
+                await _context.SaveChangesAsync();
+        }
+
+
+
 
 }
 

@@ -1,4 +1,5 @@
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -11,17 +12,21 @@ public class RecurringJobService : IRecurringJobService
     private readonly IRecurrenceDateGenerator _dateGenerator;
     private readonly ILogger<RecurringJobService> _logger;
 
+    private readonly IHangfireService _hangfireService;
+
     public RecurringJobService(
         IJobInstanceRepository jobInstanceRepository,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
         IRecurrenceDateGenerator dateGenerator,
-        ILogger<RecurringJobService> logger
+        ILogger<RecurringJobService> logger,
+        IHangfireService hangfireService
     )
     {
         _jobInstanceRepository = jobInstanceRepository;
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
         _dateGenerator = dateGenerator;
         _logger = logger;
+        _hangfireService = hangfireService;
     }
 
     public async Task GenerateFutureJobInstances()
@@ -125,6 +130,7 @@ public class RecurringJobService : IRecurringJobService
                 jobInstances.Add(new JobInstance
                 {
                     SeniorId = order.SeniorId,
+                    OrderId = order.Id,
                     ScheduleAssignmentId = assignment.Id,
                     ScheduledDate = date,
                     StartTime = assignment.OrderSchedule.StartTime,
@@ -144,5 +150,63 @@ public class RecurringJobService : IRecurringJobService
         }
     }
 
+
+
+    /// ==============================
+    /// 
+
+
+    /// <summary>
+    /// Schedules Hangfire background jobs to automatically update the status of today's job instances 
+    /// to "InProgress" at their start time and to "Completed" at their end time.
+    /// </summary>
+    /// <remarks>
+    /// - Fetches all job instances scheduled for today.
+    /// - Uses Hangfire to enqueue status update tasks at the appropriate times.
+    /// - Stores the scheduled job IDs on each instance for potential tracking or cancellation.
+    /// </remarks>
+    public async Task ScheduleDailyJobInstanceStatusUpdates()
+    {
+        _logger.LogInformation("📅 Starting daily status update scheduling at {Time}.", DateTime.UtcNow);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var jobInstancesForToday = await _jobInstanceRepository.GetByDateAsync(today);
+
+        if (jobInstancesForToday == null || !jobInstancesForToday.Any())
+        {
+            _logger.LogInformation("🚫 No job instances scheduled for today ({Date}).", today);
+            return;
+        }
+
+        _logger.LogInformation("✅ Found {Count} job instance(s) scheduled for today ({Date}).", jobInstancesForToday.Count, today);
+
+        foreach (var instance in jobInstancesForToday)
+        {
+            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
+            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+
+            _logger.LogDebug("⏳ Scheduling JobInstance #{Id}: ▶️ InProgress at {StartTime}, ✅ Completed at {EndTime}.",
+                instance.Id, startTime, endTime);
+
+            instance.HangFireStartStatusJobId = _hangfireService.Schedule<IJobInstanceService>(
+                s => s.UpdateToInProgressAsync(instance.Id),
+                startTime
+            );
+
+            instance.HangFireEndStatusJobId = _hangfireService.Schedule<IJobInstanceService>(
+                s => s.UpdateToCompletedAsync(instance.Id),
+                endTime
+            );
+
+            _logger.LogDebug("📌 JobInstance #{Id} scheduled — StartJobId: {StartJobId} 🟢, EndJobId: {EndJobId} 🔴.",
+                instance.Id,
+                instance.HangFireStartStatusJobId,
+                instance.HangFireEndStatusJobId);
+        }
+
+        await _jobInstanceRepository.SaveChangesAsync();
+
+        _logger.LogInformation("🎯 Finished scheduling status updates for today’s job instances.");
+    }
 
 }

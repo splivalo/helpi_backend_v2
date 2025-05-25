@@ -3,6 +3,7 @@ using System.Text;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Persistence;
@@ -45,6 +46,8 @@ public static class DependencyInjection
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
         services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
+        services.AddScoped<IHangfireService, HangfireService>();
+        services.AddScoped<CompletionStatusService>();
 
         // Register all repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

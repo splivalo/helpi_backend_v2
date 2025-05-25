@@ -159,6 +159,7 @@ public class JobRequestRepository : IJobRequestRepository
                 var assignment = new ScheduleAssignment
                 {
                         OrderScheduleId = jobRequest.OrderScheduleId,
+                        OrderId = jobRequest.OrderId,
                         StudentId = jobRequest.StudentId,
                         Status = AssignmentStatus.Accepted,
                         AssignedAt = DateTime.UtcNow

@@ -17,5 +17,12 @@ public class JobInstanceJobs : IJobInstanceJobs
 
     }
 
+    public void ScheduleDailyStatusUpdates()
+    {
+        RecurringJob.AddOrUpdate<RecurringJobService>(
+        "schedule-daily-job-instance-status",
+        s => s.ScheduleDailyJobInstanceStatusUpdates(),
+        Cron.Daily);
+    }
 
 }

@@ -4,6 +4,7 @@ using Helpi.Application.DTOs.Order;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 
 namespace Helpi.Application.Services;
@@ -100,6 +101,7 @@ public class OrdersService
                 var order = await _orderRepository.GetByIdAsync(id);
                 return _mapper.Map<OrderDto>(order);
         }
+
 
 }
 
