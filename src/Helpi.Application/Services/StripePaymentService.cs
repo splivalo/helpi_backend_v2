@@ -4,6 +4,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.ValueObjects;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Stripe;
@@ -12,14 +13,13 @@ namespace Helpi.Application.Services
 {
     public class StripePaymentService : IStripePaymentService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IOrderRepository _orderRepository;
         private readonly IPaymentProfileRepository _paymentProfileRepository;
 
         private readonly IConfiguration _configuration;
         private readonly ILogger<StripePaymentService> _logger;
 
         private readonly IMapper _mapper;
+        private readonly IPaymentErrorMapper _paymentErrorMapper;
 
         public StripePaymentService(
             IUserRepository userRepository,
@@ -27,15 +27,16 @@ namespace Helpi.Application.Services
             IPaymentProfileRepository paymentProfileRepository,
             IConfiguration configuration,
             ILogger<StripePaymentService> logger,
-             IMapper mapper
+             IMapper mapper,
+           IPaymentErrorMapper paymentErrorMapper
             )
         {
-            _userRepository = userRepository;
-            _orderRepository = orderRepository;
+
             _paymentProfileRepository = paymentProfileRepository;
             _configuration = configuration;
             _logger = logger;
             _mapper = mapper;
+            _paymentErrorMapper = paymentErrorMapper;
 
 
 
@@ -123,51 +124,66 @@ namespace Helpi.Application.Services
             }
         }
 
-        public async Task<string> ChargePaymentAsync(Order order, User user)
+        public async Task<PaymentResult> ChargePaymentAsync(string stripeCustomerId, PaymentTransaction transaction)
         {
             try
             {
                 // Get the total amount in cents
-                // long amountInCents = (long)(order.TotalAmount * 100);
+                long amountInCents = ConvertToStripeAmount(transaction.Amount);
 
-                // var paymentIntentService = new PaymentIntentService();
-                // var paymentIntent = await paymentIntentService.CreateAsync(new PaymentIntentCreateOptions
-                // {
-                //     Amount = amountInCents,
-                //     Currency = "usd",
-                //     Customer = user.StripeCustomerId,
-                //     Description = $"Order #{order.Id} - {DateTime.UtcNow}",
-                //     Metadata = new Dictionary<string, string>
-                //     {
-                //         { "OrderId", order.Id.ToString() }
-                //     },
-                //     CaptureMethod = "automatic", // Automatically capture the payment
-                //     ConfirmationMethod = "automatic",
-                //     Confirm = true // Confirm and process immediately
-                // });
+                var paymentIntentService = new PaymentIntentService();
+                var paymentIntent = await paymentIntentService.CreateAsync(new PaymentIntentCreateOptions
+                {
+                    Amount = amountInCents,
+                    Currency = transaction.Currency?.ToLower() ?? "usd",
+                    Customer = stripeCustomerId,
+                    Description = $"Order #{transaction.OrderId} - Job #{transaction.JobInstanceId}",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "OrderId", transaction.OrderId.ToString() },
+                        { "JobInstanceId", transaction.JobInstanceId.ToString() },
+                         { "TransactionId", transaction.Id.ToString() },
+                        { "Amount", transaction.Amount.ToString("F2") }
+                    },
+                    CaptureMethod = "automatic", // Automatically capture the payment
+                    ConfirmationMethod = "automatic",
+                    Confirm = true // Confirm and process immediately
+                });
 
-                // if (paymentIntent.Status == "succeeded")
-                // {
-                //     return paymentIntent.Id;
-                // }
-                // else if (paymentIntent.Status == "requires_action")
-                // {
-                //     throw new ApplicationException("This payment requires additional authentication");
-                // }
-                // else
-                // {
-                //     throw new ApplicationException($"Payment failed with status: {paymentIntent.Status}");
-                // }
+                return paymentIntent.Status switch
+                {
+                    "succeeded" => PaymentResult.SuccessResult(paymentIntent.Id, paymentIntent.Status),
+                    "requires_action" => PaymentResult.RequiresActionResult(paymentIntent.Id, paymentIntent.ClientSecret, paymentIntent.Status),
+                    "processing" => PaymentResult.ProcessingResult(paymentIntent.Id, paymentIntent.Status),
+                    _ => PaymentResult.Failed($"Payment failed with status: {paymentIntent.Status}")
+                };
 
-                return "not implemented";
+
             }
             catch (StripeException ex)
             {
-                _logger.LogError(ex, "Error charging payment for order {OrderId}", order.Id);
-                throw new ApplicationException("Payment processing failed", ex);
+                _logger.LogError(ex, "❌  Error charging payment for order {OrderId} - JobInstance {JobInstance}", transaction.OrderId, transaction.JobInstanceId);
+
+                var friendlyMessage = _paymentErrorMapper.GetLocalizedErrorMessage(ex);
+                return PaymentResult.Failed(friendlyMessage, ex.StripeError?.Code);
+
             }
         }
 
+
+
+
+        private static long ConvertToStripeAmount(decimal amount)
+        {
+            if (amount < 0)
+                throw new ArgumentException("Amount cannot be negative");
+
+            if (amount > 999999.99m) // Stripe's maximum
+                throw new ArgumentException("Amount exceeds maximum allowed");
+
+            // Use Math.Round to handle decimal precision properly
+            return (long)Math.Round(amount * 100, MidpointRounding.AwayFromZero);
+        }
         public async Task<IEnumerable<PaymentMethodDto>> GetSavedPaymentMethodsAsync(string stripeCustomerId)
         {
             try
@@ -200,7 +216,7 @@ namespace Helpi.Application.Services
             }
             catch (StripeException ex)
             {
-                _logger.LogError(ex, "Error retrieving payment methods for customer {CustomerId}", stripeCustomerId);
+                _logger.LogError(ex, "❌  Error retrieving payment methods for customer {CustomerId}", stripeCustomerId);
                 throw new ApplicationException("Failed to retrieve saved payment methods", ex);
             }
         }

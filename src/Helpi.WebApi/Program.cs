@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Helpi.Application;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Validators;
 using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
 using Helpi.WebApi.Middleware;
@@ -30,12 +31,14 @@ builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddHangfireServices(builder.Configuration);
 
 
+
 FirebaseConfiguration.InitializeFirebase(builder.Configuration);
 
 
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<OrderCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<PricingConfigurationDtoValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -69,6 +72,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHangfireDashboard();
 
+await app.Services.SeedAsync(); // important
+
 /// TODO: seeders
 using (var scope = app.Services.CreateScope())
 {
@@ -93,6 +98,7 @@ using (var scope = app.Services.CreateScope())
     var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
     jobInstanceJobs.GenerateFutureJobInstances();
     jobInstanceJobs.ScheduleDailyStatusUpdates();
+    jobInstanceJobs.ScheduleDailyJobInstancePayments();
 }
 
 

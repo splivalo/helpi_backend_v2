@@ -9,15 +9,16 @@ namespace Helpi.Domain.Entities
     public class PaymentTransaction
     {
         public int Id { get; set; }
+        public int OrderId { get; set; }
         public int JobInstanceId { get; set; }
         public int CustomerId { get; set; }
         public int PaymentMethodId { get; set; }
 
-        // [Precision(10, 2)]
+        // [Precision(18, 2)]
         public decimal Amount { get; set; }
 
         [MaxLength(3)]
-        public string Currency { get; set; } = "USD";
+        public string Currency { get; set; } = "EUR";
         public DateTime ScheduledAt { get; set; }
         public DateTime? ProcessedAt { get; set; }
         public DateTime? NextRetryAt { get; set; }

@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
 
@@ -13,15 +14,25 @@ public class JobRequestService
         private readonly IJobRequestRepository _jobRequestRepository;
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<JobRequestService> _logger;
 
         private readonly IRecurringJobService _recurringJobService;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
-        public JobRequestService(IJobRequestRepository jobRequestRepository, IJobInstanceRepository jobInstanceRepository, IMapper mapper, IRecurringJobService recurringJobService)
+        public JobRequestService(
+                IJobRequestRepository jobRequestRepository,
+                IJobInstanceRepository jobInstanceRepository,
+                IMapper mapper,
+                 IRecurringJobService recurringJobService,
+                 IPricingConfigurationRepository pricingConfigRepo,
+                  ILogger<JobRequestService> logger)
         {
                 _jobRequestRepository = jobRequestRepository;
                 _jobInstanceRepository = jobInstanceRepository;
                 _mapper = mapper;
                 _recurringJobService = recurringJobService;
+                _pricingConfigRepo = pricingConfigRepo;
+                _logger = logger;
         }
 
         public async Task<List<JobRequestDto>> GetStudentPendingRequests(int studentId)
@@ -65,9 +76,18 @@ public class JobRequestService
         public async Task _GenerateJobInstancesAsync(JobRequest jobRequest)
         {
 
+                var pricingConfig = await _pricingConfigRepo.GetByIdAsync(1);
+
+                if (pricingConfig == null)
+                {
+                        _logger.LogInformation("❌ Not pricing configuration found");
+                        return;
+                }
+
+
                 var assignment = jobRequest.OrderSchedule.Assignments.First();
 
-                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment);
+                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
 
                 await _jobInstanceRepository.AddRangeAsync(jobInstances);
 

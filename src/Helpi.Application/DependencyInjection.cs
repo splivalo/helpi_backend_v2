@@ -15,6 +15,7 @@ public static class DependencyInjection
 
         ConfigureStripe(configuration);
         // Register all services
+
         services.AddScoped<IStripePaymentService, StripePaymentService>();
         services.AddScoped<IContractNumberService, ContractNumberService>();
         services.AddScoped<AuthService>();
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<CustomerService>();
         services.AddScoped<SeniorService>();
         services.AddScoped<PaymentMethodService>();
+        services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<ServiceCategoryService>();
         services.AddScoped<ServiceService>();
         services.AddScoped<StudentServiceService>();
@@ -47,6 +49,8 @@ public static class DependencyInjection
         services.AddScoped<InvoiceEmailService>();
         services.AddScoped<CityService>();
         services.AddScoped<ServiceRegionService>();
+        services.AddScoped<PricingConfigurationService>();
+        services.AddScoped<PricingChangeHistoryService>();
 
         // AutoMapper
         services.AddAutoMapper(typeof(MappingProfile).Assembly);

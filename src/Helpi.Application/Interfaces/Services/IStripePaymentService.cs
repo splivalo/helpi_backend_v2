@@ -1,5 +1,6 @@
 using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
+using Helpi.Domain.ValueObjects;
 
 namespace Helpi.Application.Interfaces.Services
 {
@@ -10,7 +11,7 @@ namespace Helpi.Application.Interfaces.Services
         Task<string> CreateSetupIntentAsync(User user);
         Task<string> CreateCustomerAsync(User user);
         Task<string> SavePaymentMethodAsync(string customerId, string paymentMethodId);
-        Task<string> ChargePaymentAsync(Order order, User user);
+        Task<PaymentResult> ChargePaymentAsync(string stripeCustomerId, PaymentTransaction transaction);
         Task<IEnumerable<PaymentMethodDto>> GetSavedPaymentMethodsAsync(string customerId);
 
 

@@ -9,6 +9,7 @@ public class RecurringJobService : IRecurringJobService
 {
     private readonly IJobInstanceRepository _jobInstanceRepository;
     private readonly IScheduleAssignmentRepository _scheduleAssignmentRepository;
+    private readonly IPricingConfigurationRepository _pricingConfig;
     private readonly IRecurrenceDateGenerator _dateGenerator;
     private readonly ILogger<RecurringJobService> _logger;
 
@@ -17,6 +18,7 @@ public class RecurringJobService : IRecurringJobService
     public RecurringJobService(
         IJobInstanceRepository jobInstanceRepository,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
+        IPricingConfigurationRepository pricingConfig,
         IRecurrenceDateGenerator dateGenerator,
         ILogger<RecurringJobService> logger,
         IHangfireService hangfireService
@@ -24,6 +26,7 @@ public class RecurringJobService : IRecurringJobService
     {
         _jobInstanceRepository = jobInstanceRepository;
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
+        _pricingConfig = pricingConfig;
         _dateGenerator = dateGenerator;
         _logger = logger;
         _hangfireService = hangfireService;
@@ -39,6 +42,14 @@ public class RecurringJobService : IRecurringJobService
         var activeAssignments = await _scheduleAssignmentRepository.GetActiveAssignmentsAsync();
         _logger.LogInformation("📦 Retrieved {Count} active assignments", activeAssignments.Count);
 
+        var pricingConfig = await _pricingConfig.GetByIdAsync(1);
+
+        if (pricingConfig == null)
+        {
+            _logger.LogInformation("❌ Not pricing configuration found");
+            return;
+        }
+
         var jobInstances = new List<JobInstance>();
 
         foreach (var assignment in activeAssignments)
@@ -46,7 +57,12 @@ public class RecurringJobService : IRecurringJobService
 
             try
             {
-                var instances = GenerateInstancesForAssignment(assignment, horizonMonths, generationThresholdDays);
+                var instances = GenerateInstancesForAssignment(
+                    assignment,
+                     pricingConfig,
+                 horizonMonths,
+                 generationThresholdDays
+                );
                 jobInstances.AddRange(instances);
             }
             catch (Exception)
@@ -69,8 +85,11 @@ public class RecurringJobService : IRecurringJobService
 
     public List<JobInstance> GenerateInstancesForAssignment(
         ScheduleAssignment assignment,
+         PricingConfiguration pricingConfiguration,
         int horizonMonths = 3,
-        int generationThresholdDays = 14)
+        int generationThresholdDays = 14
+
+        )
     {
         try
         {
@@ -130,7 +149,11 @@ public class RecurringJobService : IRecurringJobService
                 jobInstances.Add(new JobInstance
                 {
                     SeniorId = order.SeniorId,
+                    CustomerId = order.Senior.CustomerId,
                     OrderId = order.Id,
+                    HourlyRate = pricingConfiguration.JobHourlyRate,
+                    CompanyPercentage = pricingConfiguration.CompanyPercentage,
+                    ServiceProviderPercentage = pricingConfiguration.ServiceProviderPercentage,
                     ScheduleAssignmentId = assignment.Id,
                     ScheduledDate = date,
                     StartTime = assignment.OrderSchedule.StartTime,
@@ -169,7 +192,7 @@ public class RecurringJobService : IRecurringJobService
     {
         _logger.LogInformation("📅 Starting daily status update scheduling at {Time}.", DateTime.UtcNow);
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var jobInstancesForToday = await _jobInstanceRepository.GetByDateAsync(today);
 
         if (jobInstancesForToday == null || !jobInstancesForToday.Any())
@@ -207,6 +230,46 @@ public class RecurringJobService : IRecurringJobService
         await _jobInstanceRepository.SaveChangesAsync();
 
         _logger.LogInformation("🎯 Finished scheduling status updates for today’s job instances.");
+    }
+
+    public async Task ScheduleDailyJobInstancePayments()
+    {
+        _logger.LogInformation("📅 Starting daily job payments scheduling at {Time}.", DateTime.UtcNow);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var jobInstancesForToday = await _jobInstanceRepository.GetByDateAsync(today);
+
+        if (jobInstancesForToday == null || !jobInstancesForToday.Any())
+        {
+            _logger.LogInformation("🚫 No job instances scheduled for today ({Date}).", today);
+            return;
+        }
+
+        _logger.LogInformation("✅ Found {Count} job instance(s) scheduled for today ({Date}).", jobInstancesForToday.Count, today);
+
+        foreach (var instance in jobInstancesForToday)
+        {
+            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
+            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+
+
+            var chargePaymentAt = startTime.AddMinutes(-30);
+            _logger.LogDebug("⏳ Scheduling Payment -> JobInstance #{Id}.",
+                instance.Id);
+
+            instance.HangFirePaymentJobId = _hangfireService.Schedule<IPaymentService>(
+                s => s.ProcessPaymentAsync(instance.Id),
+                chargePaymentAt
+            );
+
+            _logger.LogDebug("📌 JobInstance #{Id} scheduled payment — hangfirePaymentJobId: {hangfirePaymentJobId}",
+                instance.Id,
+                instance.HangFirePaymentJobId);
+        }
+
+        await _jobInstanceRepository.SaveChangesAsync();
+
+        _logger.LogInformation("🎯 Finished scheduling Payments updates for today’s job instances.");
     }
 
 }

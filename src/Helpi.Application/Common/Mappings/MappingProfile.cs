@@ -14,6 +14,9 @@ public class MappingProfile : Profile
     {
 
 
+        CreateMap<PricingChangeHistory, PricingChangeHistoryDto>().ReverseMap();
+        CreateMap<PricingConfiguration, PricingConfigurationDto>().ReverseMap();
+
         // User Mappings
         CreateMap<User, UserDto>();
         CreateMap<UserCreateDto, User>();

@@ -18,6 +18,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // public DbSet<User> Users { get; set; }
     // public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<PricingConfiguration> PricingConfigurations { get; set; }
+    public DbSet<PricingChangeHistory> PricingChangeHistories { get; set; }
+
     public DbSet<PaymentProfile> PaymentProfiles { get; set; }
     public DbSet<ContractNumberSequence> ContractNumberSequences { get; set; }
 
@@ -168,7 +171,19 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.HasOne(j => j.Assignment)          // JobInstance has one ScheduleAssignment
               .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
               .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
+
+            entity.Property(p => p.HourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
+            entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
         });
+
+        modelBuilder.Entity<PricingConfiguration>(entity =>
+        {
+            entity.Property(p => p.JobHourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
+            entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
+        });
+
 
 
 

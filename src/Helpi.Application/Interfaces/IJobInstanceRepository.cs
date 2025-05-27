@@ -1,3 +1,4 @@
+using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces;
@@ -20,6 +21,7 @@ public interface IJobInstanceRepository
 
     Task<JobInstance?> UpdateToInProgressAsync(int jobInstanceId);
     Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId);
+    Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes);
     Task<List<JobInstance>> GetByDateAsync(DateOnly today);
     Task SaveChangesAsync();
 

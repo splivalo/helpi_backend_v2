@@ -24,5 +24,12 @@ public class JobInstanceJobs : IJobInstanceJobs
         s => s.ScheduleDailyJobInstanceStatusUpdates(),
         Cron.Daily);
     }
+    public void ScheduleDailyJobInstancePayments()
+    {
+        RecurringJob.AddOrUpdate<RecurringJobService>(
+        "schedule-daily-job-intsance-payments",
+        s => s.ScheduleDailyJobInstancePayments(),
+        Cron.Daily);
+    }
 
 }

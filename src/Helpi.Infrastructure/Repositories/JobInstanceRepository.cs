@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -152,8 +153,31 @@ public class JobInstanceRepository : IJobInstanceRepository
                 await _context.SaveChangesAsync();
         }
 
+        public async Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes)
+        {
+                var query = _context.JobInstances.AsQueryable();
+
+                if (includes.Senior)
+                        query = query.Include(ji => ji.Senior).ThenInclude(s => s.Contact);
 
 
+                if (includes.Order)
+                {
+                        query = query.Include(ji => ji.Order);
+                }
+
+
+
+                if (includes.Assignment)
+                {
+                        query = query
+                            .Include(ji => ji.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact);
+
+                }
+
+
+                return await query.FirstOrDefaultAsync(ji => ji.Id == jobInstanceId);
+        }
 
 }
 

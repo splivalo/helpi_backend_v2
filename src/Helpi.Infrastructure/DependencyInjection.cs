@@ -6,6 +6,7 @@ using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
+using Helpi.Infrastructure.Payment.Stripe;
 using Helpi.Infrastructure.Persistence;
 using Helpi.Infrastructure.Repositories;
 using Helpi.Infrastructure.Seeds;
@@ -37,6 +38,9 @@ public static class DependencyInjection
 
 
 
+        services.AddScoped<IPaymentErrorMapper, StripeErrorMapper>();
+        services.AddScoped<IPricingChangeHistoryRepository, PricingChangeHistoryRepository>();
+        services.AddScoped<IPricingConfigurationRepository, PricingConfigurationRepository>();
         services.AddScoped<IPaymentProfileRepository, PaymentProfileRepository>();
         services.AddScoped<IContractNumberSequenceRepository, ContractNumberSequenceRepository>();
 

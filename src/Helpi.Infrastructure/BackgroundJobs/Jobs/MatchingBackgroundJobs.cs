@@ -8,10 +8,6 @@ namespace Helpi.Infrastructure.BackgroundJobs.Jobs;
 public class MatchingBackgroundJobs : IMatchingBackgroundJobs
 {
 
-
-
-
-
     public void ScheduleFindAndNotifyStudents(int orderId, DateTime executionTime)
     {
         BackgroundJob.Schedule<IMatchingService>(
