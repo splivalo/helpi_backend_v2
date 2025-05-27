@@ -20,7 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IContractNumberService, ContractNumberService>();
         services.AddScoped<AuthService>();
         services.AddScoped<FcmTokensService>();
-        services.AddScoped<IRecurringJobService, RecurringJobService>();
+        services.AddScoped<IHangfireRecurringJobService, HangfireRecurringJobService>();
         services.AddScoped<IRecurrenceDateGenerator, RecurrenceDateGenerator>();
         services.AddScoped<IMatchingService, MatchingService>();
         services.AddScoped<INotificationService, NotificationService>();

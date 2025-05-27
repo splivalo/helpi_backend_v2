@@ -137,6 +137,7 @@ namespace Helpi.Application.Services
                     Amount = amountInCents,
                     Currency = transaction.Currency?.ToLower() ?? "usd",
                     Customer = stripeCustomerId,
+                    PaymentMethod = transaction.PaymentMethod.ProcessorToken,
                     Description = $"Order #{transaction.OrderId} - Job #{transaction.JobInstanceId}",
                     Metadata = new Dictionary<string, string>
                     {
@@ -146,8 +147,13 @@ namespace Helpi.Application.Services
                         { "Amount", transaction.Amount.ToString("F2") }
                     },
                     CaptureMethod = "automatic", // Automatically capture the payment
-                    ConfirmationMethod = "automatic",
-                    Confirm = true // Confirm and process immediately
+
+                    Confirm = true,// Confirm and process immediately
+                    AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                    {
+                        Enabled = true,
+                        AllowRedirects = "never"
+                    }
                 });
 
                 return paymentIntent.Status switch

@@ -5,22 +5,22 @@ using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
-public class RecurringJobService : IRecurringJobService
+public class HangfireRecurringJobService : IHangfireRecurringJobService
 {
     private readonly IJobInstanceRepository _jobInstanceRepository;
     private readonly IScheduleAssignmentRepository _scheduleAssignmentRepository;
     private readonly IPricingConfigurationRepository _pricingConfig;
     private readonly IRecurrenceDateGenerator _dateGenerator;
-    private readonly ILogger<RecurringJobService> _logger;
+    private readonly ILogger<HangfireRecurringJobService> _logger;
 
     private readonly IHangfireService _hangfireService;
 
-    public RecurringJobService(
+    public HangfireRecurringJobService(
         IJobInstanceRepository jobInstanceRepository,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
         IPricingConfigurationRepository pricingConfig,
         IRecurrenceDateGenerator dateGenerator,
-        ILogger<RecurringJobService> logger,
+        ILogger<HangfireRecurringJobService> logger,
         IHangfireService hangfireService
     )
     {

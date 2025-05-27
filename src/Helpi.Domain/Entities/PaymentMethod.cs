@@ -15,9 +15,15 @@ namespace Helpi.Domain.Entities
         public int? ExpiryMonth { get; set; }
         public int? ExpiryYear { get; set; }
 
+        /// <summary>
+        /// "Stripe", "PayPal", etc.
+        /// </summary>
+        public PaymentProcessor PaymentProcessor { get; set; }
 
-        public PaymentProcessor PaymentProcessor { get; set; } // "Stripe", "PayPal", etc.
-        public string? ProcessorToken { get; set; }  // Eg Stripe PaymentMethodID 
+        /// <summary>
+        /// Eg Stripe PaymentMethodID 
+        /// </summary>
+        public string? ProcessorToken { get; set; }
 
         public bool IsDefault { get; set; } = false;
         public bool IsActive { get; set; } = true;

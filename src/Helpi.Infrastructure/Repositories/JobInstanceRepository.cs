@@ -163,7 +163,15 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 if (includes.Order)
                 {
-                        query = query.Include(ji => ji.Order);
+                        if (includes.OrderPaymentMethod)
+                        {
+                                query = query.Include(ji => ji.Order).ThenInclude(o => o.PaymentMethod);
+                        }
+                        else
+                        {
+                                query = query.Include(ji => ji.Order);
+                        }
+
                 }
 
 

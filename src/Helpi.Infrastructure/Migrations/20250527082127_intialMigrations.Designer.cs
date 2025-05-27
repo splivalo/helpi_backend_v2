@@ -4,6 +4,7 @@ using System.Text.Json;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -13,9 +14,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250527082127_intialMigrations")]
+    partial class intialMigrations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -522,8 +525,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PaymentMethodId");
 
                     b.HasIndex("SeniorId");
 
@@ -1509,10 +1510,6 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.Order", b =>
                 {
-                    b.HasOne("Helpi.Domain.Entities.PaymentMethod", "PaymentMethod")
-                        .WithMany()
-                        .HasForeignKey("PaymentMethodId");
-
                     b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
                         .WithMany("Orders")
                         .HasForeignKey("SeniorId")
@@ -1522,8 +1519,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasOne("Helpi.Domain.Entities.Service", null)
                         .WithMany("Orders")
                         .HasForeignKey("ServiceId");
-
-                    b.Navigation("PaymentMethod");
 
                     b.Navigation("Senior");
                 });

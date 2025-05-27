@@ -107,6 +107,43 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PricingChangeHistories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PricingConfigurationId = table.Column<int>(type: "integer", nullable: false),
+                    OldJobHourlyRate = table.Column<decimal>(type: "numeric", nullable: false),
+                    OldCompanyPercentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    OldServiceProviderPercentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    NewJobHourlyRate = table.Column<decimal>(type: "numeric", nullable: false),
+                    NewCompanyPercentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    NewServiceProviderPercentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ChangedBy = table.Column<int>(type: "integer", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PricingChangeHistories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PricingConfigurations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    JobHourlyRate = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CompanyPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                    ServiceProviderPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PricingConfigurations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ServiceCategories",
                 columns: table => new
                 {
@@ -733,6 +770,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
                     ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
                     OriginalAssignmentId = table.Column<int>(type: "integer", nullable: true),
@@ -743,6 +781,9 @@ namespace Helpi.Infrastructure.Migrations
                     SubstitutionStatus = table.Column<int>(type: "integer", nullable: false),
                     ActualStartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ActualEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    HourlyRate = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CompanyPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                    ServiceProviderPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
                     HangFireStartStatusJobId = table.Column<string>(type: "text", nullable: true),
                     HangFireEndStatusJobId = table.Column<string>(type: "text", nullable: true),
                     HangFirePaymentJobId = table.Column<string>(type: "text", nullable: true)
@@ -750,6 +791,12 @@ namespace Helpi.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_JobInstances", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobInstances_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_JobInstances_ScheduleAssignments_OriginalAssignmentId",
                         column: x => x.OriginalAssignmentId,
@@ -804,6 +851,7 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
                     JobInstanceId = table.Column<int>(type: "integer", nullable: false),
                     CustomerId = table.Column<int>(type: "integer", nullable: false),
                     PaymentMethodId = table.Column<int>(type: "integer", nullable: false),
@@ -1038,6 +1086,11 @@ namespace Helpi.Infrastructure.Migrations
                 column: "TransactionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_JobInstances_OrderId",
+                table: "JobInstances",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobInstances_OriginalAssignmentId",
                 table: "JobInstances",
                 column: "OriginalAssignmentId");
@@ -1246,6 +1299,12 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PaymentProfiles");
+
+            migrationBuilder.DropTable(
+                name: "PricingChangeHistories");
+
+            migrationBuilder.DropTable(
+                name: "PricingConfigurations");
 
             migrationBuilder.DropTable(
                 name: "Reviews");

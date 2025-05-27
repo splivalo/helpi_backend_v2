@@ -17,6 +17,7 @@ namespace Helpi.Domain.Entities
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public Senior Senior { get; set; } = null!;
+        public PaymentMethod PaymentMethod { get; set; } = null!;
 
 
         public ICollection<OrderService> OrderServices { get; set; } = new List<OrderService>();

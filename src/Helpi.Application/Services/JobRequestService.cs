@@ -16,14 +16,14 @@ public class JobRequestService
         private readonly IMapper _mapper;
         private readonly ILogger<JobRequestService> _logger;
 
-        private readonly IRecurringJobService _recurringJobService;
+        private readonly IHangfireRecurringJobService _recurringJobService;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         public JobRequestService(
                 IJobRequestRepository jobRequestRepository,
                 IJobInstanceRepository jobInstanceRepository,
                 IMapper mapper,
-                 IRecurringJobService recurringJobService,
+                 IHangfireRecurringJobService recurringJobService,
                  IPricingConfigurationRepository pricingConfigRepo,
                   ILogger<JobRequestService> logger)
         {

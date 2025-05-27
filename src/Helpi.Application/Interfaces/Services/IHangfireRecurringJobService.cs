@@ -4,7 +4,7 @@ using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces.Services
 {
-  public interface IRecurringJobService
+  public interface IHangfireRecurringJobService
   {
     Task GenerateFutureJobInstances();
     List<JobInstance> GenerateInstancesForAssignment(ScheduleAssignment assignment,
