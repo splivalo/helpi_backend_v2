@@ -12,7 +12,6 @@ namespace Helpi.Domain.Entities
         [ForeignKey(nameof(Student))]
         public int StudentId { get; set; }
 
-        public ContractStatus Status { get; set; } = ContractStatus.valid;
 
         public string ContractNumber { get; set; } = null!;
 
@@ -23,5 +22,19 @@ namespace Helpi.Domain.Entities
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
         public Student Student { get; set; } = null!;
+
+        public ContractStatus Status
+        {
+            get
+            {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                if (today < EffectiveDate)
+                    return ContractStatus.expired;
+                if (today > ExpirationDate)
+                    return ContractStatus.expired;
+
+                return ContractStatus.valid;
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces;
+
 public interface IStudentAvailabilitySlotRepository
 {
     Task<StudentAvailabilitySlot?> GetByIdAsync(int studentId, byte dayOfWeek);
@@ -13,5 +14,5 @@ public interface IStudentAvailabilitySlotRepository
     Task DeleteAsync(StudentAvailabilitySlot slot);
     Task<List<StudentAvailabilitySlot>> UpdateRangeAsync(List<StudentAvailabilitySlot> slots);
     Task DeleteRangeAsync(List<StudentAvailabilitySlot> slots);
-
+    Task RemoveAllByStudentIdAsync(int userId);
 }

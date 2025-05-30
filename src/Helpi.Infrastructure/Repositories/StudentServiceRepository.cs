@@ -68,5 +68,14 @@ public class StudentServiceRepository : IStudentServiceRepository
                 }
         }
 
+        public async Task RemoveAllByStudentIdAsync(int studentId)
+        {
+                var services = await _context.StudentServices
+                    .Where(ss => ss.StudentId == studentId)
+                    .ToListAsync();
+
+                _context.StudentServices.RemoveRange(services);
+        }
+
 
 }

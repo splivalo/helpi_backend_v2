@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
         services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
+        services.AddScoped<StudentBackgroundJobs>();
         services.AddScoped<IHangfireService, HangfireService>();
         services.AddScoped<CompletionStatusService>();
 

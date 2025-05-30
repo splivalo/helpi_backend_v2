@@ -13,11 +13,16 @@ namespace Helpi.Domain.Entities
         public int FacultyId { get; set; }
         public DateTime DateRegistered { get; set; } = DateTime.UtcNow;
         public int ContactId { get; set; }
-        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
+        public StudentStatus Status { get; set; } = StudentStatus.UnVerified;
+
+        public DateTime? DeletedOn { get; set; }
+
         public DateOnly? BackgroundCheckDate { get; set; }
 
         // [Precision(3, 2)]
         public decimal AverageRating { get; set; } = 0.00m;
+
+
 
         // public User User { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
@@ -26,5 +31,6 @@ namespace Helpi.Domain.Entities
         public ICollection<StudentAvailabilitySlot> AvailabilitySlots { get; set; } = new List<StudentAvailabilitySlot>();
 
         public ICollection<ScheduleAssignment> ScheduleAssignments { get; set; } = new List<ScheduleAssignment>();
+        public ICollection<StudentContract> Contracts { get; set; } = new List<StudentContract>();
     }
 }

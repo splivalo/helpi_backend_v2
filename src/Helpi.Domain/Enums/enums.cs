@@ -7,11 +7,14 @@ namespace Helpi.Domain.Enums
         Customer
     }
 
-    public enum VerificationStatus
+    public enum StudentStatus
     {
-        Pending,
+        UnVerified,
         Verified,
-        Suspended
+        ContractRenewalNeeded,
+        AccountDeactivated,  // Account soft-deleted after 3 months non-renewal
+        PendingPermanentDeletion,  // Warned, awaiting 6-month mark for hard delete
+        Deleted
     }
 
     public enum ContractStatus
@@ -142,7 +145,9 @@ namespace Helpi.Domain.Enums
         AssignmentConfirmed,
         ScheduleChange,
         PaymentReceipt,
-        JobInProgress
+        JobInProgress,
+        ContractRenewalRequired,
+        contractValid
 
     }
 }

@@ -18,6 +18,7 @@ public class StudentContractService
         private readonly IContractNumberService _contractNumberService;
         private readonly IGoogleDriveService _googleDriveService;
         private readonly IMapper _mapper;
+        private readonly StudentStatusService _studentStatusService;
         private readonly ILogger<StudentContractService> _logger;
 
         public StudentContractService(
@@ -25,6 +26,7 @@ public class StudentContractService
             IStudentRepository studentRepository,
             IContractNumberService contractNumberService,
             IGoogleDriveService googleDriveService,
+           StudentStatusService studentStatusService,
             IMapper mapper,
             ILogger<StudentContractService> logger)
         {
@@ -32,6 +34,7 @@ public class StudentContractService
                 _studentRepository = studentRepository;
                 _contractNumberService = contractNumberService;
                 _googleDriveService = googleDriveService;
+                _studentStatusService = studentStatusService;
                 _mapper = mapper;
                 _logger = logger;
         }
@@ -65,7 +68,6 @@ public class StudentContractService
                 {
                         StudentId = dto.StudentId,
                         CloudPath = cloudPath,
-                        Status = status,
                         EffectiveDate = dto.EffectiveDate,
                         ExpirationDate = dto.ExpirationDate,
                         ContractNumber = contractNumber.ToString()
@@ -74,6 +76,10 @@ public class StudentContractService
                 await _repository.AddAsync(contract);
                 _logger.LogInformation("Created contract {ContractNumber} for student {StudentId}", contractNumber, dto.StudentId);
 
+                student.Contracts.Add(contract);
+
+                await _studentStatusService.ProcessStudentStatus(student);
+
                 return _mapper.Map<StudentContractDto>(contract);
         }
 
@@ -81,11 +87,17 @@ public class StudentContractService
         {
                 var contract = await GetAndValidateContractAsync(contractId);
 
+                var students = await _studentRepository.LoadStudentsWithIncludes(dto.StudentId, new StudentIncludeOptions
+                {
+                        Contracts = true,
+                });
+
+                var student = students.First();
 
                 // If there's a new contract file, upload it
                 if (dto.NewContractFile != null)
                 {
-                        var student = await _studentRepository.GetByIdAsync(dto.StudentId);
+
                         var contractNumber = int.Parse(contract.ContractNumber);
 
                         // Build file metadata
@@ -110,15 +122,16 @@ public class StudentContractService
                         contract.ExpirationDate = dto.ExpirationDate.Value;
                 }
 
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                var isValid = dto.ExpirationDate > today;
-                var status = isValid ? ContractStatus.valid : ContractStatus.expired;
-                contract.Status = status;
+
 
 
 
                 await _repository.UpdateAsync(contract);
                 _logger.LogInformation("Updated contract {ContractId} for student {StudentId}", contractId, dto.StudentId);
+
+
+
+                await _studentStatusService.ProcessStudentStatus(student);
 
                 return _mapper.Map<StudentContractDto>(contract);
         }

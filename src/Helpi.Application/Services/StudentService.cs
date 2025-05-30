@@ -5,6 +5,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
 
@@ -14,10 +15,25 @@ public class StudentService
         private readonly IStudentRepository _repository;
         private readonly IMapper _mapper;
 
-        public StudentService(IStudentRepository repository, IMapper mapper)
+        ILogger<StudentService> _logger;
+        private readonly IContactInfoRepository _contactInfoRepo;
+        private readonly IStudentServiceRepository _studentServiceRepo;
+        private readonly IStudentAvailabilitySlotRepository _studentAvailabilityRepo;
+
+        public StudentService(IStudentRepository repository,
+         IMapper mapper,
+           ILogger<StudentService> logger,
+             IStudentServiceRepository studentServiceRepo,
+        IStudentAvailabilitySlotRepository studentAvailabilityRepo,
+        IContactInfoRepository contactInfoRepo
+         )
         {
                 _repository = repository;
                 _mapper = mapper;
+                _logger = logger;
+                _studentServiceRepo = studentServiceRepo;
+                _studentAvailabilityRepo = studentAvailabilityRepo;
+                _contactInfoRepo = contactInfoRepo;
         }
 
         public async Task<List<StudentDto>> GetAllStudentsAsync()
@@ -40,10 +56,10 @@ public class StudentService
                 return _mapper.Map<StudentDto>(student);
         }
 
-        public async Task UpdateVerificationStatusAsync(int id, VerificationStatus status)
+        public async Task UpdateVerificationStatusAsync(int id, StudentStatus status)
         {
                 var student = await _repository.GetByIdAsync(id);
-                student.VerificationStatus = status;
+                student.Status = status;
                 await _repository.UpdateAsync(student);
         }
 
@@ -51,6 +67,66 @@ public class StudentService
         {
                 var students = await _repository.FindEligibleStudentsForSchedule(orderScheduleId, notifiedStudentIds);
                 return _mapper.Map<List<StudentDto>>(students);
+        }
+
+
+        public async Task<bool> SoftDeleteStudent(int studentId)
+        {
+                _logger.LogInformation("🗑️ Soft deleting student account {StudentId}", studentId);
+
+                try
+                {
+                        var student = await _repository.GetByIdAsync(studentId);
+
+                        // Soft delete - disable account but keep ID linked
+                        student.Status = StudentStatus.PendingPermanentDeletion;
+                        await _repository.UpdateAsync(student);
+
+                        _logger.LogInformation("✅ Student {StudentId} account soft deleted successfully", student.UserId);
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to soft delete student {StudentId}", studentId);
+                        return false;
+                }
+        }
+
+        public async Task<bool> PermanentlyDeleteStudent(int studentId)
+        {
+                _logger.LogInformation("💀 Permanently deleting student {StudentId} from database", studentId);
+
+                try
+                {
+                        var student = await _repository.GetByIdAsync(studentId);
+
+                        student.Status = StudentStatus.Deleted;
+
+                        var contact = student.Contact;
+
+                        contact.Phone = "";
+                        contact.Email = $"deleted_{student.UserId}@deleted.local";
+                        contact.FullAddress = "";
+                        contact.PostalCode = "";
+
+                        await _repository.UpdateAsync(student);
+                        await _contactInfoRepo.UpdateAsync(contact);
+
+                        // Delete related entities first (maintaining referential integrity)
+                        await _studentAvailabilityRepo.RemoveAllByStudentIdAsync(student.UserId);
+                        await _studentServiceRepo.RemoveAllByStudentIdAsync(student.UserId);
+
+
+
+                        _logger.LogInformation("✅ Student {StudentId} permanently deleted from database", student.UserId);
+
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to permanently delete student {StudentId}", studentId);
+                        return false;
+                }
         }
 
 }

@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250527095048_InitialMigrations")]
+    [Migration("20250530130436_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -1059,16 +1059,19 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("DateRegistered")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("FacultyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<string>("StudentNumber")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<int>("VerificationStatus")
-                        .HasColumnType("integer");
 
                     b.HasKey("UserId");
 
@@ -1121,9 +1124,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("date");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");
@@ -1763,7 +1763,7 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.StudentContract", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.Student", "Student")
-                        .WithMany()
+                        .WithMany("Contracts")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1929,6 +1929,8 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.Student", b =>
                 {
                     b.Navigation("AvailabilitySlots");
+
+                    b.Navigation("Contracts");
 
                     b.Navigation("ScheduleAssignments");
 

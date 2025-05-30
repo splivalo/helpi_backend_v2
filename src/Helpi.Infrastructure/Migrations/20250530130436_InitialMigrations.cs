@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class intialMigrations : Migration
+    public partial class InitialMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -412,7 +412,8 @@ namespace Helpi.Infrastructure.Migrations
                     FacultyId = table.Column<int>(type: "integer", nullable: false),
                     DateRegistered = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
-                    VerificationStatus = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BackgroundCheckDate = table.Column<DateTime>(type: "date", nullable: true),
                     AverageRating = table.Column<decimal>(type: "numeric", nullable: false)
                 },
@@ -558,7 +559,6 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
                     ContractNumber = table.Column<string>(type: "text", nullable: false),
                     CloudPath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     EffectiveDate = table.Column<DateTime>(type: "date", nullable: false),
@@ -621,6 +621,11 @@ namespace Helpi.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Orders_PaymentMethods_PaymentMethodId",
+                        column: x => x.PaymentMethodId,
+                        principalTable: "PaymentMethods",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_Seniors_SeniorId",
                         column: x => x.SeniorId,
@@ -1126,6 +1131,11 @@ namespace Helpi.Infrastructure.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_PaymentMethodId",
+                table: "Orders",
+                column: "PaymentMethodId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_SeniorId",
                 table: "Orders",
                 column: "SeniorId");
@@ -1337,9 +1347,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "JobInstances");
 
             migrationBuilder.DropTable(
-                name: "PaymentMethods");
-
-            migrationBuilder.DropTable(
                 name: "ScheduleAssignments");
 
             migrationBuilder.DropTable(
@@ -1353,6 +1360,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Faculties");
+
+            migrationBuilder.DropTable(
+                name: "PaymentMethods");
 
             migrationBuilder.DropTable(
                 name: "Seniors");

@@ -49,5 +49,5 @@ public class StudentsController : ControllerBase
         }
 
         [HttpPatch("{id}/verification")]
-        public async Task<IActionResult> UpdateVerification(int id, [FromBody] VerificationStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
+        public async Task<IActionResult> UpdateVerification(int id, [FromBody] StudentStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
 }

@@ -1,3 +1,4 @@
+using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
@@ -9,12 +10,12 @@ public interface IStudentRepository
 
     Task<IEnumerable<Student>> GetAllStudentsAsync();
     Task<Student?> GetByStudentNumberAsync(string studentNumber);
-    Task<IEnumerable<Student>> GetByVerificationStatusAsync(VerificationStatus status);
+    Task<IEnumerable<Student>> GetByVerificationStatusAsync(StudentStatus status);
     Task<Student> AddAsync(Student student);
     Task UpdateAsync(Student student);
     Task DeleteAsync(Student student);
     Task GetByFacultyAsync(int facultyId);
 
     Task<List<Student>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds);
-
+    Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions studentIncludeOptions);
 }

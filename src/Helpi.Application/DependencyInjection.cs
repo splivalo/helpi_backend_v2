@@ -16,6 +16,7 @@ public static class DependencyInjection
         ConfigureStripe(configuration);
         // Register all services
 
+        services.AddScoped<StudentStatusService>();
         services.AddScoped<IStripePaymentService, StripePaymentService>();
         services.AddScoped<IContractNumberService, ContractNumberService>();
         services.AddScoped<AuthService>();

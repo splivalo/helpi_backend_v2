@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using Helpi.Application;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Validators;
+using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
 using Helpi.WebApi.Middleware;
@@ -99,6 +100,10 @@ using (var scope = app.Services.CreateScope())
     jobInstanceJobs.GenerateFutureJobInstances();
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
+
+
+    var studentBackgroundJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
+    studentBackgroundJobs.ProcessStudentContracts();
 }
 
 

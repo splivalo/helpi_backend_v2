@@ -78,4 +78,12 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
 
         }
 
+        public async Task RemoveAllByStudentIdAsync(int studentId)
+        {
+                var availabilitySlots = await _context.StudentAvailabilitySlots
+                    .Where(slot => slot.StudentId == studentId)
+                    .ToListAsync();
+
+                _context.StudentAvailabilitySlots.RemoveRange(availabilitySlots);
+        }
 }
