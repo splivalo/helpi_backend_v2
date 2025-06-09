@@ -15,6 +15,7 @@ using Helpi.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using NetTopologySuite.Operation.Buffer;
 
 
 namespace Helpi.Application.Services
@@ -32,6 +33,8 @@ namespace Helpi.Application.Services
         private readonly IAuthRepository _authRepository;
         private readonly IFirebaseService _firebaseService;
         private readonly IMailerLiteService _mailerLiteService;
+        private readonly ICityRepository _cityRepo;
+        private readonly IGooglePlaceService _googlePlaceService;
 
         private readonly IMapper _mapper;
 
@@ -44,7 +47,9 @@ namespace Helpi.Application.Services
          IAuthRepository authRepository,
           IMapper mapper,
         IFirebaseService firebaseService,
-       IMailerLiteService mailerLiteService
+       IMailerLiteService mailerLiteService,
+       ICityRepository cityRepo,
+       IGooglePlaceService googlePlaceService
        )
         {
             _userManager = userManager;
@@ -53,6 +58,8 @@ namespace Helpi.Application.Services
             _firebaseService = firebaseService;
             _mailerLiteService = mailerLiteService;
             _mapper = mapper;
+            _cityRepo = cityRepo;
+            _googlePlaceService = googlePlaceService;
 
 
             /// todo: use Enviroment
@@ -164,6 +171,9 @@ namespace Helpi.Application.Services
 
                 var customerContactInfoDto = customerRegistrationDto.ContactInfo;
 
+                var cityId = await GetCityId(customerContactInfoDto.GooglePlaceId);
+
+
                 // Create contact info for the user
                 var customerContactInfo = new ContactInfo
                 {
@@ -174,7 +184,7 @@ namespace Helpi.Application.Services
                     Gender = customerContactInfoDto.Gender,
                     GooglePlaceId = customerContactInfoDto.GooglePlaceId,
                     FullAddress = customerContactInfoDto.FullAddress,
-                    CityId = customerContactInfoDto.CityId,
+                    CityId = cityId,
                     Latitude = customerContactInfoDto.Latitude,
                     Longitude = customerContactInfoDto.Longitude,
                     State = customerContactInfoDto.State,
@@ -184,34 +194,45 @@ namespace Helpi.Application.Services
 
                 var seniorContactInfoDto = customerRegistrationDto.SeniorContactInfo;
 
-                var seniorContactInfo = new ContactInfo
+                ContactInfo? seniorContactInfo = null;
+
+
+                // if customer is not ordering for self
+                if (customerRegistrationDto.Relationship != Relationship.Self)
                 {
 
-                    FullName = seniorContactInfoDto.FullName,
-                    Phone = seniorContactInfoDto.Phone,
-                    Email = customerRegistrationDto.Email,
-                    Gender = seniorContactInfoDto.Gender,
-                    GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
-                    FullAddress = seniorContactInfoDto.FullAddress,
-                    CityId = seniorContactInfoDto.CityId,
-                    Latitude = seniorContactInfoDto.Latitude,
-                    Longitude = seniorContactInfoDto.Longitude,
-                    State = seniorContactInfoDto.State,
-                    PostalCode = seniorContactInfoDto.PostalCode,
-                    Country = seniorContactInfoDto.Country
-                };
+                    var seniorcCityId = await GetCityId(seniorContactInfoDto.GooglePlaceId);
+
+                    seniorContactInfo = new ContactInfo
+                    {
+
+                        FullName = seniorContactInfoDto.FullName,
+                        Phone = seniorContactInfoDto.Phone,
+                        Email = customerRegistrationDto.Email,
+                        Gender = seniorContactInfoDto.Gender,
+                        GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
+                        FullAddress = seniorContactInfoDto.FullAddress,
+                        CityId = seniorcCityId,
+                        Latitude = seniorContactInfoDto.Latitude,
+                        Longitude = seniorContactInfoDto.Longitude,
+                        State = seniorContactInfoDto.State,
+                        PostalCode = seniorContactInfoDto.PostalCode,
+                        Country = seniorContactInfoDto.Country
+                    };
+                }
+
+
 
                 var customer = new Customer
                 {
                     UserId = user.Id,
                     PreferredNotificationMethod = customerRegistrationDto.PreferredNotificationMethod,
-
                 };
 
                 var senior = new Senior
                 {
                     CustomerId = user.Id,
-                    Relationship = Relationship.Self,
+                    Relationship = customerRegistrationDto.Relationship,
                 };
 
                 await _authRepository.RegisterCustomer(customer, customerContactInfo, senior, seniorContactInfo);
@@ -229,12 +250,20 @@ namespace Helpi.Application.Services
             try
             {
 
+
+
                 var user = await _CreateUser(registerDto.ContactInfo.FullName, registerDto.Email, registerDto.UserType, registerDto.Password);
 
                 // Create contact info for the user
                 var contactInfo = _mapper.Map<ContactInfo>(registerDto.ContactInfo);
                 contactInfo.Email = registerDto.Email;
 
+
+
+
+                var cityId = await GetCityId(contactInfo.GooglePlaceId);
+
+                contactInfo.CityId = cityId;
 
                 if (!registerDto.FacultyId.HasValue)
                 {
@@ -328,10 +357,17 @@ namespace Helpi.Application.Services
                 // Create contact info for the user
                 var contactInfo = _mapper.Map<ContactInfo>(dto.ContactInfo);
 
+
+
                 var admin = new Admin
                 {
                     UserId = user.Id,
                 };
+
+
+                var cityId = await GetCityId(contactInfo.GooglePlaceId);
+
+                contactInfo.CityId = cityId;
 
                 await _authRepository.RegisterAdmin(admin, contactInfo);
 
@@ -387,7 +423,26 @@ namespace Helpi.Application.Services
             return tokenResponseDto;
         }
 
+        private async Task<int> GetCityId(string googlePlaceId)
+        {
+            var cityCreateDto = await _googlePlaceService.GetCityFromLocationPlaceIdAsync(googlePlaceId);
+
+            var cityId = 1;
+
+            if (cityCreateDto != null)
+            {
+                cityId = await _cityRepo.EnsureCityExistsAsync(
+                                cityCreateDto.GooglePlaceId,
+                                cityCreateDto.Name
+                            );
+            }
+
+            return cityId;
+        }
+
     }
+
+
 
 
 

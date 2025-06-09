@@ -12,7 +12,6 @@ using Helpi.Infrastructure.Repositories;
 using Helpi.Infrastructure.Seeds;
 using Helpi.Infrastructure.Services;
 using Infrastructure.Persistence.Repositories;
-using MailerLiteIntegration.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +37,11 @@ public static class DependencyInjection
 
 
 
+        services.AddHttpClient<IApiService, ApiService>();
+
+
+        services.AddScoped<IGooglePlaceService, GooglePlaceService>();
+        services.AddScoped<IMinimaxService, MinimaxService>();
         services.AddScoped<IPaymentErrorMapper, StripeErrorMapper>();
         services.AddScoped<IPricingChangeHistoryRepository, PricingChangeHistoryRepository>();
         services.AddScoped<IPricingConfigurationRepository, PricingConfigurationRepository>();
@@ -45,8 +49,8 @@ public static class DependencyInjection
         services.AddScoped<IContractNumberSequenceRepository, ContractNumberSequenceRepository>();
 
         services.AddScoped<IFcmTokensRepository, FcmTokensRepository>();
-        services.AddScoped<IMailerLiteService, MailerLiteService>();
-        services.AddHttpClient<MailerLiteService>();
+        // services.AddScoped<IMailerLiteService, MailerLiteService>();
+        services.AddHttpClient<IMailerLiteService, MailerLiteService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
         services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
@@ -151,7 +155,7 @@ public static class DependencyInjection
         services.AddTransient<RoleSeeder>();
         services.AddTransient<ContractNumberSequenceSeeder>();
         // TODO: seeders 
-        services.AddTransient<CitySeeder>();
+        // services.AddTransient<CitySeeder>();
         services.AddTransient<ServiceDataSeeder>();
 
         return services;

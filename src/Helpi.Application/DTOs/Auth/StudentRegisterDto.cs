@@ -12,7 +12,7 @@ namespace Helpi.Application.DTOs.Auth
         public int? FacultyId { get; set; }
 
         // ContactInfo
-        public ContactInfoDto ContactInfo { get; set; } = new ContactInfoDto();
+        public ContactInfoCreateDto ContactInfo { get; set; } = new ContactInfoCreateDto();
 
 
 

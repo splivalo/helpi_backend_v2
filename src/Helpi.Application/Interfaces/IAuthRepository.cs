@@ -7,7 +7,7 @@ public interface IAuthRepository
 {
 
     Task RegisterStudent(Student student, ContactInfo contactInfo);
-    Task RegisterCustomer(Customer customer, ContactInfo customerContactInfo, Senior senior, ContactInfo seniorContactInfo);
+    Task RegisterCustomer(Customer customer, ContactInfo customerContactInfo, Senior senior, ContactInfo? seniorContactInfo);
 
     Task RegisterAdmin(Admin admin, ContactInfo contactInfo);
 

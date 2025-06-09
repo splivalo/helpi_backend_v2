@@ -70,8 +70,8 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    OfficialName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    Bounds = table.Column<Polygon>(type: "geometry", nullable: false),
+                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Bounds = table.Column<Polygon>(type: "geometry", nullable: true),
                     IsServiced = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -325,7 +325,7 @@ namespace Helpi.Infrastructure.Migrations
                     CityId = table.Column<int>(type: "integer", nullable: false),
                     State = table.Column<string>(type: "text", nullable: true),
                     PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    Country = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    Country = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

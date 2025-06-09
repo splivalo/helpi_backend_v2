@@ -11,4 +11,6 @@ public interface ICityRepository
     Task<City> AddAsync(City city);
     Task UpdateAsync(City city);
     Task DeleteAsync(City city);
+
+    Task<int> EnsureCityExistsAsync(string placeId, string cityName);
 }

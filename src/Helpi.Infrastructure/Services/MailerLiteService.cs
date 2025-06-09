@@ -6,7 +6,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
 
-namespace MailerLiteIntegration.Infrastructure.Services;
+namespace Helpi.Infrastructure.Services;
 
 public class MailerLiteService : IMailerLiteService
 {

@@ -12,9 +12,9 @@ public class ContactInfoDto
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
     public Gender Gender { get; set; }
-    public string GooglePlaceId { get; set; } = null!;
-    public string FullAddress { get; set; } = null!;
-    public int CityId { get; set; }
+    public required string GooglePlaceId { get; set; } = null!;
+    public required string FullAddress { get; set; } = null!;
+    public required int CityId { get; set; }
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -24,36 +24,33 @@ public class ContactInfoDto
     [MaxLength(20)]
     public string? PostalCode { get; set; }
 
-    [MaxLength(2)]
-    public string Country { get; set; } = "US";
+
+    public string Country { get; set; } = "Croatia";
 }
 
 public class ContactInfoCreateDto
 {
-    [Required]
-    [MaxLength(255)]
+    public int Id { get; set; }
     public string FullName { get; set; } = null!;
 
     public DateOnly DateOfBirth { get; set; }
-
-    [Required]
-    [Phone]
-    [MaxLength(20)]
     public string Phone { get; set; } = null!;
-
-
-
-    [Required]
+    public string? Email { get; set; }
     public Gender Gender { get; set; }
-
-    [Required]
     public string GooglePlaceId { get; set; } = null!;
-
-    [Required]
     public string FullAddress { get; set; } = null!;
-
-    [Required]
     public int CityId { get; set; }
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public string? State { get; set; }
+
+    [MaxLength(20)]
+    public string? PostalCode { get; set; }
+
+
+    public string Country { get; set; } = "Croatia";
 }
 
 public class ContactInfoUpdateDto : ContactInfoCreateDto { }

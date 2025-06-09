@@ -40,6 +40,10 @@ FirebaseConfiguration.InitializeFirebase(builder.Configuration);
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<OrderCreateDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PricingConfigurationDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ContactInfoCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AdminRegisterDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<StudentRegisterDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CustomerRegisterDtoValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -59,6 +63,13 @@ builder.Services.AddCors(options =>
      .AllowAnyMethod()
      .AllowAnyHeader());
 });
+
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>() // 👈 Loads secrets for dev
+    .AddEnvironmentVariables(); // 👈 Prepares for prod
 
 
 
@@ -85,8 +96,8 @@ using (var scope = app.Services.CreateScope())
     await contractNumberSequenceSeeder.SeedAsync();
 
     //
-    var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();
-    await citySeeder.SeedAsync();
+    // var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();
+    // await citySeeder.SeedAsync();
 
 
     var serviceDataSeeder = scope.ServiceProvider.GetRequiredService<ServiceDataSeeder>();

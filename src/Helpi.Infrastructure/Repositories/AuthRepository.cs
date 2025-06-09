@@ -2,6 +2,7 @@ namespace Helpi.Infrastructure.Repositories;
 
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 
 public class AuthRepository : IAuthRepository
@@ -33,7 +34,11 @@ public class AuthRepository : IAuthRepository
             throw;
         }
     }
-    public async Task RegisterCustomer(Customer customer, ContactInfo customerContactInfo, Senior senior, ContactInfo seniorContactInfo)
+    public async Task RegisterCustomer(
+        Customer customer,
+        ContactInfo customerContactInfo,
+        Senior senior,
+        ContactInfo? seniorContactInfo)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -41,14 +46,21 @@ public class AuthRepository : IAuthRepository
         {
             // Add ContactInfo entities to the context
             _context.Set<ContactInfo>().Add(customerContactInfo);
-            _context.Set<ContactInfo>().Add(seniorContactInfo);
+
+            var isOrderingForAnother = senior.Relationship != Relationship.Self;
+
+            if (isOrderingForAnother)
+            {
+                _context.Set<ContactInfo>().Add(seniorContactInfo!);
+            }
+
 
             // Save ContactInfo entities to generate their Ids
             await _context.SaveChangesAsync();
 
             // Set the relationships
             customer.Contact = customerContactInfo;
-            senior.Contact = seniorContactInfo;
+            senior.Contact = isOrderingForAnother ? seniorContactInfo! : customerContactInfo;
             customer.Seniors.Add(senior);
 
             // Add Customer and Senior to the context

@@ -41,5 +41,24 @@ public class CityRepository : ICityRepository
                 await _context.SaveChangesAsync();
         }
 
+        public async Task<int> EnsureCityExistsAsync(string placeId, string cityName)
+        {
+                var city = await _context.Cities
+                    .FirstOrDefaultAsync(c => c.GooglePlaceId == placeId);
+
+                if (city != null) return city.Id;
+
+                city = new City
+                {
+                        Name = cityName,
+                        GooglePlaceId = placeId
+                };
+
+                _context.Cities.Add(city);
+                await _context.SaveChangesAsync();
+
+                return city.Id;
+        }
+
 
 }

@@ -8,7 +8,7 @@ namespace Helpi.Application.DTOs.Auth
         public string Password { get; set; } = string.Empty;
         public UserType UserType { get; set; }
 
-        public ContactInfoDto ContactInfo { get; set; } = new ContactInfoDto();
+        public ContactInfoCreateDto ContactInfo { get; set; } = new ContactInfoCreateDto();
 
     }
 }

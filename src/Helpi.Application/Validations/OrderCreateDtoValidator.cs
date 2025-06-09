@@ -1,5 +1,6 @@
 using FluentValidation;
 using Helpi.Application.DTOs.Order;
+namespace Helpi.Application.Validators;
 
 public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
 {

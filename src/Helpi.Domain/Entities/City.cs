@@ -9,13 +9,13 @@ namespace Helpi.Domain.Entities
         public int Id { get; set; }
 
         [MaxLength(255)]
-        public string GooglePlaceId { get; set; } = null!;
+        public required string GooglePlaceId { get; set; }
 
         [MaxLength(255)]
-        public string OfficialName { get; set; } = null!;
+        public required string Name { get; set; } = null!;
 
-        public Polygon Bounds { get; set; } = null!;
-        public bool IsServiced { get; set; } = false;
+        public Polygon? Bounds { get; set; }
+        public bool IsServiced { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<ContactInfo> ContactInfos { get; set; } = new List<ContactInfo>();

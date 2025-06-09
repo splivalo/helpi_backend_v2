@@ -53,7 +53,6 @@ namespace Helpi.Infrastructure.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<Polygon>("Bounds")
-                        .IsRequired()
                         .HasColumnType("geometry");
 
                     b.Property<DateTime>("CreatedAt")
@@ -67,7 +66,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsServiced")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("OfficialName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -97,8 +96,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<string>("Country")
                         .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");

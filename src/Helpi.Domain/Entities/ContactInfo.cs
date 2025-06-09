@@ -32,8 +32,8 @@ namespace Helpi.Domain.Entities
         [MaxLength(20)]
         public string? PostalCode { get; set; }
 
-        [MaxLength(2)]
-        public string Country { get; set; } = "US";
+
+        public string Country { get; set; } = "Croatia";
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
