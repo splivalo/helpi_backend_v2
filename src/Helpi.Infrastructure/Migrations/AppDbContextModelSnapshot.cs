@@ -173,6 +173,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("PreferredNotificationMethod")
                         .HasColumnType("integer");
 
@@ -942,6 +945,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");

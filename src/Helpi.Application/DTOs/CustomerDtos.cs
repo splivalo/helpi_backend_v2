@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Helpi.Domain.Entities;
+
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;

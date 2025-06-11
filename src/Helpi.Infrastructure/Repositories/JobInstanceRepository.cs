@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -187,5 +188,9 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await query.FirstOrDefaultAsync(ji => ji.Id == jobInstanceId);
         }
 
+        public Task<int> SumAsync(Expression<Func<JobInstance, bool>> predicate, Expression<Func<JobInstance, int>> selector)
+        {
+                return _context.JobInstances.Where(predicate).SumAsync(selector);
+        }
 }
 

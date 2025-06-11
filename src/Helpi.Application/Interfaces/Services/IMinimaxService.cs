@@ -17,6 +17,9 @@ public interface IMinimaxService
     public Task<MinimaxCountry?> GetCountryByCode(string code);
     public Task<List<MinimaxItem>> GetItems();
     public Task<List<MinimaxPaymentMethod>> GetPaymentMethods();
+    public Task<List<MinimaxReportTemplate>> GetReportTemplates();
+    public Task<List<MinimaxVatRate>> GetVatRates();
+    public Task<List<MinimaxDocumentNumbering>> GetDocumentNumbering();
 
     // - get paymentmethods
     // - add customer

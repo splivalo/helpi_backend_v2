@@ -9,6 +9,8 @@ namespace Helpi.Domain.Entities
         [Key]
         public int UserId { get; set; } // user id
         public int ContactId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public NotificationMethod PreferredNotificationMethod { get; set; } = NotificationMethod.Email;
 
         // public User User { get; set; } = null!;

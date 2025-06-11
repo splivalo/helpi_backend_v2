@@ -30,7 +30,7 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                .Include(sa => sa.JobInstances)
                .Where(sa => sa.IsTemporary == false &&
                             sa.OrderSchedule.Order.IsRecurring &&
-                            sa.OrderSchedule.Order.Status == OrderStatus.Acitve)
+                            sa.OrderSchedule.Order.Status == OrderStatus.Active)
                .ToListAsync();
         }
 

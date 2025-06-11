@@ -1,6 +1,7 @@
 namespace Helpi.Infrastructure.Repositories;
 
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
@@ -173,6 +174,9 @@ public class StudentRepository : IStudentRepository
         return await query.ToListAsync();
     }
 
-
+    public Task<int> CountAsync(Expression<Func<Student, bool>> predicate)
+    {
+        return _context.Students.CountAsync(predicate);
+    }
 
 }

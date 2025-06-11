@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -16,4 +17,6 @@ public interface IOrderRepository
     Task DeleteAsync(Order order);
 
     Task AddServicesToOrderAsync(int orderId, IEnumerable<OrderService> services);
+    Task<int> CountAsync(Expression<Func<Order, bool>> predicate);
+
 }

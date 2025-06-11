@@ -48,7 +48,7 @@ namespace Helpi.Domain.Enums
     public enum OrderStatus
     {
         Pending,
-        Acitve,
+        Active,
         Completed,
         Cancelled
     }
@@ -149,5 +149,28 @@ namespace Helpi.Domain.Enums
         ContractRenewalRequired,
         contractValid
 
+    }
+
+    public enum DashboardTileType
+    {
+        uncoveredOrders,
+        expiredContracts,
+        newNotifications,
+        newMessages,
+        studentCount,
+        invalidContracts,
+        reviewCount,
+        averageReview,
+        userCount,
+        orderCount,
+        completedOrders,
+        workedHours
+    }
+
+    public enum ChangeType
+    {
+        increased,
+        decreased,
+        remained
     }
 }

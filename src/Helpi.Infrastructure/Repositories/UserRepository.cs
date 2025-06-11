@@ -1,5 +1,7 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System;
+using System.Linq.Expressions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
@@ -33,4 +35,10 @@ public class UserRepository : IUserRepository
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
         }
+
+        public Task<int> CountAsync(Expression<Func<User, bool>> predicate)
+        {
+                return _context.Users.CountAsync(predicate);
+        }
+
 }

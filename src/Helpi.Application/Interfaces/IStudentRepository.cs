@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -18,4 +19,6 @@ public interface IStudentRepository
 
     Task<List<Student>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds);
     Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions studentIncludeOptions);
+    Task<int> CountAsync(Expression<Func<Student, bool>> predicate);
+
 }

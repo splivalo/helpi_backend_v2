@@ -21,18 +21,21 @@ public class TestingController : ControllerBase
     private readonly OrdersService _ordersService;
     private readonly JobRequestService _jobRequestService;
     private readonly IMinimaxService _minimaxService;
+    private readonly ILogger<TestingController> _logger;
 
 
     public TestingController(INotificationService notificationService,
      JobRequestService jobRequestService,
       OrdersService ordersService,
-       IMinimaxService minimaxService
+       IMinimaxService minimaxService,
+      ILogger<TestingController> logger
       )
     {
         _notificationService = notificationService;
         _jobRequestService = jobRequestService;
         _ordersService = ordersService;
         _minimaxService = minimaxService;
+        _logger = logger;
     }
 
     [HttpGet("send-job-request-notification")]
@@ -138,6 +141,27 @@ public class TestingController : ControllerBase
         var c = await _minimaxService.GetPaymentMethods();
         return Ok(c);
     }
+    [HttpGet("minimax/report-templates")]
+    public async Task<ActionResult<MinimaxReportTemplate>> GetReportTemplates()
+    {
+
+        var c = await _minimaxService.GetReportTemplates();
+        return Ok(c);
+    }
+    [HttpGet("minimax/vatrates")]
+    public async Task<ActionResult<MinimaxVatRate>> GetVatRates()
+    {
+
+        var c = await _minimaxService.GetVatRates();
+        return Ok(c);
+    }
+    [HttpGet("minimax/document-numbering")]
+    public async Task<ActionResult<List<MinimaxDocumentNumbering>>> GetDocumentNumbering()
+    {
+
+        var c = await _minimaxService.GetDocumentNumbering();
+        return Ok(c);
+    }
 
     [HttpPost("minimax/createCustomer")]
     public async Task<ActionResult<MinimaxCustomer>> CreateCustomer()
@@ -192,7 +216,7 @@ public class TestingController : ControllerBase
 
 
     [HttpPost("minimax/createIssuedInvoice")]
-    public async Task<ActionResult<MinimaxCustomer>> CreateIssuedInvoice()
+    public async Task<ActionResult<MinimaxIssuedInvoice>> CreateIssuedInvoice()
     {
 
 
@@ -240,10 +264,44 @@ public class TestingController : ControllerBase
             Default = "Y"
         };
 
+        double hourlyPrice = 200;
+        double jobHours = 1;
 
+        var documentNumbering = new MinimaxDocumentNumbering
+        {
+            DocumentNumberingId = 39152,
+            Document = "IR",
+            Code = "/AK/1",
+            Name = "Fiskalni lažni",
+            Default = "D",
+            Reverse = null,
+            ReferenceNumber = "00",
+            PackagingDepositReturnIncludedInPrice = null,
+            Usage = "D",
+            RecordDtModified = DateTime.Parse("2025-05-29T11:20:58.82"),
+            RowVersion = "AAAAAWlW5aE="
+        };
+
+
+        var vatrate = new MinimaxVatRate
+        {
+            VatRateId = 6,
+            Code = "N",
+            Percent = 0,
+            VatRatePercentage = new MinimaxEntityReference
+            {
+                Id = 12
+            }
+        };
         var minimaxCustomer = new MinimaxIssuedInvoice
         {
             InvoiceType = "R",
+            PaymentType = "T",
+            InvoiceNumber = "236541",
+            DocumentNumbering = new MinimaxEntityReference
+            {
+                Id = documentNumbering.DocumentNumberingId
+            },
             Customer = new MinimaxEntityReference
             {
                 Id = 3520788,
@@ -254,15 +312,11 @@ public class TestingController : ControllerBase
             AddresseeName = " sidney test",
             AddresseeAddress = "addy",
             AddresseeCity = "city",
-            AddresseeCountryName = "countryname",
+            AddresseeCountryName = country.Name,
             AddresseePostalCode = "1000",
-            RecipientAddress = "aa",
-            RecipientCity = "aa",
-            RecipientName = "aa",
-            RecipientCountry = country,
+            AddresseeCountry = country,
 
             Currency = currency,
-
             IssuedInvoiceRows = [
                 new MinimaxIssuedInvoiceRow
                 {
@@ -273,10 +327,13 @@ public class TestingController : ControllerBase
                       Id = minimaxItem.ItemId,
                       Name = minimaxItem.Title
                     },
-                    Quantity = 1,
+                    ItemCode = minimaxItem.Code,
+                    Quantity = jobHours, /// todo: ask bout hour unit of measure vs price
+                    UnitOfMeasurement = minimaxItem.UnitOfMeasurement,
+                    Price = hourlyPrice,
                     VatRate = new MinimaxEntityReference
                     {
-                        Id = 1,
+                        Id = vatrate.VatRateId,
                     },
                 },
             ],
@@ -286,11 +343,13 @@ public class TestingController : ControllerBase
                     PaymentMethod = new MinimaxEntityReference {
                         Id =  paymentMethod.PaymentMethodId
                     },
-                    Amount =  150616.47,
+                    Amount =  hourlyPrice,
                     AlreadyPaid = "D"
                 }
             ]
         };
+
+
 
         var customer = await _minimaxService.CreateIssuedInvoice(minimaxCustomer);
         return Ok(customer);
@@ -298,3 +357,6 @@ public class TestingController : ControllerBase
 
 
 }
+
+
+

@@ -384,6 +384,7 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PreferredNotificationMethod = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -513,7 +514,8 @@ namespace Helpi.Infrastructure.Migrations
                     CustomerId = table.Column<int>(type: "integer", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     Relationship = table.Column<int>(type: "integer", nullable: false),
-                    SpecialRequirements = table.Column<JsonDocument>(type: "jsonb", nullable: true)
+                    SpecialRequirements = table.Column<JsonDocument>(type: "jsonb", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

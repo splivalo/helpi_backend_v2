@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -108,4 +109,10 @@ public class OrderRepository : IOrderRepository
 
                 return await query.FirstOrDefaultAsync(o => o.Id == orderId);
         }
+
+        public Task<int> CountAsync(Expression<Func<Order, bool>> predicate)
+        {
+                return _context.Orders.CountAsync(predicate);
+        }
+
 }

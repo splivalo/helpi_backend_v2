@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
@@ -12,5 +13,6 @@ public interface ICustomerRepository
     Task UpdateAsync(Customer customer);
     Task DeleteAsync(Customer customer);
     Task<IEnumerable<Customer>> GetAllCustomersAsync();
+    Task<int> CountAsync(Expression<Func<Customer, bool>> predicate);
 
 }

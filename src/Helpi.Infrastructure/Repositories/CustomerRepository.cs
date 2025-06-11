@@ -1,5 +1,7 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System;
+using System.Linq.Expressions;
 
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -65,5 +67,9 @@ public class CustomerRepository : ICustomerRepository
                         .ToListAsync();
         }
 
+        public Task<int> CountAsync(Expression<Func<Customer, bool>> predicate)
+        {
+                return _context.Customers.CountAsync(predicate);
+        }
 }
 

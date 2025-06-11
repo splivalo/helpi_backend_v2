@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 
@@ -24,5 +25,5 @@ public interface IJobInstanceRepository
     Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes);
     Task<List<JobInstance>> GetByDateAsync(DateOnly today);
     Task SaveChangesAsync();
-
+    Task<int> SumAsync(Expression<Func<JobInstance, bool>> predicate, Expression<Func<JobInstance, int>> selector);
 }

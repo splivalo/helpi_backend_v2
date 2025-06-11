@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Linq.Expressions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
@@ -45,4 +46,7 @@ public class StudentContractRepository : IStudentContractRepository
                 _context.StudentContracts.Remove(contract);
                 await _context.SaveChangesAsync();
         }
+
+        public Task<int> CountAsync(Expression<Func<StudentContract, bool>> predicate)
+    => _context.StudentContracts.CountAsync(predicate);
 }

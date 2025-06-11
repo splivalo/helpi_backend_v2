@@ -17,7 +17,7 @@ namespace Helpi.Domain.Entities
         [Column(TypeName = "jsonb")]
         public JsonDocument? SpecialRequirements { get; set; }
 
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         // public Customer Customer { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
         public ICollection<Order> Orders { get; set; } = new List<Order>();

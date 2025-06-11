@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250609084414_InitialMigrations")]
+    [Migration("20250611162454_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -175,6 +175,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("PreferredNotificationMethod")
                         .HasColumnType("integer");
@@ -945,6 +948,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");

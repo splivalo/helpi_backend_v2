@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces;
@@ -10,4 +11,6 @@ public interface IUserRepository
     Task<User> AddAsync(User user);
     Task UpdateAsync(User user);
     Task DeleteAsync(User user);
+    Task<int> CountAsync(Expression<Func<User, bool>> predicate);
+
 }

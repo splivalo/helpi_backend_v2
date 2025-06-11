@@ -1,5 +1,6 @@
 
 using Helpi.Application.DTOs;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,9 @@ namespace Helpi.WebApi.Controllers;
 [Route("api/job-instances")]
 public class JobInstancesController : ControllerBase
 {
-        private readonly JobInstanceService _service;
+        private readonly IJobInstanceService _service;
 
-        public JobInstancesController(JobInstanceService service) => _service = service;
+        public JobInstancesController(IJobInstanceService service) => _service = service;
 
         [HttpGet("assignment/{assignmentId}")]
         public async Task<ActionResult<List<JobInstanceDto>>> GetByAssignment(int assignmentId)

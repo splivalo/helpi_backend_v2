@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Interfaces;
@@ -10,4 +11,6 @@ public interface IStudentContractRepository
     Task<StudentContract> AddAsync(StudentContract contract);
     Task UpdateAsync(StudentContract contract);
     Task DeleteAsync(StudentContract contract);
+
+    Task<int> CountAsync(Expression<Func<StudentContract, bool>> predicate);
 }

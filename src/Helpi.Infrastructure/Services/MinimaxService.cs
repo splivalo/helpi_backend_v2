@@ -201,6 +201,7 @@ public class MinimaxService : IMinimaxService
         string json = JsonConvert.SerializeObject(issuedInvoice, Formatting.Indented);
 
 
+
         var url = $"{_baseUrl}/orgs/{_organisationId}/issuedInvoices";
 
 
@@ -209,6 +210,8 @@ public class MinimaxService : IMinimaxService
                _cachedAccessToken,
              json
                );
+
+        _logger.LogInformation(JsonConvert.SerializeObject(result, Formatting.Indented));
 
         var invoice = JsonConvert.DeserializeObject<MinimaxIssuedInvoice>(result);
 
@@ -227,6 +230,38 @@ public class MinimaxService : IMinimaxService
         return JsonConvert.DeserializeObject<List<MinimaxPaymentMethod>>($"{result["Rows"]}") ?? [];
     }
 
+    public async Task<List<MinimaxReportTemplate>> GetReportTemplates()
+    {
+        _cachedAccessToken = await getAccessToken();
 
+        var url = $"{_baseUrl}/orgs/{_organisationId}/report-templates";
+
+        var result = await _apiService.GetAsync(url, _cachedAccessToken);
+
+        return JsonConvert.DeserializeObject<List<MinimaxReportTemplate>>($"{result["Rows"]}") ?? [];
+    }
+
+    public async Task<List<MinimaxVatRate>> GetVatRates()
+    {
+        _cachedAccessToken = await getAccessToken();
+
+        var url = $"{_baseUrl}/orgs/{_organisationId}/vatrates";
+
+        var result = await _apiService.GetAsync(url, _cachedAccessToken);
+
+
+        return JsonConvert.DeserializeObject<List<MinimaxVatRate>>($"{result["Rows"]}") ?? [];
+    }
+
+    public async Task<List<MinimaxDocumentNumbering>> GetDocumentNumbering()
+    {
+        _cachedAccessToken = await getAccessToken();
+
+        var url = $"{_baseUrl}/orgs/{_organisationId}/document-numbering";
+
+        var result = await _apiService.GetAsync(url, _cachedAccessToken);
+
+        return JsonConvert.DeserializeObject<List<MinimaxDocumentNumbering>>($"{result["Rows"]}") ?? [];
+    }
 
 }
