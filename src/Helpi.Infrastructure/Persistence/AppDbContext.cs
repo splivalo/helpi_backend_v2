@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // public DbSet<User> Users { get; set; }
     // public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<HNotification> HNotifications { get; set; }
     public DbSet<PricingConfiguration> PricingConfigurations { get; set; }
     public DbSet<PricingChangeHistory> PricingChangeHistories { get; set; }
 

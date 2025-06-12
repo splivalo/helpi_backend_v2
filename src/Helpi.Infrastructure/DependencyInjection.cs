@@ -36,6 +36,7 @@ public static class DependencyInjection
 
 
 
+        services.AddScoped<IHNotificationRepository, HNotificationRepository>();
 
         services.AddHttpClient<IApiService, ApiService>();
 

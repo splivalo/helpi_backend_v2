@@ -13,6 +13,10 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
 
+        CreateMap<HNotification, HNotificationDto>();
+        CreateMap<CreateHNotificationDto, HNotification>();
+        CreateMap<UpdateHNotificationDto, HNotification>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
         CreateMap<PricingChangeHistory, PricingChangeHistoryDto>().ReverseMap();
         CreateMap<PricingConfiguration, PricingConfigurationDto>().ReverseMap();

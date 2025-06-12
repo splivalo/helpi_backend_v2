@@ -2,7 +2,6 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
-using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Services;
 
