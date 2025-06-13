@@ -147,7 +147,9 @@ namespace Helpi.Domain.Enums
         PaymentReceipt,
         JobInProgress,
         ContractRenewalRequired,
-        contractValid
+        contractValid,
+        NoEligableStudentAcceptedJobYet,
+        NoEligibleStudents
 
     }
 
@@ -172,5 +174,12 @@ namespace Helpi.Domain.Enums
         increased,
         decreased,
         remained
+    }
+
+    public enum AutoScheduleDisableReason
+    {
+        admin,
+        noEligibleStudents,
+        allEligibleStudentsNotified,
     }
 }

@@ -425,19 +425,30 @@ namespace Helpi.Application.Services
 
         private async Task<int> GetCityId(string googlePlaceId)
         {
-            var cityCreateDto = await _googlePlaceService.GetCityFromLocationPlaceIdAsync(googlePlaceId);
 
             var cityId = 1;
 
-            if (cityCreateDto != null)
+            try
             {
-                cityId = await _cityRepo.EnsureCityExistsAsync(
-                                cityCreateDto.GooglePlaceId,
-                                cityCreateDto.Name
-                            );
-            }
+                var cityCreateDto = await _googlePlaceService.GetCityFromLocationPlaceIdAsync(googlePlaceId);
 
-            return cityId;
+
+
+                if (cityCreateDto != null)
+                {
+                    cityId = await _cityRepo.EnsureCityExistsAsync(
+                                    cityCreateDto.GooglePlaceId,
+                                    cityCreateDto.Name
+                                );
+                }
+
+                return cityId;
+            }
+            catch (Exception)
+            {
+
+                return cityId;
+            }
         }
 
     }

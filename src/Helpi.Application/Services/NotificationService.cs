@@ -14,17 +14,22 @@ public class NotificationService : INotificationService
     private readonly IFirebaseService _firebaseService;
     private readonly IFcmTokensRepository _fcmTokensRepository;
 
-    // private readonly ISignalRNotifier _signalRNotifier;
+    private readonly IHNotificationRepository _hNotificationRepo;
+    private readonly ISignalRNotificationService _signalRNotifier;
 
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
          IFirebaseService firebaseService,
+         IHNotificationRepository hNotificationRepo,
+         ISignalRNotificationService signalRNotifier,
          IFcmTokensRepository fcmTokensRepository,
          ILogger<NotificationService> logger
         )
     {
+        _hNotificationRepo = hNotificationRepo;
         _firebaseService = firebaseService;
+        _signalRNotifier = signalRNotifier;
         _fcmTokensRepository = fcmTokensRepository;
         _logger = logger;
     }
@@ -65,11 +70,6 @@ public class NotificationService : INotificationService
         }
     }
 
-    public async Task<bool> StoreNotificationAsync(HNotification notification)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<bool> SendJobStartedNotificationAsync(int userId, JobInstance jobInstance)
     {
 
@@ -107,5 +107,39 @@ public class NotificationService : INotificationService
         return await SendPushNotificationAsync(userId, notification);
     }
 
+
+    public async Task<bool> StoreAndNotifyAsync(HNotification notification, bool viaSignalR = true, bool viaFcm = false)
+    {
+        try
+        {
+
+            var hasSuccess = true;
+
+            var userId = notification.RecieverUserId;
+
+            // 1) store to db
+            await _hNotificationRepo.CreateAsync(notification);
+
+
+            // 2) send notification
+            if (viaSignalR)
+            {
+                await _signalRNotifier.SendNotificationToUserAsync(userId, notification);
+            }
+
+            if (viaFcm)
+            {
+                await SendPushNotificationAsync(userId, notification);
+            }
+
+            return hasSuccess;
+        }
+        catch (Exception ex)
+        {
+
+            _logger.LogError(ex, "❌");
+            return false;
+        }
+    }
 
 }

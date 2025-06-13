@@ -7,7 +7,9 @@ using Helpi.Application.Validators;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
+using Helpi.WebApi.Hubs;
 using Helpi.WebApi.Middleware;
+using Helpi.WebAPI.Services;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddGoogleDriveServices(builder.Configuration);
+
+// here because of NotificationHub
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+
+builder.Services.AddSignalRServices(builder.Configuration);
 
 
 builder.Services.AddApplication(builder.Configuration);
@@ -152,6 +159,8 @@ app.UseAuthorization();
 
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();
 

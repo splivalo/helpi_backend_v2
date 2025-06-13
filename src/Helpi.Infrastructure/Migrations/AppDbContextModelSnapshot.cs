@@ -270,6 +270,42 @@ namespace Helpi.Infrastructure.Migrations
                     b.ToTable("FcmTokens");
                 });
 
+            modelBuilder.Entity("Helpi.Domain.Entities.HNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecieverUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HNotifications");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
                 {
                     b.Property<int>("Id")
@@ -541,6 +577,12 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AutoScheduleAttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AutoScheduleDisableReason")
+                        .HasColumnType("integer");
+
                     b.Property<string>("CancellationReason")
                         .HasColumnType("text");
 
@@ -558,6 +600,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
+
+                    b.Property<bool>("allowAutoScheduling")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 

@@ -13,7 +13,9 @@ namespace Helpi.Application.Services;
 public class MatchingService : IMatchingService
 {
     private readonly IJobRequestRepository _jobRequestRepository;
+
     private readonly IScheduleAssignmentRepository _scheduleAssignmentRepository;
+    private readonly IOrderScheduleRepository _orderScheduleRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ISeniorRepository _seniorRepository;
     private readonly StudentAvailabilitySlotService _studentAvailabilityService;
@@ -31,6 +33,7 @@ public class MatchingService : IMatchingService
     public MatchingService(
         StudentAvailabilitySlotService studentAvailabilityService,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
+        IOrderScheduleRepository orderScheduleRepository,
         INotificationService notificationService,
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
@@ -41,6 +44,7 @@ public class MatchingService : IMatchingService
     {
         _studentAvailabilityService = studentAvailabilityService;
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
+        _orderScheduleRepository = orderScheduleRepository;
         _notificationService = notificationService;
         _orderRepository = orderRepository;
         _studentRepository = studentRepository;
@@ -71,21 +75,11 @@ public class MatchingService : IMatchingService
 
             if (unassignedSchedules.Any())
             {
-                // Store attempt count in the order or a separate tracking table
-                int currentAttempt = await GetCurrentMatchingAttemptCount(orderId);
-
-                if (currentAttempt >= _maxMatchingAttempts)
-                {
-                    _logger.LogWarning("⚠️ Max matching attempts reached for order {OrderId}", orderId);
-                    await HandleMaxAttemptsReached(orderId);
-                    return;
-                }
 
                 // Process all schedules in the order
                 await ProcessAllSchedulesAsync(order);
 
-                // Increment the attempt counter and schedule next attempt if needed
-                await IncrementMatchingAttemptCount(orderId);
+
                 ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(_retryIntervalMinutes));
             }
         }
@@ -104,6 +98,7 @@ public class MatchingService : IMatchingService
         foreach (var schedule in schedules)
         {
             if (schedule.IsCancelled) continue;
+            if (schedule.allowAutoScheduling == false) continue;
 
             // Check if schedule is already assigned
             bool isAssigned = await _scheduleAssignmentRepository.IsScheduleAssigned(schedule.Id);
@@ -129,8 +124,21 @@ public class MatchingService : IMatchingService
     {
         foreach (var schedule in order.Schedules)
         {
+            if (schedule.allowAutoScheduling == false) return;
+
+            int currentAttempt = schedule.AutoScheduleAttemptCount;
+
+            if (currentAttempt >= _maxMatchingAttempts)
+            {
+                _logger.LogWarning("⚠️ Max matching attempts reached for {ScheduleId} in order {OrderId}", schedule.Id, order.Id);
+                await HandleMaxAttemptsReached(schedule);
+                return;
+            }
 
             await FindAndNotifyStudentsForScheduleAsync(order, schedule);
+
+            // Increment the attempt counter and schedule next attempt if needed
+            await IncrementMatchingAttemptCount(schedule);
         }
     }
 
@@ -153,7 +161,8 @@ public class MatchingService : IMatchingService
 
             if (!qualifiedStudents.Any())
             {
-                _logger.LogWarning("⚠️ No qualified students found for schedule {ScheduleId}", schedule.Id);
+
+                HandleNoEligableStudents(order, schedule);
                 return;
             }
 
@@ -168,7 +177,7 @@ public class MatchingService : IMatchingService
             if (!unnotifiedStudents.Any())
             {
                 _logger.LogInformation("📝 Out of qualified students  for schedule {ScheduleId}", schedule.Id);
-                HandleFailedToAssign(order, schedule.Id);
+                HandleEligableAllStudentsNotified(order, schedule, notifiedStudentIds);
                 return;
             }
 
@@ -326,29 +335,82 @@ public class MatchingService : IMatchingService
             orderId, executionTime);
     }
 
-    private async Task<int> GetCurrentMatchingAttemptCount(int orderId)
+    private async Task IncrementMatchingAttemptCount(OrderSchedule schedule)
     {
-        // might stored in a dedicated table or on the order itself
-        return await Task.FromResult(0); // Placeholder
+        schedule.AutoScheduleAttemptCount = schedule.AutoScheduleAttemptCount + 1;
+        await _orderScheduleRepository.UpdateAsync(schedule);
     }
 
-    private async Task IncrementMatchingAttemptCount(int orderId)
-    {
-        // Implementation to increment attempt counter
-        await Task.CompletedTask; // Placeholder
-    }
-
-    private async Task HandleMaxAttemptsReached(int orderId)
+    private async Task HandleMaxAttemptsReached(OrderSchedule schedule)
     {
         // Notify admin or customer that no matches were found after all attempts
         // Could automatically offer incentives or adjust requirements
         await Task.CompletedTask; // Placeholder
     }
 
-    private async Task HandleFailedToAssign(Order order, int scheduleId)
+    private async Task HandleNoEligableStudents(Order order, OrderSchedule schedule)
     {
-        // Notify admin or customer that no matches were found after all attempts
-        // Could automatically offer incentives or adjust requirements
-        await Task.CompletedTask; // Placeholder
+        _logger.LogWarning("⚠️ No qualified students found for schedule {ScheduleId}", schedule.Id);
+
+        /// todo : stop from being scheduled again
+
+        var adminId = await GetAdminId();
+
+        var notification = new HNotification
+        {
+            RecieverUserId = adminId,
+            Title = "No Eligible Students Available",
+            Body = $"Schedule #{schedule.Id} could not be assigned due to a lack of eligible students.",
+            Type = NotificationType.NoEligibleStudents,
+            Payload = JsonSerializer.Serialize(new
+            {
+                Order = order.Id,
+                Schedule = schedule.Id,
+            })
+        };
+
+
+
+        await _notificationService.StoreAndNotifyAsync(notification);
+
+        ///
+        schedule.allowAutoScheduling = false;
+        schedule.AutoScheduleDisableReason = AutoScheduleDisableReason.noEligibleStudents;
+        await _orderScheduleRepository.UpdateAsync(schedule);
+    }
+
+    /// None of the notified students accepted
+    private async Task HandleEligableAllStudentsNotified(Order order, OrderSchedule schedule, List<int> notifiedStudents)
+    {
+        /// todo : stop from being scheduled again
+
+        var adminId = await GetAdminId();
+
+        var notification = new HNotification
+        {
+            RecieverUserId = adminId,
+            Title = "Schedule Assignment Unaccepted",
+            Body = $"All {notifiedStudents.Count()} eligable students notified, none accepted yet",
+            Type = NotificationType.NoEligableStudentAcceptedJobYet,
+            Payload = JsonSerializer.Serialize(new
+            {
+                Order = order.Id,
+                Schedule = schedule.Id,
+                NotifiedStudent = notifiedStudents,
+            })
+        };
+
+        await _notificationService.StoreAndNotifyAsync(notification);
+
+
+        ///
+        schedule.allowAutoScheduling = false;
+        schedule.AutoScheduleDisableReason = AutoScheduleDisableReason.allEligibleStudentsNotified;
+        await _orderScheduleRepository.UpdateAsync(schedule);
+    }
+
+    Task<int> GetAdminId()
+    {
+        return Task.FromResult(1);
     }
 }

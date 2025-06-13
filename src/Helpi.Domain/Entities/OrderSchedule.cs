@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Helpi.Domain.Enums;
 
 
 namespace Helpi.Domain.Entities
@@ -12,6 +13,12 @@ namespace Helpi.Domain.Entities
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public bool IsCancelled { get; set; } = false;
+
+        public int AutoScheduleAttemptCount { get; set; } = 0;
+
+        public bool allowAutoScheduling { get; set; } = true;
+
+        public AutoScheduleDisableReason? AutoScheduleDisableReason { get; set; }
 
         [Column(TypeName = "text")]
         public string? CancellationReason { get; set; }

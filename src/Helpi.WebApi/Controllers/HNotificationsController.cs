@@ -6,11 +6,11 @@ namespace Helpi.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class HNotificationController : ControllerBase
+public class HNotificationsController : ControllerBase
 {
     private readonly IHNotificationService _notificationService;
 
-    public HNotificationController(IHNotificationService notificationService)
+    public HNotificationsController(IHNotificationService notificationService)
     {
         _notificationService = notificationService;
     }
@@ -39,7 +39,7 @@ public class HNotificationController : ControllerBase
         return Ok(notifications);
     }
 
-    [HttpGet("user/{userId}/count/unread")]
+    [HttpGet("user/{userId}/unread-count")]
     public async Task<ActionResult<int>> GetUnreadCount(int userId)
     {
         var count = await _notificationService.GetUnreadCountAsync(userId);

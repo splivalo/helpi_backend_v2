@@ -36,6 +36,7 @@ public static class DependencyInjection
 
 
 
+
         services.AddScoped<IHNotificationRepository, HNotificationRepository>();
 
         services.AddHttpClient<IApiService, ApiService>();
@@ -188,6 +189,19 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IGoogleDriveService, GoogleDriveService>();
+
+        return services;
+    }
+    public static IServiceCollection AddSignalRServices(
+      this IServiceCollection services, IConfiguration configuration)
+    {
+
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+        });
 
         return services;
     }

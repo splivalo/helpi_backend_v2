@@ -107,6 +107,25 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "HNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RecieverUserId = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Body = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    Payload = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_HNotifications", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PricingChangeHistories",
                 columns: table => new
                 {
@@ -652,6 +671,9 @@ namespace Helpi.Infrastructure.Migrations
                     StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     IsCancelled = table.Column<bool>(type: "boolean", nullable: false),
+                    AutoScheduleAttemptCount = table.Column<int>(type: "integer", nullable: false),
+                    allowAutoScheduling = table.Column<bool>(type: "boolean", nullable: false),
+                    AutoScheduleDisableReason = table.Column<int>(type: "integer", nullable: true),
                     CancellationReason = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -1299,6 +1321,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "FcmTokens");
+
+            migrationBuilder.DropTable(
+                name: "HNotifications");
 
             migrationBuilder.DropTable(
                 name: "InvoiceEmails");
