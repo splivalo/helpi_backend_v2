@@ -11,6 +11,7 @@ public interface IApiService
     Task<string> GetRawAsync(string url, string accessToken);
     Task<JObject> PostAsync(string url, string accessToken, string json);
     Task<string> PostRawAsync(string url, string accessToken, string json);
+    Task<string> MinimaxPostRawAsync(string url, string accessToken, string json);
     Task<JObject> PutAsync(string url, string accessToken, string json);
     Task DeleteAsync(string url, string accessToken);
 }

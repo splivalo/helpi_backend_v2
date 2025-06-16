@@ -9,6 +9,8 @@ namespace Helpi.Domain.Entities
         public int UserId { get; set; }
         public User User { get; set; } = null!;
 
+        public int? MinimaxCustomerId { get; set; }
+
         public PaymentProcessor PaymentProcessor { get; set; }
 
         // For making payments

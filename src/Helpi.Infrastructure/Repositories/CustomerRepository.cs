@@ -2,7 +2,7 @@ namespace Helpi.Infrastructure.Repositories;
 
 using System;
 using System.Linq.Expressions;
-
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -70,6 +70,24 @@ public class CustomerRepository : ICustomerRepository
         public Task<int> CountAsync(Expression<Func<Customer, bool>> predicate)
         {
                 return _context.Customers.CountAsync(predicate);
+        }
+
+        public async Task<Customer?> LoadCustomerWithIncludes(int customerId, CustomerIncludeOptions includes)
+        {
+                var query = _context.Customers.AsQueryable();
+
+                if (includes.Contact)
+                        query = query.Include(c => c.Contact);
+
+                if (includes.Seniors)
+                {
+                        query = query.Include(c => c.Seniors);
+                }
+
+
+
+
+                return await query.FirstOrDefaultAsync(c => c.UserId == customerId);
         }
 }
 

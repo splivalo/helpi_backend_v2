@@ -162,6 +162,13 @@ public class TestingController : ControllerBase
         var c = await _minimaxService.GetDocumentNumbering();
         return Ok(c);
     }
+    [HttpGet("minimax/employees")]
+    public async Task<ActionResult<List<MinimaxEmployee>>> GetEmployees()
+    {
+
+        var c = await _minimaxService.GetEmployees();
+        return Ok(c);
+    }
 
     [HttpPost("minimax/createCustomer")]
     public async Task<ActionResult<MinimaxCustomer>> CreateCustomer()
@@ -242,8 +249,8 @@ public class TestingController : ControllerBase
             ItemType = "AS",
             VatRate = new MinimaxEntityReference
             {
-                Id = 1,
-                Name = "S",
+                Id = 6,
+                Name = "N",
                 ResourceUrl = "/api/orgs/39503/vatrates/1"
             },
             Price = 0,
@@ -264,8 +271,33 @@ public class TestingController : ControllerBase
             Default = "Y"
         };
 
-        double hourlyPrice = 200;
-        double jobHours = 1;
+        var employee = new MinimaxEmployee
+        {
+            EmployeeId = 205878,
+            FirstName = "Marko",
+            LastName = "Strugar",
+            DateOfBirth = null,
+            TaxNumber = null,
+            EmploymentType = "ZD",
+            EmploymentStartDate = null,
+            EmploymentEndDate = null,
+            Country = new MinimaxEntityReference
+            {
+                Id = 95,
+                Name = "HR",
+                ResourceUrl = "/api/orgs/39503/countries/95"
+            },
+            CountryOfResidence = new MinimaxEntityReference
+            {
+                Id = 95,
+                Name = "HR",
+                ResourceUrl = "/api/orgs/39503/countries/95"
+            }
+        };
+
+
+        double hourlyPrice = 500;
+        double jobHours = 3;
 
         var documentNumbering = new MinimaxDocumentNumbering
         {
@@ -297,7 +329,7 @@ public class TestingController : ControllerBase
         {
             InvoiceType = "R",
             PaymentType = "T",
-            InvoiceNumber = "236541",
+            // InvoiceNumber = "236541",
             DocumentNumbering = new MinimaxEntityReference
             {
                 Id = documentNumbering.DocumentNumberingId
@@ -317,6 +349,10 @@ public class TestingController : ControllerBase
             AddresseeCountry = country,
 
             Currency = currency,
+            Employee = new MinimaxEntityReference
+            {
+                Id = employee.EmployeeId
+            },
             IssuedInvoiceRows = [
                 new MinimaxIssuedInvoiceRow
                 {
@@ -328,7 +364,7 @@ public class TestingController : ControllerBase
                       Name = minimaxItem.Title
                     },
                     ItemCode = minimaxItem.Code,
-                    Quantity = jobHours, /// todo: ask bout hour unit of measure vs price
+                    Quantity = jobHours,
                     UnitOfMeasurement = minimaxItem.UnitOfMeasurement,
                     Price = hourlyPrice,
                     VatRate = new MinimaxEntityReference
@@ -351,8 +387,17 @@ public class TestingController : ControllerBase
 
 
 
-        var customer = await _minimaxService.CreateIssuedInvoice(minimaxCustomer);
-        return Ok(customer);
+        var issuedInvoiceId = await _minimaxService.CreateIssuedInvoice(minimaxCustomer);
+
+        var invoice = await _minimaxService.GetIssuedInvoiceByIdAsync((int)issuedInvoiceId);
+
+
+        var issueSuccess = await _minimaxService.CustomActionIssuedInvoice((int)issuedInvoiceId, invoice!.RowVersion!, "issue");
+
+        var emailSuccess = await _minimaxService.CustomActionIssuedInvoice((int)issuedInvoiceId, invoice!.RowVersion!, "sendEInvoice");
+
+
+        return Ok(invoice);
     }
 
 

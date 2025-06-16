@@ -45,3 +45,5 @@ namespace Helpi.Domain.Entities
         public string? HangFirePaymentJobId { get; set; }
     }
 }
+
+

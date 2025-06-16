@@ -18,6 +18,7 @@ public class CityCreateDto
     [Required]
     [StringLength(255)]
     public string Name { get; set; } = null!;
+    public string PostalCode { get; set; } = null!;
 
     [Required]
     public bool IsServiced { get; set; }

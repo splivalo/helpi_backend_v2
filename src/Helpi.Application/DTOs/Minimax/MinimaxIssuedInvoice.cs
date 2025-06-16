@@ -4,7 +4,8 @@ namespace Helpi.Application.DTOs.Minimax;
 
 public class MinimaxIssuedInvoice
 {
-    public int Year { get; set; }
+    public int? IssuedInvoiceId { get; set; }
+    public int? Year { get; set; }
     public MinimaxEntityReference? DocumentNumbering { get; set; }
     public required MinimaxEntityReference Customer { get; set; }
     public string? InvoiceNumber { get; set; }
@@ -36,6 +37,7 @@ public class MinimaxIssuedInvoice
     public required string InvoiceType { get; set; }
     public double InvoiceValue { get; set; }
     public double PaidValue { get; set; }
+    public string? RowVersion { get; set; }
 
     public required List<MinimaxIssuedInvoicePaymentMethod> IssuedInvoicePaymentMethods { get; set; }
     public required List<MinimaxIssuedInvoiceRow> IssuedInvoiceRows { get; set; }

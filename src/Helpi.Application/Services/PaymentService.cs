@@ -1,4 +1,5 @@
 // // Application/Services/PaymentService.cs
+using System.Runtime.InteropServices;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -10,22 +11,28 @@ public class PaymentService : IPaymentService
 {
     private readonly IPaymentTransactionRepository _transactionRepository;
     private readonly IJobInstanceRepository _jobInstanceRepo;
+    private readonly ICustomerRepository _customerRepo;
     private readonly IPaymentProfileRepository _paymentProfileRepo;
     private readonly IStripePaymentService _stripePaymentService;
+    private readonly IMinimaxService _minimaxService;
     private readonly ILogger<PaymentService> _logger;
 
     public PaymentService(
         IPaymentTransactionRepository transactionRepository,
        IJobInstanceRepository jobInstanceRepo,
+       ICustomerRepository customerRepo,
        IPaymentProfileRepository paymentProfileRepo,
         IStripePaymentService stripePaymentService,
+      IMinimaxService minimaxService,
       ILogger<PaymentService> logger
         )
     {
         _transactionRepository = transactionRepository;
         _jobInstanceRepo = jobInstanceRepo;
+        _customerRepo = customerRepo;
         _paymentProfileRepo = paymentProfileRepo;
         _stripePaymentService = stripePaymentService;
+        _minimaxService = minimaxService;
         _logger = logger;
     }
 
@@ -73,9 +80,11 @@ public class PaymentService : IPaymentService
 
         await _transactionRepository.AddAsync(transaction);
 
+        PaymentProfile? paymentProfile = null;
+
         try
         {
-            var paymentProfile = await _paymentProfileRepo.GetStipePaymentByUserIdAsync(jobInstance.CustomerId);
+            paymentProfile = await _paymentProfileRepo.GetStipePaymentByUserIdAsync(jobInstance.CustomerId);
             if (paymentProfile?.StripeCustomerId == null)
             {
                 _logger.LogWarning("❗ Missing Stripe profile or customer ID for user {CustomerId}", jobInstance.CustomerId);
@@ -88,6 +97,7 @@ public class PaymentService : IPaymentService
                 if (result.Success)
                 {
                     transaction.Status = PaymentStatus.Paid;
+                    transaction.ProcessPaymentId = result.PaymentIntentId;
                     _logger.LogInformation("✅ Payment successful for JobInstance {JobInstanceId} 💸", jobInstanceId);
                 }
                 else
@@ -104,6 +114,28 @@ public class PaymentService : IPaymentService
         }
 
         await _transactionRepository.UpdateAsync(transaction);
+
+
+
+        /// 
+        /// ---  Minimax ------
+        /// 
+
+        if (transaction.Status != PaymentStatus.Paid) return;
+
+        var customer = await _customerRepo.LoadCustomerWithIncludes(jobInstance.CustomerId, new CustomerIncludeOptions
+        {
+            Contact = true
+        });
+
+        if (customer == null)
+        {
+            _logger.LogWarning("❌ [Failed] get customer in payment service Customer: {customerId}", jobInstance.CustomerId);
+        }
+
+        await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
     }
+
+
 
 }

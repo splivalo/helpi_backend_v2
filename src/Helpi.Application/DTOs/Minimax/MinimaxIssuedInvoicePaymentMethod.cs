@@ -7,7 +7,7 @@ public class MinimaxIssuedInvoicePaymentMethod
     public required MinimaxEntityReference PaymentMethod { get; set; }
     public MinimaxEntityReference? CashRegister { get; set; }
     public MinimaxEntityReference? Revenue { get; set; }
-    public DateTime RevenueDate { get; set; }
+    public DateTime? RevenueDate { get; set; }
     public required double Amount { get; set; }
     public double AmountInDomesticCurrency { get; set; }
     public required string AlreadyPaid { get; set; }

@@ -48,13 +48,15 @@ public class ContactInfoService
 
                         if (cityCreateDto != null)
                         {
-                                var cityId = await _cityRepo.EnsureCityExistsAsync(
+                                var city = await _cityRepo.EnsureCityExistsAsync(
                                     cityCreateDto.GooglePlaceId,
-                                    cityCreateDto.Name
+                                    cityCreateDto.Name,
+                                    cityCreateDto.PostalCode
                                 );
 
-                                dto.CityId = cityId;
-                                contactInfo.CityId = cityId;
+                                dto.CityId = city.Id;
+                                dto.CityName = city.Name;
+                                dto.PostalCode = city.PostalCode;
                         }
                         else
                         {

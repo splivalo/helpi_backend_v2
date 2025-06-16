@@ -33,6 +33,7 @@ public class GooglePlaceService : IGooglePlaceService
         var detailResponse = JsonConvert.DeserializeObject<GooglePlaceDetailResponse>(result);
 
         var cityName = ExtractCityName(detailResponse?.Result?.AddressComponents);
+        var postalCode = ExtractPostalCode(detailResponse?.Result?.AddressComponents);
 
         if (string.IsNullOrWhiteSpace(cityName))
             return null;
@@ -53,6 +54,7 @@ public class GooglePlaceService : IGooglePlaceService
         {
             GooglePlaceId = googlePlaceId,
             Name = cityName,
+            PostalCode = postalCode ?? "10000"
         };
 
     }
@@ -68,5 +70,14 @@ public class GooglePlaceService : IGooglePlaceService
             GetByType("locality") ??
             GetByType("sublocality_level_1") ??
             GetByType("administrative_area_level_2");
+    }
+
+    private string? ExtractPostalCode(List<GoogleAddressComponent>? components)
+    {
+        if (components == null) return null;
+
+        return components
+            .FirstOrDefault(c => c.Types.Contains("postal_code"))
+            ?.LongName;
     }
 }

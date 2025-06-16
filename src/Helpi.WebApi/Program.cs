@@ -78,7 +78,8 @@ builder.Configuration
     .AddUserSecrets<Program>() // 👈 Loads secrets for dev
     .AddEnvironmentVariables(); // 👈 Prepares for prod
 
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 var app = builder.Build();
 

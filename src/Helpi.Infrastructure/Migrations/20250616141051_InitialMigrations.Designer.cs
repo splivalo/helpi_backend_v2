@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250613081619_InitialMigrations")]
+    [Migration("20250616141051_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -74,6 +74,10 @@ namespace Helpi.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Bounds");
@@ -96,6 +100,10 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("CityId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Country")
                         .IsRequired()
@@ -702,6 +710,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime?>("LastPayoutDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("MinimaxCustomerId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PaymentProcessor")
                         .HasColumnType("integer");
 
@@ -768,6 +779,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("PaymentMethodId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ProcessPaymentId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");

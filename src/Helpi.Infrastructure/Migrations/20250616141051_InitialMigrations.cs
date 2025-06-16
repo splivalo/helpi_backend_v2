@@ -71,6 +71,7 @@ namespace Helpi.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    PostalCode = table.Column<string>(type: "text", nullable: false),
                     Bounds = table.Column<Polygon>(type: "geometry", nullable: true),
                     IsServiced = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -307,6 +308,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<int>(type: "integer", nullable: false),
+                    MinimaxCustomerId = table.Column<int>(type: "integer", nullable: true),
                     PaymentProcessor = table.Column<int>(type: "integer", nullable: false),
                     StripeCustomerId = table.Column<string>(type: "text", nullable: true),
                     StripeConnectAccountId = table.Column<string>(type: "text", nullable: true),
@@ -342,6 +344,7 @@ namespace Helpi.Infrastructure.Migrations
                     Latitude = table.Column<decimal>(type: "numeric", nullable: false),
                     Longitude = table.Column<decimal>(type: "numeric", nullable: false),
                     CityId = table.Column<int>(type: "integer", nullable: false),
+                    CityName = table.Column<string>(type: "text", nullable: false),
                     State = table.Column<string>(type: "text", nullable: true),
                     PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Country = table.Column<string>(type: "text", nullable: false),
@@ -892,6 +895,7 @@ namespace Helpi.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     RetryCount = table.Column<byte>(type: "smallint", nullable: false),
                     MaxRetries = table.Column<byte>(type: "smallint", nullable: false),
+                    ProcessPaymentId = table.Column<string>(type: "text", nullable: true),
                     GatewayId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     GatewayResponse = table.Column<JsonDocument>(type: "jsonb", nullable: true),
                     IdempotencyKey = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)

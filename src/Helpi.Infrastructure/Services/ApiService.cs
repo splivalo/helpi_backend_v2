@@ -62,10 +62,14 @@ public class ApiService : IApiService
 
         var content = await response.Content.ReadAsStringAsync();
 
-        _logger.LogInformation("📥 Response: {Content}", content);
+        var parsed = JObject.Parse(content);
+
+        _logger.LogInformation("📥 Response:");
+        _logger.LogInformation(parsed.ToString());
+
         response.EnsureSuccessStatusCode();
 
-        return JObject.Parse(content);
+        return parsed;
     }
 
     public async Task<string> GetRawAsync(string url, string accessToken)
@@ -76,8 +80,16 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync(url);
         var content = await response.Content.ReadAsStringAsync();
 
-        _logger.LogInformation("📥 Raw Response: {Content}", content);
+        content = System.Text.RegularExpressions.Regex.Unescape(content);
+
+
+        _logger.LogInformation("📥 Raw Response: {content}", content);
+
+
+
         response.EnsureSuccessStatusCode();
+
+
 
         return content;
     }
@@ -111,8 +123,41 @@ public class ApiService : IApiService
         _logger.LogInformation("📥 POST Raw Response: {Content}", responseContent);
         response.EnsureSuccessStatusCode();
 
+
         return responseContent;
     }
+
+    public async Task<string> MinimaxPostRawAsync(string url, string accessToken, string json)
+    {
+        _logger.LogInformation("📨 POST RAW to {Url}", url);
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(url, content);
+
+        // Log full response
+        var responseContent = await response.Content.ReadAsStringAsync();
+        _logger.LogInformation("📥 POST Raw Response: {Content}", responseContent);
+
+        // Throw if not success
+        response.EnsureSuccessStatusCode();
+
+        // Try to get ID from Location header
+        if (response.Headers.Location != null)
+        {
+            var location = response.Headers.Location.ToString();
+            _logger.LogInformation("📎 Location Header: {Location}", location);
+
+            // Try to extract ID from URL
+            var id = location.Split('/').Last().Split('?').First();
+
+            return id;
+        }
+
+        throw new InvalidOperationException("Location header is missing; cannot extract ID.");
+    }
+
 
     public async Task<JObject> PutAsync(string url, string accessToken, string json)
     {

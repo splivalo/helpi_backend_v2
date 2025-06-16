@@ -26,6 +26,8 @@ namespace Helpi.Domain.Entities
         public byte RetryCount { get; set; } = 0;
         public byte MaxRetries { get; set; } = 3;
 
+        public string? ProcessPaymentId { get; set; } // stripe payment_intent_id
+
         [MaxLength(255)]
         public string? GatewayId { get; set; }
 

@@ -13,6 +13,7 @@ namespace Helpi.Domain.Entities
 
         [MaxLength(255)]
         public required string Name { get; set; } = null!;
+        public required string PostalCode { get; set; } = null!;
 
         public Polygon? Bounds { get; set; }
         public bool IsServiced { get; set; } = true;

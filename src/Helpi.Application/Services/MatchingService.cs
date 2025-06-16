@@ -27,7 +27,7 @@ public class MatchingService : IMatchingService
     // Configuration parameters  could be moved to app settings
     private readonly int _maxConcurrentNotifications = 1;  // Number of students to notify at once
     private readonly int _jobRequestExpirationMinutes = 10;
-    private readonly int _retryIntervalMinutes = 2; /// todo: 10
+    private readonly int _retryIntervalMinutes = 10; /// todo: 10
     private readonly int _maxMatchingAttempts = 100000;
 
     public MatchingService(

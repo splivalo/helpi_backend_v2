@@ -171,7 +171,7 @@ namespace Helpi.Application.Services
 
                 var customerContactInfoDto = customerRegistrationDto.ContactInfo;
 
-                var cityId = await GetCityId(customerContactInfoDto.GooglePlaceId);
+                var city = await GetCity(customerContactInfoDto.GooglePlaceId);
 
 
                 // Create contact info for the user
@@ -184,11 +184,12 @@ namespace Helpi.Application.Services
                     Gender = customerContactInfoDto.Gender,
                     GooglePlaceId = customerContactInfoDto.GooglePlaceId,
                     FullAddress = customerContactInfoDto.FullAddress,
-                    CityId = cityId,
+                    CityId = city.Id,
+                    CityName = city.Name,
+                    PostalCode = city.PostalCode,
                     Latitude = customerContactInfoDto.Latitude,
                     Longitude = customerContactInfoDto.Longitude,
                     State = customerContactInfoDto.State,
-                    PostalCode = customerContactInfoDto.PostalCode,
                     Country = customerContactInfoDto.Country
                 };
 
@@ -201,7 +202,7 @@ namespace Helpi.Application.Services
                 if (customerRegistrationDto.Relationship != Relationship.Self)
                 {
 
-                    var seniorcCityId = await GetCityId(seniorContactInfoDto.GooglePlaceId);
+                    var seniorcCity = await GetCity(seniorContactInfoDto.GooglePlaceId);
 
                     seniorContactInfo = new ContactInfo
                     {
@@ -212,11 +213,12 @@ namespace Helpi.Application.Services
                         Gender = seniorContactInfoDto.Gender,
                         GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
                         FullAddress = seniorContactInfoDto.FullAddress,
-                        CityId = seniorcCityId,
+                        CityId = seniorcCity.Id,
+                        CityName = seniorcCity.Name,
+                        PostalCode = city.PostalCode,
                         Latitude = seniorContactInfoDto.Latitude,
                         Longitude = seniorContactInfoDto.Longitude,
                         State = seniorContactInfoDto.State,
-                        PostalCode = seniorContactInfoDto.PostalCode,
                         Country = seniorContactInfoDto.Country
                     };
                 }
@@ -261,9 +263,12 @@ namespace Helpi.Application.Services
 
 
 
-                var cityId = await GetCityId(contactInfo.GooglePlaceId);
+                var city = await GetCity(contactInfo.GooglePlaceId);
 
-                contactInfo.CityId = cityId;
+                contactInfo.CityId = city.Id;
+                contactInfo.CityName = city.Name;
+                contactInfo.PostalCode = city.PostalCode;
+
 
                 if (!registerDto.FacultyId.HasValue)
                 {
@@ -365,9 +370,11 @@ namespace Helpi.Application.Services
                 };
 
 
-                var cityId = await GetCityId(contactInfo.GooglePlaceId);
+                var city = await GetCity(contactInfo.GooglePlaceId);
 
-                contactInfo.CityId = cityId;
+                contactInfo.CityId = city.Id;
+                contactInfo.CityName = city.Name;
+                contactInfo.PostalCode = city.PostalCode;
 
                 await _authRepository.RegisterAdmin(admin, contactInfo);
 
@@ -423,10 +430,16 @@ namespace Helpi.Application.Services
             return tokenResponseDto;
         }
 
-        private async Task<int> GetCityId(string googlePlaceId)
+        private async Task<City> GetCity(string googlePlaceId)
         {
 
-            var cityId = 1;
+            var city = new City
+            {
+                Id = 1,
+                Name = "Zagreb",
+                GooglePlaceId = "-",
+                PostalCode = "10000",
+            };
 
             try
             {
@@ -436,18 +449,19 @@ namespace Helpi.Application.Services
 
                 if (cityCreateDto != null)
                 {
-                    cityId = await _cityRepo.EnsureCityExistsAsync(
+                    city = await _cityRepo.EnsureCityExistsAsync(
                                     cityCreateDto.GooglePlaceId,
-                                    cityCreateDto.Name
+                                    cityCreateDto.Name,
+                                    cityCreateDto.PostalCode
                                 );
                 }
 
-                return cityId;
+                return city;
             }
             catch (Exception)
             {
 
-                return cityId;
+                return city;
             }
         }
 
