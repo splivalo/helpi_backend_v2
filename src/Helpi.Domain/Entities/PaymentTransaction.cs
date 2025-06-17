@@ -37,6 +37,12 @@ namespace Helpi.Domain.Entities
         [MaxLength(64)]
         public string? IdempotencyKey { get; set; }
 
+        // refunf
+        public string? RefundId { get; set; }
+        public string? RefundReason { get; set; }
+        public decimal? RefundAmount { get; set; }
+        public DateTime? RefundedAt { get; set; }
+
         public JobInstance JobInstance { get; set; } = null!;
         public Customer Customer { get; set; } = null!;
         public PaymentMethod PaymentMethod { get; set; } = null!;

@@ -98,7 +98,12 @@ public class MatchingService : IMatchingService
         foreach (var schedule in schedules)
         {
             if (schedule.IsCancelled) continue;
-            if (schedule.allowAutoScheduling == false) continue;
+
+            if (schedule.allowAutoScheduling == false)
+            {
+                _logger.LogInformation("⚠️ [allowAutoScheduling]  = FALSE -> schedule {schedule}", schedule.Id);
+                continue;
+            }
 
             // Check if schedule is already assigned
             bool isAssigned = await _scheduleAssignmentRepository.IsScheduleAssigned(schedule.Id);

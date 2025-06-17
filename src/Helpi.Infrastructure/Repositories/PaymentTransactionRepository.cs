@@ -5,6 +5,8 @@ using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
+
 
 public class PaymentTransactionRepository : IPaymentTransactionRepository
 {
@@ -47,4 +49,12 @@ public class PaymentTransactionRepository : IPaymentTransactionRepository
                 _context.PaymentTransactions.Remove(transaction);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task<PaymentTransaction?> GetByPaymentIntentIdAsync(string paymentIntentId)
+        {
+                return await _context.PaymentTransactions
+                          .Include(pt => pt.JobInstance)
+                          .FirstOrDefaultAsync(pt => pt.ProcessPaymentId == paymentIntentId);
+        }
+
 }

@@ -1,11 +1,11 @@
-// // Application/Services/PaymentService.cs
-using System.Runtime.InteropServices;
+
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
+
 
 public class PaymentService : IPaymentService
 {
@@ -35,7 +35,6 @@ public class PaymentService : IPaymentService
         _minimaxService = minimaxService;
         _logger = logger;
     }
-
 
 
     public async Task ProcessPaymentAsync(int jobInstanceId)
@@ -135,6 +134,34 @@ public class PaymentService : IPaymentService
 
         await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
     }
+
+
+
+
+    public async Task HandlePaymentRefund(string paymentIntentId, string refundId, decimal refundAmount, string refundReason)
+    {
+        var transaction = await _transactionRepository.GetByPaymentIntentIdAsync(paymentIntentId);
+
+        if (transaction == null)
+        {
+            _logger.LogInformation("❌ [Failed]  to get PaymentTransaction with paymentIntentId: {paymentIntentId}", paymentIntentId);
+            return;
+        }
+
+        transaction.Status = PaymentStatus.Refunded;
+        transaction.RefundId = refundId;
+        transaction.RefundAmount = refundAmount;
+        transaction.RefundReason = refundReason;
+        transaction.RefundedAt = DateTime.UtcNow;
+        transaction.JobInstance.Status = JobInstanceStatus.Cancelled;
+
+        await _transactionRepository.UpdateAsync(transaction);
+
+        _logger.LogInformation("✅ [Pass]  Refunded paymentIntentId: {paymentIntentId}", paymentIntentId);
+
+    }
+
+
 
 
 

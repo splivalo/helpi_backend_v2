@@ -1,4 +1,5 @@
 using Helpi.Domain.Entities;
+using Stripe;
 
 namespace Helpi.Application.Interfaces;
 
@@ -10,4 +11,6 @@ public interface IPaymentTransactionRepository
     Task<PaymentTransaction> AddAsync(PaymentTransaction transaction);
     Task UpdateAsync(PaymentTransaction transaction);
     Task DeleteAsync(PaymentTransaction transaction);
+    Task<PaymentTransaction?> GetByPaymentIntentIdAsync(string paymentIntentId);
+
 }

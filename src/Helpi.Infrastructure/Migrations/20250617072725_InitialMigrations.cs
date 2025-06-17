@@ -898,7 +898,11 @@ namespace Helpi.Infrastructure.Migrations
                     ProcessPaymentId = table.Column<string>(type: "text", nullable: true),
                     GatewayId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     GatewayResponse = table.Column<JsonDocument>(type: "jsonb", nullable: true),
-                    IdempotencyKey = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
+                    IdempotencyKey = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    RefundId = table.Column<string>(type: "text", nullable: true),
+                    RefundReason = table.Column<string>(type: "text", nullable: true),
+                    RefundAmount = table.Column<decimal>(type: "numeric", nullable: true),
+                    RefundedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {

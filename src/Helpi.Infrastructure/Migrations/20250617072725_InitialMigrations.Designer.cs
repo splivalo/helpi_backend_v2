@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250616141051_InitialMigrations")]
+    [Migration("20250617072725_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -784,6 +784,18 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("RefundAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("RefundId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RefundReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RefundedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte>("RetryCount")
