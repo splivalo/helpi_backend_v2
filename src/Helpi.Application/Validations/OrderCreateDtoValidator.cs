@@ -38,19 +38,7 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
 
 
         RuleFor(o => o.Schedules)
-            .Must(schedules => schedules.All(schedule =>
-            {
-                TimeOnly start = schedule.StartTime;
-                TimeOnly end = schedule.EndTime;
-
-                // Compare if the end time is greater than the start time
-                return end > start;
-            }))
-            .WithMessage("End time must be greater than start time for all schedules.");
-
-        RuleFor(o => o.Schedules)
-            .Must(schedules => schedules.All(schedule =>
-                schedule.DayOfWeek >= 1 && schedule.DayOfWeek <= 7))
-            .WithMessage("Schedule dayOfWeek must be between 1 and 7.");
+              .NotNull()
+              .ForEach(schedule => schedule.SetValidator(new OrderScheduleCreateDtoValidator()));
     }
 }

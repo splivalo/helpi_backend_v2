@@ -12,6 +12,7 @@ namespace Helpi.Application.Services;
 public class JobRequestService
 {
         private readonly IJobRequestRepository _jobRequestRepository;
+        private readonly CompletionStatusService _completionStatusService;
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<JobRequestService> _logger;
@@ -21,6 +22,7 @@ public class JobRequestService
 
         public JobRequestService(
                 IJobRequestRepository jobRequestRepository,
+                CompletionStatusService completionStatusService,
                 IJobInstanceRepository jobInstanceRepository,
                 IMapper mapper,
                  IHangfireRecurringJobService recurringJobService,
@@ -28,6 +30,7 @@ public class JobRequestService
                   ILogger<JobRequestService> logger)
         {
                 _jobRequestRepository = jobRequestRepository;
+                _completionStatusService = completionStatusService;
                 _jobInstanceRepository = jobInstanceRepository;
                 _mapper = mapper;
                 _recurringJobService = recurringJobService;
@@ -65,16 +68,25 @@ public class JobRequestService
                 if (jobRequest.Status == JobRequestStatus.Accepted)
                 {
                         await _GenerateJobInstancesAsync(jobRequest);
+
+                        await _completionStatusService.ProcessIsOrderAllSchedulesAssigned(jobRequest.OrderId);
                 }
 
                 return _mapper.Map<JobRequestDto>(jobRequest);
         }
 
         /// 
+        /// ONLY USE FOR FIRST ASIGNMENT ON A SCHEDULE
         /// Generated the first batch of JobInstances,
         /// the rest will be done by Hangfire recuring job
         public async Task _GenerateJobInstancesAsync(JobRequest jobRequest)
         {
+
+                if (!jobRequest.OrderSchedule.Assignments.Any())
+                {
+                        _logger.LogInformation("❌ [JobRequest] -> [OrderSchedule] has no assignments");
+                        return;
+                }
 
                 var pricingConfig = await _pricingConfigRepo.GetByIdAsync(1);
 
@@ -84,7 +96,7 @@ public class JobRequestService
                         return;
                 }
 
-
+                /// this is okay because there is only 1 assignment
                 var assignment = jobRequest.OrderSchedule.Assignments.First();
 
                 var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);

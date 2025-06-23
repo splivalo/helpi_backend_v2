@@ -13,7 +13,7 @@ using Helpi.WebAPI.Services;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var env = builder.Environment;
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
@@ -40,12 +40,10 @@ builder.Services.AddHangfireServices(builder.Configuration);
 
 
 
-FirebaseConfiguration.InitializeFirebase(builder.Configuration);
-
-
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<OrderCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<OrderScheduleCreateDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<PricingConfigurationDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ContactInfoCreateDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AdminRegisterDtoValidator>();
@@ -54,21 +52,21 @@ builder.Services.AddValidatorsFromAssemblyContaining<CustomerRegisterDtoValidato
 
 builder.Services.AddCors(options =>
 {
-
-
-
-    options.AddPolicy("AllowFlutterWeb",
- policy => policy
-     .WithOrigins("http://localhost:59013")
-     .AllowAnyMethod()
-     .AllowAnyHeader()
-    );
-
-    /// todo : remove in prod
-    options.AddPolicy("AllowAll", policy => policy
-     .AllowAnyOrigin()  // For development only! Replace with your Flutter web URL in production.
-     .AllowAnyMethod()
-     .AllowAnyHeader());
+    if (env.IsDevelopment())
+    {
+        options.AddPolicy("AllowAll", policy => policy
+           .AllowAnyOrigin()  // For development ONLY! 
+           .AllowAnyMethod()
+           .AllowAnyHeader());
+    }
+    else
+    {
+        options.AddPolicy("AllowFlutterAdminDashboard", policy => policy
+               .WithOrigins("https://admin.helpi.social")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               );
+    }
 });
 
 
@@ -83,6 +81,11 @@ builder.Logging.AddConsole();
 
 var app = builder.Build();
 
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
+
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -92,9 +95,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHangfireDashboard();
 
-await app.Services.SeedAsync(); // important
 
-/// TODO: seeders
+
+/// Seeds
 using (var scope = app.Services.CreateScope())
 {
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
@@ -103,16 +106,14 @@ using (var scope = app.Services.CreateScope())
     var contractNumberSequenceSeeder = scope.ServiceProvider.GetRequiredService<ContractNumberSequenceSeeder>();
     await contractNumberSequenceSeeder.SeedAsync();
 
-    //
-    // var citySeeder = scope.ServiceProvider.GetRequiredService<CitySeeder>();
-    // await citySeeder.SeedAsync();
-
-
     var serviceDataSeeder = scope.ServiceProvider.GetRequiredService<ServiceDataSeeder>();
     await serviceDataSeeder.SeedAsync();
 
+    await app.Services.SeedPriceConfigAsync();
 }
 
+
+/// Hangfire schedules
 using (var scope = app.Services.CreateScope())
 {
     var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
@@ -120,16 +121,18 @@ using (var scope = app.Services.CreateScope())
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
 
-
+    //
     var studentBackgroundJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
     studentBackgroundJobs.ProcessStudentContracts();
 }
 
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
 
-
-app.UseCors("AllowFlutterLocalhost");
-app.UseCors("AllowAll");
+app.UseCors("AllowFlutterAdminDashboard");
 app.UseCors("AllowAllForPreflight"); // Apply CORS middleware early in the pipeline
 
 app.Use(async (context, next) =>
@@ -152,7 +155,7 @@ app.UseRouting();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); <-- problem on server
 
 
 app.UseAuthentication();

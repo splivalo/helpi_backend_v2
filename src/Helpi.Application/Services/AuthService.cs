@@ -62,10 +62,20 @@ namespace Helpi.Application.Services
             _googlePlaceService = googlePlaceService;
 
 
-            /// todo: use Enviroment
-            _secretKey = _configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret Key is not configured");
-            _issuer = _configuration["JwtSettings:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured");
-            _audience = _configuration["JwtSettings:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured");
+            _secretKey = Environment.GetEnvironmentVariable("JwtSettings:Secret")
+                        ?? _configuration["JwtSettings:Secret"]
+                        ?? throw new ArgumentNullException("JwtSettings:Secret");
+
+            _issuer = Environment.GetEnvironmentVariable("JwtSettings:Issuer")
+                        ?? _configuration["JwtSettings:Issuer"]
+                        ?? throw new ArgumentNullException("JwtSettings:Issuer");
+
+            _audience = Environment.GetEnvironmentVariable("JwtSettings:Audience")
+                        ?? _configuration["JwtSettings:Audience"]
+                        ?? throw new ArgumentNullException("JwtSettings:Audience");
+
+
+
         }
 
 

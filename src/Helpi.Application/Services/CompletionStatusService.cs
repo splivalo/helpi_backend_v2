@@ -109,5 +109,66 @@ public class CompletionStatusService
         _logger.LogInformation("🎉 Order ID {OrderId} marked as completed!", orderId);
         return true;
     }
+
+
+    public async Task ProcessIsOrderAllSchedulesAssigned(int orderId)
+    {
+        _logger.LogInformation("🧩 Checking if Order is fully assigned ID: {OrderId}", orderId);
+
+        var order = await _orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions
+        {
+            Schedules = true,
+            ScheduleAssignments = true,
+        });
+
+        if (order == null)
+        {
+            _logger.LogWarning("⚠️ Order ID {OrderId} not found. Skipping...", orderId);
+            return;
+        }
+
+        // Early exit for terminal states
+        if (order.Status is OrderStatus.Completed or OrderStatus.Cancelled)
+        {
+            _logger.LogInformation("⚠️ Order ID {OrderId} is in terminal state [{Status}]. Skipping...",
+                orderId, order.Status);
+            return;
+        }
+
+        var assignedStatus = new[] {
+        AssignmentStatus.Accepted,
+        AssignmentStatus.Completed
+    };
+
+        // Check if ALL active schedules have assignments
+        var activeSchedules = order.Schedules.Where(s => !s.IsCancelled).ToList();
+
+        if (!activeSchedules.Any())
+        {
+            _logger.LogWarning("⚠️ Order ID {OrderId} has no active schedules", orderId);
+            return;
+        }
+
+        var fullyAssigned = activeSchedules.All(schedule =>
+            schedule.Assignments.Any(sa =>
+                !sa.IsTemporary &&
+                assignedStatus.Contains(sa.Status)));
+
+        var newStatus = fullyAssigned ? OrderStatus.FullAssigned : OrderStatus.Pending;
+
+        if (order.Status != newStatus)
+        {
+            _logger.LogInformation("📋 Order {OrderId} status changing: {OldStatus} → {NewStatus}",
+                orderId, order.Status, newStatus);
+
+            order.Status = newStatus;
+            await _orderRepository.UpdateAsync(order);
+        }
+        else
+        {
+            _logger.LogDebug("✅ Order {OrderId} status unchanged: {Status}", orderId, order.Status);
+        }
+    }
+
 }
 

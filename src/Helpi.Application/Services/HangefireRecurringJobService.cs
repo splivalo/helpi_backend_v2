@@ -39,7 +39,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         _logger.LogInformation("🔄 Starting future job instance generation...");
 
-        var activeAssignments = await _scheduleAssignmentRepository.GetActiveAssignmentsAsync();
+        var activeAssignments = await _scheduleAssignmentRepository.GetAssignmentsNeedingJobGenerationAsync();
         _logger.LogInformation("📦 Retrieved {Count} active assignments", activeAssignments.Count);
 
         var pricingConfig = await _pricingConfig.GetByIdAsync(1);
@@ -63,6 +63,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                  horizonMonths,
                  generationThresholdDays
                 );
+
                 jobInstances.AddRange(instances);
             }
             catch (Exception)
@@ -166,9 +167,10 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
             return jobInstances;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _logger.LogError("❌ Failed to generate job instance for assignment {AssignmentId}threshold", assignment.Id);
+            _logger.LogError("❌ Failed to generate job instance for assignment {AssignmentId}", assignment.Id);
+            _logger.LogError(ex.ToString());
             throw;
         }
     }

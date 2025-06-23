@@ -29,7 +29,10 @@ public class MailerLiteService : IMailerLiteService
         _httpClient = new HttpClient(handler);
         _configuration = configuration;
 
-        var apiKey = _configuration["MailerLite:ApiKey"];
+
+        var apiKey = Environment.GetEnvironmentVariable("MailerLite:ApiKey")
+                     ?? _configuration["MailerLite:ApiKey"]
+                     ?? throw new ArgumentNullException("MailerLite:ApiKey");
 
         _httpClient.BaseAddress = new Uri("https://connect.mailerlite.com/api/");
         _httpClient.DefaultRequestHeaders.Authorization =

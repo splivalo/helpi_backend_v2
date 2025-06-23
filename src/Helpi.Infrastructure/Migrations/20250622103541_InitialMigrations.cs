@@ -1096,7 +1096,7 @@ namespace Helpi.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ContactInfos_CityId",
+                name: "IX_Contacts_CityId",
                 table: "ContactInfos",
                 column: "CityId");
 
@@ -1123,9 +1123,10 @@ namespace Helpi.Infrastructure.Migrations
                 column: "TransactionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobInstances_OrderId",
+                name: "IX_JobInstances_OrderStatus",
                 table: "JobInstances",
-                column: "OrderId");
+                columns: new[] { "OrderId", "Status" })
+                .Annotation("Npgsql:IndexInclude", new[] { "ScheduledDate" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobInstances_OriginalAssignmentId",
@@ -1176,6 +1177,16 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_Orders_ServiceId",
                 table: "Orders",
                 column: "ServiceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderSchedules_DayOfWeek_Start_End",
+                table: "OrderSchedules",
+                columns: new[] { "DayOfWeek", "StartTime", "EndTime" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderSchedules_Id",
+                table: "OrderSchedules",
+                column: "Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderSchedules_OrderId",
@@ -1250,9 +1261,9 @@ namespace Helpi.Infrastructure.Migrations
                 column: "OrderScheduleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ScheduleAssignments_StudentId",
+                name: "IX_ScheduleAssignments_Student_OrderSchedule",
                 table: "ScheduleAssignments",
-                column: "StudentId");
+                columns: new[] { "StudentId", "OrderScheduleId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Seniors_ContactId",
@@ -1282,6 +1293,11 @@ namespace Helpi.Infrastructure.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AvailabilitySlots_Student_Day_Time",
+                table: "StudentAvailabilitySlots",
+                columns: new[] { "StudentId", "DayOfWeek", "StartTime", "EndTime" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_StudentContracts_StudentId",
                 table: "StudentContracts",
                 column: "StudentId");
@@ -1298,9 +1314,24 @@ namespace Helpi.Infrastructure.Migrations
                 column: "FacultyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Students_Status",
+                table: "Students",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Students_UserId",
+                table: "Students",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_StudentServices_ServiceId",
                 table: "StudentServices",
                 column: "ServiceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentServices_Student_Service",
+                table: "StudentServices",
+                columns: new[] { "StudentId", "ServiceId" });
         }
 
         /// <inheritdoc />

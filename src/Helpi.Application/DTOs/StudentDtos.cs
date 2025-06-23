@@ -9,7 +9,7 @@ public class StudentDto
     public string StudentNumber { get; set; } = null!;
     public int FacultyId { get; set; }
     public DateTime DateRegistered { get; set; }
-    public StudentStatus VerificationStatus { get; set; }
+    public StudentStatus Status { get; set; }
     public decimal AverageRating { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 }
@@ -29,6 +29,6 @@ public class StudentCreateDto
 
 public class StudentUpdateDto
 {
-    public StudentStatus? VerificationStatus { get; set; }
+    public StudentStatus? Status { get; set; }
     public DateOnly? BackgroundCheckDate { get; set; }
 }

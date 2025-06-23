@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Collections.Generic;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
@@ -11,6 +12,12 @@ public class CityRepository : ICityRepository
         private readonly AppDbContext _context;
 
         public CityRepository(AppDbContext context) => _context = context;
+
+
+        public async Task<List<City>> GetAllAsync()
+        {
+                return await _context.Cities.ToListAsync();
+        }
 
         public async Task<City> GetByIdAsync(int id) => await _context.Cities.FindAsync(id);
 

@@ -1,6 +1,7 @@
 
 using Helpi.Application.DTOs;
 using Helpi.Application.Services;
+using Helpi.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,9 +18,21 @@ public class SeniorsController : ControllerBase
 
 
         [HttpGet]
-        public async Task<ActionResult<List<SeniorDto>>> GetBySeniors()
+        public async Task<ActionResult<List<SeniorDto>>> GetSeniorsAsync(
+                [FromQuery] int? cityId = null,
+                [FromQuery] OrderStatus? orderStatus = null,
+                [FromQuery] string? searchText = null
+        )
         {
-                var senior = await _service.GetBySeniorsAsync();
+
+                var filter = new SeniorFilterDto
+                {
+                        CityId = cityId,
+                        OrderStatus = orderStatus,
+                        SearchText = searchText
+                };
+
+                var senior = await _service.GetSeniorsWithExtraDetailsAsync(filter);
                 return Ok(senior);
         }
 

@@ -1,16 +1,24 @@
 
 using Helpi.Domain.Entities;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Infrastructure.Persistence;
 
 public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 {
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
+        : base(options)
+    {
+
+    }
 
     // public AppDbContext() { }
 
@@ -74,8 +82,22 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
 
         // Connection string
-        string connectionString = "Host=localhost;Port=5432;Database=HelpiDB;";
-        // string connectionString = "Host=localhost;Port=5432;Database=HelpiDB;Username=myuser;Password=mypassword;";
+
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json")
+            .AddEnvironmentVariables()
+            .Build();
+
+
+
+        var connectionString = configuration.GetConnectionString("Default");
+
+
+        /// todo: remove 
+        // using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        // var logger = loggerFactory.CreateLogger("DbContext");
+        // logger.LogInformation($"🔥 DB connection -> {connectionString}");
 
         optionsBuilder.UseNpgsql(
             connectionString,
@@ -199,7 +221,11 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // .WithOne(s => s.User)
         // .HasForeignKey<Student>(s => s.Id)
         // .OnDelete(DeleteBehavior.Cascade);
+
+        /// Indexing
+        modelBuilder.AddCustomIndexes();
     }
+
 
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

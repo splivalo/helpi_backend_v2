@@ -1,10 +1,12 @@
 namespace Helpi.Infrastructure.Repositories;
 
 using System.Collections.Generic;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 
 public class SeniorRepository : ISeniorRepository
@@ -56,4 +58,31 @@ public class SeniorRepository : ISeniorRepository
                 .ToListAsync();
         }
 
+        public async Task<List<Senior>> GetSeniorsAsync(SeniorFilterDto? filter = null)
+        {
+                var builder = new SeniorQueryBuilder(_context);
+
+                if (filter != null)
+                {
+                        builder.FilterByCity(filter.CityId)
+                               .FilterByOrderStatus(filter.OrderStatus)
+                               .FilterBySearchText(filter.SearchText);
+                }
+
+                return await builder.OrderByName().ExecuteAsync();
+        }
+
+        public async Task<List<SeniorDto>> GetSeniorsWithExtraDetailsAsync(SeniorFilterDto? filter = null)
+        {
+                var builder = new SeniorQueryBuilder(_context);
+
+                if (filter != null)
+                {
+                        builder.FilterByCity(filter.CityId)
+                               .FilterByOrderStatus(filter.OrderStatus)
+                               .FilterBySearchText(filter.SearchText);
+                }
+
+                return await builder.OrderByName().ExecuteWithExtraDetailsAsync();
+        }
 }

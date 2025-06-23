@@ -32,12 +32,13 @@ public class SeniorService
                 return _mapper.Map<SeniorDto>(senior);
         }
 
-        public async Task<List<SeniorDto>> GetBySeniorsAsync()
-        {
-                var seniors = await _repository.GetSeniorsAsync();
 
-                return _mapper.Map<List<SeniorDto>>(seniors);
+        public async Task<List<SeniorDto>> GetSeniorsWithExtraDetailsAsync(SeniorFilterDto? filter = null)
+        {
+                var seniors = await _repository.GetSeniorsWithExtraDetailsAsync(filter);
+                return seniors; // Already mapped to dto using projection
         }
+
 
         public async Task<SeniorDto> GetBySeniorByIdAsync(int seniorId)
         {

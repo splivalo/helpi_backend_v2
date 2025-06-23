@@ -23,15 +23,26 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 .Where(sa => sa.StudentId == studentId)
                 .ToListAsync();
 
-        public async Task<List<ScheduleAssignment>> GetActiveAssignmentsAsync()
+        public async Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationAsync()
         {
+
+                var liveOrderStatuses = new[] {
+                                OrderStatus.Pending,
+                                OrderStatus.FullAssigned
+                                };
+
                 return await _context.ScheduleAssignments
-               .Include(sa => sa.OrderSchedule.Order)
-               .Include(sa => sa.JobInstances)
-               .Where(sa => sa.IsTemporary == false &&
-                            sa.OrderSchedule.Order.IsRecurring &&
-                            sa.OrderSchedule.Order.Status == OrderStatus.Active)
-               .ToListAsync();
+                        .Include(sa => sa.OrderSchedule.Order).ThenInclude(o => o.Senior)
+                        .Include(sa => sa.JobInstances
+                                .OrderByDescending(ji => ji.ScheduledDate)
+                                .Take(1)) // we just need the last scheduled date
+                        .Where(sa => sa.Status == AssignmentStatus.Accepted &&
+                                !sa.IsTemporary &&
+                                sa.OrderSchedule.Order.IsRecurring &&
+                                liveOrderStatuses.Contains(sa.OrderSchedule.Order.Status))
+                        .ToListAsync();
+
+
         }
 
         public async Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment)

@@ -7,12 +7,10 @@ namespace Helpi.Infrastructure.Seeds;
 
 public static class PricingConfigurationSeeder
 {
-    public static async Task SeedAsync(this IServiceProvider services)
+    public static async Task SeedPriceConfigAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        await db.Database.MigrateAsync(); // Apply migrations
 
         if (!await db.PricingConfigurations.AnyAsync())
         {

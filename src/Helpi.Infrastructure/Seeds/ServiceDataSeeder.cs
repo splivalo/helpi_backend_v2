@@ -1,7 +1,6 @@
 using Helpi.Domain.Entities;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
 
 namespace Helpi.Infrastructure.Seeds
 {

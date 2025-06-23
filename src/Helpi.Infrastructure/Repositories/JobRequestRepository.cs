@@ -107,7 +107,6 @@ public class JobRequestRepository : IJobRequestRepository
                 {
                         var jobRequest = await _context.JobRequests
                              .Include(jr => jr.OrderSchedule)
-                             .Include(jr => jr.OrderSchedule)
                              .Include(jr => jr.Order)
                              .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                              .SingleOrDefaultAsync(jr => jr.Id == resJobRequest.Id);
@@ -117,8 +116,6 @@ public class JobRequestRepository : IJobRequestRepository
                                 throw new NotFoundException("Job request not found");
                         }
 
-                        /// TODO: figure out DomainException is good response
-
                         // Validate student ownership
                         if (jobRequest.StudentId != resJobRequest.StudentId)
                                 throw new DomainException("Invalid student for this job request");
@@ -126,9 +123,6 @@ public class JobRequestRepository : IJobRequestRepository
                         // Validate request status
                         if (jobRequest.Status != JobRequestStatus.Pending)
                                 throw new DomainException("Job request is no longer active");
-
-
-
 
 
                         if (resJobRequest.Status == JobRequestStatus.Accepted)

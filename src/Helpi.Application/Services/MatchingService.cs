@@ -167,7 +167,7 @@ public class MatchingService : IMatchingService
             if (!qualifiedStudents.Any())
             {
 
-                HandleNoEligableStudents(order, schedule);
+                await HandleNoEligableStudents(order, schedule);
                 return;
             }
 
@@ -182,7 +182,7 @@ public class MatchingService : IMatchingService
             if (!unnotifiedStudents.Any())
             {
                 _logger.LogInformation("📝 Out of qualified students  for schedule {ScheduleId}", schedule.Id);
-                HandleEligableAllStudentsNotified(order, schedule, notifiedStudentIds);
+                await HandleEligableAllStudentsNotified(order, schedule, notifiedStudentIds);
                 return;
             }
 
@@ -357,7 +357,6 @@ public class MatchingService : IMatchingService
     {
         _logger.LogWarning("⚠️ No qualified students found for schedule {ScheduleId}", schedule.Id);
 
-        /// todo : stop from being scheduled again
 
         var adminId = await GetAdminId();
 
@@ -387,7 +386,7 @@ public class MatchingService : IMatchingService
     /// None of the notified students accepted
     private async Task HandleEligableAllStudentsNotified(Order order, OrderSchedule schedule, List<int> notifiedStudents)
     {
-        /// todo : stop from being scheduled again
+
 
         var adminId = await GetAdminId();
 

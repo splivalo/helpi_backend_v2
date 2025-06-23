@@ -119,8 +119,8 @@ public class DashboardService : IDashboardService
 
 
         var liveOrderStatuses = new[] {
-            OrderStatus.Active,
-            OrderStatus.Pending
+            OrderStatus.Pending,
+            OrderStatus.FullAssigned
         };
 
         // Count all "live" orders that have at least one active schedule

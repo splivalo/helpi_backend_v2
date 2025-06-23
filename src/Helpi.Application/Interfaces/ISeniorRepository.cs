@@ -1,3 +1,4 @@
+using Helpi.Application.DTOs;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
@@ -12,5 +13,5 @@ public interface ISeniorRepository
     Task UpdateAsync(Senior senior);
     Task DeleteAsync(Senior senior);
     Task<List<Senior>> GetSeniorsAsync();
-
+    Task<List<SeniorDto>> GetSeniorsWithExtraDetailsAsync(SeniorFilterDto? filter);
 }

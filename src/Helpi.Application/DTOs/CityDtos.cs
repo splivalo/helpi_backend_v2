@@ -6,6 +6,8 @@ public class CityDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
+    public string GooglePlaceId { get; set; } = null!;
+    public string PostalCode { get; set; } = null!;
     public bool IsServiced { get; set; }
 }
 

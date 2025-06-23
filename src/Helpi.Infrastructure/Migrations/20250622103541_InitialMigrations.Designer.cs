@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250617072725_InitialMigrations")]
+    [Migration("20250622103541_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -155,7 +155,8 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CityId");
+                    b.HasIndex("CityId")
+                        .HasDatabaseName("IX_Contacts_CityId");
 
                     b.ToTable("ContactInfos");
                 });
@@ -466,13 +467,16 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
-
                     b.HasIndex("OriginalAssignmentId");
 
                     b.HasIndex("ScheduleAssignmentId");
 
                     b.HasIndex("SeniorId");
+
+                    b.HasIndex("OrderId", "Status")
+                        .HasDatabaseName("IX_JobInstances_OrderStatus");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OrderId", "Status"), new[] { "ScheduledDate" });
 
                     b.ToTable("JobInstances");
                 });
@@ -617,7 +621,13 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .HasDatabaseName("IX_OrderSchedules_Id");
+
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("DayOfWeek", "StartTime", "EndTime")
+                        .HasDatabaseName("IX_OrderSchedules_DayOfWeek_Start_End");
 
                     b.ToTable("OrderSchedules");
                 });
@@ -972,7 +982,8 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("OrderScheduleId");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "OrderScheduleId")
+                        .HasDatabaseName("IX_ScheduleAssignments_Student_OrderSchedule");
 
                     b.ToTable("ScheduleAssignments");
                 });
@@ -1155,6 +1166,12 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("FacultyId");
 
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_Students_Status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Students_UserId");
+
                     b.ToTable("Students");
                 });
 
@@ -1173,6 +1190,9 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("time");
 
                     b.HasKey("StudentId", "DayOfWeek");
+
+                    b.HasIndex("StudentId", "DayOfWeek", "StartTime", "EndTime")
+                        .HasDatabaseName("IX_AvailabilitySlots_Student_Day_Time");
 
                     b.ToTable("StudentAvailabilitySlots");
                 });
@@ -1227,6 +1247,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasKey("StudentId", "ServiceId");
 
                     b.HasIndex("ServiceId");
+
+                    b.HasIndex("StudentId", "ServiceId")
+                        .HasDatabaseName("IX_StudentServices_Student_Service");
 
                     b.ToTable("StudentServices");
                 });

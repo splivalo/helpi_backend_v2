@@ -21,5 +21,7 @@ namespace Helpi.Domain.Entities
         // public Customer Customer { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+
     }
 }

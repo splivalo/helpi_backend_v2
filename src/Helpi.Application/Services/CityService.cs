@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 
 namespace Helpi.Application.Services;
+
 public class CityService
 {
         private readonly ICityRepository _repository;
@@ -18,9 +19,10 @@ public class CityService
 
         public async Task<List<CityDto>> GetAllCitiesAsync()
         {
+                var cities = await _repository.GetAllAsync();
 
-                //  _mapper.Map<List<CityDto>>(await _repository.GetAllAsync());
-                return null;
+
+                return _mapper.Map<List<CityDto>>(cities);
         }
 
         public async Task<CityDto> CreateCityAsync(CityCreateDto dto)

@@ -25,9 +25,13 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
         DateOnly startDate,
         DateOnly? endDate,
         RecurrencePattern? pattern,
-        DayOfWeek dayOfWeek,
+        DayOfWeek isoDayOfWeek,
         int horizonMonths = 3)
     {
+
+        /// .net uses 0 - 6 ... WE store 1 -7
+        var dayOfWeek = FromIsoDayNumber((int)isoDayOfWeek);
+
         var dates = new List<DateOnly>();
 
         // If the recurrence pattern is null, return a single occurrence at startDate
@@ -69,6 +73,16 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
         return dates;
     }
 
+
+    private DayOfWeek FromIsoDayNumber(int isoDay)
+    {
+        if (isoDay < 1 || isoDay > 7)
+            throw new ArgumentOutOfRangeException(nameof(isoDay), "Day of week must be between 1 (Monday) and 7 (Sunday).");
+
+        // Adjust ISO 8601 day to .NET DayOfWeek:
+        // ISO: 1 (Mon) → .NET 1, ..., 6 (Sat) → 6, 7 (Sun) → 0
+        return (DayOfWeek)(isoDay % 7);
+    }
 
 
 }
