@@ -1,5 +1,6 @@
 # .NET Core
 bin/
+publish/
 obj/
 *.suo
 *.user
