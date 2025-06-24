@@ -17,9 +17,35 @@ public class StudentsController : ControllerBase
         public StudentsController(StudentService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<List<StudentDto>>> GetAll()
+        public async Task<ActionResult<List<StudentDto>>> GetStudents(
+        [FromQuery] int? cityId = null,
+        [FromQuery] string? searchText = null,
+        [FromQuery] List<int>? serviceIds = null,
+        [FromQuery] StudentStatus? status = null,
+        [FromQuery] int? facultyId = null,
+        [FromQuery] List<AvailabilityCriteria>? availabilityCriteria = null,
+        [FromQuery] bool matchAllAvailability = true,
+        [FromQuery] bool? hasAvailabilitySlots = null,
+        [FromQuery] decimal? minAverageRating = null,
+        [FromQuery] bool? backgroundCheckCompleted = null,
+        [FromQuery] bool includeDeleted = false)
         {
-                var students = await _service.GetAllStudentsAsync();
+                var filter = new StudentFilterDto
+                {
+                        CityId = cityId,
+                        SearchText = searchText,
+                        ServiceIds = serviceIds,
+                        Status = status,
+                        FacultyId = facultyId,
+                        AvailabilityCriteria = availabilityCriteria,
+                        MatchAllAvailability = matchAllAvailability,
+                        HasAvailabilitySlots = hasAvailabilitySlots,
+                        MinAverageRating = minAverageRating,
+                        BackgroundCheckCompleted = backgroundCheckCompleted,
+                        IncludeDeleted = includeDeleted
+                };
+
+                var students = await _service.GetStudentsAsync(filter);
                 return Ok(students);
         }
 

@@ -9,9 +9,11 @@ public interface IStudentRepository
 {
     Task<Student> GetByIdAsync(int id);
 
-    Task<IEnumerable<Student>> GetAllStudentsAsync();
+    Task<List<Student>> GetStudentsAsync(StudentFilterDto? filter = null);
+
+    Task<List<StudentDto>> GetStudentsWithDetailsAsync(StudentFilterDto? filter = null);
     Task<Student?> GetByStudentNumberAsync(string studentNumber);
-    Task<IEnumerable<Student>> GetByVerificationStatusAsync(StudentStatus status);
+
     Task<Student> AddAsync(Student student);
     Task UpdateAsync(Student student);
     Task DeleteAsync(Student student);

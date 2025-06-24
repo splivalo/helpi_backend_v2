@@ -36,11 +36,11 @@ public class StudentService
                 _contactInfoRepo = contactInfoRepo;
         }
 
-        public async Task<List<StudentDto>> GetAllStudentsAsync()
+        public async Task<List<StudentDto>> GetStudentsAsync(StudentFilterDto? filter = null)
         {
-                var students = await _repository.GetAllStudentsAsync();
-                return _mapper.Map<List<StudentDto>>(students);
+                return await _repository.GetStudentsWithDetailsAsync(filter);
         }
+
 
         public async Task<StudentDto> GetStudentByIdAsync(int id)
         {

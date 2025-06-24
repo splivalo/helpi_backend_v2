@@ -72,7 +72,6 @@ public class SeniorQueryBuilder
                 Country = s.Contact.Country,
                 PostalCode = s.Contact.PostalCode,
                 CreatedAt = s.Contact.CreatedAt,
-
             },
             Relationship = s.Relationship,
             SpecialRequirements = s.SpecialRequirements,

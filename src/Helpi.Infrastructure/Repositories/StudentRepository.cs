@@ -67,9 +67,32 @@ public class StudentRepository : IStudentRepository
         throw new NotImplementedException();
     }
 
-    public async Task<IEnumerable<Student>> GetAllStudentsAsync()
+
+    public async Task<List<Student>> GetStudentsAsync(StudentFilterDto? filter = null)
     {
-        return await _context.Students.Include(s => s.Contact).ToListAsync();
+        var builder = new StudentQueryBuilder(_context);
+
+        return await builder.OrderByName().ExecuteAsync();
+    }
+
+    public async Task<List<StudentDto>> GetStudentsWithDetailsAsync(StudentFilterDto? filter = null)
+    {
+        var builder = new StudentQueryBuilder(_context);
+
+        if (filter != null)
+        {
+            builder.FilterByCity(filter.CityId)
+                   .FilterBySearchText(filter.SearchText)
+                   .FilterByServices(filter.ServiceIds)
+                   .FilterByStatus(filter.Status)
+                   .FilterByFaculty(filter.FacultyId)
+                   .FilterByAvailability(filter.AvailabilityCriteria, filter.MatchAllAvailability)
+                   .FilterByMinRating(filter.MinAverageRating)
+                   .FilterByBackgroundCheck(filter.BackgroundCheckCompleted)
+                   .IncludeDeleted(filter.IncludeDeleted ?? false);
+        }
+
+        return await builder.OrderByName().ExecuteWithDetailsAsync();
     }
 
 
@@ -178,5 +201,7 @@ public class StudentRepository : IStudentRepository
     {
         return _context.Students.CountAsync(predicate);
     }
+
+
 
 }
