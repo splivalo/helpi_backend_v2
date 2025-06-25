@@ -11,7 +11,9 @@ public class StudentDto
     public int FacultyId { get; set; }
     public DateTime DateRegistered { get; set; }
     public StudentStatus Status { get; set; }
-    public decimal AverageRating { get; set; }
+    public int TotalReviews { get; set; } = 0;
+    public decimal TotalRatingSum { get; set; } = 0.00m;
+    public decimal AverageRating { get; set; } = 0.00m;
 
     public DateTime? DeletedOn { get; set; }
 
@@ -41,7 +43,7 @@ public class StudentUpdateDto
 
 public class AvailabilityCriteria
 {
-    public DayOfWeek DayOfWeek { get; set; }
+    public byte DayOfWeek { get; set; }
     public TimeOnly? StartTime { get; set; }
     public TimeOnly? EndTime { get; set; }
 }

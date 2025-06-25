@@ -149,8 +149,8 @@ namespace Helpi.Domain.Enums
         ContractRenewalRequired,
         contractValid,
         NoEligableStudentAcceptedJobYet,
-        NoEligibleStudents
-
+        NoEligibleStudents,
+        ReviewRequest
     }
 
     public enum DashboardTileType

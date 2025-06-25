@@ -1,7 +1,9 @@
 
+using System.Text.Json;
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -15,17 +17,20 @@ public class JobInstanceService : IJobInstanceService
         private readonly INotificationService _notificationService;
         private readonly CompletionStatusService _completionStatusService;
 
+        private readonly IHangfireService _hangfireService;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
                 INotificationService notificationService,
-                 CompletionStatusService completionStatusService
+                 CompletionStatusService completionStatusService,
+                  IHangfireService hangfireService
                 )
         {
                 _repository = repository;
                 _mapper = mapper;
                 _notificationService = notificationService;
                 _completionStatusService = completionStatusService;
+                _hangfireService = hangfireService;
         }
 
 
@@ -91,14 +96,51 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.Completed) return;
 
                 var assignedStudent = instance.Assignment;
-                await _notificationService.SendJobStartedNotificationAsync(assignedStudent.Id, instance);
+                await _notificationService.SendJobCompletedNotificationAsync(assignedStudent.Id, instance);
 
                 var customerId = instance.Senior.CustomerId;
-                await _notificationService.SendJobStartedNotificationAsync(customerId, instance);
+                await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
 
                 await _completionStatusService.ProcessCompletionStatuses(instance.OrderId);
 
+                var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
+
+                _hangfireService.Schedule<IJobInstanceService>(
+               s => s.RequestJobReviewAsync(instance.Id),
+               reviewRequestTime
+           );
+
         }
 
+        public async Task RequestJobReviewAsync(int jobInstanceId)
+        {
+                var instance = await _repository.GetByIdAsync(jobInstanceId);
+
+                if (instance == null) return;
+
+                if (instance.Status != JobInstanceStatus.Completed) return;
+
+                var customerId = instance.Senior.CustomerId;
+
+                var notification = new HNotification
+                {
+                        RecieverUserId = customerId,
+                        Title = "Review",
+                        Body = "How was your expirence? ",
+                        Type = NotificationType.ReviewRequest,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                                RecieverUserId = customerId,
+                                JobInstanceId = jobInstanceId,
+                                SeniorId = instance.SeniorId,
+                                SeniorFullName = instance.Senior.Contact.FullName,
+                                StudentId = instance.Assignment.StudentId,
+                                StudentFullName = instance.Assignment.Student.Contact.FullName,
+                        })
+                };
+
+
+                await _notificationService.SendPushNotificationAsync(customerId, notification);
+        }
 
 }

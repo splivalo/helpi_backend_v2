@@ -45,7 +45,9 @@ public class StudentQueryBuilder
     {
         if (serviceIds != null && serviceIds.Any())
         {
-            _query = _query.Where(s => s.StudentServices.Any(ss => serviceIds.Contains(ss.ServiceId)));
+            _query = _query.Where(s =>
+     serviceIds.All(requiredId =>
+         s.StudentServices.Any(ss => ss.ServiceId == requiredId)));
         }
         return this;
     }
@@ -77,20 +79,20 @@ public class StudentQueryBuilder
                 // Student must match ALL availability criteria (AND logic)
                 foreach (var criteria in availabilityCriteria)
                 {
-                    var dayByte = (byte)criteria.DayOfWeek;
+                    var isoDayByte = criteria.DayOfWeek;
 
                     if (criteria.StartTime.HasValue && criteria.EndTime.HasValue)
                     {
                         // Must be available during the specified time range on this specific day
                         _query = _query.Where(s => s.AvailabilitySlots.Any(slot =>
-                            slot.DayOfWeek == dayByte &&
+                            slot.DayOfWeek == isoDayByte &&
                             slot.StartTime <= criteria.StartTime.Value &&
                             slot.EndTime >= criteria.EndTime.Value));
                     }
                     else
                     {
                         // Must be available on this specific day (any time)
-                        _query = _query.Where(s => s.AvailabilitySlots.Any(slot => slot.DayOfWeek == dayByte));
+                        _query = _query.Where(s => s.AvailabilitySlots.Any(slot => slot.DayOfWeek == isoDayByte));
                     }
                 }
             }

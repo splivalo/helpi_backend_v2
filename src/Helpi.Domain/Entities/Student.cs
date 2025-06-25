@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
@@ -19,10 +20,9 @@ namespace Helpi.Domain.Entities
 
         public DateOnly? BackgroundCheckDate { get; set; }
 
-        // [Precision(3, 2)]
+        public int TotalReviews { get; set; } = 0;
+        public decimal TotalRatingSum { get; set; } = 0.00m;
         public decimal AverageRating { get; set; } = 0.00m;
-
-
 
         // public User User { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
