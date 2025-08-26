@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
+using Helpi.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore.Migrations;
-using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -72,7 +73,6 @@ namespace Helpi.Infrastructure.Migrations
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PostalCode = table.Column<string>(type: "text", nullable: false),
-                    Bounds = table.Column<Polygon>(type: "geometry", nullable: true),
                     IsServiced = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -169,7 +169,8 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Translations = table.Column<Dictionary<string, Translation>>(type: "jsonb", nullable: false),
                     Icon = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
@@ -368,7 +369,8 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
+                    DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Translations = table.Column<Dictionary<string, Translation>>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -438,6 +440,8 @@ namespace Helpi.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BackgroundCheckDate = table.Column<DateTime>(type: "date", nullable: true),
+                    TotalReviews = table.Column<int>(type: "integer", nullable: false),
+                    TotalRatingSum = table.Column<decimal>(type: "numeric", nullable: false),
                     AverageRating = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
@@ -1082,12 +1086,6 @@ namespace Helpi.Infrastructure.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Cities_Bounds",
-                table: "Cities",
-                column: "Bounds")
-                .Annotation("Npgsql:IndexMethod", "GIST");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cities_GooglePlaceId",

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using NetTopologySuite.Geometries;
 
 namespace Helpi.Domain.Entities
 {
@@ -15,7 +14,8 @@ namespace Helpi.Domain.Entities
         public required string Name { get; set; } = null!;
         public required string PostalCode { get; set; } = null!;
 
-        public Polygon? Bounds { get; set; }
+
+        // public Polygon? Bounds { get; set; }
         public bool IsServiced { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

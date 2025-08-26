@@ -27,4 +27,15 @@ public class ServicesController : ControllerBase
                 var service = await _service.CreateServiceAsync(dto);
                 return CreatedAtAction(nameof(GetByCategory), new { categoryId = dto.CategoryId }, service);
         }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ServiceCategoryDto>> Update(int id, ServiceUpdateDto dto)
+        {
+                var updated = await _service.UpdateServiceAsync(id, dto);
+
+                if (updated == null)
+                        return NotFound();
+
+                return Ok(updated);
+        }
 }

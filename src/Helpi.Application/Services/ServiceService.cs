@@ -26,4 +26,17 @@ public class ServiceService
                 await _repository.AddAsync(service);
                 return _mapper.Map<ServiceDto>(service);
         }
+
+        public async Task<ServiceDto?> UpdateServiceAsync(int id, ServiceUpdateDto dto)
+        {
+                var service = await _repository.GetByIdAsync(id);
+                if (service == null)
+                        return null;
+
+                _mapper.Map(dto, service);
+
+                await _repository.UpdateAsync(service);
+
+                return _mapper.Map<ServiceDto>(service);
+        }
 }

@@ -25,9 +25,15 @@ public class CityRepository : ICityRepository
             => await _context.Cities.FirstOrDefaultAsync(c => c.GooglePlaceId == googlePlaceId);
 
         public async Task<IEnumerable<City>> GetCitiesWithinRadius(Point location, double radiusKm)
-            => await _context.Cities
-                .Where(c => c.Bounds.Distance(location) <= radiusKm * 1000)
-                .ToListAsync();
+        {
+                return [];
+                //     await _context.Cities
+                // // .Where(c => c.Bounds.Distance(location) <= radiusKm * 1000)
+                // .ToListAsync();
+
+        }
+
+
 
         public async Task<City> AddAsync(City city)
         {
@@ -61,8 +67,9 @@ public class CityRepository : ICityRepository
                         GooglePlaceId = placeId,
                         PostalCode = postalCode
                 };
-
                 _context.Cities.Add(city);
+
+
                 await _context.SaveChangesAsync();
 
                 return city;

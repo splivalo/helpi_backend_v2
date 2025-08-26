@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Helpi.Domain.ValueObjects;
 
 namespace Helpi.Application.DTOs;
 
@@ -6,24 +7,28 @@ namespace Helpi.Application.DTOs;
 public class ServiceDto
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
+    public Dictionary<string, Translation> Translations { get; set; } = new();
     public int CategoryId { get; set; }
+
+    public DateTime? DeletedOn { get; set; }
 }
 
 public class ServiceCreateDto
 {
     [Required]
-    [StringLength(255)]
-    public string Name { get; set; } = null!;
+    public Dictionary<string, Translation> Translations { get; set; } = new();
 
 
     [Required]
     public int CategoryId { get; set; }
+
+
 }
 
 public class ServiceUpdateDto
 {
-    [StringLength(255)]
-    public string? Name { get; set; }
+    public Dictionary<string, Translation> Translations { get; set; } = new();
     public int? CategoryId { get; set; }
+
+    public DateTime? DeletedOn { get; set; }
 }

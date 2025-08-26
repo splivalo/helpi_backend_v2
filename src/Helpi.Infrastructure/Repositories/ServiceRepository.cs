@@ -22,9 +22,9 @@ public class ServiceRepository : IServiceRepository
                 .ToListAsync();
 
         public async Task<IEnumerable<Service>> SearchAsync(string searchTerm)
-            => await _context.Services
-                .Where(s => s.Name.Contains(searchTerm))
-                .ToListAsync();
+        {
+                return await _context.Services.ToListAsync();
+        }
 
         public async Task<Service> AddAsync(Service service)
         {

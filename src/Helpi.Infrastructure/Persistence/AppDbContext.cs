@@ -4,10 +4,10 @@ using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using NetTopologySuite;
+using Npgsql;
 
 namespace Helpi.Infrastructure.Persistence;
 
@@ -19,6 +19,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
 
     }
+
 
     // public AppDbContext() { }
 
@@ -99,10 +100,22 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // var logger = loggerFactory.CreateLogger("DbContext");
         // logger.LogInformation($"🔥 DB connection -> {connectionString}");
 
+
+
+
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        // dataSourceBuilder.UseNetTopologySuite();
+
+        var dataSource = dataSourceBuilder.Build();
+
         optionsBuilder.UseNpgsql(
-            connectionString,
+            dataSource,
             o => o.UseNetTopologySuite()
         );
+
+
+
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -117,6 +130,23 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // base.OnModelCreating(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+
+        // Automatically make all int PKs value-generated
+        // foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        // {
+        //     var key = entityType.FindPrimaryKey();
+        //     if (key != null)
+        //     {
+        //         foreach (var property in key.Properties)
+        //         {
+        //             if (property.ClrType == typeof(int))
+        //             {
+        //                 property.ValueGenerated = ValueGenerated.OnAdd;
+        //             }
+        //         }
+        //     }
+        // }
+        /// ====
 
 
 
@@ -134,6 +164,22 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
         // Spatial configuration for PostgreSQL
         modelBuilder.HasPostgresExtension("postgis");
+
+        modelBuilder.Entity<ServiceCategory>(entity =>
+        {
+            entity.Property(c => c.Translations)
+                       .HasColumnType("jsonb");
+        });
+
+
+
+
+        modelBuilder.Entity<Service>(entity =>
+          {
+              // Configure JSON conversion for Translations
+              entity.Property(e => e.Translations)
+                    .HasColumnType("jsonb");
+          });
 
         // Configure composite primary key
         modelBuilder.Entity<OrderService>().HasKey(os => new
@@ -176,7 +222,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<City>(entity =>
            {
                entity.HasIndex(c => c.GooglePlaceId).IsUnique();
-               entity.HasIndex(c => c.Bounds).HasMethod("GIST");
+               //    entity.HasIndex(c => c.Bounds).HasMethod("GIST");
+               //    entity.Property(e => e.Bounds).HasColumnType("geometry (Polygon)");
+               //    entity.Property(c => c.Bounds).IsRequired(false);
            });
 
         // Configure JSON column for Senior special requirements
@@ -237,6 +285,15 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         configurationBuilder.Properties<TimeOnly>()
             .HaveConversion<TimeOnlyConverter>()
             .HaveColumnType("time");
+
+        // Ensure all DateTime are stored as UTC in PostgreSQL
+        configurationBuilder.Properties<DateTime>()
+          .HaveConversion<UtcDateTimeConverter>()
+          .HaveColumnType("timestamp with time zone");
+
+        configurationBuilder.Properties<DateTime?>()
+            .HaveConversion<UtcNullableDateTimeConverter>()
+            .HaveColumnType("timestamp with time zone");
     }
 
 }
@@ -257,5 +314,27 @@ public class TimeOnlyConverter : ValueConverter<TimeOnly, TimeSpan>
     public TimeOnlyConverter() : base(
         t => t.ToTimeSpan(),
         t => TimeOnly.FromTimeSpan(t))
+    { }
+}
+
+public class UtcDateTimeConverter : ValueConverter<DateTime, DateTime>
+{
+    public UtcDateTimeConverter()
+        : base(
+            v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
+    { }
+}
+
+public class UtcNullableDateTimeConverter : ValueConverter<DateTime?, DateTime?>
+{
+    public UtcNullableDateTimeConverter()
+        : base(
+            v => v.HasValue
+                ? (v.Value.Kind == DateTimeKind.Utc ? v.Value : v.Value.ToUniversalTime())
+                : v,
+            v => v.HasValue
+                ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+                : v)
     { }
 }

@@ -28,4 +28,16 @@ public class ServiceCategoriesController : ControllerBase
                 var category = await _service.CreateCategoryAsync(dto);
                 return CreatedAtAction(nameof(GetAll), category);
         }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ServiceCategoryDto>> Update(int id, ServiceCategoryUpdateDto dto)
+        {
+                var updated = await _service.UpdateCategoryAsync(id, dto);
+
+                if (updated == null)
+                        return NotFound();
+
+                return Ok(updated);
+        }
+
 }

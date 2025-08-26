@@ -169,7 +169,7 @@ public static class DependencyInjection
 
         var googleCredentialsJson = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_CREDENTIALS_JSON")
                                      ??
-                                    configuration["Google:CredentialsJson"];
+                                    configuration["GoogleDrive:CredentialsJson"];
 
         if (string.IsNullOrEmpty(googleCredentialsJson))
         {

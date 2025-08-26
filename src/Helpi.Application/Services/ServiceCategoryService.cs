@@ -19,7 +19,7 @@ public class ServiceCategoryService
         }
 
         public async Task<List<ServiceCategoryDto>> GetAllCategoriesAsync() =>
-            _mapper.Map<List<ServiceCategoryDto>>(await _repository.GetAllAsync());
+            _mapper.Map<List<ServiceCategoryDto>>(await _repository.GetAllAsync(excludeDeleted: true));
 
         public async Task<ServiceCategoryDto> CreateCategoryAsync(ServiceCategoryCreateDto dto)
         {
@@ -27,4 +27,18 @@ public class ServiceCategoryService
                 await _repository.AddAsync(category);
                 return _mapper.Map<ServiceCategoryDto>(category);
         }
+
+        public async Task<ServiceCategoryDto?> UpdateCategoryAsync(int id, ServiceCategoryUpdateDto dto)
+        {
+                var category = await _repository.GetByIdAsync(id);
+                if (category == null)
+                        return null;
+
+                _mapper.Map(dto, category);
+
+                await _repository.UpdateAsync(category);
+
+                return _mapper.Map<ServiceCategoryDto>(category);
+        }
+
 }
