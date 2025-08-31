@@ -60,9 +60,9 @@ public class StudentContractService
                     fileName
                 );
 
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                var isValid = dto.ExpirationDate > today;
-                var status = isValid ? ContractStatus.valid : ContractStatus.expired;
+                // var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                // var isValid = dto.ExpirationDate > today;
+                // var status = isValid ? ContractStatus.valid : ContractStatus.expired;
 
                 var contract = new StudentContract
                 {

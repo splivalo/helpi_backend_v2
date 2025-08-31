@@ -28,13 +28,16 @@ namespace Helpi.Domain.Entities
             get
             {
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                if (today < EffectiveDate)
-                    return ContractStatus.expired;
-                if (today > ExpirationDate)
-                    return ContractStatus.expired;
 
-                return ContractStatus.valid;
+                if (today < EffectiveDate)
+                    return ContractStatus.Pending;
+
+                if (today > ExpirationDate)
+                    return ContractStatus.Expired;
+
+                return ContractStatus.Active;
             }
         }
+
     }
 }

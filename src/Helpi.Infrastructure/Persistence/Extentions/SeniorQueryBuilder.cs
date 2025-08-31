@@ -29,11 +29,20 @@ public class SeniorQueryBuilder
     {
         if (orderStatus.HasValue)
         {
-            _query = _query.Where(s => s.Orders.Any(o =>
-                o.Status == orderStatus.Value));
+            if (orderStatus.Value == OrderStatus.InActive)
+            {
+                // Seniors with no orders
+                _query = _query.Where(s => !s.Orders.Any());
+            }
+            else
+            {
+                // Seniors with at least one order with the given status
+                _query = _query.Where(s => s.Orders.Any(o => o.Status == orderStatus.Value));
+            }
         }
         return this;
     }
+
 
     public SeniorQueryBuilder FilterBySearchText(string? searchText)
     {

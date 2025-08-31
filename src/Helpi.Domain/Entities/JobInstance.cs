@@ -9,6 +9,8 @@ namespace Helpi.Domain.Entities
         public int SeniorId { get; set; }
         public int CustomerId { get; set; }
         public int OrderId { get; set; }
+
+        public int? ContractId { get; set; }
         public int ScheduleAssignmentId { get; set; }
         public int? OriginalAssignmentId { get; set; }
         public DateOnly ScheduledDate { get; set; }

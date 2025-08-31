@@ -30,6 +30,23 @@ public class StudentContractCreateDto
 
     [Required]
     public DateOnly ExpirationDate { get; set; }
+
+    public ContractStatus Status
+    {
+        get
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            if (today < EffectiveDate)
+                return ContractStatus.Pending;
+
+            if (today > ExpirationDate)
+                return ContractStatus.Expired;
+
+            return ContractStatus.Active;
+        }
+    }
+
 }
 
 public class StudentContractUpdateDto

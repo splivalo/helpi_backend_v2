@@ -19,8 +19,9 @@ namespace Helpi.Domain.Enums
 
     public enum ContractStatus
     {
-        valid,
-        expired
+        Pending,    // Exists but not yet effective
+        Active,     // Currently valid
+        Expired     // Was valid but has ended
     }
 
     public enum Relationship
@@ -47,6 +48,7 @@ namespace Helpi.Domain.Enums
 
     public enum OrderStatus
     {
+        InActive,
         Pending,
         FullAssigned,
         Completed,
@@ -147,7 +149,7 @@ namespace Helpi.Domain.Enums
         PaymentReceipt,
         JobInProgress,
         ContractRenewalRequired,
-        contractValid,
+        contractActive,
         NoEligableStudentAcceptedJobYet,
         NoEligibleStudents,
         ReviewRequest

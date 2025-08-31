@@ -7,6 +7,8 @@ namespace Helpi.Application.DTOs;
 public class JobInstanceDto
 {
     public int Id { get; set; }
+
+    public int? ContractId { get; set; }
     public int ScheduleAssignmentId { get; set; }
     public int? OriginalAssignmentId { get; set; }
     public DateOnly ScheduledDate { get; set; }

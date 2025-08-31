@@ -152,8 +152,8 @@ public class MappingProfile : Profile
         CreateMap<PaymentTransactionUpdateDto, PaymentTransaction>();
 
         // ScheduleAssignmentReplacement Mappings
-        CreateMap<ScheduleAssignmentReplacement, ScheduleAssignmentReplacementDto>();
-        CreateMap<ScheduleAssignmentReplacementCreateDto, ScheduleAssignmentReplacement>();
+        // CreateMap<ScheduleAssignmentReplacement, ScheduleAssignmentReplacementDto>();
+        // CreateMap<ScheduleAssignmentReplacementCreateDto, ScheduleAssignmentReplacement>();
 
         // Review Mappings
         CreateMap<Review, ReviewDto>();

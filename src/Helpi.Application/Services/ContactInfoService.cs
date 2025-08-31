@@ -40,6 +40,8 @@ public class ContactInfoService
                 var contactInfo = await _repository.GetByIdAsync(id);
                 dto.Id = contactInfo.Id;
                 dto.CityId = contactInfo.CityId;
+                dto.CityName = contactInfo.CityName;
+                dto.PostalCode = contactInfo.PostalCode;
 
                 // 
                 if (dto.GooglePlaceId != contactInfo.GooglePlaceId)

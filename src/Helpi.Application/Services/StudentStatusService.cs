@@ -64,7 +64,7 @@ public class StudentStatusService
         _logger.LogInformation("📅 Processing Student: {StudentId}", student.UserId);
 
         var activeContract = student.Contracts
-            .Where(c => c.Status == ContractStatus.valid)
+            .Where(c => c.Status == ContractStatus.Active)
             .OrderByDescending(c => c.ExpirationDate)
             .FirstOrDefault();
 
@@ -106,7 +106,7 @@ public class StudentStatusService
                     RecieverUserId = student.UserId,
                     Title = "Contract valid",
                     Body = "Contract valid",
-                    Type = NotificationType.contractValid,
+                    Type = NotificationType.contractActive,
                     Payload = JsonSerializer.Serialize(new
                     {
                         RecieverUserId = student.UserId,
