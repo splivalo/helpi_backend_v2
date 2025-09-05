@@ -12,11 +12,14 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 
         public ScheduleAssignmentRepository(AppDbContext context) => _context = context;
 
-        public async Task<ScheduleAssignment> GetByIdAsync(int id)
-            => await _context.ScheduleAssignments
-                .Include(sa => sa.OrderSchedule)
-                .Include(sa => sa.Student)
-                .FirstOrDefaultAsync(sa => sa.Id == id);
+        public async Task<ScheduleAssignment?> GetByIdAsync(int id)
+        {
+
+                return await _context.ScheduleAssignments
+              .Include(sa => sa.OrderSchedule)
+              .Include(sa => sa.Student)
+              .FirstOrDefaultAsync(sa => sa.Id == id);
+        }
 
         public async Task<IEnumerable<ScheduleAssignment>> GetByStudentAsync(int studentId)
             => await _context.ScheduleAssignments
@@ -37,7 +40,7 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                                 .OrderByDescending(ji => ji.ScheduledDate)
                                 .Take(1)) // we just need the last scheduled date
                         .Where(sa => sa.Status == AssignmentStatus.Accepted &&
-                                !sa.IsTemporary &&
+                                !sa.IsJobInstanceSub &&
                                 sa.OrderSchedule.Order.IsRecurring &&
                                 liveOrderStatuses.Contains(sa.OrderSchedule.Order.Status))
                         .ToListAsync();
@@ -94,7 +97,7 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 var hasActiveAssignments = await _context.ScheduleAssignments.AnyAsync(a =>
                         a.OrderId == orderId &&
                         a.Status != AssignmentStatus.Completed &&
-                        a.Status != AssignmentStatus.Canceled
+                        a.Status != AssignmentStatus.Terminated
                 );
 
                 return hasActiveAssignments == false;
@@ -112,17 +115,18 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .AnyAsync(sa => sa.OrderScheduleId == scheduleId && sa.Status == AssignmentStatus.Completed);
         }
 
-        public async Task<ScheduleAssignment?> LoadAssignmentWithIncludes(int assignmentId, AssignmentIncludeOptions options)
+        public async Task<ScheduleAssignment?> LoadAssignmentWithIncludes(
+    int assignmentId,
+    AssignmentIncludeOptions options)
         {
                 var query = _context.ScheduleAssignments.AsQueryable();
 
                 if (options.IncludeStudent)
-                        query = query.Include(o => o.Student).ThenInclude(s => s.Contact);
-
+                        query = query.Include(o => o.Student)
+                                     .ThenInclude(s => s.Contact);
 
                 if (options.JobInstances)
                         query = query.Include(o => o.JobInstances);
-
 
                 if (options.IncludeSchedules)
                 {
@@ -134,14 +138,26 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                         }
                         else
                         {
+                                query = query.Include(o => o.OrderSchedule);
+                        }
+
+                        if (options.IncludeOrder)
+                        {
                                 query = query
-                                    .Include(o => o.OrderSchedule);
+                                    .Include(o => o.OrderSchedule)
+                                        .ThenInclude(s => s.Order);
                         }
                 }
-
 
                 return await query.FirstOrDefaultAsync(o => o.Id == assignmentId);
         }
 
+
+        public async Task<List<ScheduleAssignment>> GetActiveAssignmentsByStudentId(int studentId)
+        {
+                return await _context.ScheduleAssignments
+                                .Where(a => a.StudentId == studentId && a.Status == AssignmentStatus.Accepted)
+                                .ToListAsync();
+        }
 
 }

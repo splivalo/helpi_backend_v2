@@ -19,6 +19,13 @@ public class JobRequestDto
     public DateTime ExpiresAt { get; set; }
     public bool IsEmergencySub { get; set; }
 
+    // Reassignment tracking
+    public bool IsReassignment { get; set; } = false;
+    public int? ReassignmentRecordId { get; set; }
+    public ReassignmentType? ReassignmentType { get; set; }
+    public int? ReassignAssignmentId { get; set; }
+    public int? ReassignJobInstanceId { get; set; }
+
     public OrderScheduleDto OrderSchedule { get; set; } = null!;
     public OrderDto Order { get; set; } = null!;
     public SeniorDto Senior { get; set; } = null!;

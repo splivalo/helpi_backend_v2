@@ -719,53 +719,6 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "JobRequests",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
-                    StudentId = table.Column<int>(type: "integer", nullable: false),
-                    SeniorId = table.Column<int>(type: "integer", nullable: false),
-                    OrderId = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    RespondedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RejectionReason = table.Column<string>(type: "text", nullable: true),
-                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsEmergencySub = table.Column<bool>(type: "boolean", nullable: false),
-                    PriorityLevel = table.Column<byte>(type: "smallint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_JobRequests", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_JobRequests_OrderSchedules_OrderScheduleId",
-                        column: x => x.OrderScheduleId,
-                        principalTable: "OrderSchedules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_JobRequests_Orders_OrderId",
-                        column: x => x.OrderId,
-                        principalTable: "Orders",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_JobRequests_Seniors_SeniorId",
-                        column: x => x.SeniorId,
-                        principalTable: "Seniors",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_JobRequests_Students_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "Students",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ScheduleAssignments",
                 columns: table => new
                 {
@@ -775,7 +728,9 @@ namespace Helpi.Infrastructure.Migrations
                     OrderId = table.Column<int>(type: "integer", nullable: false),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    IsTemporary = table.Column<bool>(type: "boolean", nullable: false),
+                    IsJobInstanceSub = table.Column<bool>(type: "boolean", nullable: false),
+                    OriginalAssignmentId = table.Column<int>(type: "integer", nullable: true),
+                    ReplacedAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     TerminationReason = table.Column<int>(type: "integer", nullable: true),
                     TerminatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -808,6 +763,7 @@ namespace Helpi.Infrastructure.Migrations
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
                     CustomerId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
+                    ContractId = table.Column<int>(type: "integer", nullable: true),
                     ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
                     OriginalAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
@@ -850,35 +806,6 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "Seniors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ScheduleAssignmentReplacements",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    OriginalAssignmentId = table.Column<int>(type: "integer", nullable: false),
-                    NewAssignmentId = table.Column<int>(type: "integer", nullable: false),
-                    ReplacedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ReplacementReason = table.Column<string>(type: "text", nullable: true),
-                    InitiatedBy = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ScheduleAssignmentReplacements", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ScheduleAssignmentReplacements_ScheduleAssignments_NewAssig~",
-                        column: x => x.NewAssignmentId,
-                        principalTable: "ScheduleAssignments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ScheduleAssignmentReplacements_ScheduleAssignments_Original~",
-                        column: x => x.OriginalAssignmentId,
-                        principalTable: "ScheduleAssignments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -929,6 +856,72 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "PaymentMethods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReassignmentRecords",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    JobInstanceId = table.Column<int>(type: "integer", nullable: true),
+                    ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: true),
+                    OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
+                    ReassignmentType = table.Column<int>(type: "integer", nullable: false),
+                    Trigger = table.Column<int>(type: "integer", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RequestedByUserId = table.Column<int>(type: "integer", nullable: false),
+                    OriginalStudentId = table.Column<int>(type: "integer", nullable: true),
+                    NewStudentId = table.Column<int>(type: "integer", nullable: true),
+                    AttemptCount = table.Column<int>(type: "integer", nullable: false),
+                    MaxAttempts = table.Column<int>(type: "integer", nullable: false),
+                    LastAttemptAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReassignmentRecords", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_AspNetUsers_RequestedByUserId",
+                        column: x => x.RequestedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_JobInstances_JobInstanceId",
+                        column: x => x.JobInstanceId,
+                        principalTable: "JobInstances",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_OrderSchedules_OrderScheduleId",
+                        column: x => x.OrderScheduleId,
+                        principalTable: "OrderSchedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_ScheduleAssignments_ScheduleAssignmentId",
+                        column: x => x.ScheduleAssignmentId,
+                        principalTable: "ScheduleAssignments",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_Students_NewStudentId",
+                        column: x => x.NewStudentId,
+                        principalTable: "Students",
+                        principalColumn: "UserId");
+                    table.ForeignKey(
+                        name: "FK_ReassignmentRecords_Students_OriginalStudentId",
+                        column: x => x.OriginalStudentId,
+                        principalTable: "Students",
+                        principalColumn: "UserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -999,6 +992,63 @@ namespace Helpi.Infrastructure.Migrations
                         column: x => x.TransactionId,
                         principalTable: "PaymentTransactions",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JobRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
+                    StudentId = table.Column<int>(type: "integer", nullable: false),
+                    SeniorId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    RespondedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectionReason = table.Column<string>(type: "text", nullable: true),
+                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsEmergencySub = table.Column<bool>(type: "boolean", nullable: false),
+                    PriorityLevel = table.Column<byte>(type: "smallint", nullable: false),
+                    IsReassignment = table.Column<bool>(type: "boolean", nullable: false),
+                    ReassignmentRecordId = table.Column<int>(type: "integer", nullable: true),
+                    ReassignmentType = table.Column<int>(type: "integer", nullable: true),
+                    ReassignAssignmentId = table.Column<int>(type: "integer", nullable: true),
+                    ReassignJobInstanceId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_OrderSchedules_OrderScheduleId",
+                        column: x => x.OrderScheduleId,
+                        principalTable: "OrderSchedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_ReassignmentRecords_ReassignmentRecordId",
+                        column: x => x.ReassignmentRecordId,
+                        principalTable: "ReassignmentRecords",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_JobRequests_Seniors_SeniorId",
+                        column: x => x.SeniorId,
+                        principalTable: "Seniors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1152,6 +1202,11 @@ namespace Helpi.Infrastructure.Migrations
                 column: "OrderScheduleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_JobRequests_ReassignmentRecordId",
+                table: "JobRequests",
+                column: "ReassignmentRecordId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobRequests_SeniorId",
                 table: "JobRequests",
                 column: "SeniorId");
@@ -1228,6 +1283,41 @@ namespace Helpi.Infrastructure.Migrations
                 column: "PaymentMethodId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_JobInstanceId",
+                table: "ReassignmentRecords",
+                column: "JobInstanceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_NewStudentId",
+                table: "ReassignmentRecords",
+                column: "NewStudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_OrderId",
+                table: "ReassignmentRecords",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_OrderScheduleId",
+                table: "ReassignmentRecords",
+                column: "OrderScheduleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_OriginalStudentId",
+                table: "ReassignmentRecords",
+                column: "OriginalStudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_RequestedByUserId",
+                table: "ReassignmentRecords",
+                column: "RequestedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReassignmentRecords_ScheduleAssignmentId",
+                table: "ReassignmentRecords",
+                column: "ScheduleAssignmentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reviews_JobInstanceId",
                 table: "Reviews",
                 column: "JobInstanceId",
@@ -1242,16 +1332,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_Reviews_StudentId",
                 table: "Reviews",
                 column: "StudentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ScheduleAssignmentReplacements_NewAssignmentId",
-                table: "ScheduleAssignmentReplacements",
-                column: "NewAssignmentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ScheduleAssignmentReplacements_OriginalAssignmentId",
-                table: "ScheduleAssignmentReplacements",
-                column: "OriginalAssignmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ScheduleAssignments_OrderScheduleId",
@@ -1384,9 +1464,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "Reviews");
 
             migrationBuilder.DropTable(
-                name: "ScheduleAssignmentReplacements");
-
-            migrationBuilder.DropTable(
                 name: "ServiceRegions");
 
             migrationBuilder.DropTable(
@@ -1403,6 +1480,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Invoices");
+
+            migrationBuilder.DropTable(
+                name: "ReassignmentRecords");
 
             migrationBuilder.DropTable(
                 name: "PaymentTransactions");

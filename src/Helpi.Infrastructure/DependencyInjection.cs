@@ -59,8 +59,10 @@ public static class DependencyInjection
         services.AddScoped<StudentBackgroundJobs>();
         services.AddScoped<IHangfireService, HangfireService>();
         services.AddScoped<CompletionStatusService>();
+        services.AddScoped<IReassignmentService, ReassignmentService>();
 
         // Register all repositories
+        services.AddScoped<IReassignmentRecordRepository, ReassignmentRecordRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -167,26 +169,32 @@ public static class DependencyInjection
       this IServiceCollection services, IConfiguration configuration)
     {
 
-        var googleCredentialsJson = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_CREDENTIALS_JSON")
-                                     ??
-                                    configuration["GoogleDrive:CredentialsJson"];
+        var googleCredentialsPath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_CREDENTIALS_JSON")
+                            ?? configuration["GoogleDrive:CredentialsJson"];
 
-        if (string.IsNullOrEmpty(googleCredentialsJson))
+        if (string.IsNullOrEmpty(googleCredentialsPath))
         {
             throw new InvalidOperationException("Google Drive credentials not found in environment variables.");
         }
 
+        if (!File.Exists(googleCredentialsPath))
+        {
+            throw new FileNotFoundException($"Google Drive credentials file not found at {googleCredentialsPath}");
+        }
+
+        var googleCredentialsJson = File.ReadAllText(googleCredentialsPath);
+
         services.Configure<GoogleDriveSettings>(options =>
         {
-            options.ApplicationName = configuration["GoogleDrive:ApplicationName"] ??
-            throw new InvalidOperationException("GoogleDrive:ApplicationName configuration is missing");
+            options.ApplicationName = configuration["GoogleDrive:ApplicationName"]
+                ?? throw new InvalidOperationException("GoogleDrive:ApplicationName configuration is missing");
 
+            options.BaseFolderId = configuration["GoogleDrive:BaseFolderId"]
+                ?? throw new InvalidOperationException("GoogleDrive:BaseFolderId configuration is missing");
 
-            options.BaseFolderId = configuration["GoogleDrive:BaseFolderId"] ??
-            throw new InvalidOperationException("GoogleDrive:BaseFolderId configuration is missing");
-
-            options.CredentialsJson = googleCredentialsJson;
+            options.CredentialsJson = googleCredentialsJson; // now it's the actual JSON
         });
+
 
         services.AddSingleton<IGoogleDriveService, GoogleDriveService>();
 

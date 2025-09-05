@@ -5,7 +5,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IScheduleAssignmentRepository
 {
-    Task<ScheduleAssignment> GetByIdAsync(int id);
+    Task<ScheduleAssignment?> GetByIdAsync(int id);
 
     Task<ScheduleAssignment?> LoadAssignmentWithIncludes(int assignmentId, AssignmentIncludeOptions options);
     Task<IEnumerable<ScheduleAssignment>> GetByStudentAsync(int studentId);
@@ -17,4 +17,6 @@ public interface IScheduleAssignmentRepository
     Task<bool> IsScheduleAssigned(int scheduleId);
     Task<bool> IsAllOrderAssignmentsCompleted(int orderId);
     Task<bool> IsScheduleCompleted(int scheduleId);
+    Task<List<ScheduleAssignment>> GetActiveAssignmentsByStudentId(int studentId);
+
 }

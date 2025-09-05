@@ -15,8 +15,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250825100330_InitialMigrations")]
-    partial class InitialMigrations
+    [Migration("20250903100518_NeedsSubstitute")]
+    partial class NeedsSubstitute
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -414,6 +414,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<decimal>("CompanyPercentage")
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<int?>("ContractId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
 
@@ -431,6 +434,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("NeedsSubstitute")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
@@ -454,9 +460,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("time");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SubstitutionStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -489,6 +492,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsEmergencySub")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsReassignment")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
@@ -497,6 +503,18 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<byte>("PriorityLevel")
                         .HasColumnType("smallint");
+
+                    b.Property<int?>("ReassignAssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReassignJobInstanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReassignmentRecordId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReassignmentType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text");
@@ -521,6 +539,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("OrderScheduleId");
+
+                    b.HasIndex("ReassignmentRecordId");
 
                     b.HasIndex("SeniorId");
 
@@ -951,13 +971,19 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsTemporary")
+                    b.Property<bool>("IsJobInstanceSub")
                         .HasColumnType("boolean");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
                     b.Property<int>("OrderScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OriginalAssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReplacedAssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -980,38 +1006,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasDatabaseName("IX_ScheduleAssignments_Student_OrderSchedule");
 
                     b.ToTable("ScheduleAssignments");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.ScheduleAssignmentReplacement", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("InitiatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NewAssignmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OriginalAssignmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ReplacedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ReplacementReason")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NewAssignmentId");
-
-                    b.HasIndex("OriginalAssignmentId");
-
-                    b.ToTable("ScheduleAssignmentReplacements");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Senior", b =>
@@ -1466,6 +1460,82 @@ namespace Helpi.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ReassignmentRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("NewStudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OriginalStudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReassignmentType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ScheduleAssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Trigger")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobInstanceId");
+
+                    b.HasIndex("NewStudentId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("OrderScheduleId");
+
+                    b.HasIndex("OriginalStudentId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ScheduleAssignmentId");
+
+                    b.ToTable("ReassignmentRecords");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.ContactInfo", "Contact")
@@ -1590,6 +1660,10 @@ namespace Helpi.Infrastructure.Migrations
                         .HasForeignKey("OrderScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("ReassignmentRecord", null)
+                        .WithMany("JobRequests")
+                        .HasForeignKey("ReassignmentRecordId");
 
                     b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
                         .WithMany()
@@ -1760,25 +1834,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Helpi.Domain.Entities.ScheduleAssignmentReplacement", b =>
-                {
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "NewAssignment")
-                        .WithMany()
-                        .HasForeignKey("NewAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "OriginalAssignment")
-                        .WithMany()
-                        .HasForeignKey("OriginalAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("NewAssignment");
-
-                    b.Navigation("OriginalAssignment");
-                });
-
             modelBuilder.Entity("Helpi.Domain.Entities.Senior", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.ContactInfo", "Contact")
@@ -1943,6 +1998,57 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ReassignmentRecord", b =>
+                {
+                    b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
+                        .WithMany()
+                        .HasForeignKey("JobInstanceId");
+
+                    b.HasOne("Helpi.Domain.Entities.Student", "NewStudent")
+                        .WithMany()
+                        .HasForeignKey("NewStudentId");
+
+                    b.HasOne("Helpi.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Helpi.Domain.Entities.OrderSchedule", "OrderSchedule")
+                        .WithMany()
+                        .HasForeignKey("OrderScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Helpi.Domain.Entities.Student", "OriginalStudent")
+                        .WithMany()
+                        .HasForeignKey("OriginalStudentId");
+
+                    b.HasOne("Helpi.Domain.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
+                        .WithMany()
+                        .HasForeignKey("ScheduleAssignmentId");
+
+                    b.Navigation("JobInstance");
+
+                    b.Navigation("NewStudent");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("OrderSchedule");
+
+                    b.Navigation("OriginalStudent");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("ScheduleAssignment");
+                });
+
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
                 {
                     b.Navigation("ContactInfos");
@@ -2048,6 +2154,11 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Student");
 
                     b.Navigation("fcmTokens");
+                });
+
+            modelBuilder.Entity("ReassignmentRecord", b =>
+                {
+                    b.Navigation("JobRequests");
                 });
 #pragma warning restore 612, 618
         }

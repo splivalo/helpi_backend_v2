@@ -18,10 +18,13 @@ public class StudentStatusService
 
     private readonly ILogger<CompletionStatusService> _logger;
 
+    private readonly IReassignmentService _reassignmentService;
+
     public StudentStatusService(
         IStudentRepository studentRepo,
       StudentService studentService,
       INotificationService notificationService,
+     IReassignmentService reassignmentService,
         ILogger<CompletionStatusService> logger
     )
     {
@@ -29,6 +32,7 @@ public class StudentStatusService
         _studentService = studentService;
         _notificationService = notificationService;
         _logger = logger;
+        _reassignmentService = reassignmentService;
     }
 
     public async Task ProcessStudentContracts()
@@ -147,6 +151,27 @@ public class StudentStatusService
 
         _logger.LogInformation("Contract expired {DaysSinceExpiry} days ago for student {StudentId}",
             daysSinceExpiry, student.UserId);
+
+
+        if (student.Status == StudentStatus.Verified)
+        {
+            student.Status = StudentStatus.UnVerified;
+            await _studentRepo.UpdateAsync(student);
+        }
+
+
+        // Reassign jobs immediately when contract expires
+        if (daysSinceExpiry == 1)
+        {
+            try
+            {
+                await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+            }
+            catch
+            {
+                //
+            }
+        }
 
         switch (daysSinceExpiry)
         {

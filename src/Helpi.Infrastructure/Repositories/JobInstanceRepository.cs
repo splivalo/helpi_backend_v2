@@ -73,6 +73,12 @@ public class JobInstanceRepository : IJobInstanceRepository
                 await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateRangeAsync(List<JobInstance> jobInstances)
+        {
+                _context.JobInstances.UpdateRange(jobInstances);
+                await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteAsync(JobInstance instance)
         {
                 _context.JobInstances.Remove(instance);
@@ -192,5 +198,61 @@ public class JobInstanceRepository : IJobInstanceRepository
         {
                 return _context.JobInstances.Where(predicate).SumAsync(selector);
         }
+
+        public async Task<List<JobInstance>> GetJobInstancesAsync(
+                int? assignmentId,
+                JobInstanceStatus? status,
+                JobInstanceIncludeOptions options
+     )
+        {
+                var query = _context.JobInstances
+                    .AsNoTracking()
+                    .AsQueryable();
+
+                if (assignmentId.HasValue)
+                {
+                        query = query.Where(j => j.Assignment.Id == assignmentId.Value);
+                }
+
+                if (status.HasValue)
+                {
+                        query = query.Where(j => j.Status == status.Value);
+                }
+
+                if (options.Senior)
+                {
+                        query = query.Include(j => j.Senior)
+                                     .ThenInclude(s => s.Contact);
+                }
+
+                if (options.Assignment)
+                {
+                        query = query.Include(j => j.Assignment);
+
+                        if (options.AssignmentStudent)
+                        {
+                                query = query.Include(j => j.Assignment)
+                                             .ThenInclude(a => a.Student)
+                                             .ThenInclude(s => s.Contact);
+                        }
+                }
+
+                if (options.Order)
+                {
+                        query = query.Include(j => j.Order);
+
+                        if (options.OrderPaymentMethod)
+                        {
+                                query = query.Include(j => j.Order)
+                                             .ThenInclude(o => o.PaymentMethod);
+                        }
+                }
+
+                return await query.ToListAsync();
+        }
+
+
+
+
 }
 

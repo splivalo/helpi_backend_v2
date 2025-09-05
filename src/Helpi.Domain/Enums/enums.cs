@@ -69,20 +69,48 @@ namespace Helpi.Domain.Enums
         AssignedToOther
     }
 
+    public enum ReassignmentTrigger
+    {
+        ContractExpiration,
+        StudentRequest,
+        SeniorRequest,
+        AdminIntervention,
+    }
+
+    public enum ReassignmentStatus
+    {
+        Requested,
+        InProgress,
+        Completed,
+        Failed,
+        Cancelled,
+        Expired
+    }
+
+    public enum ReassignmentType
+    {
+        OneDaySubstitution,    // Reassigning a single day/instance
+        CompleteTakeover,      // Reassigning the entire schedule
+    }
+
     public enum AssignmentStatus
     {
         Accepted,
         Declined,
-        Canceled,
-        Completed
+        Terminated,
+        Completed,
+
     }
 
     public enum TerminationReason
     {
         Completed,
         StudentQuit,
+        StudentRequested,
+        StudentContractExpired,
         SeniorCanceled,
-        SystemTerminated
+        SystemTerminated,
+        AdminIntervention
     }
 
     public enum JobInstanceStatus
@@ -152,7 +180,11 @@ namespace Helpi.Domain.Enums
         contractActive,
         NoEligableStudentAcceptedJobYet,
         NoEligibleStudents,
-        ReviewRequest
+        ReviewRequest,
+        ReassignmentFailed,
+        ReassignmentCompleted,
+        ReassignmentStatusUpdate
+
     }
 
     public enum DashboardTileType

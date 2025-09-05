@@ -17,7 +17,7 @@ namespace Helpi.Domain.Entities
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public JobInstanceStatus Status { get; set; } = JobInstanceStatus.Upcoming;
-        public SubstitutionStatus SubstitutionStatus { get; set; } = SubstitutionStatus.Original;
+        public bool NeedsSubstitute { get; set; } = false;
         public DateTime? ActualStartTime { get; set; }
         public DateTime? ActualEndTime { get; set; }
 

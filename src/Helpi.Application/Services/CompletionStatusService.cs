@@ -135,10 +135,11 @@ public class CompletionStatusService
             return;
         }
 
-        var assignedStatus = new[] {
-        AssignmentStatus.Accepted,
-        AssignmentStatus.Completed
-    };
+        var assignedStatus = new[]
+            {
+                AssignmentStatus.Accepted,
+                AssignmentStatus.Completed
+            };
 
         // Check if ALL active schedules have assignments
         var activeSchedules = order.Schedules.Where(s => !s.IsCancelled).ToList();
@@ -151,7 +152,7 @@ public class CompletionStatusService
 
         var fullyAssigned = activeSchedules.All(schedule =>
             schedule.Assignments.Any(sa =>
-                !sa.IsTemporary &&
+                !sa.IsJobInstanceSub &&
                 assignedStatus.Contains(sa.Status)));
 
         var newStatus = fullyAssigned ? OrderStatus.FullAssigned : OrderStatus.Pending;

@@ -6,6 +6,7 @@ using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 
 public class JobRequestRepository : IJobRequestRepository
@@ -76,6 +77,40 @@ public class JobRequestRepository : IJobRequestRepository
                 return notifiedStudentIds;
         }
 
+        public async Task<List<int>> NotifiedStudentIdsForReassignment(int reassignmentRecordId)
+        {
+                var notifiedStudentIds = await _context.JobRequests
+                    .Where(jr => jr.ReassignmentRecordId == reassignmentRecordId)
+                    .Select(jr => jr.StudentId)
+                    .ToListAsync();
+
+                return notifiedStudentIds;
+        }
+
+        public async Task<List<int>> NotifiedStudentIdsForScheduleAndReassignment(
+                int orderScheduleId,
+                 int? reassignmentRecordId)
+        {
+                var query = _context.JobRequests
+                    .Where(jr => jr.OrderScheduleId == orderScheduleId);
+
+                if (reassignmentRecordId.HasValue)
+                {
+                        query = query.Where(jr => jr.ReassignmentRecordId == reassignmentRecordId.Value ||
+                                                 !jr.IsReassignment);
+                }
+                else
+                {
+                        query = query.Where(jr => !jr.IsReassignment);
+                }
+
+                var notifiedStudentIds = await query
+                    .Select(jr => jr.StudentId)
+                    .ToListAsync();
+
+                return notifiedStudentIds;
+        }
+
         public async Task<List<JobRequest>> GetStudentPendingRequests(int studentId)
         {
                 return await _context.JobRequests
@@ -101,8 +136,6 @@ public class JobRequestRepository : IJobRequestRepository
 
         public async Task<JobRequest> RespondToJobRequestAsync(JobRequest resJobRequest)
         {
-
-
                 try
                 {
                         var jobRequest = await _context.JobRequests
@@ -127,7 +160,18 @@ public class JobRequestRepository : IJobRequestRepository
 
                         if (resJobRequest.Status == JobRequestStatus.Accepted)
                         {
-                                return await HandleAcceptance(jobRequest);
+
+
+                                if (jobRequest.IsReassignment == false)
+                                {
+                                        return await HandleAcceptance(jobRequest);
+                                }
+                                else
+                                {
+                                        return await HandleReassignmentAcceptance(jobRequest);
+
+                                }
+
                         }
                         else
                         {
@@ -141,15 +185,20 @@ public class JobRequestRepository : IJobRequestRepository
                 }
         }
 
+
         private async Task<JobRequest> HandleAcceptance(JobRequest jobRequest)
         {
                 // Check if slot is still available
                 var isSlotAvailable = await IsScheduleSlotAvailable(jobRequest.OrderScheduleId);
 
                 if (!isSlotAvailable)
+                {
                         throw new DomainException("Already assigned");
+                }
 
-                // Create schedule assignment
+
+
+                // Create schedule assignment only for non-reassignment requests
                 var assignment = new ScheduleAssignment
                 {
                         OrderScheduleId = jobRequest.OrderScheduleId,
@@ -165,15 +214,47 @@ public class JobRequestRepository : IJobRequestRepository
                 jobRequest.Status = JobRequestStatus.Accepted;
                 jobRequest.RespondedAt = DateTime.UtcNow;
 
+                await _unitOfWork.SaveChangesAsync();
+
+                // Decline other pending requests for same schedule
+
+                await DeclineOtherRequests(jobRequest.OrderScheduleId, jobRequest.Id);
 
 
+                return jobRequest;
+        }
+        private async Task<JobRequest> HandleReassignmentAcceptance(JobRequest jobRequest)
+        {
+
+                bool isSlotAvailable;
+
+                // Check if slot is still available
+                if (jobRequest.ReassignmentType == ReassignmentType.CompleteTakeover)
+                {
+                        isSlotAvailable = await IsScheduleSlotAvailable(jobRequest.OrderScheduleId);
+                }
+                else
+                {
+                        isSlotAvailable = await IsJobInstanceSlotAvailable(jobRequest.ReassignJobInstanceId!.Value);
+                }
+
+
+                if (!isSlotAvailable)
+                {
+                        throw new DomainException("Already assigned");
+                }
+
+
+
+                // Update job request
+                jobRequest.Status = JobRequestStatus.Accepted;
+                jobRequest.RespondedAt = DateTime.UtcNow;
 
                 await _unitOfWork.SaveChangesAsync();
 
+                // For reassignments, decline other requests for the same reassignment record
+                await DeclineOtherReassignmentRequests(jobRequest.ReassignmentRecordId!.Value, jobRequest.Id);
 
-
-                // Decline other pending requests for same schedule
-                await DeclineOtherRequests(jobRequest.OrderScheduleId, jobRequest.Id);
 
                 return jobRequest;
         }
@@ -190,10 +271,34 @@ public class JobRequestRepository : IJobRequestRepository
                         && sa.Status == AssignmentStatus.Accepted);
         }
 
+        private async Task<bool> IsJobInstanceSlotAvailable(int jobInstanceId)
+        {
+                return await _context.JobInstances
+                    .AnyAsync(ji => ji.Id == jobInstanceId
+                         && ji.NeedsSubstitute);
+        }
+
         private async Task DeclineOtherRequests(int orderScheduleId, int acceptedRequestId)
         {
                 var otherRequests = await _context.JobRequests
                     .Where(jr => jr.OrderScheduleId == orderScheduleId
+                        && jr.Id != acceptedRequestId
+                        && jr.Status == JobRequestStatus.Pending)
+                    .ToListAsync();
+
+                foreach (var request in otherRequests)
+                {
+                        request.Status = JobRequestStatus.AssignedToOther;
+                        request.RespondedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+        }
+
+        private async Task DeclineOtherReassignmentRequests(int reassignmentRecordId, int acceptedRequestId)
+        {
+                var otherRequests = await _context.JobRequests
+                    .Where(jr => jr.ReassignmentRecordId == reassignmentRecordId
                         && jr.Id != acceptedRequestId
                         && jr.Status == JobRequestStatus.Pending)
                     .ToListAsync();

@@ -22,5 +22,12 @@ namespace Helpi.Domain.Entities
         public Student Student { get; set; } = null!;
         public Senior Senior { get; set; } = null!;
         public Order Order { get; set; } = null!;
+
+        // Reassignment tracking
+        public bool IsReassignment { get; set; } = false;
+        public int? ReassignmentRecordId { get; set; }
+        public ReassignmentType? ReassignmentType { get; set; }
+        public int? ReassignAssignmentId { get; set; }
+        public int? ReassignJobInstanceId { get; set; }
     }
 }

@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<ServiceRegionService>();
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
+        services.AddScoped<IReassignmentService, ReassignmentService>();
 
         // AutoMapper
         services.AddAutoMapper(typeof(MappingProfile).Assembly);

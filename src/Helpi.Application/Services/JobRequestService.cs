@@ -20,6 +20,8 @@ public class JobRequestService
         private readonly IHangfireRecurringJobService _recurringJobService;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
+        private readonly IReassignmentService _reassignmentService;
+
         public JobRequestService(
                 IJobRequestRepository jobRequestRepository,
                 CompletionStatusService completionStatusService,
@@ -27,7 +29,9 @@ public class JobRequestService
                 IMapper mapper,
                  IHangfireRecurringJobService recurringJobService,
                  IPricingConfigurationRepository pricingConfigRepo,
-                  ILogger<JobRequestService> logger)
+                  ILogger<JobRequestService> logger,
+                     IReassignmentService reassignmentService
+                     )
         {
                 _jobRequestRepository = jobRequestRepository;
                 _completionStatusService = completionStatusService;
@@ -36,6 +40,7 @@ public class JobRequestService
                 _recurringJobService = recurringJobService;
                 _pricingConfigRepo = pricingConfigRepo;
                 _logger = logger;
+                _reassignmentService = reassignmentService;
         }
 
         public async Task<List<JobRequestDto>> GetStudentPendingRequests(int studentId)
@@ -67,7 +72,20 @@ public class JobRequestService
 
                 if (jobRequest.Status == JobRequestStatus.Accepted)
                 {
-                        await _GenerateJobInstancesAsync(jobRequest);
+
+                        // Handle reassignment completion if this is a reassignment
+                        if (jobRequest.IsReassignment && jobRequest.ReassignmentRecordId.HasValue)
+                        {
+                                await _reassignmentService.CompleteReassignment(
+                                    jobRequest.ReassignmentRecordId.Value,
+                                    jobRequest.StudentId);
+                        }
+                        else
+                        {
+                                // Only generate instances for non-reassignment acceptances
+                                await _GenerateJobInstancesAsync(jobRequest);
+                        }
+
 
                         await _completionStatusService.ProcessIsOrderAllSchedulesAssigned(jobRequest.OrderId);
                 }

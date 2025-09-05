@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250902084039_InitialMigrations")]
+    partial class InitialMigrations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -432,9 +435,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<bool>("NeedsSubstitute")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
@@ -457,6 +457,9 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("time");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SubstitutionStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");

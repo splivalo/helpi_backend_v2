@@ -67,6 +67,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Job Management
     public DbSet<JobRequest> JobRequests { get; set; }
     public DbSet<ScheduleAssignment> ScheduleAssignments { get; set; }
+    public DbSet<ReassignmentRecord> ReassignmentRecords { get; set; }
     public DbSet<JobInstance> JobInstances { get; set; }
     // public DbSet<ScheduleAssignmentReplacement> ScheduleAssignmentReplacements { get; set; }
 
