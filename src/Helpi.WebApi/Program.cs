@@ -2,8 +2,11 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Helpi.Application;
+using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Services;
 using Helpi.Application.Validators;
+using Helpi.Domain.Events;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
@@ -94,6 +97,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHangfireDashboard();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var mediator = scope.ServiceProvider.GetRequiredService<IEventMediator>();
+    mediator?.Subscribe<ReinitiateAllFailedMatchesEvent, FailedMatchReinitiationService>();
+}
 
 
 

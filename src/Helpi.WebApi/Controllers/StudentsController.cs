@@ -12,9 +12,9 @@ namespace Helpi.WebApi.Controllers;
 [Route("api/students")]
 public class StudentsController : ControllerBase
 {
-        private readonly StudentService _service;
+        private readonly StudentsService _service;
 
-        public StudentsController(StudentService service) => _service = service;
+        public StudentsController(StudentsService service) => _service = service;
 
         [HttpGet]
         public async Task<ActionResult<List<StudentDto>>> GetStudents(

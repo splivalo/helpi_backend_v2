@@ -2,10 +2,12 @@
 using System.Text.Json;
 using Helpi.Application.DTOs.JobRequest;
 using Helpi.Application.DTOs.Minimax;
+using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Events;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
@@ -23,12 +25,14 @@ public class TestingController : ControllerBase
     private readonly IMinimaxService _minimaxService;
     private readonly ILogger<TestingController> _logger;
 
+    private readonly IEventMediator _mediator;
 
     public TestingController(INotificationService notificationService,
      JobRequestService jobRequestService,
       OrdersService ordersService,
        IMinimaxService minimaxService,
-      ILogger<TestingController> logger
+      ILogger<TestingController> logger,
+      IEventMediator mediator
       )
     {
         _notificationService = notificationService;
@@ -36,6 +40,22 @@ public class TestingController : ControllerBase
         _ordersService = ordersService;
         _minimaxService = minimaxService;
         _logger = logger;
+        _mediator = mediator;
+    }
+
+    [HttpGet("ReinitiateAllFailedMatches")]
+    public async Task ReinitiateAllFailedMatches()
+    {
+
+        try
+        {
+            await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to reinitiate failed matches");
+        }
+
     }
 
     [HttpGet("send-job-request-notification")]

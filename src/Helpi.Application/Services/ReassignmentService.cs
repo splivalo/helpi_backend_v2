@@ -16,6 +16,7 @@ namespace Helpi.Application.Services
         private readonly IOrderScheduleRepository _orderScheduleRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IMatchingService _matchingService;
+        private readonly IJobInstanceMatchingService _jobInstanceMatchingService;
         private readonly ILogger<ReassignmentService> _logger;
         private readonly INotificationService _notificationService;
         private readonly IStudentRepository _studentRepository;
@@ -27,6 +28,7 @@ namespace Helpi.Application.Services
             IOrderScheduleRepository orderScheduleRepository,
             IOrderRepository orderRepository,
              IMatchingService matchingService,
+             IJobInstanceMatchingService jobInstanceMatchingService,
             ILogger<ReassignmentService> logger,
             INotificationService notificationService,
             IStudentRepository studentRepository)
@@ -37,6 +39,7 @@ namespace Helpi.Application.Services
             _orderScheduleRepository = orderScheduleRepository;
             _orderRepository = orderRepository;
             _matchingService = matchingService;
+            _jobInstanceMatchingService = jobInstanceMatchingService;
             _logger = logger;
             _notificationService = notificationService;
             _studentRepository = studentRepository;
@@ -48,7 +51,9 @@ namespace Helpi.Application.Services
             string reason,
             int requestedByUserId,
             int? jobInstanceId = null,
-            int? scheduleAssignmentId = null)
+            int? scheduleAssignmentId = null,
+            int? preferedStudentId = null
+            )
         {
             _logger.LogInformation("🚀 Initiating reassignment: Type={Type}, Trigger={Trigger}, Reason={Reason}",
                 reassignmentType, trigger, reason);
@@ -58,8 +63,8 @@ namespace Helpi.Application.Services
                 throw new ArgumentException("Either jobInstanceId or scheduleAssignmentId must be provided");
 
             // Get the related entities to populate the reassignment record
-            OrderSchedule orderSchedule;
-            Order order;
+            OrderSchedule? orderSchedule;
+            Order? order;
             int? originalStudentId = null;
 
             if (reassignmentType == ReassignmentType.OneDaySubstitution)
@@ -72,7 +77,15 @@ namespace Helpi.Application.Services
                 }
 
 
-                var jobInstance = await _jobInstanceRepository.GetByIdAsync(jobInstanceId.Value);
+                var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(
+                    jobInstanceId.Value,
+                    new JobInstanceIncludeOptions
+                    {
+                        Order = true,
+                        Assignment = true,
+                        AssignmentOrderSchedule = true
+                    });
+
                 if (jobInstance == null)
                     throw new ArgumentException($"Job instance {jobInstanceId} not found");
 
@@ -109,7 +122,10 @@ namespace Helpi.Application.Services
             }
             else
             {
-                hasActiveReassignment = await _reassignmentRecordRepository.HasActiveReassignmentsForAssignmentAsync(scheduleAssignmentId.Value);
+
+                hasActiveReassignment = await _reassignmentRecordRepository.HasActiveReassignmentsForAssignmentAsync(scheduleAssignmentId!.Value);
+
+
             }
 
 
@@ -132,16 +148,24 @@ namespace Helpi.Application.Services
                 RequestedByUserId = requestedByUserId,
                 OriginalStudentId = originalStudentId,
                 Status = ReassignmentStatus.Requested,
+                PreferredStudentId = preferedStudentId,
                 RequestedAt = DateTime.UtcNow
             };
 
             await _reassignmentRecordRepository.AddAsync(reassignmentRecord);
 
             // Make order schedule allow scheduling
-            orderSchedule.allowAutoScheduling = true;
-            orderSchedule.AutoScheduleAttemptCount = 0;
-            orderSchedule.AutoScheduleDisableReason = null;
-            await _orderScheduleRepository.UpdateAsync(orderSchedule);
+            // for CompleteTakeover we track in OrderSchedule
+            // for OneDaySub we track in ReassignmentRecord
+
+            // if (reassignmentType == ReassignmentType.CompleteTakeover)
+            // {
+            //     orderSchedule.AllowAutoScheduling = true;
+            //     orderSchedule.AutoScheduleAttemptCount = 0;
+            //     orderSchedule.AutoScheduleDisableReason = null;
+            //     await _orderScheduleRepository.UpdateAsync(orderSchedule);
+            // }
+
 
 
             // Handle the reassignment based on type
@@ -307,7 +331,7 @@ namespace Helpi.Application.Services
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
             // Use the matching service to find a replacement
-            await _matchingService.InitiateMatchingProcessAsync(jobInstance.OrderId);
+            await _jobInstanceMatchingService.StartJobInstanceMatchingAsync(jobInstance.Id, reassignmentRecord.Id);
 
         }
 
@@ -367,7 +391,14 @@ namespace Helpi.Application.Services
                 return;
 
             // Get the job instance
-            var jobInstance = await _jobInstanceRepository.GetByIdAsync(reassignmentRecord.JobInstanceId.Value);
+            var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(
+                reassignmentRecord.JobInstanceId.Value,
+                new JobInstanceIncludeOptions
+                {
+                    Assignment = true
+                }
+                );
+
             if (jobInstance == null)
                 return;
 

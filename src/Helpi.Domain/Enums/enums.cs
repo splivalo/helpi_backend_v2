@@ -118,7 +118,9 @@ namespace Helpi.Domain.Enums
         Upcoming,
         InProgress,
         Completed,
-        Cancelled
+        Cancelled,
+        Rescheduled
+
     }
 
     public enum SubstitutionStatus

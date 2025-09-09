@@ -10,6 +10,7 @@ namespace Helpi.Domain.Entities
         public int CustomerId { get; set; }
         public int OrderId { get; set; }
 
+
         public int? ContractId { get; set; }
         public int ScheduleAssignmentId { get; set; }
         public int? OriginalAssignmentId { get; set; }
@@ -20,6 +21,14 @@ namespace Helpi.Domain.Entities
         public bool NeedsSubstitute { get; set; } = false;
         public DateTime? ActualStartTime { get; set; }
         public DateTime? ActualEndTime { get; set; }
+
+        // Rescheduling properties
+        public bool IsRescheduleVariant { get; set; } = false;
+        public int? OriginalInstanceId { get; set; }
+        public int? RescheduledFromId { get; set; }
+        public int? RescheduledToId { get; set; }
+        public DateTime? RescheduledAt { get; set; }
+        public string? RescheduleReason { get; set; }
 
         // Money
         public decimal HourlyRate { get; set; }
@@ -32,12 +41,18 @@ namespace Helpi.Domain.Entities
         public decimal ServiceProviderPercentage { get; set; }
         public decimal CompanyAmount => TotalAmount * (CompanyPercentage / 100);
         public decimal ServiceProviderAmount => TotalAmount * (ServiceProviderPercentage / 100);
+
+
         public ScheduleAssignment Assignment { get; set; } = null!;
         public ScheduleAssignment? OriginalAssignment { get; set; }
         public PaymentTransaction? PaymentTransaction { get; set; }
+
+
         public Review? Review { get; set; }
         public Senior Senior { get; set; } = null!;
         public Order Order { get; set; } = null!;
+
+        public ICollection<JobInstance> RescheduledInstances { get; set; } = new List<JobInstance>();
 
 
 

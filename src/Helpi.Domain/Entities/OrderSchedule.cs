@@ -16,7 +16,7 @@ namespace Helpi.Domain.Entities
 
         public int AutoScheduleAttemptCount { get; set; } = 0;
 
-        public bool allowAutoScheduling { get; set; } = true;
+        public bool AllowAutoScheduling { get; set; } = true;
 
         public AutoScheduleDisableReason? AutoScheduleDisableReason { get; set; }
 

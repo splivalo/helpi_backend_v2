@@ -16,6 +16,17 @@ public class MatchingBackgroundJobs : IMatchingBackgroundJobs
        );
 
     }
+    public void ScheduleJobInstanceMatching(int jobInstanceId, int reassignmentRecordId, DateTime executionTime)
+    {
+        BackgroundJob.Schedule<IJobInstanceMatchingService>(
+           service => service.ProcessJobInstanceMatchingAsync(
+                        jobInstanceId,
+                        reassignmentRecordId
+                        ),
+           executionTime
+       );
+
+    }
 
 
 }

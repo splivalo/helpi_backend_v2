@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -14,17 +15,19 @@ public class StudentStatusService
     private readonly IStudentRepository _studentRepo;
 
     private readonly INotificationService _notificationService;
-    private readonly StudentService _studentService;
+    private readonly StudentsService _studentService;
 
     private readonly ILogger<CompletionStatusService> _logger;
 
     private readonly IReassignmentService _reassignmentService;
+    private readonly IEventMediator _mediator;
 
     public StudentStatusService(
         IStudentRepository studentRepo,
-      StudentService studentService,
+      StudentsService studentService,
       INotificationService notificationService,
      IReassignmentService reassignmentService,
+IEventMediator mediator,
         ILogger<CompletionStatusService> logger
     )
     {
@@ -33,6 +36,7 @@ public class StudentStatusService
         _notificationService = notificationService;
         _logger = logger;
         _reassignmentService = reassignmentService;
+        _mediator = mediator;
     }
 
     public async Task ProcessStudentContracts()
@@ -46,7 +50,9 @@ public class StudentStatusService
         var students = await _studentRepo.LoadStudentsWithIncludes(null, new StudentIncludeOptions
         {
             Contracts = true
-        });
+        }
+        ,
+         excludeStatus: [StudentStatus.Deleted]);
 
 
 
@@ -59,13 +65,14 @@ public class StudentStatusService
     }
 
     /// <summary>
-    /// student must have included Include(contacts)
+    /// student must have included Include(contracts)
     /// </summary>
     /// <param name="student"></param>
     /// <returns></returns>
     public async Task ProcessStudentStatus(Student student)
     {
         _logger.LogInformation("📅 Processing Student: {StudentId}", student.UserId);
+
 
         var activeContract = student.Contracts
             .Where(c => c.Status == ContractStatus.Active)
@@ -119,6 +126,8 @@ public class StudentStatusService
                 };
 
                 await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+
+                await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
             }
         }
     }

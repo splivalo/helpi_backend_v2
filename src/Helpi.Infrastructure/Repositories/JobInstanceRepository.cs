@@ -6,6 +6,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 
 public class JobInstanceRepository : IJobInstanceRepository
@@ -170,14 +171,20 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 if (includes.Order)
                 {
+
+                        query = query.Include(ji => ji.Order);
+
                         if (includes.OrderPaymentMethod)
                         {
                                 query = query.Include(ji => ji.Order).ThenInclude(o => o.PaymentMethod);
                         }
-                        else
+
+                        if (includes.OrderServices)
                         {
-                                query = query.Include(ji => ji.Order);
+                                query = query.Include(ji => ji.Order).ThenInclude(o => o.OrderServices);
                         }
+
+
 
                 }
 
@@ -187,6 +194,12 @@ public class JobInstanceRepository : IJobInstanceRepository
                 {
                         query = query
                             .Include(ji => ji.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact);
+
+                        if (includes.AssignmentOrderSchedule)
+                        {
+                                query = query
+                             .Include(ji => ji.Assignment).ThenInclude(a => a.OrderSchedule);
+                        }
 
                 }
 
@@ -251,8 +264,10 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await query.ToListAsync();
         }
 
-
-
+        public void Detach(JobInstance jobInstance)
+        {
+                _context.DetachEntity(jobInstance);
+        }
 
 }
 

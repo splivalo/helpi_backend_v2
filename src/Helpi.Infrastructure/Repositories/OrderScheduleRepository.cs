@@ -2,6 +2,7 @@ namespace Helpi.Infrastructure.Repositories;
 
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,23 @@ public class OrderScheduleRepository : IOrderScheduleRepository
         public async Task AddRangeNoSaveAsync(IEnumerable<OrderSchedule> orderSchedules)
         {
                 await _context.OrderSchedules.AddRangeAsync(orderSchedules);
+        }
+
+        public async Task<IEnumerable<OrderSchedule>> GetFailedAutoSchedulingSchedules()
+        {
+                var assignedStatuses = new[]
+                {
+                        AssignmentStatus.Accepted,
+                        AssignmentStatus.Completed
+                };
+
+                return await _context.OrderSchedules
+                    .Where(os => !os.AllowAutoScheduling
+                                && !os.IsCancelled
+                                && !os.Assignments.Any(a =>
+                                    assignedStatuses.Contains(a.Status) &&
+                                    !a.IsJobInstanceSub))
+                    .ToListAsync();
         }
 
 }

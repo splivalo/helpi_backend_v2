@@ -20,9 +20,14 @@ namespace Helpi.Infrastructure.Repositories
             _logger = logger;
         }
 
-        public async Task<ReassignmentRecord?> GetByIdAsync(int id, ReassignmentIncludeOptions options)
+        public async Task<ReassignmentRecord?> GetByIdAsync(int id, ReassignmentIncludeOptions options, bool asNoTracking = true)
         {
             var query = _context.ReassignmentRecords.AsQueryable();
+
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
 
             if (options.IncludeJobInstance)
                 query = query.Include(r => r.JobInstance);

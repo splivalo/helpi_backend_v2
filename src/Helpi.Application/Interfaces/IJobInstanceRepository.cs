@@ -31,7 +31,6 @@ public interface IJobInstanceRepository
     Task<List<JobInstance>> GetJobInstancesAsync(int? assignmentId,
      JobInstanceStatus? status,
      JobInstanceIncludeOptions options);
-
-
+    void Detach(JobInstance jobInstance);
 
 }

@@ -2,6 +2,7 @@
 using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
+using Helpi.Domain.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,7 +30,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<UserService>();
         services.AddScoped<ContactInfoService>();
-        services.AddScoped<StudentService>();
+        services.AddScoped<StudentsService>();
         services.AddScoped<FacultyService>();
         services.AddScoped<StudentContractService>();
         services.AddScoped<CustomerService>();
@@ -55,6 +56,12 @@ public static class DependencyInjection
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
+        services.AddScoped<IJobInstanceMatchingService, JobInstanceMatchingService>();
+        services.AddScoped<IFailedMatchReinitiationService, FailedMatchReinitiationService>();
+
+        services.AddScoped<IDomainEventHandler<ReinitiateAllFailedMatchesEvent>>(sp =>
+            (IDomainEventHandler<ReinitiateAllFailedMatchesEvent>)sp.GetRequiredService<IFailedMatchReinitiationService>());
+
 
         // AutoMapper
         services.AddAutoMapper(typeof(MappingProfile).Assembly);

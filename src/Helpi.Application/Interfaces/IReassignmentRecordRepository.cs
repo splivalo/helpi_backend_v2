@@ -6,7 +6,7 @@ namespace Helpi.Application.Interfaces
 {
     public interface IReassignmentRecordRepository
     {
-        Task<ReassignmentRecord?> GetByIdAsync(int id, ReassignmentIncludeOptions options);
+        Task<ReassignmentRecord?> GetByIdAsync(int id, ReassignmentIncludeOptions options, bool asNoTracking = true);
         Task<IEnumerable<ReassignmentRecord>> GetByOrderScheduleIdAsync(int orderScheduleId);
         Task<IEnumerable<ReassignmentRecord>> GetByOrderIdAsync(int orderId);
         Task<IEnumerable<ReassignmentRecord>> GetByStudentIdAsync(int studentId);

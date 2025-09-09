@@ -20,7 +20,17 @@ public interface IStudentRepository
     Task GetByFacultyAsync(int facultyId);
 
     Task<List<Student>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds);
-    Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions studentIncludeOptions);
+    Task<List<Student>> LoadStudentsWithIncludes(
+        int? studentId,
+        StudentIncludeOptions studentIncludeOptions,
+         List<StudentStatus>? withStatus = null,
+    List<StudentStatus>? excludeStatus = null);
     Task<int> CountAsync(Expression<Func<Student, bool>> predicate);
-
+    Task<List<Student>> FindEligibleStudentsForInstance(
+                            DateOnly scheduledDate,
+                            TimeOnly startTime,
+                            TimeOnly endTime,
+                            int seniorCityId,
+                            List<int> serviceIds,
+                            List<int> notifiedStudentIds);
 }

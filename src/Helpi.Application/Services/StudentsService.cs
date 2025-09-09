@@ -10,19 +10,19 @@ using Microsoft.Extensions.Logging;
 namespace Helpi.Application.Services;
 
 
-public class StudentService
+public class StudentsService
 {
         private readonly IStudentRepository _repository;
         private readonly IMapper _mapper;
 
-        ILogger<StudentService> _logger;
+        ILogger<StudentsService> _logger;
         private readonly IContactInfoRepository _contactInfoRepo;
         private readonly IStudentServiceRepository _studentServiceRepo;
         private readonly IStudentAvailabilitySlotRepository _studentAvailabilityRepo;
 
-        public StudentService(IStudentRepository repository,
+        public StudentsService(IStudentRepository repository,
          IMapper mapper,
-           ILogger<StudentService> logger,
+           ILogger<StudentsService> logger,
              IStudentServiceRepository studentServiceRepo,
         IStudentAvailabilitySlotRepository studentAvailabilityRepo,
         IContactInfoRepository contactInfoRepo

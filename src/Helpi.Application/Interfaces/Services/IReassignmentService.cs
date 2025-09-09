@@ -11,7 +11,9 @@ namespace Helpi.Application.Interfaces.Services
             string reason,
             int requestedByUserId,
             int? jobInstanceId = null,
-            int? scheduleAssignmentId = null);
+            int? scheduleAssignmentId = null,
+            int? preferedStudentId = null
+            );
 
         Task CompleteReassignment(int reassignmentRecordId, int newStudentId);
         Task RecordReassignmentAttempt(int reassignmentRecordId, bool success = false);

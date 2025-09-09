@@ -11,5 +11,5 @@ public interface IOrderScheduleRepository
     Task UpdateAsync(OrderSchedule schedule);
     Task DeleteAsync(OrderSchedule schedule);
     Task AddRangeNoSaveAsync(IEnumerable<OrderSchedule> orderSchedules);
-
+    Task<IEnumerable<OrderSchedule>> GetFailedAutoSchedulingSchedules();
 }

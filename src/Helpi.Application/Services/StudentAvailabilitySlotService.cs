@@ -4,6 +4,8 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Events;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
 
@@ -12,10 +14,20 @@ public class StudentAvailabilitySlotService
         private readonly IStudentAvailabilitySlotRepository _repository;
         private readonly IMapper _mapper;
 
-        public StudentAvailabilitySlotService(IStudentAvailabilitySlotRepository repository, IMapper mapper)
+        private readonly IEventMediator _mediator;
+
+        private readonly ILogger<StudentAvailabilitySlotService> _logger;
+
+        public StudentAvailabilitySlotService(
+                IStudentAvailabilitySlotRepository repository,
+IEventMediator mediator,
+        IMapper mapper,
+        ILogger<StudentAvailabilitySlotService> logger)
         {
                 _repository = repository;
                 _mapper = mapper;
+                _mediator = mediator;
+                _logger = logger;
         }
 
         public async Task<StudentAvailabilitySlotDto> GetByIdAsync(int studentId, byte dayOfWeek)
@@ -39,6 +51,10 @@ public class StudentAvailabilitySlotService
         {
                 var slot = _mapper.Map<StudentAvailabilitySlot>(dto);
                 await _repository.AddAsync(slot);
+
+                ReinitiateAllFailedMatches();
+
+
                 return _mapper.Map<StudentAvailabilitySlotDto>(slot);
         }
 
@@ -47,6 +63,9 @@ public class StudentAvailabilitySlotService
 
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.AddRangeAsync(slots);
+
+                ReinitiateAllFailedMatches();
+
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
 
         }
@@ -63,6 +82,8 @@ public class StudentAvailabilitySlotService
                 slot.EndTime = dto.EndTime;
 
                 await _repository.UpdateAsync(slot);
+
+                ReinitiateAllFailedMatches();
 
                 return _mapper.Map<StudentAvailabilitySlotDto>(slot);
         }
@@ -82,6 +103,9 @@ public class StudentAvailabilitySlotService
         {
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.UpdateRangeAsync(slots);
+
+                ReinitiateAllFailedMatches();
+
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
         }
         public async Task<List<StudentAvailabilitySlotDto>> DeleteSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
@@ -89,6 +113,21 @@ public class StudentAvailabilitySlotService
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.DeleteRangeAsync(slots);
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
+        }
+
+        private void ReinitiateAllFailedMatches()
+        {
+                _ = Task.Run(async () =>
+                {
+                        try
+                        {
+                                await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
+                        }
+                        catch (Exception ex)
+                        {
+                                _logger.LogError(ex, "❌ Failed to reinitiate failed matches");
+                        }
+                });
         }
 
 }

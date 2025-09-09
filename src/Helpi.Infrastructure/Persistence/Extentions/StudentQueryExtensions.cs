@@ -9,8 +9,7 @@ namespace Helpi.Infrastructure.Persistence.Extentions
         {
             var activeStatuses = new[]
             {
-                StudentStatus.Verified,
-                StudentStatus.ContractRenewalNeeded
+                StudentStatus.Verified
             };
 
             return query.Where(s => activeStatuses.Contains(s.Status));

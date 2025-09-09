@@ -103,7 +103,15 @@ public class MatchingService : IMatchingService
         {
             if (schedule.IsCancelled) continue;
 
-            if (schedule.allowAutoScheduling == false)
+            var pendingReassignment = await IsSchedulesPendingReassignAsync(schedule);
+
+            if (pendingReassignment)
+            {
+                unassigned.Add(schedule);
+                continue;
+            }
+
+            if (schedule.AllowAutoScheduling == false)
             {
                 _logger.LogInformation("⚠️ [allowAutoScheduling]  = FALSE -> schedule {schedule}", schedule.Id);
                 continue;
@@ -129,13 +137,45 @@ public class MatchingService : IMatchingService
         return unassigned;
     }
 
+    private async Task<bool> IsSchedulesPendingReassignAsync(OrderSchedule schedule)
+    {
+
+        var reassignmentRecord = await _reassignmentRecordRepository.GetScheduleActiveReassignmentAsync(
+               schedule.Id);
+
+        if (reassignmentRecord != null)
+        {
+            _logger.LogInformation("📅 Schedule {ScheduleId} is pending assignement, {record}", schedule.Id, reassignmentRecord.Id);
+
+            return true;
+        }
+
+        return false;
+
+    }
+
+
+
     private async Task ProcessAllSchedulesAsync(Order order)
     {
         foreach (var schedule in order.Schedules)
         {
-            if (schedule.allowAutoScheduling == false) return;
+            var reassignmentRecord = await _reassignmentRecordRepository.GetScheduleActiveReassignmentAsync(
+                       schedule.Id);
 
-            int currentAttempt = schedule.AutoScheduleAttemptCount;
+            int currentAttempt = 0;
+
+            if (reassignmentRecord != null)
+            {
+                _logger.LogWarning("⚠️ This is reassignment matching for  record {RecordId}", reassignmentRecord.Id);
+                currentAttempt = reassignmentRecord.AttemptCount;
+            }
+            else
+            {
+                if (schedule.AllowAutoScheduling == false) return;
+                currentAttempt = schedule.AutoScheduleAttemptCount;
+            }
+
 
             if (currentAttempt >= _maxMatchingAttempts)
             {
@@ -144,20 +184,10 @@ public class MatchingService : IMatchingService
                 return;
             }
 
-            //--
-
-            var reassignmentRecord = await _reassignmentRecordRepository.GetScheduleActiveReassignmentAsync(schedule.Id);
-            if (reassignmentRecord != null)
-            {
-                _logger.LogWarning("⚠️ This is reassignment matching for  record {RecordId}", reassignmentRecord.Id);
-            }
-
-            //--
-
             await FindAndNotifyStudentsForScheduleAsync(order, schedule, reassignmentRecord);
 
             // Increment the attempt counter and schedule next attempt if needed
-            await IncrementMatchingAttemptCount(schedule);
+            await IncrementMatchingAttemptCount(schedule, reassignmentRecord);
         }
     }
 
@@ -350,7 +380,7 @@ public class MatchingService : IMatchingService
                 Status = JobRequestStatus.Pending,
                 ExpiresAt = expiresAt,
                 PriorityLevel = reassignment != null ? (byte)2 : (byte)1,
-                IsEmergencySub = reassignment != null && reassignment.ReassignmentType == ReassignmentType.OneDaySubstitution,
+                IsEmergencySub = false,
                 IsReassignment = reassignment != null,
                 ReassignmentRecordId = reassignment?.Id,
                 ReassignmentType = reassignment?.ReassignmentType,
@@ -407,10 +437,50 @@ public class MatchingService : IMatchingService
             orderId, executionTime);
     }
 
-    private async Task IncrementMatchingAttemptCount(OrderSchedule schedule)
+    private async Task IncrementMatchingAttemptCount(OrderSchedule schedule, ReassignmentRecord? reassignmentRecord)
     {
-        schedule.AutoScheduleAttemptCount = schedule.AutoScheduleAttemptCount + 1;
-        await _orderScheduleRepository.UpdateAsync(schedule);
+        if (reassignmentRecord != null)
+        {
+            reassignmentRecord.AttemptCount = reassignmentRecord.AttemptCount + 1;
+            await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
+        }
+        else
+        {
+            schedule.AutoScheduleAttemptCount = schedule.AutoScheduleAttemptCount + 1;
+            await _orderScheduleRepository.UpdateAsync(schedule);
+        }
+
+    }
+    private async Task MarkAutoSchedulingStatusAsync(
+        OrderSchedule schedule,
+        AutoScheduleDisableReason? scheduleReason,
+        ReassignmentRecord? reassignmentRecord,
+        bool recordAllowAutoScheduling,
+         ReassignmentStatus? recordReason
+        )
+    {
+
+        try
+        {
+            if (reassignmentRecord != null)
+            {
+                reassignmentRecord.Status = recordReason ?? ReassignmentStatus.Failed;
+                reassignmentRecord.AllowAutoScheduling = recordAllowAutoScheduling;
+                await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
+            }
+            else
+            {
+                schedule.AllowAutoScheduling = false;
+                schedule.AutoScheduleDisableReason = scheduleReason ?? AutoScheduleDisableReason.noEligibleStudents;
+                await _orderScheduleRepository.UpdateAsync(schedule);
+            }
+        }
+        catch (Exception ex)
+        {
+
+            _logger.LogError(ex, "❌ Failed [MarkAutoMatchingFail({schedule} , {reassing}) ", schedule.Id, reassignmentRecord?.Id);
+        }
+
     }
 
     private async Task HandleMaxAttemptsReached(OrderSchedule schedule)
@@ -450,15 +520,15 @@ public class MatchingService : IMatchingService
 
         ///
         // Update schedule or reassignment record
-        if (reassignment != null)
-        {
-            // await _reassignmentMatchingCoordinator.HandleMatchingResultForReassignment(
-            //    reassignment.Id, false, "No eligible students found");
-        }
 
-        schedule.allowAutoScheduling = false;
-        schedule.AutoScheduleDisableReason = AutoScheduleDisableReason.noEligibleStudents;
-        await _orderScheduleRepository.UpdateAsync(schedule);
+        await MarkAutoSchedulingStatusAsync(
+                schedule,
+                AutoScheduleDisableReason.noEligibleStudents,
+                reassignment,
+                recordAllowAutoScheduling: false,
+                ReassignmentStatus.Failed
+               );
+
 
     }
 
@@ -491,17 +561,13 @@ public class MatchingService : IMatchingService
         await _notificationService.StoreAndNotifyAsync(notification);
 
         // Update schedule or reassignment record
-        if (reassignment != null)
-        {
-            // await _reassignmentMatchingCoordinator.HandleMatchingResultForReassignment(
-            //    reassignment.Id, false, "All eligible students notified, none accepted");
-
-        }
-
-        ///
-        schedule.allowAutoScheduling = false;
-        schedule.AutoScheduleDisableReason = AutoScheduleDisableReason.allEligibleStudentsNotified;
-        await _orderScheduleRepository.UpdateAsync(schedule);
+        await MarkAutoSchedulingStatusAsync(
+                schedule,
+                AutoScheduleDisableReason.noEligibleStudents,
+                reassignment,
+                recordAllowAutoScheduling: false,
+                ReassignmentStatus.InProgress
+               );
     }
 
     Task<int> GetAdminId()

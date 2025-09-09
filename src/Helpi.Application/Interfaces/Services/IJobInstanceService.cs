@@ -17,4 +17,14 @@ public interface IJobInstanceService
     Task UpdateToInProgressAsync(int jobInstanceId);
     Task UpdateToCompletedAsync(int jobInstanceId);
     Task RequestJobReviewAsync(int jobInstanceId);
+
+    Task<JobInstance?> ManageJobInstance(
+            int jobInstanceId,
+            DateOnly? newDate,
+            TimeOnly? newStartTime,
+            TimeOnly? newEndTime,
+            string reason,
+            int? preferedStudentId,
+            bool reassignStudent,
+            int requestedByUserId);
 }

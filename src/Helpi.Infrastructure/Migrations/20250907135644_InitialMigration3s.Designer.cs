@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250907135644_InitialMigration3s")]
+    partial class InitialMigration3s
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -626,9 +629,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AllowAutoScheduling")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("AutoScheduleAttemptCount")
                         .HasColumnType("integer");
 
@@ -652,6 +652,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
+
+                    b.Property<bool>("allowAutoScheduling")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -1487,9 +1490,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AllowAutoScheduling")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("AttemptCount")
                         .HasColumnType("integer");

@@ -97,10 +97,9 @@ public class StudentRepository : IStudentRepository
 
 
     public async Task<List<Student>> FindEligibleStudentsForSchedule(
-        int orderScheduleId,
-        List<int>? notifiedStudentIds = null)
+      int orderScheduleId,
+      List<int>? notifiedStudentIds = null)
     {
-        // Fetch the target OrderSchedule with required relationships
         var orderSchedule = await _context.OrderSchedules
             .Include(os => os.Order)
                 .ThenInclude(o => o.OrderServices)
@@ -111,17 +110,51 @@ public class StudentRepository : IStudentRepository
 
         if (orderSchedule == null) return new List<Student>();
 
-        // Extract required parameters
         var requiredServiceIds = orderSchedule.Order.OrderServices
             .Select(os => os.ServiceId)
             .ToList();
 
-        var seniorCityId = orderSchedule.Order.Senior.Contact.CityId;
-        var targetDay = orderSchedule.DayOfWeek;
-        var targetStart = orderSchedule.StartTime;
-        var targetEnd = orderSchedule.EndTime;
+        return await FindEligibleStudentsCore(
+            scheduledDate: null,
+            targetDay: orderSchedule.DayOfWeek,
+            targetStart: orderSchedule.StartTime,
+            targetEnd: orderSchedule.EndTime,
+            seniorCityId: orderSchedule.Order.Senior.Contact.CityId,
+            requiredServiceIds: requiredServiceIds,
+            notifiedStudentIds: notifiedStudentIds
+        );
+    }
 
-        // Base query for eligible students
+    public async Task<List<Student>> FindEligibleStudentsForInstance(
+        DateOnly scheduledDate,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        int seniorCityId,
+        List<int> serviceIds,
+        List<int>? notifiedStudentIds = null)
+    {
+        var targetDay = (byte)scheduledDate.DayOfWeek;
+
+        return await FindEligibleStudentsCore(
+            scheduledDate: scheduledDate,
+            targetDay: targetDay,
+            targetStart: startTime,
+            targetEnd: endTime,
+            seniorCityId: seniorCityId,
+            requiredServiceIds: serviceIds,
+            notifiedStudentIds: notifiedStudentIds
+        );
+    }
+
+    private async Task<List<Student>> FindEligibleStudentsCore(
+        DateOnly? scheduledDate,
+        byte targetDay,
+        TimeOnly targetStart,
+        TimeOnly targetEnd,
+        int seniorCityId,
+        List<int> requiredServiceIds,
+        List<int>? notifiedStudentIds)
+    {
         var query = _context.Students.WhereIsActive()
             .Include(s => s.Contact)
             .Include(s => s.StudentServices)
@@ -131,26 +164,25 @@ public class StudentRepository : IStudentRepository
             .AsNoTracking()
             .AsQueryable();
 
-
-        // Filter out already notified students if a list is provided
+        // Filter out already notified students
         if (notifiedStudentIds != null && notifiedStudentIds.Any())
         {
             query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
         }
 
-        // Availability check 
+        // Availability check
         query = query.Where(s => s.AvailabilitySlots.Any(a =>
             a.DayOfWeek == targetDay &&
             a.StartTime <= targetStart &&
             a.EndTime >= targetEnd
         ));
 
-        // Student must offer ALL services required by the order
+        // Student must offer ALL required services
         query = query.Where(s => requiredServiceIds.All(rs =>
             s.StudentServices.Any(ss => ss.ServiceId == rs)
         ));
 
-        // Location validation 
+        // Location validation (optional, uncomment if needed)
         // query = query.Where(s =>
         //     s.Contact.CityId == seniorCityId &&
         //     _context.ServiceRegions.Any(sr =>
@@ -159,7 +191,7 @@ public class StudentRepository : IStudentRepository
         //         requiredServiceIds.Contains(sr.ServiceId)
         // ));
 
-        // Conflict check with existing assignments
+        // Conflict check
         query = query.Where(s => !s.ScheduleAssignments.Any(sa =>
             sa.OrderSchedule.DayOfWeek == targetDay &&
             sa.OrderSchedule.StartTime < targetEnd &&
@@ -169,14 +201,26 @@ public class StudentRepository : IStudentRepository
             sa.Status != AssignmentStatus.Declined
         ));
 
-
-
         return await query.ToListAsync();
     }
 
-    public async Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions includes)
+
+    public async Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions includes, List<StudentStatus>? withStatus = null,
+    List<StudentStatus>? excludeStatus = null)
     {
-        var query = _context.Students.AsQueryable().WhereIsActive();
+        var query = _context.Students.AsQueryable();
+
+        // Status filter
+        if (withStatus != null && withStatus.Any())
+        {
+            query = query.Where(s => withStatus.Contains(s.Status));
+        }
+
+
+        if (excludeStatus != null && excludeStatus.Any())
+        {
+            query = query.Where(s => !excludeStatus.Contains(s.Status));
+        }
 
         if (studentId != null)
         {

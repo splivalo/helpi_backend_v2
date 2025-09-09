@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Events;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Payment.Stripe;
 using Helpi.Infrastructure.Persistence;
@@ -34,6 +35,8 @@ public static class DependencyInjection
                 o => o.UseNetTopologySuite()), ServiceLifetime.Scoped);
 
 
+
+        services.AddSingleton<IEventMediator, EventMediator>();
 
 
 

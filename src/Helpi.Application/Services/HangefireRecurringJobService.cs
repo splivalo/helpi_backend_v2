@@ -207,6 +207,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         foreach (var instance in jobInstancesForToday)
         {
+            /// TODO: UPDATE status if job date passed and its not marked accordinly
+            /// 
             var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
             var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
 
