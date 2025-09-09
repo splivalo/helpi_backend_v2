@@ -121,13 +121,13 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
             await _reassignmentRecordRepository.UpdateAsync(reassignment);
 
             // Determine what type of reassignment this is and start the appropriate matching process
-            if (reassignment.JobInstanceId.HasValue)
+            if (reassignment.ReassignJobInstanceId.HasValue)
             {
                 // Job instance reassignment
                 await _jobInstanceMatchingService.StartJobInstanceMatchingAsync(
-                    reassignment.JobInstanceId.Value, reassignment.Id);
+                    reassignment.ReassignJobInstanceId.Value, reassignment.Id);
             }
-            else if (reassignment.ScheduleAssignmentId.HasValue)
+            else if (reassignment.ReassignAssignmentId.HasValue)
             {
                 // Order schedule reassignment
                 var schedule = await _orderScheduleRepository.GetByIdAsync(reassignment.OrderScheduleId);

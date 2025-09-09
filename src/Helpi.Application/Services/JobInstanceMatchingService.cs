@@ -69,8 +69,8 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             // Get the job instance and reassignment record
             var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
             {
-                Order = true,
-                Assignment = true
+                Order = true
+                // Assignment = true
             });
 
 
@@ -294,14 +294,13 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             // Create JobRequest entity
             var jobRequest = new JobRequest
             {
-                OrderScheduleId = jobInstance.Assignment.OrderScheduleId,
+                OrderScheduleId = jobInstance.OrderScheduleId,
                 OrderId = jobInstance.OrderId,
                 SeniorId = jobInstance.SeniorId,
                 StudentId = student.UserId,
                 Status = JobRequestStatus.Pending,
                 ExpiresAt = expiresAt,
                 PriorityLevel = 2, // Higher priority for reassignments
-                IsEmergencySub = true,
                 IsReassignment = true,
                 ReassignmentRecordId = reassignmentRecord.Id,
                 ReassignmentType = reassignmentRecord.ReassignmentType,

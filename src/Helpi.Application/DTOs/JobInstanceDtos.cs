@@ -1,4 +1,4 @@
-using Helpi.Domain.Entities;
+
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -10,7 +10,7 @@ public class JobInstanceDto
 
     public int? ContractId { get; set; }
     public int ScheduleAssignmentId { get; set; }
-    public int? OriginalAssignmentId { get; set; }
+    public int? PrevAssignmentId { get; set; }
     public DateOnly ScheduledDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }

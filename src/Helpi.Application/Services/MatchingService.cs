@@ -380,12 +380,11 @@ public class MatchingService : IMatchingService
                 Status = JobRequestStatus.Pending,
                 ExpiresAt = expiresAt,
                 PriorityLevel = reassignment != null ? (byte)2 : (byte)1,
-                IsEmergencySub = false,
                 IsReassignment = reassignment != null,
                 ReassignmentRecordId = reassignment?.Id,
                 ReassignmentType = reassignment?.ReassignmentType,
-                ReassignAssignmentId = reassignment?.ScheduleAssignmentId,
-                ReassignJobInstanceId = reassignment?.JobInstanceId
+                ReassignAssignmentId = reassignment?.ReassignAssignmentId,
+                ReassignJobInstanceId = reassignment?.ReassignJobInstanceId
             };
 
             await _jobRequestRepository.AddAsync(jobRequest);

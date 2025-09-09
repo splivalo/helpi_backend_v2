@@ -17,7 +17,6 @@ public class JobRequestDto
     public JobRequestStatus Status { get; set; }
     public DateTime SentAt { get; set; }
     public DateTime ExpiresAt { get; set; }
-    public bool IsEmergencySub { get; set; }
 
     // Reassignment tracking
     public bool IsReassignment { get; set; } = false;
@@ -47,7 +46,6 @@ public class JobRequestCreateDto
     public int StudentId { get; set; }
 
     public DateTime ExpiresAt { get; set; }
-    public bool IsEmergencySub { get; set; }
 }
 
 public class JobRequestUpdateDto

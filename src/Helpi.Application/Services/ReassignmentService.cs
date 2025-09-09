@@ -66,6 +66,7 @@ namespace Helpi.Application.Services
             OrderSchedule? orderSchedule;
             Order? order;
             int? originalStudentId = null;
+            int currentAssignmentId = 0;
 
             if (reassignmentType == ReassignmentType.OneDaySubstitution)
             {
@@ -92,6 +93,7 @@ namespace Helpi.Application.Services
                 orderSchedule = jobInstance.Assignment.OrderSchedule;
                 order = jobInstance.Order;
                 originalStudentId = jobInstance.Assignment.StudentId;
+                currentAssignmentId = jobInstance.ScheduleAssignmentId;
             }
             else
             {
@@ -112,6 +114,7 @@ namespace Helpi.Application.Services
                 orderSchedule = assignment.OrderSchedule;
                 order = assignment.OrderSchedule.Order;
                 originalStudentId = assignment.StudentId;
+                currentAssignmentId = assignment.Id;
             }
 
             // Check if there's already an active reassignment for this entity
@@ -138,8 +141,9 @@ namespace Helpi.Application.Services
             // Create the reassignment record
             var reassignmentRecord = new ReassignmentRecord
             {
-                JobInstanceId = jobInstanceId,
-                ScheduleAssignmentId = scheduleAssignmentId,
+                ReassignJobInstanceId = jobInstanceId,
+                ReassignAssignmentId = scheduleAssignmentId,
+                CurrentAssignmentId = currentAssignmentId,
                 OrderScheduleId = orderSchedule.Id,
                 OrderId = order.Id,
                 ReassignmentType = reassignmentType,
@@ -290,12 +294,12 @@ namespace Helpi.Application.Services
 
         private async Task HandleCompleteTakeover(ReassignmentRecord reassignmentRecord)
         {
-            if (!reassignmentRecord.ScheduleAssignmentId.HasValue)
+            if (!reassignmentRecord.ReassignAssignmentId.HasValue)
                 throw new InvalidOperationException("ScheduleAssignmentId is required for complete takeover");
 
-            var assignment = await _scheduleAssignmentRepository.GetByIdAsync(reassignmentRecord.ScheduleAssignmentId.Value);
+            var assignment = await _scheduleAssignmentRepository.GetByIdAsync(reassignmentRecord.ReassignAssignmentId.Value);
             if (assignment == null)
-                throw new ArgumentException($"Assignment {reassignmentRecord.ScheduleAssignmentId} not found");
+                throw new ArgumentException($"Assignment {reassignmentRecord.ReassignAssignmentId} not found");
 
             // Mark current assignment as terminated
             assignment.Status = AssignmentStatus.Terminated;
@@ -314,12 +318,12 @@ namespace Helpi.Application.Services
 
         private async Task HandleOneDaySubstitution(ReassignmentRecord reassignmentRecord)
         {
-            if (!reassignmentRecord.JobInstanceId.HasValue)
+            if (!reassignmentRecord.ReassignJobInstanceId.HasValue)
                 throw new InvalidOperationException("JobInstanceId is required for one-day substitution");
 
-            var jobInstance = await _jobInstanceRepository.GetByIdAsync(reassignmentRecord.JobInstanceId.Value);
+            var jobInstance = await _jobInstanceRepository.GetByIdAsync(reassignmentRecord.ReassignJobInstanceId.Value);
             if (jobInstance == null)
-                throw new ArgumentException($"Job instance {reassignmentRecord.JobInstanceId} not found");
+                throw new ArgumentException($"Job instance {reassignmentRecord.ReassignJobInstanceId} not found");
 
             // Mark instance as needing substitution
             jobInstance.NeedsSubstitute = true;
@@ -347,8 +351,8 @@ namespace Helpi.Application.Services
                 return;
             }
 
-            // Create a new assignment for the new student
-            var originalAssignment = await _scheduleAssignmentRepository.GetByIdAsync(reassignmentRecord.ScheduleAssignmentId!.Value);
+            // 
+            var originalAssignment = await _scheduleAssignmentRepository.GetByIdAsync(reassignmentRecord.ReassignAssignmentId!.Value);
 
             if (originalAssignment == null)
                 return;
@@ -359,8 +363,7 @@ namespace Helpi.Application.Services
                 OrderId = originalAssignment.OrderId,
                 StudentId = reassignmentRecord.NewStudentId.Value,
                 Status = AssignmentStatus.Accepted,
-                OriginalAssignmentId = originalAssignment.OriginalAssignmentId ?? originalAssignment.Id,
-                ReplacedAssignmentId = originalAssignment.Id,
+                PrevAssignmentId = originalAssignment.Id,
                 AssignedAt = DateTime.UtcNow,
                 AcceptedAt = DateTime.UtcNow
             };
@@ -377,7 +380,7 @@ namespace Helpi.Application.Services
             foreach (var instance in upComingJobInstances)
             {
                 instance.ScheduleAssignmentId = newAssignment.Id;
-                instance.OriginalAssignmentId = originalAssignment.Id;
+                instance.PrevAssignmentId = reassignmentRecord.CurrentAssignmentId;
                 instance.NeedsSubstitute = false;
                 instance.ContractId = null;
             }
@@ -387,12 +390,12 @@ namespace Helpi.Application.Services
 
         private async Task HandleOneDaySubstitutionCompletion(ReassignmentRecord reassignmentRecord)
         {
-            if (!reassignmentRecord.JobInstanceId.HasValue || !reassignmentRecord.NewStudentId.HasValue)
+            if (!reassignmentRecord.ReassignJobInstanceId.HasValue || !reassignmentRecord.NewStudentId.HasValue)
                 return;
 
             // Get the job instance
             var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(
-                reassignmentRecord.JobInstanceId.Value,
+                reassignmentRecord.ReassignJobInstanceId.Value,
                 new JobInstanceIncludeOptions
                 {
                     Assignment = true
@@ -405,13 +408,12 @@ namespace Helpi.Application.Services
             // Create a temporary assignment for this single instance
             var temporaryAssignment = new ScheduleAssignment
             {
-                OrderScheduleId = jobInstance.Assignment.OrderScheduleId,
+                OrderScheduleId = jobInstance.OrderScheduleId,
                 OrderId = jobInstance.OrderId,
                 StudentId = reassignmentRecord.NewStudentId.Value,
                 Status = AssignmentStatus.Accepted,
                 IsJobInstanceSub = true,
-                OriginalAssignmentId = jobInstance.Assignment.OriginalAssignmentId ?? jobInstance.Assignment.Id,
-                ReplacedAssignmentId = jobInstance.Assignment.Id,
+                PrevAssignmentId = reassignmentRecord.CurrentAssignmentId,
                 AssignedAt = DateTime.UtcNow,
                 AcceptedAt = DateTime.UtcNow
             };
@@ -420,6 +422,7 @@ namespace Helpi.Application.Services
 
             // Update the job instance to point to the new assignment
             jobInstance.ScheduleAssignmentId = temporaryAssignment.Id;
+            jobInstance.PrevAssignmentId = reassignmentRecord.CurrentAssignmentId;
             jobInstance.Status = JobInstanceStatus.Upcoming;
             jobInstance.NeedsSubstitute = false;
             await _jobInstanceRepository.UpdateAsync(jobInstance);
@@ -449,8 +452,8 @@ namespace Helpi.Application.Services
                 {
                     ReassignmentId = reassignmentRecord.Id,
                     Action = action,
-                    EntityType = reassignmentRecord.JobInstanceId.HasValue ? "JobInstance" : "Assignment",
-                    EntityId = reassignmentRecord.JobInstanceId ?? reassignmentRecord.ScheduleAssignmentId,
+                    EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
+                    EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     ReassignmentRecord = reassignmentRecord
                 })
             };
@@ -470,8 +473,8 @@ namespace Helpi.Application.Services
                 Payload = JsonSerializer.Serialize(new
                 {
                     ReassignmentId = reassignmentRecord.Id,
-                    EntityType = reassignmentRecord.JobInstanceId.HasValue ? "JobInstance" : "Assignment",
-                    EntityId = reassignmentRecord.JobInstanceId ?? reassignmentRecord.ScheduleAssignmentId,
+                    EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
+                    EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     NewStudentId = reassignmentRecord.NewStudentId,
                     ReassignmentRecord = reassignmentRecord
                 })
@@ -492,8 +495,8 @@ namespace Helpi.Application.Services
                 Payload = JsonSerializer.Serialize(new
                 {
                     ReassignmentId = reassignmentRecord.Id,
-                    EntityType = reassignmentRecord.JobInstanceId.HasValue ? "JobInstance" : "Assignment",
-                    EntityId = reassignmentRecord.JobInstanceId ?? reassignmentRecord.ScheduleAssignmentId,
+                    EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
+                    EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     AttemptCount = reassignmentRecord.AttemptCount,
                     ReassignmentRecord = reassignmentRecord
                 })
@@ -504,13 +507,13 @@ namespace Helpi.Application.Services
 
         private string GetEntityDescription(ReassignmentRecord reassignmentRecord)
         {
-            if (reassignmentRecord.JobInstanceId.HasValue)
+            if (reassignmentRecord.ReassignJobInstanceId.HasValue)
             {
-                return $"Job Instance #{reassignmentRecord.JobInstanceId}";
+                return $"Job Instance #{reassignmentRecord.ReassignJobInstanceId}";
             }
             else if (reassignmentRecord.ReassignmentType == ReassignmentType.CompleteTakeover)
             {
-                return $"Assignment #{reassignmentRecord.ScheduleAssignmentId}";
+                return $"Assignment #{reassignmentRecord.ReassignAssignmentId}";
             }
             return "Unknown Entity";
         }

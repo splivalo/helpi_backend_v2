@@ -30,10 +30,10 @@ namespace Helpi.Infrastructure.Repositories
             }
 
             if (options.IncludeJobInstance)
-                query = query.Include(r => r.JobInstance);
+                query = query.Include(r => r.ReassignJobInstance);
 
             if (options.IncludeScheduleAssignment)
-                query = query.Include(r => r.ScheduleAssignment);
+                query = query.Include(r => r.ReassignAssignment);
 
             if (options.IncludeOrderSchedule)
                 query = query.Include(r => r.OrderSchedule);
@@ -63,8 +63,8 @@ namespace Helpi.Infrastructure.Repositories
         {
             return await _context.ReassignmentRecords
                 .Where(r => r.OrderScheduleId == orderScheduleId)
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
                 .Include(r => r.OriginalStudent)
@@ -78,8 +78,8 @@ namespace Helpi.Infrastructure.Repositories
         {
             return await _context.ReassignmentRecords
                 .Where(r => r.OrderId == orderId)
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.RequestedByUser)
                 .Include(r => r.OriginalStudent)
@@ -93,8 +93,8 @@ namespace Helpi.Infrastructure.Repositories
         {
             return await _context.ReassignmentRecords
                 .Where(r => r.OriginalStudentId == studentId || r.NewStudentId == studentId)
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -110,8 +110,8 @@ namespace Helpi.Infrastructure.Repositories
             var activeStatuses = new[] { ReassignmentStatus.Requested, ReassignmentStatus.InProgress };
             return await _context.ReassignmentRecords
                 .Where(r => activeStatuses.Contains(r.Status))
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -127,8 +127,8 @@ namespace Helpi.Infrastructure.Repositories
             var activeStatuses = new[] { ReassignmentStatus.Requested, ReassignmentStatus.InProgress };
             return await _context.ReassignmentRecords
                 .Where(r => activeStatuses.Contains(r.Status))
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -144,8 +144,8 @@ namespace Helpi.Infrastructure.Repositories
             var expirationTime = DateTime.UtcNow.AddHours(-24); // Reassignments older than 24 hours
             return await _context.ReassignmentRecords
                 .Where(r => r.Status == ReassignmentStatus.Requested && r.RequestedAt < expirationTime)
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -159,8 +159,8 @@ namespace Helpi.Infrastructure.Repositories
         {
             return await _context.ReassignmentRecords
                 .Where(r => r.Status == status)
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -202,8 +202,8 @@ namespace Helpi.Infrastructure.Repositories
             var attentionStatuses = new[] { ReassignmentStatus.Failed, ReassignmentStatus.Expired };
             return await _context.ReassignmentRecords
                 .Where(r => attentionStatuses.Contains(r.Status))
-                .Include(r => r.JobInstance)
-                .Include(r => r.ScheduleAssignment)
+                .Include(r => r.ReassignJobInstance)
+                .Include(r => r.ReassignAssignment)
                 .Include(r => r.OrderSchedule)
                 .Include(r => r.Order)
                 .Include(r => r.RequestedByUser)
@@ -218,14 +218,14 @@ namespace Helpi.Infrastructure.Repositories
         {
             var activeStatuses = new[] { ReassignmentStatus.Requested, ReassignmentStatus.InProgress };
             return await _context.ReassignmentRecords
-                .AnyAsync(r => r.ScheduleAssignmentId == assignmentId && activeStatuses.Contains(r.Status));
+                .AnyAsync(r => r.ReassignAssignmentId == assignmentId && activeStatuses.Contains(r.Status));
         }
 
         public async Task<bool> HasActiveReassignmentsForInstanceAsync(int instanceId)
         {
             var activeStatuses = new[] { ReassignmentStatus.Requested, ReassignmentStatus.InProgress };
             return await _context.ReassignmentRecords
-                .AnyAsync(r => r.JobInstanceId == instanceId && activeStatuses.Contains(r.Status));
+                .AnyAsync(r => r.ReassignJobInstanceId == instanceId && activeStatuses.Contains(r.Status));
         }
 
         public void Detach(ReassignmentRecord record)

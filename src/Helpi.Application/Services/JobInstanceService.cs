@@ -247,6 +247,7 @@ public class JobInstanceService : IJobInstanceService
                         SeniorId = originalInstance.SeniorId,
                         CustomerId = originalInstance.CustomerId,
                         OrderId = originalInstance.OrderId,
+                        OrderScheduleId = originalInstance.OrderScheduleId,
                         ContractId = originalInstance.ContractId,
 
                         // Use new times
@@ -256,7 +257,6 @@ public class JobInstanceService : IJobInstanceService
 
                         // Rescheduling metadata
                         IsRescheduleVariant = true,
-                        OriginalInstanceId = originalInstance.Id,
                         RescheduledFromId = originalInstance.Id,
                         RescheduledAt = DateTime.UtcNow,
                         RescheduleReason = reason,

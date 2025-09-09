@@ -152,6 +152,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     SeniorId = order.SeniorId,
                     CustomerId = order.Senior.CustomerId,
                     OrderId = order.Id,
+                    OrderScheduleId = assignment.OrderScheduleId,
                     HourlyRate = pricingConfiguration.JobHourlyRate,
                     CompanyPercentage = pricingConfiguration.CompanyPercentage,
                     ServiceProviderPercentage = pricingConfiguration.ServiceProviderPercentage,

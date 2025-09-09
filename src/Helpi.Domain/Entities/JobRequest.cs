@@ -15,7 +15,6 @@ namespace Helpi.Domain.Entities
         public string? RejectionReason { get; set; }
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
         public DateTime ExpiresAt { get; set; }
-        public bool IsEmergencySub { get; set; } = false;
         public byte PriorityLevel { get; set; } = 1;
 
         public OrderSchedule OrderSchedule { get; set; } = null!;

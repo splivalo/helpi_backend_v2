@@ -6,8 +6,9 @@ public class ReassignmentRecord
     public int Id { get; set; }
 
     // What's being reassigned
-    public int? JobInstanceId { get; set; }
-    public int? ScheduleAssignmentId { get; set; }
+    public int? ReassignJobInstanceId { get; set; }
+    public int? ReassignAssignmentId { get; set; }
+    public int CurrentAssignmentId { get; set; }
     public int OrderScheduleId { get; set; }
     public int OrderId { get; set; }
 
@@ -41,8 +42,8 @@ public class ReassignmentRecord
     public ICollection<JobRequest> JobRequests { get; set; } = new List<JobRequest>();
 
     // Navigation properties
-    public JobInstance? JobInstance { get; set; }
-    public ScheduleAssignment? ScheduleAssignment { get; set; }
+    public JobInstance? ReassignJobInstance { get; set; }
+    public ScheduleAssignment? ReassignAssignment { get; set; }
     public OrderSchedule OrderSchedule { get; set; } = null!;
     public Order Order { get; set; } = null!;
     public User RequestedByUser { get; set; } = null!;

@@ -10,10 +10,10 @@ namespace Helpi.Domain.Entities
         public int CustomerId { get; set; }
         public int OrderId { get; set; }
 
-
+        public int OrderScheduleId { get; set; }
         public int? ContractId { get; set; }
         public int ScheduleAssignmentId { get; set; }
-        public int? OriginalAssignmentId { get; set; }
+        public int? PrevAssignmentId { get; set; }
         public DateOnly ScheduledDate { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
@@ -24,9 +24,8 @@ namespace Helpi.Domain.Entities
 
         // Rescheduling properties
         public bool IsRescheduleVariant { get; set; } = false;
-        public int? OriginalInstanceId { get; set; }
-        public int? RescheduledFromId { get; set; }
-        public int? RescheduledToId { get; set; }
+        public int? RescheduledFromId { get; set; } // jobInstance
+        public int? RescheduledToId { get; set; } // jobInstance
         public DateTime? RescheduledAt { get; set; }
         public string? RescheduleReason { get; set; }
 
@@ -44,7 +43,7 @@ namespace Helpi.Domain.Entities
 
 
         public ScheduleAssignment Assignment { get; set; } = null!;
-        public ScheduleAssignment? OriginalAssignment { get; set; }
+        public ScheduleAssignment? PrevAssignment { get; set; }
         public PaymentTransaction? PaymentTransaction { get; set; }
 
 
