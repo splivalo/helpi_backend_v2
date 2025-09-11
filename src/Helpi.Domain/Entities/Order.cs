@@ -7,7 +7,7 @@ namespace Helpi.Domain.Entities
     {
         public int Id { get; set; }
         public int SeniorId { get; set; }
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending; /// TODO: not updating , eg, contract expires -- maybe create event to trigger completion check , or just set it directly
         public bool IsRecurring { get; set; }
         public int? PaymentMethodId { get; set; }
         public RecurrencePattern? RecurrencePattern { get; set; }

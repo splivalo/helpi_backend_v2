@@ -243,4 +243,10 @@ public class StudentContractService
                 await file.CopyToAsync(memoryStream);
                 return memoryStream.ToArray();
         }
+
+        public async Task<List<CompletedStudentContractDto>> GetStudentCompletedContractsAsync(int studentId)
+        {
+                var contracts = await _repository.GetCompletedContractsForStudentAsync(studentId);
+                return _mapper.Map<List<CompletedStudentContractDto>>(contracts);
+        }
 }

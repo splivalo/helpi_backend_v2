@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using System.Runtime;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -17,7 +18,7 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 
                 return await _context.ScheduleAssignments
               .Include(sa => sa.OrderSchedule)
-              .Include(sa => sa.Student)
+              .Include(sa => sa.Student).ThenInclude(s => s.Contracts)
               .FirstOrDefaultAsync(sa => sa.Id == id);
         }
 
@@ -30,20 +31,50 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
         {
 
                 var liveOrderStatuses = new[] {
-                                OrderStatus.Pending,
-                                OrderStatus.FullAssigned
-                                };
+                        OrderStatus.Pending,
+                        OrderStatus.FullAssigned
+                };
 
-                return await _context.ScheduleAssignments
-                        .Include(sa => sa.OrderSchedule.Order).ThenInclude(o => o.Senior)
-                        .Include(sa => sa.JobInstances
-                                .OrderByDescending(ji => ji.ScheduledDate)
-                                .Take(1)) // we just need the last scheduled date
-                        .Where(sa => sa.Status == AssignmentStatus.Accepted &&
-                                !sa.IsJobInstanceSub &&
-                                sa.OrderSchedule.Order.IsRecurring &&
-                                liveOrderStatuses.Contains(sa.OrderSchedule.Order.Status))
-                        .ToListAsync();
+                // Step 1: Get assignments with necessary includes
+                var assignments = await _context.ScheduleAssignments
+                    .Include(sa => sa.OrderSchedule)
+                        .ThenInclude(os => os.Order)
+                            .ThenInclude(o => o.Senior)
+                    .Where(sa => sa.Status == AssignmentStatus.Accepted &&
+                            !sa.IsJobInstanceSub &&
+                            sa.OrderSchedule.Order.IsRecurring &&
+                            liveOrderStatuses.Contains(sa.OrderSchedule.Order.Status))
+                    .AsSplitQuery() // Important: prevents cartesian explosion
+                    .ToListAsync();
+
+                // Step 2: Load latest job instances separately
+                if (assignments.Any())
+                {
+                        var assignmentIds = assignments.Select(a => a.Id).ToHashSet();
+
+                        // Get only the latest job instance per assignment
+                        var latestJobInstances = await _context.JobInstances
+                            .Where(ji => ji.IsRescheduleVariant == false)
+                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId))
+                            .GroupBy(ji => ji.ScheduleAssignmentId)
+                            .Select(g => g.OrderByDescending(x => x.ScheduledDate).First())
+                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId);
+
+                        // Attach to assignments
+                        foreach (var assignment in assignments)
+                        {
+                                if (latestJobInstances.TryGetValue(assignment.Id, out var latestJob))
+                                {
+                                        assignment.JobInstances = new List<JobInstance> { latestJob };
+                                }
+                                else
+                                {
+                                        assignment.JobInstances = new List<JobInstance>();
+                                }
+                        }
+                }
+
+                return assignments;
 
 
         }
@@ -122,8 +153,18 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 var query = _context.ScheduleAssignments.AsQueryable();
 
                 if (options.IncludeStudent)
+                {
+
                         query = query.Include(o => o.Student)
                                      .ThenInclude(s => s.Contact);
+
+                        if (options.IncludeStudentContracts)
+                        {
+                                query = query.Include(o => o.Student)
+                                   .ThenInclude(s => s.Contracts);
+                        }
+
+                }
 
                 if (options.JobInstances)
                         query = query.Include(o => o.JobInstances);
@@ -161,3 +202,4 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
         }
 
 }
+

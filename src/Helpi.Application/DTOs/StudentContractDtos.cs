@@ -15,6 +15,8 @@ public class StudentContractDto
     public DateOnly? ExpirationDate { get; set; }
 
     public string ContractNumber { get; set; } = null!;
+
+    public ICollection<JobInstanceDto> JobInstances { get; set; } = new List<JobInstanceDto>();
 }
 
 public class StudentContractCreateDto
@@ -59,4 +61,23 @@ public class StudentContractUpdateDto
 
     public DateOnly? EffectiveDate { get; set; }
     public DateOnly? ExpirationDate { get; set; }
+}
+
+
+
+public class CompletedStudentContractDto
+{
+    public int Id { get; set; }
+    public string ContractNumber { get; set; } = null!;
+    public DateOnly EffectiveDate { get; set; }
+    public DateOnly ExpirationDate { get; set; }
+
+    // Pre-calculated summary
+    public int TotalJobs { get; set; }
+    public decimal DurationHours { get; set; }
+    public decimal TotalStudentEarnings { get; set; }
+    public decimal TotalCompanyEarnings { get; set; }
+
+    // Completed JobInstances
+    public ICollection<CompletedJobInstanceDto> CompletedJobs { get; set; } = new List<CompletedJobInstanceDto>();
 }

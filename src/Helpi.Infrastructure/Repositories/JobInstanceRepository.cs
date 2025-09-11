@@ -25,19 +25,23 @@ public class JobInstanceRepository : IJobInstanceRepository
 
         public async Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId)
             => await _context.JobInstances
+             .Where(j => j.NeedsSubstitute == false)
                 .Where(ji => ji.ScheduleAssignmentId == assignmentId)
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
 
         public async Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId)
         {
                 return await _context.JobInstances
+                 .Where(j => j.NeedsSubstitute == false)
                      .Where(j => j.Assignment.StudentId == studentId)
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
                      .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                      .AsNoTracking()
+                     .OrderByDescending(j => j.ScheduledDate)
                      .ToListAsync();
         }
 
@@ -47,6 +51,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                     .AsNoTracking()
                     .Include(j => j.Senior).ThenInclude(s => s.Contact)
                     .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                    .OrderByDescending(j => j.ScheduledDate)
                     .ToListAsync();
 
         }
@@ -59,6 +64,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .AsNoTracking()
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
         public async Task<JobInstance> AddAsync(JobInstance instance)
@@ -99,24 +105,29 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .Where(j => j.SeniorId == seniorId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
                            .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
         public async Task<IEnumerable<JobInstance>> GetStudentCompletedJobInstances(int studentId)
         {
                 return await _context.JobInstances
                            .AsNoTracking()
+                            .Where(j => j.NeedsSubstitute == false)
                            .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
                            .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
         public async Task<IEnumerable<JobInstance>> GetStudentUpComingJobInstances(int studentId)
         {
                 return await _context.JobInstances
                            .AsNoTracking()
+                           .Where(j => j.NeedsSubstitute == false)
                            .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Upcoming)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
                            .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
 
@@ -135,19 +146,19 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return null;
         }
 
-        public async Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId)
-        {
-                var instance = await GetByIdAsync(jobInstanceId);
-                if (instance?.Status == JobInstanceStatus.InProgress)
-                {
-                        instance.Status = JobInstanceStatus.Completed;
-                        await _context.SaveChangesAsync();
+        // public async Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId)
+        // {
+        //         var instance = await GetByIdAsync(jobInstanceId);
+        //         if (instance?.Status == JobInstanceStatus.InProgress)
+        //         {
+        //                 instance.Status = JobInstanceStatus.Completed;
+        //                 await _context.SaveChangesAsync();
 
-                        return instance;
-                }
+        //                 return instance;
+        //         }
 
-                return null;
-        }
+        //         return null;
+        // }
 
         public async Task<List<JobInstance>> GetByDateAsync(DateOnly today)
         {
@@ -219,6 +230,7 @@ public class JobInstanceRepository : IJobInstanceRepository
      )
         {
                 var query = _context.JobInstances
+
                     .AsNoTracking()
                     .AsQueryable();
 
@@ -261,7 +273,8 @@ public class JobInstanceRepository : IJobInstanceRepository
                         }
                 }
 
-                return await query.ToListAsync();
+                return await query.OrderByDescending(j => j.ScheduledDate)
+                                .ToListAsync();
         }
 
         public void Detach(JobInstance jobInstance)

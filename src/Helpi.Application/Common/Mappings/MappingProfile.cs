@@ -183,5 +183,28 @@ public class MappingProfile : Profile
         CreateMap<DateOnly, DateTime>().ConvertUsing(d => d.ToDateTime(TimeOnly.MinValue));
         CreateMap<TimeOnly, TimeSpan>().ConvertUsing(t => t.ToTimeSpan());
         CreateMap<TimeSpan, TimeOnly>().ConvertUsing(t => TimeOnly.FromTimeSpan(t));
+
+
+        // Map StudentContract → CompletedStudentContractDto
+        CreateMap<StudentContract, CompletedStudentContractDto>()
+            .ForMember(dest => dest.CompletedJobs,
+                opt => opt.MapFrom(src => src.JobInstances))
+            .ForMember(dest => dest.TotalJobs,
+                opt => opt.MapFrom(src => src.JobInstances.Count()))
+            .ForMember(dest => dest.DurationHours,
+                opt => opt.MapFrom(src => src.JobInstances
+                    .Sum(j => j.DurationHours)))
+            .ForMember(dest => dest.TotalCompanyEarnings,
+                opt => opt.MapFrom(src => src.JobInstances
+                    .Sum(j => j.CompanyAmount)))
+            .ForMember(dest => dest.TotalStudentEarnings,
+                opt => opt.MapFrom(src => src.JobInstances
+                    .Sum(j => j.ServiceProviderAmount)));
+
+
+        // Map JobInstance → CompletedJobInstanceDto
+        CreateMap<JobInstance, CompletedJobInstanceDto>();
     }
+
+
 }

@@ -23,6 +23,8 @@ namespace Helpi.Domain.Entities
 
         public Student Student { get; set; } = null!;
 
+        public ICollection<JobInstance> JobInstances { get; set; } = new List<JobInstance>();
+
         public ContractStatus Status
         {
             get

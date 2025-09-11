@@ -13,4 +13,6 @@ public interface IStudentContractRepository
     Task DeleteAsync(StudentContract contract);
 
     Task<int> CountAsync(Expression<Func<StudentContract, bool>> predicate);
+    Task<List<StudentContract>> GetCompletedContractsForStudentAsync(int studentId);
+
 }

@@ -7,6 +7,7 @@ using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
 
@@ -17,15 +18,19 @@ public class JobInstanceService : IJobInstanceService
         private readonly INotificationService _notificationService;
         private readonly CompletionStatusService _completionStatusService;
         private readonly IReassignmentService _reassignmentService;
+        private readonly IScheduleAssignmentRepository _assignmentRepository;
 
         private readonly IHangfireService _hangfireService;
+        private readonly ILogger<JobInstanceService> _logger;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
                 INotificationService notificationService,
                  CompletionStatusService completionStatusService,
                   IHangfireService hangfireService,
-                  IReassignmentService reassignmentService
+                  IReassignmentService reassignmentService,
+                  IScheduleAssignmentRepository assignmentRepository,
+                   ILogger<JobInstanceService> logger
                 )
         {
                 _jobInstanceRepository = repository;
@@ -34,6 +39,8 @@ public class JobInstanceService : IJobInstanceService
                 _completionStatusService = completionStatusService;
                 _hangfireService = hangfireService;
                 _reassignmentService = reassignmentService;
+                _assignmentRepository = assignmentRepository;
+                _logger = logger;
         }
 
 
@@ -92,28 +99,79 @@ public class JobInstanceService : IJobInstanceService
 
         public async Task UpdateToCompletedAsync(int jobInstanceId)
         {
-                var instance = await _jobInstanceRepository.UpdateToCompletedAsync(jobInstanceId);
+                try
+                {
+                        var instance = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
 
-                if (instance == null) return;
+                        if (instance == null)
+                        {
+                                LogJobInstanceNotFound(jobInstanceId);
+                                return;
+                        }
 
-                if (instance.Status != JobInstanceStatus.Completed) return;
+                        if (instance.Status != JobInstanceStatus.InProgress)
+                        {
+                                LogJobInstanceNotInProgress(jobInstanceId, instance.Status);
+                                return;
+                        }
 
-                var assignedStudent = instance.Assignment;
-                await _notificationService.SendJobCompletedNotificationAsync(assignedStudent.Id, instance);
+                        var assignment = await _assignmentRepository.LoadAssignmentWithIncludes(
+                            instance.ScheduleAssignmentId,
+                            new AssignmentIncludeOptions
+                            {
+                                    IncludeStudent = true,
+                                    IncludeStudentContracts = true
+                            });
 
-                var customerId = instance.Senior.CustomerId;
-                await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
+                        if (assignment == null)
+                        {
+                                LogAssignmentNotFound(instance.ScheduleAssignmentId, jobInstanceId);
+                                return;
+                        }
 
-                await _completionStatusService.ProcessCompletionStatuses(instance.OrderId);
+                        var studentActiveContract = assignment.Student.ActiveContract;
+                        if (studentActiveContract == null)
+                        {
+                                LogStudentNoActiveContract(assignment.Student.UserId, jobInstanceId);
+                                return;
+                        }
 
-                var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
+                        // Apply completion updates
+                        instance.ContractId = studentActiveContract.Id;
+                        instance.Status = JobInstanceStatus.Completed;
 
-                _hangfireService.Schedule<IJobInstanceService>(
-               s => s.RequestJobReviewAsync(instance.Id),
-               reviewRequestTime
-           );
+                        await _jobInstanceRepository.UpdateAsync(instance);
 
+                        if (instance.Status != JobInstanceStatus.Completed)
+                        {
+                                LogCompletionUpdateFailed(jobInstanceId);
+                                return;
+                        }
+
+                        // Notifications
+                        await _notificationService.SendJobCompletedNotificationAsync(instance.Assignment.Id, instance);
+
+                        await _notificationService.SendJobCompletedNotificationAsync(instance.Senior.CustomerId, instance);
+
+                        // Post-completion processing
+                        await _completionStatusService.ProcessCompletionStatuses(instance.OrderId);
+
+                        // Schedule review request
+                        var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
+                        _hangfireService.Schedule<IJobInstanceService>(
+                            s => s.RequestJobReviewAsync(instance.Id),
+                            reviewRequestTime
+                        );
+                        LogReviewScheduled(jobInstanceId, reviewRequestTime);
+                }
+                catch (Exception ex)
+                {
+                        LogException(jobInstanceId, ex);
+                }
         }
+
+
+
 
         public async Task RequestJobReviewAsync(int jobInstanceId)
         {
@@ -344,4 +402,31 @@ public class JobInstanceService : IJobInstanceService
                 await _notificationService.SendPushNotificationAsync(studentId, notification);
         }
 
+
+        #region Logging helpers
+
+        private void LogJobInstanceNotFound(int jobInstanceId) =>
+            _logger.LogWarning("⚠️ JobInstance {jobInstanceId} not found. Skipping completion.", jobInstanceId);
+
+        private void LogJobInstanceNotInProgress(int jobInstanceId, JobInstanceStatus status) =>
+            _logger.LogInformation("ℹ️ JobInstance {jobInstanceId} is not in progress (Status: {status}). No update.", jobInstanceId, status);
+
+        private void LogAssignmentNotFound(int assignmentId, int jobInstanceId) =>
+            _logger.LogWarning("⚠️ Assignment {assignmentId} not found for JobInstance {jobInstanceId}.", assignmentId, jobInstanceId);
+
+        private void LogStudentNoActiveContract(int studentId, int jobInstanceId) =>
+            _logger.LogWarning("⚠️ Student {studentId} has no active contract. JobInstance {jobInstanceId} cannot be completed.", studentId, jobInstanceId);
+
+        private void LogCompletionUpdateFailed(int jobInstanceId) =>
+            _logger.LogError("❌ Failed to update JobInstance {jobInstanceId} to Completed.", jobInstanceId);
+
+
+
+        private void LogReviewScheduled(int jobInstanceId, DateTime reviewTime) =>
+            _logger.LogInformation("📅 Scheduled review request for JobInstance {jobInstanceId} at {reviewTime}.", jobInstanceId, reviewTime);
+
+        private void LogException(int jobInstanceId, Exception ex) =>
+            _logger.LogError(ex, "❌ Exception while updating JobInstance {jobInstanceId} to completed.", jobInstanceId);
+
+        #endregion
 }

@@ -2,6 +2,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -24,6 +25,12 @@ public class CompletionStatusService
         _scheduleRepository = scheduleRepository;
         _scheduldeAssignmentRepo = scheduldeAssignmentRepo;
         _logger = logger;
+    }
+
+    public async Task Handle(UpdateOrderStatusEvent @event)
+    {
+        var orderId = @event.OrderId;
+        await ProcessCompletionStatuses(orderId);
     }
 
     public async Task ProcessCompletionStatuses(int orderId)
@@ -170,6 +177,7 @@ public class CompletionStatusService
             _logger.LogDebug("✅ Order {OrderId} status unchanged: {Status}", orderId, order.Status);
         }
     }
+
 
 }
 

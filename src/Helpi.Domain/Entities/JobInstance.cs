@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
@@ -11,6 +12,8 @@ namespace Helpi.Domain.Entities
         public int OrderId { get; set; }
 
         public int OrderScheduleId { get; set; }
+
+        [ForeignKey(nameof(StudentContract))]
         public int? ContractId { get; set; }
         public int ScheduleAssignmentId { get; set; }
         public int? PrevAssignmentId { get; set; }
@@ -53,6 +56,8 @@ namespace Helpi.Domain.Entities
 
         public ICollection<JobInstance> RescheduledInstances { get; set; } = new List<JobInstance>();
 
+        [ForeignKey(nameof(ContractId))]
+        public StudentContract? StudentContract { get; set; }
 
 
         // Track hangfire scheduling state

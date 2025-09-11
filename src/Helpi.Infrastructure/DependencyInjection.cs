@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<StudentBackgroundJobs>();
         services.AddScoped<IHangfireService, HangfireService>();
         services.AddScoped<CompletionStatusService>();
+
         services.AddScoped<IReassignmentService, ReassignmentService>();
 
         // Register all repositories

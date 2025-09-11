@@ -20,6 +20,7 @@ namespace Helpi.Application.Services
         private readonly ILogger<ReassignmentService> _logger;
         private readonly INotificationService _notificationService;
         private readonly IStudentRepository _studentRepository;
+        private readonly CompletionStatusService _completionStatusService;
 
         public ReassignmentService(
             IReassignmentRecordRepository reassignmentRecordRepository,
@@ -31,7 +32,9 @@ namespace Helpi.Application.Services
              IJobInstanceMatchingService jobInstanceMatchingService,
             ILogger<ReassignmentService> logger,
             INotificationService notificationService,
-            IStudentRepository studentRepository)
+            IStudentRepository studentRepository,
+            CompletionStatusService completionStatusService
+            )
         {
             _reassignmentRecordRepository = reassignmentRecordRepository;
             _jobInstanceRepository = jobInstanceRepository;
@@ -43,6 +46,7 @@ namespace Helpi.Application.Services
             _logger = logger;
             _notificationService = notificationService;
             _studentRepository = studentRepository;
+            _completionStatusService = completionStatusService;
         }
 
         public async Task<ReassignmentRecord> InitiateReassignment(
@@ -314,6 +318,7 @@ namespace Helpi.Application.Services
 
             //
             await _matchingService.InitiateMatchingProcessAsync(assignment.OrderId);
+            // await _completionStatusService.ProcessCompletionStatuses(); TODO:
         }
 
         private async Task HandleOneDaySubstitution(ReassignmentRecord reassignmentRecord)

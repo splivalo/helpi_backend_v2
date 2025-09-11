@@ -15,8 +15,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250903100518_NeedsSubstitute")]
-    partial class NeedsSubstitute
+    [Migration("20250910085729_InitialMigrations")]
+    partial class InitialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -435,13 +435,34 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("IsRescheduleVariant")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("NeedsSubstitute")
                         .HasColumnType("boolean");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OriginalAssignmentId")
+                    b.Property<int>("OrderScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PrevAssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RescheduleReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RescheduledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RescheduledFromId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RescheduledToId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ScheduleAssignmentId")
@@ -464,7 +485,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OriginalAssignmentId");
+                    b.HasIndex("JobInstanceId");
+
+                    b.HasIndex("PrevAssignmentId");
 
                     b.HasIndex("ScheduleAssignmentId");
 
@@ -488,9 +511,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsEmergencySub")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsReassignment")
                         .HasColumnType("boolean");
@@ -606,6 +626,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowAutoScheduling")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("AutoScheduleAttemptCount")
                         .HasColumnType("integer");
 
@@ -629,9 +652,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
-
-                    b.Property<bool>("allowAutoScheduling")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -980,10 +1000,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("OrderScheduleId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OriginalAssignmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ReplacedAssignmentId")
+                    b.Property<int?>("PrevAssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -1468,13 +1485,16 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowAutoScheduling")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("AttemptCount")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("JobInstanceId")
+                    b.Property<int>("CurrentAssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastAttemptAt")
@@ -1495,9 +1515,18 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("OriginalStudentId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PreferredStudentId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("ReassignAssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReassignJobInstanceId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("ReassignmentType")
                         .HasColumnType("integer");
@@ -1508,9 +1537,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int>("RequestedByUserId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ScheduleAssignmentId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -1518,8 +1544,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("JobInstanceId");
 
                     b.HasIndex("NewStudentId");
 
@@ -1529,9 +1553,11 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("OriginalStudentId");
 
-                    b.HasIndex("RequestedByUserId");
+                    b.HasIndex("ReassignAssignmentId");
 
-                    b.HasIndex("ScheduleAssignmentId");
+                    b.HasIndex("ReassignJobInstanceId");
+
+                    b.HasIndex("RequestedByUserId");
 
                     b.ToTable("ReassignmentRecords");
                 });
@@ -1616,15 +1642,19 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
                 {
+                    b.HasOne("Helpi.Domain.Entities.JobInstance", null)
+                        .WithMany("RescheduledInstances")
+                        .HasForeignKey("JobInstanceId");
+
                     b.HasOne("Helpi.Domain.Entities.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "OriginalAssignment")
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "PrevAssignment")
                         .WithMany()
-                        .HasForeignKey("OriginalAssignmentId");
+                        .HasForeignKey("PrevAssignmentId");
 
                     b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "Assignment")
                         .WithMany("JobInstances")
@@ -1642,7 +1672,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Navigation("Order");
 
-                    b.Navigation("OriginalAssignment");
+                    b.Navigation("PrevAssignment");
 
                     b.Navigation("Senior");
                 });
@@ -2000,10 +2030,6 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("ReassignmentRecord", b =>
                 {
-                    b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
-                        .WithMany()
-                        .HasForeignKey("JobInstanceId");
-
                     b.HasOne("Helpi.Domain.Entities.Student", "NewStudent")
                         .WithMany()
                         .HasForeignKey("NewStudentId");
@@ -2024,17 +2050,19 @@ namespace Helpi.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("OriginalStudentId");
 
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ReassignAssignment")
+                        .WithMany()
+                        .HasForeignKey("ReassignAssignmentId");
+
+                    b.HasOne("Helpi.Domain.Entities.JobInstance", "ReassignJobInstance")
+                        .WithMany()
+                        .HasForeignKey("ReassignJobInstanceId");
+
                     b.HasOne("Helpi.Domain.Entities.User", "RequestedByUser")
                         .WithMany()
                         .HasForeignKey("RequestedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
-                        .WithMany()
-                        .HasForeignKey("ScheduleAssignmentId");
-
-                    b.Navigation("JobInstance");
 
                     b.Navigation("NewStudent");
 
@@ -2044,9 +2072,11 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Navigation("OriginalStudent");
 
-                    b.Navigation("RequestedByUser");
+                    b.Navigation("ReassignAssignment");
 
-                    b.Navigation("ScheduleAssignment");
+                    b.Navigation("ReassignJobInstance");
+
+                    b.Navigation("RequestedByUser");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
@@ -2091,6 +2121,8 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
                 {
                     b.Navigation("PaymentTransaction");
+
+                    b.Navigation("RescheduledInstances");
 
                     b.Navigation("Review");
                 });

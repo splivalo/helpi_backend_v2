@@ -33,11 +33,11 @@ namespace Helpi.Domain.Entities
         public ICollection<ScheduleAssignment> ScheduleAssignments { get; set; } = new List<ScheduleAssignment>();
         public ICollection<StudentContract> Contracts { get; set; } = new List<StudentContract>();
 
-        public StudentContract? CurrentContract
-                => Contracts.FirstOrDefault(c =>
-                c.EffectiveDate <= DateOnly.FromDateTime(DateTime.Now) &&
-                c.ExpirationDate >= DateOnly.FromDateTime(DateTime.Now));
-
+        public StudentContract? ActiveContract
+                => Contracts
+            .Where(c => c.Status == ContractStatus.Active)
+            .OrderByDescending(c => c.ExpirationDate)
+            .FirstOrDefault();
 
 
     }

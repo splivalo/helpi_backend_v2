@@ -37,4 +37,11 @@ public class StudentContractsController : ControllerBase
                 var contractDto = await _service.UpdateContractAsync(id, dto);
                 return CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, contractDto);
         }
+
+        [HttpGet("completed/{studentId}")]
+        public async Task<IActionResult> GetCompletedContracts(int studentId)
+        {
+                var contracts = await _service.GetStudentCompletedContractsAsync(studentId);
+                return Ok(contracts);
+        }
 }

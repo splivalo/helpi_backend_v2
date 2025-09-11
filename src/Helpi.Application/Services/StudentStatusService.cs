@@ -74,10 +74,7 @@ IEventMediator mediator,
         _logger.LogInformation("📅 Processing Student: {StudentId}", student.UserId);
 
 
-        var activeContract = student.Contracts
-            .Where(c => c.Status == ContractStatus.Active)
-            .OrderByDescending(c => c.ExpirationDate)
-            .FirstOrDefault();
+        var activeContract = student.ActiveContract;
 
         if (activeContract == null)
         {
@@ -166,6 +163,7 @@ IEventMediator mediator,
         {
             student.Status = StudentStatus.UnVerified;
             await _studentRepo.UpdateAsync(student);
+            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
         }
 
 

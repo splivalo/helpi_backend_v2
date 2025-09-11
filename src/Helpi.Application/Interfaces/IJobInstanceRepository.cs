@@ -23,7 +23,7 @@ public interface IJobInstanceRepository
     Task<IEnumerable<JobInstance>> GetStudentUpComingJobInstances(int studentId);
 
     Task<JobInstance?> UpdateToInProgressAsync(int jobInstanceId);
-    Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId);
+    // Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId);
     Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes);
     Task<List<JobInstance>> GetByDateAsync(DateOnly today);
     Task SaveChangesAsync();
