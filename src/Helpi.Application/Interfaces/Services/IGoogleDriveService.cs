@@ -1,4 +1,5 @@
 namespace Helpi.Application.Interfaces.Services;
+
 public interface IGoogleDriveService
 {
     Task<string> UploadContractAsync(
@@ -9,4 +10,6 @@ public interface IGoogleDriveService
 
     Task<bool> FolderExistsAsync(string folderName);
     Task<string> CreateFolderAsync(string folderName);
+
+    Task DeleteFileAsync(string fileIdentifier);
 }

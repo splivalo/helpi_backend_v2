@@ -25,17 +25,26 @@ public class StudentContractsController : ControllerBase
 
 
         [HttpPost]
-        public async Task<ActionResult<StudentContractDto>> Create(StudentContractCreateDto dto)
+        public async Task<ActionResult<StudentContractDto>> Create([FromForm] StudentContractCreateDto dto)
         {
                 var contractDto = await _service.CreateContractAsync(dto);
                 return CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, contractDto);
         }
 
-        [HttpPut("id")]
-        public async Task<ActionResult<StudentContractDto>> Update(int id, StudentContractUpdateDto dto)
+        [HttpPut("{id}")]
+        public async Task<ActionResult<StudentContractDto>> Update(int id, [FromForm] StudentContractUpdateDto dto)
         {
                 var contractDto = await _service.UpdateContractAsync(id, dto);
-                return CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, contractDto);
+                return CreatedAtAction(nameof(GetByStudent), new { studentId = contractDto.StudentId }, contractDto);
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteStudentContract(int id)
+        {
+                await _service.DeleteContractAsync(id);
+
+
+                return NoContent(); // 204
         }
 
         [HttpGet("completed/{studentId}")]
@@ -44,4 +53,5 @@ public class StudentContractsController : ControllerBase
                 var contracts = await _service.GetStudentCompletedContractsAsync(studentId);
                 return Ok(contracts);
         }
+
 }

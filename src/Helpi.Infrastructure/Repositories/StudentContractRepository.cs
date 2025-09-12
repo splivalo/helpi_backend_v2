@@ -21,11 +21,13 @@ public class StudentContractRepository : IStudentContractRepository
 
     public async Task<IEnumerable<StudentContract>> GetByStudentIdAsync(int studentId)
         => await _context.StudentContracts
+          .Where(c => c.DeletedOn == null)
             .Where(sc => sc.StudentId == studentId)
             .ToListAsync();
 
     public async Task<IEnumerable<StudentContract>> GetActiveContracts(DateOnly date)
         => await _context.StudentContracts
+          .Where(c => c.DeletedOn == null)
             .Where(sc => sc.EffectiveDate <= date &&
                 (sc.ExpirationDate == null || sc.ExpirationDate >= date))
             .ToListAsync();
@@ -50,7 +52,9 @@ public class StudentContractRepository : IStudentContractRepository
     }
 
     public Task<int> CountAsync(Expression<Func<StudentContract, bool>> predicate)
-=> _context.StudentContracts.CountAsync(predicate);
+=> _context.StudentContracts
+  .Where(c => c.DeletedOn == null)
+.CountAsync(predicate);
 
     public async Task<List<StudentContract>> GetCompletedContractsForStudentAsync(int studentId)
     {
@@ -58,6 +62,7 @@ public class StudentContractRepository : IStudentContractRepository
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         return await _context.StudentContracts
+        .Where(c => c.DeletedOn == null)
         .Where(c => c.StudentId == studentId
             && c.ExpirationDate < today)
             .Include(c => c.JobInstances.Where(j => j.Status == JobInstanceStatus.Completed))

@@ -12,7 +12,7 @@ namespace Helpi.Domain.Entities
         [ForeignKey(nameof(Student))]
         public int StudentId { get; set; }
 
-
+        public DateTime? DeletedOn { get; set; }
         public string ContractNumber { get; set; } = null!;
 
         [MaxLength(512)]

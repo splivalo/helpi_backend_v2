@@ -11,6 +11,8 @@ public class StudentContractDto
 
     public int StudentId { get; set; }
     public ContractStatus Status { get; set; }
+
+    public DateTime? DeletedOn { get; set; }
     public DateOnly EffectiveDate { get; set; }
     public DateOnly? ExpirationDate { get; set; }
 
@@ -54,10 +56,10 @@ public class StudentContractCreateDto
 public class StudentContractUpdateDto
 {
 
+    public DateTime? DeletedOn { get; set; }
 
-    public int StudentId { get; set; }
 
-    public IFormFile? NewContractFile { get; set; }
+    public IFormFile[]? NewContractFile { get; set; }
 
     public DateOnly? EffectiveDate { get; set; }
     public DateOnly? ExpirationDate { get; set; }

@@ -206,6 +206,43 @@ public class GoogleDriveService : IGoogleDriveService
         // Create new folder if it doesn't exist
         return await CreateFolderAsync(folderName);
     }
+
+
+    public async Task DeleteFileAsync(string fileIdentifier)
+    {
+        try
+        {
+            using var driveService = await CreateDriveServiceAsync();
+
+            // Extract fileId if a full URL (webViewLink) is provided
+            string fileId = fileIdentifier;
+            if (fileIdentifier.Contains("drive.google.com"))
+            {
+                var uri = new Uri(fileIdentifier);
+                var segments = uri.Segments;
+
+                // Typical format: https://drive.google.com/file/d/{fileId}/view
+                int index = Array.IndexOf(segments, "d/");
+                if (index >= 0 && index + 1 < segments.Length)
+                {
+                    fileId = segments[index + 1].TrimEnd('/');
+                }
+                else
+                {
+                    throw new GoogleDriveException("Invalid Google Drive file link format.");
+                }
+            }
+
+            var request = driveService.Files.Delete(fileId);
+            await request.ExecuteAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete file from Google Drive");
+            throw new GoogleDriveException($"Failed to delete file '{fileIdentifier}'", ex);
+        }
+    }
+
 }
 
 public class GoogleDriveSettings

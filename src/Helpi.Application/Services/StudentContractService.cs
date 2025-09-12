@@ -87,8 +87,9 @@ public class StudentContractService
         {
                 var contract = await GetAndValidateContractAsync(contractId);
 
-                var students = await _studentRepository.LoadStudentsWithIncludes(dto.StudentId, new StudentIncludeOptions
+                var students = await _studentRepository.LoadStudentsWithIncludes(contract.StudentId, new StudentIncludeOptions
                 {
+                        ContactInfo = true,
                         Contracts = true,
                 });
 
@@ -103,11 +104,12 @@ public class StudentContractService
                         // Build file metadata
                         var (folderName, fileName) = BuildFileMetadata(student, contractNumber);
 
+
                         // Delete old file and upload new one
-                        await ReplaceContractFileAsync(contract.CloudPath, dto.NewContractFile, folderName, fileName);
+                        var cloudPath = await ReplaceContractFileAsync(contract.CloudPath, dto.NewContractFile[0], folderName, fileName);
 
                         // Update cloud path in contract
-                        contract.CloudPath = await GetContractCloudPathAsync(folderName, fileName);
+                        contract.CloudPath = cloudPath;
                 }
 
 
@@ -126,8 +128,9 @@ public class StudentContractService
 
 
 
+
                 await _repository.UpdateAsync(contract);
-                _logger.LogInformation("Updated contract {ContractId} for student {StudentId}", contractId, dto.StudentId);
+                _logger.LogInformation("Updated contract {ContractId} for student {StudentId}", contractId, contract.StudentId);
 
 
 
@@ -138,22 +141,41 @@ public class StudentContractService
 
         public async Task DeleteContractAsync(int id)
         {
-                // var contract = await GetAndValidateContractAsync(id);
+                var contract = await GetAndValidateContractAsync(id);
 
-                // // Delete the file from Google Drive
-                // try
-                // {
-                //         await _googleDriveService.DeleteFileAsync(contract.CloudPath);
-                // }
-                // catch (Exception ex)
-                // {
-                //         // Log but continue - we still want to delete the database record
-                //         _logger.LogWarning(ex, "Failed to delete contract file from cloud storage: {CloudPath}", contract.CloudPath);
-                // }
+                var studentId = contract.StudentId;
 
-                // // Delete the contract record
-                // await _repository.DeleteAsync(contract);
-                // _logger.LogInformation("Deleted contract {ContractId}", id);
+                // Delete the file from Google Drive
+                try
+                {
+                        await _googleDriveService.DeleteFileAsync(contract.CloudPath);
+                }
+                catch (Exception ex)
+                {
+                        // Log but continue - we still want to delete the database record
+                        _logger.LogWarning(ex, "Failed to delete contract file from cloud storage: {CloudPath}", contract.CloudPath);
+                }
+
+
+
+                // Delete the contract record
+                contract.DeletedOn = DateTime.Now;
+                await _repository.UpdateAsync(contract);
+                _logger.LogInformation("Deleted contract {ContractId}", id);
+
+                await ProcessStudentStatus(studentId);
+        }
+
+        private async Task ProcessStudentStatus(int studentId)
+        {
+                var students = await _studentRepository.LoadStudentsWithIncludes(studentId, new StudentIncludeOptions
+                {
+                        Contracts = true,
+                });
+
+                var student = students.First();
+
+                await _studentStatusService.ProcessStudentStatus(student);
         }
 
         public async Task<StudentContractDto> GetContractByIdAsync(int id)
@@ -209,17 +231,18 @@ public class StudentContractService
                 return (folderName, fileName);
         }
 
-        private async Task<string> GetContractCloudPathAsync(string folderName, string fileName)
-        {
-                return $"{folderName}/{fileName}"; // todo
-        }
+        // private async Task<string> GetContractCloudPathAsync(string folderName, string fileName)
+        // {
+        //         _googleDriveService.
+        //         return $"{folderName}/{fileName}"; // todo
+        // }
 
-        private async Task ReplaceContractFileAsync(string oldCloudPath, IFormFile newFile, string folderName, string fileName)
+        private async Task<string> ReplaceContractFileAsync(string oldCloudPath, IFormFile newFile, string folderName, string fileName)
         {
                 try
                 {
                         // Delete the old contract file
-                        // await _googleDriveService.DeleteFileAsync(oldCloudPath);
+                        await _googleDriveService.DeleteFileAsync(oldCloudPath);
                 }
                 catch (Exception ex)
                 {
@@ -229,11 +252,11 @@ public class StudentContractService
 
                 // Upload the new file
                 var contractFile = await ReadFileContent(newFile);
-                await _googleDriveService.UploadContractAsync(
-                    folderName,
-                    contractFile,
-                    fileName
-                );
+                return await _googleDriveService.UploadContractAsync(
+                      folderName,
+                      contractFile,
+                      fileName
+                  );
         }
 
 
