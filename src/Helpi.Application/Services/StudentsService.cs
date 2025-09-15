@@ -69,6 +69,17 @@ public class StudentsService
                 return _mapper.Map<List<StudentDto>>(students);
         }
 
+        public async Task<List<StudentDto>> FindEligibleStudentsForInstance2(DateOnly date,
+                                TimeOnly startTime,
+                                TimeOnly endTime,
+                                int orderId)
+        {
+                var students = await _repository.FindEligibleStudentsForInstance2(
+                        date, startTime, endTime, orderId);
+
+                return _mapper.Map<List<StudentDto>>(students);
+        }
+
 
         public async Task<bool> SoftDeleteStudent(int studentId)
         {

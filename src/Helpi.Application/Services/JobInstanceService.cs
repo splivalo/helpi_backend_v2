@@ -208,7 +208,7 @@ public class JobInstanceService : IJobInstanceService
         /// can reschdule 
         /// can change assignmened student
 
-        public async Task<JobInstance?> ManageJobInstance(
+        public async Task<JobInstanceDto?> ManageJobInstance(
             int jobInstanceId,
             DateOnly? newDate,
             TimeOnly? newStartTime,
@@ -268,7 +268,8 @@ public class JobInstanceService : IJobInstanceService
                                preferedStudentId);
                 }
 
-                return resultInstance;
+                return _mapper.Map<JobInstanceDto>(resultInstance);
+
         }
 
         private async Task<JobInstance> HandleReschedule(

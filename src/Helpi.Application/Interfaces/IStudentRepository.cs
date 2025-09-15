@@ -33,4 +33,10 @@ public interface IStudentRepository
                             int seniorCityId,
                             List<int> serviceIds,
                             List<int> notifiedStudentIds);
+
+    Task<List<Student>> FindEligibleStudentsForInstance2(
+   DateOnly date,
+   TimeOnly startTime,
+   TimeOnly endTime,
+   int orderId);
 }

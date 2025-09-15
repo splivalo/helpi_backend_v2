@@ -18,7 +18,7 @@ public interface IJobInstanceService
     Task UpdateToCompletedAsync(int jobInstanceId);
     Task RequestJobReviewAsync(int jobInstanceId);
 
-    Task<JobInstance?> ManageJobInstance(
+    Task<JobInstanceDto?> ManageJobInstance(
             int jobInstanceId,
             DateOnly? newDate,
             TimeOnly? newStartTime,

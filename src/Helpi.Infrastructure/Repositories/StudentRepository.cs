@@ -133,7 +133,7 @@ public class StudentRepository : IStudentRepository
         List<int> serviceIds,
         List<int>? notifiedStudentIds = null)
     {
-        var targetDay = (byte)scheduledDate.DayOfWeek;
+        var targetDay = ToIsoDayNumber(scheduledDate);
 
         return await FindEligibleStudentsCore(
             scheduledDate: scheduledDate,
@@ -143,6 +143,42 @@ public class StudentRepository : IStudentRepository
             seniorCityId: seniorCityId,
             requiredServiceIds: serviceIds,
             notifiedStudentIds: notifiedStudentIds
+        );
+    }
+
+    public async Task<List<Student>> FindEligibleStudentsForInstance2(
+       DateOnly scheduledDate,
+       TimeOnly startTime,
+       TimeOnly endTime,
+       int orderId
+       )
+    {
+
+        var order = await _context.Orders.AsNoTracking()
+                    .Where(o => o.Id == orderId)
+                    .Include(o => o.Senior).ThenInclude(s => s.Contact)
+                    .Include(o => o.OrderServices)
+                    .FirstOrDefaultAsync();
+
+        if (order == null)
+        {
+            return [];
+        }
+
+        var serviceIds = order.OrderServices.Select(os => os.ServiceId).ToList();
+
+
+        var targetDay = ToIsoDayNumber(scheduledDate);
+
+
+        return await FindEligibleStudentsCore(
+            scheduledDate: scheduledDate,
+            targetDay: targetDay,
+            targetStart: startTime,
+            targetEnd: endTime,
+            seniorCityId: order!.Senior.Contact.CityId,
+            requiredServiceIds: serviceIds,
+            notifiedStudentIds: null
         );
     }
 
@@ -247,5 +283,13 @@ public class StudentRepository : IStudentRepository
     }
 
 
+    public static byte ToIsoDayNumber(DateOnly date)
+    {
+        // .NET: Sunday = 0, Monday = 1, ..., Saturday = 6
+        // DB:   Monday = 1, ..., Saturday = 6, Sunday = 7
+        int dotNetDay = (int)date.DayOfWeek;
+        return (byte)(dotNetDay == 0 ? 7 : dotNetDay);
+    }
 
 }
+

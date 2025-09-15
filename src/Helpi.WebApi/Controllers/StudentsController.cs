@@ -59,6 +59,20 @@ public class StudentsController : ControllerBase
         }
 
 
+        [HttpGet("available-students")]
+        public async Task<ActionResult<List<StudentDto>>> GetAvailableStudents(DateOnly date,
+                                TimeOnly startTime,
+                                TimeOnly endTime,
+                                int orderId)
+        {
+                var students = await _service.FindEligibleStudentsForInstance2(date,
+                                 startTime,
+                                 endTime,
+                                 orderId);
+                return Ok(students);
+        }
+
+
         [HttpGet("{id}")]
         public async Task<ActionResult<StudentDto>> GetById(int id)
         {

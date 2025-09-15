@@ -459,7 +459,7 @@ namespace Helpi.Application.Services
                     Action = action,
                     EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
                     EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
-                    ReassignmentRecord = reassignmentRecord
+                    ReassignmentRecordId = reassignmentRecord.Id
                 })
             };
 
@@ -481,7 +481,7 @@ namespace Helpi.Application.Services
                     EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
                     EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     NewStudentId = reassignmentRecord.NewStudentId,
-                    ReassignmentRecord = reassignmentRecord
+                    ReassignmentRecordId = reassignmentRecord.Id
                 })
             };
 
@@ -503,7 +503,7 @@ namespace Helpi.Application.Services
                     EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
                     EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     AttemptCount = reassignmentRecord.AttemptCount,
-                    ReassignmentRecord = reassignmentRecord
+                    ReassignmentRecordId = reassignmentRecord.Id
                 })
             };
 
