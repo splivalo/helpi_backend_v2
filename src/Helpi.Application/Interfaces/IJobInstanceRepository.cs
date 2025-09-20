@@ -32,5 +32,7 @@ public interface IJobInstanceRepository
      JobInstanceStatus? status,
      JobInstanceIncludeOptions options);
     void Detach(JobInstance jobInstance);
+    Task<List<JobInstance>> GetFromDateForScheduleAsync(DateOnly fromDate, int scheduleId);
+    void MarkForDeleteRange(IEnumerable<JobInstance> jobs);
 
 }

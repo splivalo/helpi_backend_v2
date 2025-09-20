@@ -84,25 +84,23 @@ public class OrderRepository : IOrderRepository
 
                 if (options.Schedules)
                 {
+                        query = query.Include(o => o.Schedules);
+
+
                         if (options.ScheduleAssignments)
                         {
+
+                                query = query.Include(o => o.Schedules).ThenInclude(s => s.Assignments);
+
                                 if (options.AssignmentsJobInstances)
                                 {
-                                        query = query
-                                       .Include(o => o.Schedules)
-                                           .ThenInclude(s => s.Assignments).ThenInclude(a => a.JobInstances);
-                                }
-                                else
-                                {
-                                        query = query
-                                                                               .Include(o => o.Schedules)
-                                                                                   .ThenInclude(s => s.Assignments);
+                                        query = query.Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.JobInstances.Where(j => !j.NeedsSubstitute));
                                 }
                         }
-                        else
+
+                        if (options.SchedulesJobRequests)
                         {
-                                query = query
-                                    .Include(o => o.Schedules);
+                                query = query.Include(o => o.Schedules).ThenInclude(s => s.JobRequests);
                         }
                 }
 

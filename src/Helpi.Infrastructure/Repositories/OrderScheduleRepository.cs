@@ -1,5 +1,6 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -17,6 +18,35 @@ public class OrderScheduleRepository : IOrderScheduleRepository
                 return await _context.OrderSchedules
              .Include(os => os.Order)
              .SingleOrDefaultAsync(os => os.Id == id);
+        }
+        public async Task<List<OrderSchedule>> LoadWithIncudes(int? scheduleId, OrderScheduleInculdes inculdes)
+        {
+
+                var query = _context.OrderSchedules.AsNoTracking();
+
+                if (scheduleId != null)
+                {
+                        query = query.Where(os => os.Id == scheduleId);
+                }
+
+                if (inculdes.JobRequests)
+                {
+                        query = query.Include(os => os.JobRequests);
+                }
+
+                if (inculdes.Assignments)
+                {
+                        query = query.Include(os => os.Assignments);
+
+                        if (inculdes.AssignmentsJobInstances)
+                        {
+                                query = query.Include(os => os.Assignments).ThenInclude(a => a.JobInstances);
+                        }
+                }
+
+
+
+                return await query.ToListAsync();
         }
 
         public async Task<IEnumerable<OrderSchedule>> GetByOrderAsync(int orderId)
@@ -72,6 +102,16 @@ public class OrderScheduleRepository : IOrderScheduleRepository
                                     assignedStatuses.Contains(a.Status) &&
                                     !a.IsJobInstanceSub))
                     .ToListAsync();
+        }
+
+        public void MarkForDelete(OrderSchedule schedule)
+        {
+                throw new NotImplementedException();
+        }
+
+        public void MarkForsDelete(OrderSchedule schedule)
+        {
+                _context.OrderSchedules.Remove(schedule);
         }
 
 }

@@ -35,6 +35,20 @@ public class OrderCreateDto
 
 public class OrderUpdateDto
 {
-    public OrderStatus? Status { get; set; }
+    /// TODO: CREATE VALICATOR -SHOULD PREVENT CHANGING EDITING CANCELED SCHEDULE
+    public int? PaymentMethodId { get; set; }
+    public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
+    public OrderStatus? Status { get; set; }
+
+    public ICollection<OrderServiceCreateDto> ServicesToAdd { get; set; } = new List<OrderServiceCreateDto>();
+    public ICollection<int> ServiceIdsToRemove { get; set; } = new List<int>();
+    public ICollection<OrderScheduleCreateDto> SchedulesToAdd { get; set; } = new List<OrderScheduleCreateDto>();
+    public ICollection<int> ScheduleIdsToRemove { get; set; } = new List<int>();
+}
+
+public class OrderCancelDto
+{
+    [Required]
+    public string CancellationReason { get; set; } = null!;
 }

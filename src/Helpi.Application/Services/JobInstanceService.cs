@@ -16,7 +16,7 @@ public class JobInstanceService : IJobInstanceService
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
-        private readonly CompletionStatusService _completionStatusService;
+        private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly IReassignmentService _reassignmentService;
         private readonly IScheduleAssignmentRepository _assignmentRepository;
 
@@ -26,7 +26,7 @@ public class JobInstanceService : IJobInstanceService
                 IJobInstanceRepository repository,
                 IMapper mapper,
                 INotificationService notificationService,
-                 CompletionStatusService completionStatusService,
+                 OrderStatusMaintenanceService statusMaintenanceService,
                   IHangfireService hangfireService,
                   IReassignmentService reassignmentService,
                   IScheduleAssignmentRepository assignmentRepository,
@@ -36,7 +36,7 @@ public class JobInstanceService : IJobInstanceService
                 _jobInstanceRepository = repository;
                 _mapper = mapper;
                 _notificationService = notificationService;
-                _completionStatusService = completionStatusService;
+                _statusMaintenanceService = statusMaintenanceService;
                 _hangfireService = hangfireService;
                 _reassignmentService = reassignmentService;
                 _assignmentRepository = assignmentRepository;
@@ -154,7 +154,7 @@ public class JobInstanceService : IJobInstanceService
                         await _notificationService.SendJobCompletedNotificationAsync(instance.Senior.CustomerId, instance);
 
                         // Post-completion processing
-                        await _completionStatusService.ProcessCompletionStatuses(instance.OrderId);
+                        await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
 
                         // Schedule review request
                         var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
@@ -335,6 +335,7 @@ public class JobInstanceService : IJobInstanceService
                 // Mark original instance as rescheduled
                 originalInstance.RescheduledToId = rescheduledInstance.Id;
                 originalInstance.Status = JobInstanceStatus.Rescheduled;
+                originalInstance.NeedsSubstitute = false;
                 originalInstance.RescheduledAt = DateTime.UtcNow;
                 await _jobInstanceRepository.UpdateAsync(originalInstance);
 
@@ -403,6 +404,34 @@ public class JobInstanceService : IJobInstanceService
                 await _notificationService.SendPushNotificationAsync(studentId, notification);
         }
 
+        public async Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId)
+        {
+                var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
+
+                if (job == null)
+                {
+                        throw new ArgumentException($"Job instance {jobInstanceId} not found");
+                }
+
+                if (job.Status != JobInstanceStatus.Upcoming)
+                {
+                        throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
+                }
+
+                job.Status = JobInstanceStatus.Cancelled;
+
+                await _jobInstanceRepository.UpdateAsync(job);
+
+                await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
+
+                return _mapper.Map<JobInstanceDto>(job);
+
+
+        }
+
+
+
+
 
         #region Logging helpers
 
@@ -428,6 +457,7 @@ public class JobInstanceService : IJobInstanceService
 
         private void LogException(int jobInstanceId, Exception ex) =>
             _logger.LogError(ex, "❌ Exception while updating JobInstance {jobInstanceId} to completed.", jobInstanceId);
+
 
         #endregion
 }

@@ -282,5 +282,17 @@ public class JobInstanceRepository : IJobInstanceRepository
                 _context.DetachEntity(jobInstance);
         }
 
+        public async Task<List<JobInstance>> GetFromDateForScheduleAsync(DateOnly fromDate, int scheduleId)
+        {
+                return await _context.JobInstances
+                .Where(j => j.OrderScheduleId == scheduleId && j.ScheduledDate >= fromDate)
+                .ToListAsync();
+        }
+
+        public void MarkForDeleteRange(IEnumerable<JobInstance> jobs)
+        {
+                _context.JobInstances.RemoveRange(jobs);
+        }
+
 }
 

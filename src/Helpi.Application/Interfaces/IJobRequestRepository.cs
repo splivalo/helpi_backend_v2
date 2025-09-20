@@ -18,4 +18,6 @@ public interface IJobRequestRepository
 
     Task<List<JobRequest>> GetStudentRequests(int studentId);
     Task<JobRequest> RespondToJobRequestAsync(JobRequest jobRequest);
+    void MarkForDeleteRange(ICollection<JobRequest> jobRequests);
+
 }

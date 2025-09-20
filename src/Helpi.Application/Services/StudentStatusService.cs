@@ -17,7 +17,7 @@ public class StudentStatusService
     private readonly INotificationService _notificationService;
     private readonly StudentsService _studentService;
 
-    private readonly ILogger<CompletionStatusService> _logger;
+    private readonly ILogger<OrderStatusMaintenanceService> _logger;
 
     private readonly IReassignmentService _reassignmentService;
     private readonly IEventMediator _mediator;
@@ -28,7 +28,7 @@ public class StudentStatusService
       INotificationService notificationService,
      IReassignmentService reassignmentService,
 IEventMediator mediator,
-        ILogger<CompletionStatusService> logger
+        ILogger<OrderStatusMaintenanceService> logger
     )
     {
         _studentRepo = studentRepo;

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Net;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
@@ -64,6 +65,16 @@ namespace Helpi.Domain.Entities
         public string? HangFireStartStatusJobId { get; set; }
         public string? HangFireEndStatusJobId { get; set; }
         public string? HangFirePaymentJobId { get; set; }
+
+        public bool IsTerminal
+        {
+            get
+            {
+                return Status is JobInstanceStatus.Cancelled
+                    or JobInstanceStatus.Completed
+                    or JobInstanceStatus.Rescheduled;
+            }
+        }
     }
 }
 

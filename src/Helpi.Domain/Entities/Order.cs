@@ -13,6 +13,7 @@ namespace Helpi.Domain.Entities
         public RecurrencePattern? RecurrencePattern { get; set; }
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
+        public DateTime? CancelledAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

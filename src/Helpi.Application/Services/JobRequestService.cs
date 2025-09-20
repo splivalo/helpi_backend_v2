@@ -12,7 +12,7 @@ namespace Helpi.Application.Services;
 public class JobRequestService
 {
         private readonly IJobRequestRepository _jobRequestRepository;
-        private readonly CompletionStatusService _completionStatusService;
+        private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<JobRequestService> _logger;
@@ -24,7 +24,7 @@ public class JobRequestService
 
         public JobRequestService(
                 IJobRequestRepository jobRequestRepository,
-                CompletionStatusService completionStatusService,
+                OrderStatusMaintenanceService statusMaintenanceService,
                 IJobInstanceRepository jobInstanceRepository,
                 IMapper mapper,
                  IHangfireRecurringJobService recurringJobService,
@@ -34,7 +34,7 @@ public class JobRequestService
                      )
         {
                 _jobRequestRepository = jobRequestRepository;
-                _completionStatusService = completionStatusService;
+                _statusMaintenanceService = statusMaintenanceService;
                 _jobInstanceRepository = jobInstanceRepository;
                 _mapper = mapper;
                 _recurringJobService = recurringJobService;
@@ -87,7 +87,7 @@ public class JobRequestService
                         }
 
 
-                        await _completionStatusService.ProcessIsOrderAllSchedulesAssigned(jobRequest.OrderId);
+                        await _statusMaintenanceService.MaintainOrderStatuses(jobRequest.OrderId);
                 }
 
                 return _mapper.Map<JobRequestDto>(jobRequest);

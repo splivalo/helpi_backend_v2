@@ -2,6 +2,7 @@
 using Helpi.Application.Common.Mappings;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
+using Helpi.Application.Services.Maintenance;
 using Helpi.Domain.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,6 +62,17 @@ public static class DependencyInjection
 
         services.AddScoped<IDomainEventHandler<ReinitiateAllFailedMatchesEvent>>(sp =>
             (IDomainEventHandler<ReinitiateAllFailedMatchesEvent>)sp.GetRequiredService<IFailedMatchReinitiationService>());
+
+        ///===
+        services.AddScoped<OrderStatusMaintenanceService>();
+        services.AddScoped<OrderCancellationHandler>();
+        services.AddScoped<ScheduleCancellationHandler>();
+        services.AddScoped<AssignmentStatusUpdater>();
+        services.AddScoped<ScheduleStatusUpdater>();
+        services.AddScoped<JobInstanceStatusUpdater>();
+        services.AddScoped<OrderStatusUpdater>();
+
+        /// ===
 
 
         // AutoMapper

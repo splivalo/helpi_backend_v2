@@ -329,6 +329,9 @@ public class JobRequestRepository : IJobRequestRepository
                 return jobRequest;
         }
 
-
+        public void MarkForDeleteRange(ICollection<JobRequest> jobRequests)
+        {
+                _context.JobRequests.RemoveRange(jobRequests);
+        }
 
 }

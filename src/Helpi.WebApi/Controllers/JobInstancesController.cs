@@ -92,4 +92,25 @@ public class JobInstancesController : ControllerBase
                         return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
                 }
         }
+
+        [HttpPost("{jobInstanceId}/cancel")]
+        public async Task<ActionResult<JobInstanceDto>> CancelJobInstance(
+           int jobInstanceId)
+        {
+                try
+                {
+                        var result = await _jobInstanceService.CancelJobInstance(
+                            jobInstanceId);
+
+                        if (result == null)
+                                return BadRequest(new { message = "No changes were made to the job instance." });
+
+                        return Ok(result);
+                }
+                catch (Exception ex)
+                {
+                        // Log exception
+                        return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+                }
+        }
 }

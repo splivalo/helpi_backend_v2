@@ -20,7 +20,6 @@ namespace Helpi.Application.Services
         private readonly ILogger<ReassignmentService> _logger;
         private readonly INotificationService _notificationService;
         private readonly IStudentRepository _studentRepository;
-        private readonly CompletionStatusService _completionStatusService;
 
         public ReassignmentService(
             IReassignmentRecordRepository reassignmentRecordRepository,
@@ -32,8 +31,7 @@ namespace Helpi.Application.Services
              IJobInstanceMatchingService jobInstanceMatchingService,
             ILogger<ReassignmentService> logger,
             INotificationService notificationService,
-            IStudentRepository studentRepository,
-            CompletionStatusService completionStatusService
+            IStudentRepository studentRepository
             )
         {
             _reassignmentRecordRepository = reassignmentRecordRepository;
@@ -46,7 +44,6 @@ namespace Helpi.Application.Services
             _logger = logger;
             _notificationService = notificationService;
             _studentRepository = studentRepository;
-            _completionStatusService = completionStatusService;
         }
 
         public async Task<ReassignmentRecord> InitiateReassignment(

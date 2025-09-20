@@ -61,7 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
         services.AddScoped<StudentBackgroundJobs>();
         services.AddScoped<IHangfireService, HangfireService>();
-        services.AddScoped<CompletionStatusService>();
+        services.AddScoped<OrderStatusMaintenanceService>();
 
         services.AddScoped<IReassignmentService, ReassignmentService>();
 
