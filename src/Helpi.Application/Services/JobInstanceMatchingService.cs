@@ -425,7 +425,8 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
                 Reason = reason,
                 AttemptCount = reassignmentRecord.AttemptCount,
                 ReassignmentRecordId = reassignmentRecord.Id
-            })
+            }),
+            SeniorId = reassignmentRecord.Order.SeniorId,
         };
 
         await _notificationService.StoreAndNotifyAsync(notification);

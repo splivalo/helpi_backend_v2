@@ -1,3 +1,4 @@
+using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -12,6 +13,11 @@ public class HNotificationDto
     public DateTime CreatedAt { get; set; }
     public bool IsRead { get; set; }
     public string? Payload { get; set; }
+
+    public int? StudentId { get; set; }
+    public StudentDto? Student { get; set; }
+    public int? SeniorId { get; set; }
+    public SeniorDto? Senior { get; set; }
 }
 
 public class CreateHNotificationDto

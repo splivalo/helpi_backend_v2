@@ -16,13 +16,18 @@ public class HNotificationRepository : IHNotificationRepository
 
     public async Task<HNotification?> GetByIdAsync(int id)
     {
-        return await _context.HNotifications.FindAsync(id);
+        return await _context.HNotifications
+                    .Include(n => n.Senior).ThenInclude(s => s.Contact)
+            .Include(n => n.Student).ThenInclude(st => st.Contact)
+                    .FirstOrDefaultAsync(n => n.Id == id);
     }
 
     public async Task<IEnumerable<HNotification>> GetByUserIdAsync(int userId)
     {
         return await _context.HNotifications
             .Where(n => n.RecieverUserId == userId)
+            .Include(n => n.Senior).ThenInclude(s => s.Contact)
+            .Include(n => n.Student).ThenInclude(st => st.Contact)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
     }
@@ -31,6 +36,8 @@ public class HNotificationRepository : IHNotificationRepository
     {
         return await _context.HNotifications
             .Where(n => n.RecieverUserId == userId && !n.IsRead)
+                     .Include(n => n.Senior).ThenInclude(s => s.Contact)
+            .Include(n => n.Student).ThenInclude(st => st.Contact)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
     }
@@ -89,6 +96,8 @@ public class HNotificationRepository : IHNotificationRepository
     {
         return await _context.HNotifications
             .Where(n => n.RecieverUserId == userId)
+                    .Include(n => n.Senior)
+                    .Include(n => n.Student)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

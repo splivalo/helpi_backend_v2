@@ -510,7 +510,8 @@ public class MatchingService : IMatchingService
                 Order = order.Id,
                 Schedule = schedule.Id,
                 ReassignmentRecordId = reassignment?.Id,
-            })
+            }),
+            SeniorId = order.SeniorId,
         };
 
 
@@ -554,7 +555,8 @@ public class MatchingService : IMatchingService
                 Schedule = schedule.Id,
                 ReassignmentRecordId = reassignment?.Id,
                 NotifiedStudent = notifiedStudents,
-            })
+            }),
+            SeniorId = order.SeniorId,
         };
 
         await _notificationService.StoreAndNotifyAsync(notification);

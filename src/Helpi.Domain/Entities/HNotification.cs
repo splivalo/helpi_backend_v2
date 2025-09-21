@@ -1,7 +1,9 @@
 
+using System.ComponentModel.DataAnnotations.Schema;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities;
+
 public class HNotification
 {
     public int Id { get; set; }
@@ -12,4 +14,12 @@ public class HNotification
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsRead { get; set; }
     public string? Payload { get; set; } // JSON data
+
+    [ForeignKey(nameof(Student))]
+    public int? StudentId { get; set; }
+    public Student? Student { get; set; }
+
+    [ForeignKey(nameof(Senior))]
+    public int? SeniorId { get; set; }
+    public Senior? Senior { get; set; }
 }
