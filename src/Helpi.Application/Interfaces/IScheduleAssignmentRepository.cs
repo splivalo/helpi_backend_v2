@@ -19,4 +19,6 @@ public interface IScheduleAssignmentRepository
     Task<bool> IsScheduleCompleted(int scheduleId);
     Task<List<ScheduleAssignment>> GetActiveAssignmentsByStudentId(int studentId);
 
+    Task<bool> HasActiveAssignmentsForServicesAsync(int studentId, List<int> serviceIds);
+
 }

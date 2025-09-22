@@ -16,6 +16,8 @@ namespace Helpi.Domain.Entities
         public int ContactId { get; set; }
         public StudentStatus Status { get; set; } = StudentStatus.UnVerified;
 
+        public int? DaysToContractExpire { get; set; }
+
         public DateTime? DeletedOn { get; set; }
 
         public DateOnly? BackgroundCheckDate { get; set; }

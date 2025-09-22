@@ -15,16 +15,19 @@ public class StudentServiceService
         private readonly IMapper _mapper;
 
         private readonly IEventMediator _mediator;
+        private readonly IScheduleAssignmentRepository _assignmentRepository;
 
         private readonly ILogger<StudentServiceService> _logger;
         public StudentServiceService(
                         IStudentServiceRepository repository,
+                       IScheduleAssignmentRepository assignmentRepository,
                         IMapper mapper,
                         IEventMediator mediator,
                         ILogger<StudentServiceService> logger
         )
         {
                 _repository = repository;
+                _assignmentRepository = assignmentRepository;
                 _mapper = mapper;
                 _mediator = mediator;
                 _logger = logger;
@@ -60,11 +63,23 @@ public class StudentServiceService
 
         public async Task RemoveServiceFromStudentAsync(int studentId, int serviceId)
         {
+                var isInUse = await _assignmentRepository.HasActiveAssignmentsForServicesAsync(studentId, new List<int> { serviceId });
+
+                if (isInUse)
+                { throw new InvalidOperationException("Cannot remove service used by active assignments."); }
+
                 await _repository.DeleteAsync(studentId, serviceId);
         }
 
         public async Task RemoveServicesFromStudentAsync(int studentId, List<int> serviceIds)
         {
+                var isInUse = await _assignmentRepository.HasActiveAssignmentsForServicesAsync(studentId, serviceIds);
+
+                if (isInUse)
+                {
+                        throw new InvalidOperationException("Cannot remove services used by active assignments.");
+                }
+
                 await _repository.DeleteRangeAsync(studentId, serviceIds);
         }
 

@@ -201,5 +201,16 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                                 .ToListAsync();
         }
 
+        public async Task<bool> HasActiveAssignmentsForServicesAsync(int studentId, List<int> serviceIds)
+        {
+                return await _context.ScheduleAssignments
+                    .Where(sa => sa.StudentId == studentId &&
+                                 sa.Status != AssignmentStatus.Completed &&
+                                 sa.Status != AssignmentStatus.Terminated &&
+                                 sa.Status != AssignmentStatus.Declined)
+                    .SelectMany(sa => sa.OrderSchedule.Order.OrderServices)
+                    .AnyAsync(os => serviceIds.Contains(os.ServiceId));
+        }
+
 }
 

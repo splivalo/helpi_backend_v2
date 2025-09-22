@@ -76,6 +76,8 @@ IEventMediator mediator,
 
         var activeContract = student.ActiveContract;
 
+
+
         if (activeContract == null)
         {
             _logger.LogWarning("No active contract found for student {StudentId}", student.UserId);
@@ -83,6 +85,9 @@ IEventMediator mediator,
             await HandleStudentWithoutActiveContract(student);
             return;
         }
+
+        UpdateDaysToContractExpire(student, activeContract);
+        await _studentRepo.UpdateAsync(student);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var daysUntilExpiry = activeContract.ExpirationDate.DayNumber - today.DayNumber;
@@ -136,6 +141,9 @@ IEventMediator mediator,
             .OrderByDescending(c => c.ExpirationDate)
             .FirstOrDefault();
 
+        UpdateDaysToContractExpire(student, lastContract);
+        await _studentRepo.UpdateAsync(student);
+
         if (lastContract != null)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -146,6 +154,13 @@ IEventMediator mediator,
         else
         {
             _logger.LogWarning("Student {StudentId} has no contracts at all", student.UserId);
+
+            if (student.Status != StudentStatus.UnVerified)
+            {
+                student.Status = StudentStatus.UnVerified;
+                await _studentRepo.UpdateAsync(student);
+            }
+
         }
     }
 
@@ -162,9 +177,11 @@ IEventMediator mediator,
         if (student.Status == StudentStatus.Verified)
         {
             student.Status = StudentStatus.UnVerified;
-            await _studentRepo.UpdateAsync(student);
             await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
         }
+
+
+        await _studentRepo.UpdateAsync(student);
 
 
         // Reassign jobs immediately when contract expires
@@ -173,6 +190,7 @@ IEventMediator mediator,
             try
             {
                 await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+                await SendContractENotification(student, contract);
             }
             catch
             {
@@ -228,7 +246,7 @@ IEventMediator mediator,
                 RecieverUserId = student.UserId,
                 Title = "Renew contract",
                 Body = "Contract needs to be renewed",
-                Type = NotificationType.ContractRenewalRequired,
+                Type = NotificationType.ContractAboutToExpire,
                 Payload = JsonSerializer.Serialize(new
                 {
                     RecieverUserId = student.UserId,
@@ -272,6 +290,66 @@ IEventMediator mediator,
         {
             _logger.LogError(ex, "❌ Failed to send final warning email to student {StudentId}", student.UserId);
         }
+    }
+
+    private async Task SendContractENotification(Student student, StudentContract contract)
+    {
+        _logger.LogInformation("🔔 Sending contract expired notification to student {StudentId}", student.UserId);
+
+        try
+        {
+
+            student.Status = StudentStatus.ContractRenewalNeeded;
+            await _studentRepo.UpdateAsync(student);
+
+            var notification = new HNotification
+            {
+                RecieverUserId = student.UserId,
+                Title = "Contract Expired",
+                Body = "Contract needs to be renewed",
+                Type = NotificationType.ContractAboutToExpire,
+                Payload = JsonSerializer.Serialize(new
+                {
+                    RecieverUserId = student.UserId,
+                    ContractId = contract.Id,
+                })
+            };
+
+            await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+
+            _logger.LogInformation("✅ Contract expired {StudentId}", student.UserId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to send contract expired notification to student {StudentId}", student.UserId);
+        }
+    }
+
+
+
+    private void UpdateDaysToContractExpire(Student student, StudentContract? contract)
+    {
+
+        if (contract == null)
+        {
+            student.DaysToContractExpire = null;
+            return;
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // If already expired, set 0
+        // if (today > contract.ExpirationDate)
+        // {
+        //     student.DaysToContractExpire = 0;
+        //     return;
+        // }
+
+        // Otherwise, calculate remaining days
+        student.DaysToContractExpire = contract.ExpirationDate.DayNumber - today.DayNumber;
+
+
+
     }
 
 

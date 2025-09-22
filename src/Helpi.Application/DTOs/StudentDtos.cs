@@ -11,6 +11,8 @@ public class StudentDto
     public int FacultyId { get; set; }
     public DateTime DateRegistered { get; set; }
     public StudentStatus Status { get; set; }
+
+    public int? DaysToContractExpire { get; set; }
     public int TotalReviews { get; set; } = 0;
     public decimal TotalRatingSum { get; set; } = 0.00m;
     public decimal AverageRating { get; set; } = 0.00m;

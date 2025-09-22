@@ -45,14 +45,28 @@ public class StudentServicesController : ControllerBase
         [HttpDelete("bulk-remove/student/{studentId}")]
         public async Task<IActionResult> RemoveRange(int studentId, List<int> serviceIds)
         {
-                await _service.RemoveServicesFromStudentAsync(studentId, serviceIds);
-                return NoContent();
+                try
+                {
+                        await _service.RemoveServicesFromStudentAsync(studentId, serviceIds);
+                        return NoContent();
+                }
+                catch (InvalidOperationException ex)
+                {
+                        return BadRequest(new { error = ex.Message, code = "SERVICE_IN_USE" });
+                }
         }
 
         [HttpDelete("student/{studentId}/service/{serviceId}")]
         public async Task<IActionResult> Remove(int studentId, int serviceId)
         {
-                await _service.RemoveServiceFromStudentAsync(studentId, serviceId);
-                return NoContent();
+                try
+                {
+                        await _service.RemoveServiceFromStudentAsync(studentId, serviceId);
+                        return NoContent();
+                }
+                catch (InvalidOperationException ex)
+                {
+                        return BadRequest(new { error = ex.Message, code = "SERVICE_IN_USE" });
+                }
         }
 }
