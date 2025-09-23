@@ -46,7 +46,7 @@ namespace Helpi.Domain.Entities
         public decimal ServiceProviderAmount => TotalAmount * (ServiceProviderPercentage / 100);
 
 
-        public ScheduleAssignment Assignment { get; set; } = null!;
+        public ScheduleAssignment ScheduleAssignment { get; set; } = null!;
         public ScheduleAssignment? PrevAssignment { get; set; }
         public PaymentTransaction? PaymentTransaction { get; set; }
 

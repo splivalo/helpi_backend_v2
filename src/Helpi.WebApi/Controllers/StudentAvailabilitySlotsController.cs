@@ -1,6 +1,7 @@
 
 using Helpi.Application.DTOs;
 using Helpi.Application.Services;
+using Helpi.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,37 +63,113 @@ public class StudentAvailabilitySlotsController : ControllerBase
         [HttpPut("bulk")]
         public async Task<ActionResult<List<StudentAvailabilitySlotDto>>> UpdateRange(List<StudentAvailabilitySlotCreateDto> dtos)
         {
-                if (dtos == null || dtos.Count == 0)
+                try
                 {
-                        return BadRequest("No slots provided.");
-                }
+                        if (dtos == null || dtos.Count == 0)
+                        {
+                                return BadRequest("No slots provided.");
+                        }
 
-                var slots = await _service.UpdateSlotsAsync(dtos);
-                return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, slots);
+                        var slots = await _service.UpdateSlotsAsync(dtos);
+                        return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, slots);
+                }
+                catch (ActiveAssignmentException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "ACTIVE_ASSIGNMENTS_EXIST",
+                                Message = ex.Message,
+                        });
+                }
+                catch (Exception)
+                {
+                        return StatusCode(500, new
+                        {
+                                Code = "INTERNAL_SERVER_ERROR",
+                                Message = "An unexpected error occurred."
+                        });
+                }
         }
         [HttpDelete("bulk")]
         public async Task<IActionResult> DeleteRange(List<StudentAvailabilitySlotCreateDto> dtos)
         {
-                if (dtos == null || dtos.Count == 0)
+                try
                 {
-                        return BadRequest("No slots provided.");
-                }
+                        if (dtos == null || dtos.Count == 0)
+                        {
+                                return BadRequest("No slots provided.");
+                        }
 
-                await _service.DeleteSlotsAsync(dtos);
-                return NoContent();
+                        await _service.DeleteSlotsAsync(dtos);
+                        return NoContent();
+                }
+                catch (ActiveAssignmentException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "ACTIVE_ASSIGNMENTS_EXIST",
+                                Message = ex.Message,
+                        });
+                }
+                catch (Exception)
+                {
+                        return StatusCode(500, new
+                        {
+                                Code = "INTERNAL_SERVER_ERROR",
+                                Message = "An unexpected error occurred."
+                        });
+                }
         }
 
         [HttpPut("{studentId}/{dayOfWeek}")]
         public async Task<ActionResult<StudentAvailabilitySlotDto>> Update(int studentId, byte dayOfWeek, [FromBody] StudentAvailabilitySlotUpdateDto dto)
         {
-                var updatedSlot = await _service.UpdateSlotAsync(studentId, dayOfWeek, dto);
-                return Ok(updatedSlot);
+                try
+                {
+                        var updatedSlot = await _service.UpdateSlotAsync(studentId, dayOfWeek, dto);
+                        return Ok(updatedSlot);
+                }
+                catch (ActiveAssignmentException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "ACTIVE_ASSIGNMENTS_EXIST",
+                                Message = ex.Message,
+                        });
+                }
+                catch (Exception)
+                {
+                        return StatusCode(500, new
+                        {
+                                Code = "INTERNAL_SERVER_ERROR",
+                                Message = "An unexpected error occurred."
+                        });
+                }
         }
 
         [HttpDelete("{studentId}/{dayOfWeek}")]
         public async Task<IActionResult> Delete(int studentId, byte dayOfWeek)
         {
-                await _service.DeleteSlotAsync(studentId, dayOfWeek);
-                return NoContent(); // 204 No Content
+                try
+                {
+                        await _service.DeleteSlotAsync(studentId, dayOfWeek);
+                        return NoContent(); // 204 No Content
+                }
+                catch (ActiveAssignmentException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "ACTIVE_ASSIGNMENTS_EXIST",
+                                Message = ex.Message,
+                        });
+                }
+                catch (Exception)
+                {
+                        return StatusCode(500, new
+                        {
+                                Code = "INTERNAL_SERVER_ERROR",
+                                Message = "An unexpected error occurred."
+                        });
+                }
         }
 }

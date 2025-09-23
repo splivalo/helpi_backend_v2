@@ -21,4 +21,6 @@ public interface IScheduleAssignmentRepository
 
     Task<bool> HasActiveAssignmentsForServicesAsync(int studentId, List<int> serviceIds);
 
+    Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos);
+
 }

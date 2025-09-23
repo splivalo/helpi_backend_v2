@@ -10,11 +10,13 @@ public class JobRequestDto
     public int Id { get; set; }
 
     public int OrderScheduleId { get; set; }
+    public int? JobInstanceId { get; set; }
 
     public int OrderId { get; set; }
     public int SeniorId { get; set; }
     public int StudentId { get; set; }
     public JobRequestStatus Status { get; set; }
+    public JobInstanceDto? JobInstance { get; set; }
     public DateTime SentAt { get; set; }
     public DateTime ExpiresAt { get; set; }
 

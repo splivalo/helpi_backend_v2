@@ -25,10 +25,11 @@ public class PaymentProfileRepository : IPaymentProfileRepository
         return await _context.PaymentProfiles.FindAsync(id);
     }
 
-    public async Task AddAsync(PaymentProfile paymentProfile)
+    public async Task<PaymentProfile?> AddAsync(PaymentProfile paymentProfile)
     {
         await _context.PaymentProfiles.AddAsync(paymentProfile);
         await _context.SaveChangesAsync();
+        return paymentProfile;
     }
 
     public async Task UpdateAsync(PaymentProfile paymentProfile)

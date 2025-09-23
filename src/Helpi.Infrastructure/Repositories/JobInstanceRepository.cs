@@ -19,7 +19,7 @@ public class JobInstanceRepository : IJobInstanceRepository
         {
                 return await _context.JobInstances
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .SingleAsync(ji => ji.Id == id);
         }
 
@@ -28,7 +28,7 @@ public class JobInstanceRepository : IJobInstanceRepository
              .Where(j => j.NeedsSubstitute == false)
                 .Where(ji => ji.ScheduleAssignmentId == assignmentId)
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
@@ -37,9 +37,9 @@ public class JobInstanceRepository : IJobInstanceRepository
         {
                 return await _context.JobInstances
                  .Where(j => j.NeedsSubstitute == false)
-                     .Where(j => j.Assignment.StudentId == studentId)
+                     .Where(j => j.ScheduleAssignment.StudentId == studentId)
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                     .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                     .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                      .AsNoTracking()
                      .OrderByDescending(j => j.ScheduledDate)
                      .ToListAsync();
@@ -50,7 +50,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await _context.JobInstances
                     .AsNoTracking()
                     .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                    .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                    .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                     .OrderByDescending(j => j.ScheduledDate)
                     .ToListAsync();
 
@@ -63,7 +63,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                     ji.StartTime <= TimeOnly.FromDateTime(cutoff))
                 .AsNoTracking()
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
@@ -104,7 +104,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .AsNoTracking()
                            .Where(j => j.SeniorId == seniorId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                            .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
@@ -113,9 +113,9 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await _context.JobInstances
                            .AsNoTracking()
                             .Where(j => j.NeedsSubstitute == false)
-                           .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Completed)
+                           .Where(j => j.ScheduleAssignment.StudentId == studentId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                            .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
@@ -124,9 +124,9 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await _context.JobInstances
                            .AsNoTracking()
                            .Where(j => j.NeedsSubstitute == false)
-                           .Where(j => j.Assignment.StudentId == studentId && j.Status == JobInstanceStatus.Upcoming)
+                           .Where(j => j.ScheduleAssignment.StudentId == studentId && j.Status == JobInstanceStatus.Upcoming)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
-                           .Include(j => j.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                            .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
@@ -204,12 +204,12 @@ public class JobInstanceRepository : IJobInstanceRepository
                 if (includes.Assignment)
                 {
                         query = query
-                            .Include(ji => ji.Assignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact);
+                            .Include(ji => ji.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact);
 
                         if (includes.AssignmentOrderSchedule)
                         {
                                 query = query
-                             .Include(ji => ji.Assignment).ThenInclude(a => a.OrderSchedule);
+                             .Include(ji => ji.ScheduleAssignment).ThenInclude(a => a.OrderSchedule);
                         }
 
                 }
@@ -236,7 +236,7 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 if (assignmentId.HasValue)
                 {
-                        query = query.Where(j => j.Assignment.Id == assignmentId.Value);
+                        query = query.Where(j => j.ScheduleAssignment.Id == assignmentId.Value);
                 }
 
                 if (status.HasValue)
@@ -252,11 +252,11 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 if (options.Assignment)
                 {
-                        query = query.Include(j => j.Assignment);
+                        query = query.Include(j => j.ScheduleAssignment);
 
                         if (options.AssignmentStudent)
                         {
-                                query = query.Include(j => j.Assignment)
+                                query = query.Include(j => j.ScheduleAssignment)
                                              .ThenInclude(a => a.Student)
                                              .ThenInclude(s => s.Contact);
                         }

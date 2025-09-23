@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Events;
+using Helpi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 
@@ -66,7 +67,7 @@ public class StudentServiceService
                 var isInUse = await _assignmentRepository.HasActiveAssignmentsForServicesAsync(studentId, new List<int> { serviceId });
 
                 if (isInUse)
-                { throw new InvalidOperationException("Cannot remove service used by active assignments."); }
+                { throw new ActiveAssignmentException("Cannot remove service used by active assignments."); }
 
                 await _repository.DeleteAsync(studentId, serviceId);
         }
@@ -77,7 +78,7 @@ public class StudentServiceService
 
                 if (isInUse)
                 {
-                        throw new InvalidOperationException("Cannot remove services used by active assignments.");
+                        throw new ActiveAssignmentException("Cannot remove services used by active assignments.");
                 }
 
                 await _repository.DeleteRangeAsync(studentId, serviceIds);

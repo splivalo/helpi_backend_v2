@@ -1,7 +1,9 @@
 namespace Helpi.Infrastructure.Repositories;
 
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,4 +88,7 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
 
                 _context.StudentAvailabilitySlots.RemoveRange(availabilitySlots);
         }
+
+
+
 }

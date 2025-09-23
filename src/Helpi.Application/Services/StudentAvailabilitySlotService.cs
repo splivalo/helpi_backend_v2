@@ -5,6 +5,7 @@ using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Events;
+using Helpi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -15,6 +16,7 @@ public class StudentAvailabilitySlotService
         private readonly IMapper _mapper;
 
         private readonly IEventMediator _mediator;
+        private readonly IScheduleAssignmentRepository _assignmentRepo;
 
         private readonly ILogger<StudentAvailabilitySlotService> _logger;
 
@@ -22,9 +24,12 @@ public class StudentAvailabilitySlotService
                 IStudentAvailabilitySlotRepository repository,
 IEventMediator mediator,
         IMapper mapper,
-        ILogger<StudentAvailabilitySlotService> logger)
+        ILogger<StudentAvailabilitySlotService> logger,
+         IScheduleAssignmentRepository assignmentRepo
+         )
         {
                 _repository = repository;
+                _assignmentRepo = assignmentRepo;
                 _mapper = mapper;
                 _mediator = mediator;
                 _logger = logger;
@@ -73,6 +78,21 @@ IEventMediator mediator,
 
         public async Task<StudentAvailabilitySlotDto> UpdateSlotAsync(int studentId, byte dayOfWeek, StudentAvailabilitySlotUpdateDto dto)
         {
+
+                var slotDtos = new List<StudentAvailabilitySlotCreateDto>
+                                {
+                                        new StudentAvailabilitySlotCreateDto  {  StudentId = studentId,
+                                                 DayOfWeek = dayOfWeek
+                                                  }
+                                };
+
+                if (await _assignmentRepo.HasActiveAssignmentsForSlotsAsync(studentId, slotDtos))
+                {
+                        throw new ActiveAssignmentException("Cannot modify slot with active assignments");
+                }
+
+
+
                 var slot = await _repository.GetByIdAsync(studentId, dayOfWeek);
                 if (slot == null)
                 {
@@ -90,6 +110,18 @@ IEventMediator mediator,
 
         public async Task DeleteSlotAsync(int studentId, byte dayOfWeek)
         {
+                var slotDtos = new List<StudentAvailabilitySlotCreateDto>
+                                {
+                                        new StudentAvailabilitySlotCreateDto  {  StudentId = studentId,
+                                                 DayOfWeek = dayOfWeek
+                                                  }
+                                };
+
+                if (await _assignmentRepo.HasActiveAssignmentsForSlotsAsync(studentId, slotDtos))
+                {
+                        throw new ActiveAssignmentException("Cannot modify slot with active assignments");
+                }
+
                 var slot = await _repository.GetByIdAsync(studentId, dayOfWeek);
                 if (slot == null)
                 {
@@ -101,6 +133,16 @@ IEventMediator mediator,
 
         public async Task<List<StudentAvailabilitySlotDto>> UpdateSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
         {
+
+                if (dtos == null || dtos.Count == 0)
+                        throw new ArgumentException("No slots provided.");
+
+                var studentId = dtos.First().StudentId;
+
+                if (await _assignmentRepo.HasActiveAssignmentsForSlotsAsync(studentId, dtos))
+                        throw new ActiveAssignmentException("Cannot modify slots with active assignments");
+
+
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.UpdateRangeAsync(slots);
 
@@ -110,6 +152,14 @@ IEventMediator mediator,
         }
         public async Task<List<StudentAvailabilitySlotDto>> DeleteSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
         {
+                if (dtos == null || dtos.Count == 0)
+                        throw new ArgumentException("No slots provided.");
+
+                var studentId = dtos.First().StudentId;
+
+                if (await _assignmentRepo.HasActiveAssignmentsForSlotsAsync(studentId, dtos))
+                        throw new ActiveAssignmentException("Cannot delete slots with active assignments");
+
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.DeleteRangeAsync(slots);
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();

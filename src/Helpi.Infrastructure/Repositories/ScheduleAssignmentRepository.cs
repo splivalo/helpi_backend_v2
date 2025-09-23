@@ -205,11 +205,21 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
         {
                 return await _context.ScheduleAssignments
                     .Where(sa => sa.StudentId == studentId &&
-                                 sa.Status != AssignmentStatus.Completed &&
-                                 sa.Status != AssignmentStatus.Terminated &&
-                                 sa.Status != AssignmentStatus.Declined)
+                                 sa.Status == AssignmentStatus.Accepted)
                     .SelectMany(sa => sa.OrderSchedule.Order.OrderServices)
                     .AnyAsync(os => serviceIds.Contains(os.ServiceId));
+        }
+
+        public async Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos)
+        {
+                if (dtos == null || dtos.Count == 0) return false;
+
+                var daysOfWeek = dtos.Select(d => d.DayOfWeek).Distinct();
+
+                return await _context.ScheduleAssignments
+                    .AnyAsync(sa => sa.StudentId == studentId &&
+                                   daysOfWeek.Contains(sa.OrderSchedule.DayOfWeek) &&
+                                   sa.Status == AssignmentStatus.Accepted);
         }
 
 }

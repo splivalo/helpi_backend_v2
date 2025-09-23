@@ -295,6 +295,7 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             var jobRequest = new JobRequest
             {
                 OrderScheduleId = jobInstance.OrderScheduleId,
+                JobInstanceId = jobInstance.Id,
                 OrderId = jobInstance.OrderId,
                 SeniorId = jobInstance.SeniorId,
                 StudentId = student.UserId,

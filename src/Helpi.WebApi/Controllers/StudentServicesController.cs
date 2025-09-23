@@ -1,5 +1,6 @@
 
 using Helpi.Application.DTOs;
+using Helpi.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,7 +51,7 @@ public class StudentServicesController : ControllerBase
                         await _service.RemoveServicesFromStudentAsync(studentId, serviceIds);
                         return NoContent();
                 }
-                catch (InvalidOperationException ex)
+                catch (ActiveAssignmentException ex)
                 {
                         return BadRequest(new { error = ex.Message, code = "SERVICE_IN_USE" });
                 }
@@ -64,7 +65,7 @@ public class StudentServicesController : ControllerBase
                         await _service.RemoveServiceFromStudentAsync(studentId, serviceId);
                         return NoContent();
                 }
-                catch (InvalidOperationException ex)
+                catch (ActiveAssignmentException ex)
                 {
                         return BadRequest(new { error = ex.Message, code = "SERVICE_IN_USE" });
                 }

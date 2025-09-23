@@ -91,9 +91,9 @@ namespace Helpi.Application.Services
                 if (jobInstance == null)
                     throw new ArgumentException($"Job instance {jobInstanceId} not found");
 
-                orderSchedule = jobInstance.Assignment.OrderSchedule;
+                orderSchedule = jobInstance.ScheduleAssignment.OrderSchedule;
                 order = jobInstance.Order;
-                originalStudentId = jobInstance.Assignment.StudentId;
+                originalStudentId = jobInstance.ScheduleAssignment.StudentId;
                 currentAssignmentId = jobInstance.ScheduleAssignmentId;
             }
             else

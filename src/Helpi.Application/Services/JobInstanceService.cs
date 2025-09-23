@@ -89,7 +89,7 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.InProgress) return;
 
 
-                var assignedStudentId = instance.Assignment.StudentId;
+                var assignedStudentId = instance.ScheduleAssignment.StudentId;
                 await _notificationService.SendJobStartedNotificationAsync(assignedStudentId, instance);
 
                 var customerId = instance.Senior.CustomerId;
@@ -149,7 +149,7 @@ public class JobInstanceService : IJobInstanceService
                         }
 
                         // Notifications
-                        await _notificationService.SendJobCompletedNotificationAsync(instance.Assignment.Id, instance);
+                        await _notificationService.SendJobCompletedNotificationAsync(instance.ScheduleAssignment.Id, instance);
 
                         await _notificationService.SendJobCompletedNotificationAsync(instance.Senior.CustomerId, instance);
 
@@ -195,8 +195,8 @@ public class JobInstanceService : IJobInstanceService
                                 JobInstanceId = jobInstanceId,
                                 SeniorId = instance.SeniorId,
                                 SeniorFullName = instance.Senior.Contact.FullName,
-                                StudentId = instance.Assignment.StudentId,
-                                StudentFullName = instance.Assignment.Student.Contact.FullName,
+                                StudentId = instance.ScheduleAssignment.StudentId,
+                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
                         })
                 };
 

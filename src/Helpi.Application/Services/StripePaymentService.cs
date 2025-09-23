@@ -256,7 +256,7 @@ namespace Helpi.Application.Services
                 var paymentProfilefile = _mapper.Map<PaymentProfile>(createPaymentProfile);
 
 
-                await _paymentProfileRepository.AddAsync(paymentProfilefile);
+                stripePaymentProfile = await _paymentProfileRepository.AddAsync(paymentProfilefile);
             }
 
             // Create a SetupIntent to securely collect payment details

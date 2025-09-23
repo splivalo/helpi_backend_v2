@@ -7,6 +7,7 @@ namespace Helpi.Domain.Entities
     {
         public int Id { get; set; }
         public int OrderScheduleId { get; set; }
+        public int? JobInstanceId { get; set; }
         public int StudentId { get; set; }
         public int SeniorId { get; set; }
         public int OrderId { get; set; }
@@ -18,6 +19,7 @@ namespace Helpi.Domain.Entities
         public byte PriorityLevel { get; set; } = 1;
 
         public OrderSchedule OrderSchedule { get; set; } = null!;
+        public JobInstance? JobInstance { get; set; }
         public Student Student { get; set; } = null!;
         public Senior Senior { get; set; } = null!;
         public Order Order { get; set; } = null!;
@@ -30,3 +32,6 @@ namespace Helpi.Domain.Entities
         public int? ReassignJobInstanceId { get; set; }
     }
 }
+
+/// TODO: SHOULD CANCEL JOBREQUESTS FOR ORDERS THAT ARE PAST DATE AND NOT ACCEPTED
+/// TODO: IF A REQUEST IS ACCEPTED ON DAY OF ORDER , SCHULES STATUS UPDATES

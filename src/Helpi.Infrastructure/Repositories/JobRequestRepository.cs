@@ -26,6 +26,7 @@ public class JobRequestRepository : IJobRequestRepository
                 .Include(jr => jr.OrderSchedule).ThenInclude(os => os.Order)
                 .Include(jr => jr.Student)
                 .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.JobInstance)
                 .Include(jr => jr.Order)
                 .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                 .AsNoTracking()
@@ -117,6 +118,7 @@ public class JobRequestRepository : IJobRequestRepository
                 .Where(jr => jr.StudentId == studentId)
                 .Where(jr => jr.Status == JobRequestStatus.Pending)
                 .Include(jr => jr.OrderSchedule)
+                .Include(jr => jr.JobInstance)
                 .Include(jr => jr.Order)
                 .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                 .AsNoTracking()
@@ -128,6 +130,7 @@ public class JobRequestRepository : IJobRequestRepository
                 return await _context.JobRequests
                .Where(jr => jr.StudentId == studentId)
                .Include(jr => jr.OrderSchedule)
+               .Include(jr => jr.JobInstance)
                .Include(jr => jr.Order)
                .Include(jr => jr.Senior).ThenInclude(s => s.Contact)
                .AsNoTracking()

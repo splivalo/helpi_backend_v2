@@ -240,7 +240,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
         modelBuilder.Entity<JobInstance>(entity =>
         {
-            entity.HasOne(j => j.Assignment)          // JobInstance has one ScheduleAssignment
+            entity.HasOne(j => j.ScheduleAssignment)          // JobInstance has one ScheduleAssignment
               .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
               .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
 
