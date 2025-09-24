@@ -1,5 +1,8 @@
 # .NET Core
 bin/
+publish/
+**/publish/
+./publish
 obj/
 *.suo
 *.user
@@ -46,3 +49,6 @@ x86/
 *.vsp
 *.vspx
 *.sap
+
+
+credentials/

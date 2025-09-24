@@ -1,0 +1,203 @@
+@Helpi.WebApi_HostAddress = http://localhost:5142
+
+### Variables
+@baseUrl = http://localhost:5142/api
+@contentType = application/json
+
+### =============================================
+### Authentication Endpoints
+### =============================================
+
+### Register a new Student user
+# @name registerStudent
+POST {{baseUrl}}/Auth/register/student
+Content-Type: {{contentType}}
+
+{
+  "email": "student1@example.com",
+  "password": "StrongP@ssw0rd",
+  "userType": 1,
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+38599123456",
+  "gender": 1,
+  "googlePlaceId": "ChIJd8BlQ2BZwokRAFUEcm_qrcA",
+  "fullAddress": "123 Campus Dr, Zagreb",
+  "cityId": 1,
+  "latitude": 45.815399,
+  "longitude": 15.966568,
+  "city": "Zagreb",
+  "state": "City of Zagreb",
+  "postalCode": "10",
+  "country": "Hr",
+  "studentNumber": "S123456",
+  "facultyId": 1
+}
+
+### Register a new Customer user
+# @name registerCustomer
+POST {{baseUrl}}/Auth/register/customer
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "password": "SecureP@ss123",
+  "userType": 2,
+  "preferredNotificationMethod": 1,
+  "contactInfo": {
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "phone": "+38598654321",
+    "gender": 2,
+    "googlePlaceId": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "fullAddress": "456 Main St, Split",
+    "cityId": 2,
+    "latitude": 43.508133,
+    "longitude": 16.440193,
+    "city": "Split",
+    "state": "Split-Dalmatia",
+    "postalCode": "21000",
+    "country": "Hr"
+  },
+  "seniorContactInfo": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+38599123456",
+    "gender": 1,
+    "googlePlaceId": "ChIJd8BlQ2BZwokRAFUEcm_qrcA",
+    "fullAddress": "123 Campus Dr, Zagreb",
+    "cityId": 1,
+    "latitude": 45.815399,
+    "longitude": 15.966568,
+    "city": "Zagreb",
+    "state": "City of Zagreb",
+    "postalCode": "10000",
+    "country": "Hr"
+  }
+}
+
+### Login with student credentials
+# @name loginStudent
+POST {{baseUrl}}/Auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "student1@example.com",
+  "password": "StrongP@ssw0rd"
+}
+
+### Extract the student token for later use
+@studentToken = {{loginStudent.response.body.token}}
+@studentUserId = {{loginStudent.response.body.userId}}
+
+### Login with customer credentials
+# @name loginCustomer
+POST {{baseUrl}}/Auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "customer@example.com",
+  "password": "SecureP@ss123"
+}
+
+### Extract the customer token for later use
+@customerToken = {{loginCustomer.response.body.token}}
+@customerUserId = {{loginCustomer.response.body.userId}}
+
+### =============================================
+### Protected Endpoints - Student Access
+### =============================================
+
+### Access student  (using student token)
+GET {{baseUrl}}/students/{{studentUserId}}
+Authorization: Bearer {{studentToken}}
+
+### Update student profile
+PUT {{baseUrl}}/Students/profile
+Authorization: Bearer {{studentToken}}
+Content-Type: {{contentType}}
+
+{
+  "studentNumber": "S123456-updated",
+  "facultyId": 1
+  // Add other fields to update
+}
+
+### =============================================
+### Protected Endpoints - Customer Access
+### =============================================
+
+### Access customer profile (using customer token)
+GET {{baseUrl}}/Customers/profile
+Authorization: Bearer {{customerToken}}
+
+### Update customer preferences
+PUT {{baseUrl}}/Customers/preferences
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "preferredNotificationMethod": 2
+  // Add other preference fields
+}
+
+### =============================================
+### Admin Endpoints (requires admin token)
+### =============================================
+
+### Register an Admin user
+# @name registerAdmin
+POST {{baseUrl}}/Auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@123Secure",
+  "userType": 0,
+  "firstName": "Admin",
+  "lastName": "User",
+  "phone": "+38597111222",
+  "gender": 1,
+  "fullAddress": "Admin Building, Zagreb",
+  "cityId": 1,
+  "latitude": 45.815399,
+  "longitude": 15.966568,
+  "country": "Hr"
+}
+
+### Login with admin credentials
+# @name loginAdmin
+POST {{baseUrl}}/Auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@123Secure"
+}
+
+### Extract the admin token for later use
+@adminToken = {{loginAdmin.response.body.token}}
+
+### List all users (admin only)
+GET {{baseUrl}}/Admin/users
+Authorization: Bearer {{adminToken}}
+
+### =============================================
+### Error Testing
+### =============================================
+
+### Login with invalid credentials
+POST {{baseUrl}}/Auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "WrongPassword"
+}
+
+### Access protected endpoint without token
+GET {{baseUrl}}/Students/profile
+
+### Access admin endpoint with student token (should fail)
+GET {{baseUrl}}/Admin/users
+Authorization: Bearer {{studentToken}}
