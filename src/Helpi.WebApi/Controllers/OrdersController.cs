@@ -67,7 +67,8 @@ public class OrdersController : ControllerBase
         }
 
         [HttpPost("{id}/cancel")]
-        public async Task<ActionResult> CancelOrder(int id, [FromBody] OrderCancelDto cancelDto)
+        public async Task<ActionResult> CancelOrder(int id,
+         [FromBody] OrderCancelDto cancelDto)
         {
                 try
                 {

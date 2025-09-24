@@ -13,7 +13,7 @@ public class JobInstanceJobs : IJobInstanceJobs
         RecurringJob.AddOrUpdate<HangfireRecurringJobService>(
      "generate-job-instances",
      s => s.GenerateFutureJobInstances(),
-     Cron.Daily); // Runs daily to check for new instances
+     Cron.Daily(0, 30)); // Runs daily to check for new instances
 
     }
 
@@ -22,14 +22,14 @@ public class JobInstanceJobs : IJobInstanceJobs
         RecurringJob.AddOrUpdate<HangfireRecurringJobService>(
         "schedule-daily-job-instance-status",
         s => s.ScheduleDailyJobInstanceStatusUpdates(),
-        Cron.Daily);
+        Cron.Daily(1, 0));
     }
     public void ScheduleDailyJobInstancePayments()
     {
         RecurringJob.AddOrUpdate<HangfireRecurringJobService>(
         "schedule-daily-job-intsance-payments",
         s => s.ScheduleDailyJobInstancePayments(),
-        Cron.Daily);
+        Cron.Daily(1, 30));
     }
 
 }
