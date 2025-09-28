@@ -433,6 +433,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<string>("HangFireEndStatusJobId")
                         .HasColumnType("text");
 
+                    b.Property<string>("HangFireMatchingJobId")
+                        .HasColumnType("text");
+
                     b.Property<string>("HangFirePaymentJobId")
                         .HasColumnType("text");
 

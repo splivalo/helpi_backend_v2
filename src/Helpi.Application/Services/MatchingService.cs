@@ -58,6 +58,8 @@ public class MatchingService : IMatchingService
         _logger = logger;
     }
 
+
+
     public void StartMatching(int orderId)
     {
         ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
@@ -92,6 +94,14 @@ public class MatchingService : IMatchingService
             _logger.LogError(ex, "❌ Failed to initiate matching process for order {OrderId}", orderId);
             throw new MatchingException($"Failed to initiate matching process for order {orderId}", ex);
         }
+    }
+
+
+    private void ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
+    {
+        _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(orderId, executionTime);
+        _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
+            orderId, executionTime);
     }
 
     private async Task<ICollection<OrderSchedule>> UnassignedSchedulesAsync(ICollection<OrderSchedule> schedules)
@@ -429,12 +439,6 @@ public class MatchingService : IMatchingService
         }
     }
 
-    private void ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
-    {
-        _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(orderId, executionTime);
-        _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
-            orderId, executionTime);
-    }
 
     private async Task IncrementMatchingAttemptCount(OrderSchedule schedule, ReassignmentRecord? reassignmentRecord)
     {
