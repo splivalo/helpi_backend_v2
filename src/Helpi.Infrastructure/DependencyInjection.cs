@@ -162,8 +162,6 @@ public static class DependencyInjection
 
         services.AddTransient<RoleSeeder>();
         services.AddTransient<ContractNumberSequenceSeeder>();
-        // TODO: seeders 
-        // services.AddTransient<CitySeeder>();
         services.AddTransient<ServiceDataSeeder>();
 
         return services;

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Helpi.Infrastructure.Repositories;
 
-/// TODO: concider disposing transaction after use
+
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;

@@ -223,6 +223,7 @@ public class JobRequestRepository : IJobRequestRepository
 
                 await DeclineOtherRequests(jobRequest.OrderScheduleId, jobRequest.Id);
 
+                await DeclineConflictingRequests(jobRequest.OrderScheduleId, jobRequest.Id, jobRequest.StudentId);
 
                 return jobRequest;
         }
@@ -292,6 +293,46 @@ public class JobRequestRepository : IJobRequestRepository
                 foreach (var request in otherRequests)
                 {
                         request.Status = JobRequestStatus.AssignedToOther;
+                        request.RespondedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+        }
+
+        // Repository method to get conflicting pending job requests
+        public async Task<List<JobRequest>> GetStudentConflictingPendingRequests(int orderScheduleId, int studentId)
+        {
+                var targetSchedule = await _context.OrderSchedules
+                        .AsNoTracking()
+                    .FirstOrDefaultAsync(os => os.Id == orderScheduleId);
+
+                if (targetSchedule == null)
+                        return new List<JobRequest>();
+
+                return await _context.JobRequests
+                    .Include(jr => jr.OrderSchedule)
+                    .Where(jr => jr.Status == JobRequestStatus.Pending
+                        && jr.StudentId != studentId
+                        && jr.OrderSchedule.Id != orderScheduleId
+                        && jr.OrderSchedule.DayOfWeek == targetSchedule.DayOfWeek
+                        && jr.OrderSchedule.StartTime < targetSchedule.EndTime
+                        && jr.OrderSchedule.EndTime > targetSchedule.StartTime)
+                    .ToListAsync();
+        }
+
+        //  method to decline conflicting requests
+        private async Task DeclineConflictingRequests(int orderScheduleId, int acceptedRequestId, int studentId)
+        {
+                var conflictingRequests = await GetStudentConflictingPendingRequests(orderScheduleId, studentId);
+
+                // Also exclude the accepted request from being cancelled
+                conflictingRequests = conflictingRequests
+                    .Where(jr => jr.Id != acceptedRequestId)
+                    .ToList();
+
+                foreach (var request in conflictingRequests)
+                {
+                        request.Status = JobRequestStatus.Cancelled;
                         request.RespondedAt = DateTime.UtcNow;
                 }
 

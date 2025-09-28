@@ -66,7 +66,8 @@ namespace Helpi.Domain.Enums
         Pending,
         Accepted,
         Declined,
-        AssignedToOther
+        AssignedToOther,
+        Cancelled
     }
 
     public enum ReassignmentTrigger
