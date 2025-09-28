@@ -18,6 +18,7 @@ public class JobInstanceService : IJobInstanceService
         private readonly INotificationService _notificationService;
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly IReassignmentService _reassignmentService;
+        private readonly IReviewRepository _reviewRepo;
         private readonly IScheduleAssignmentRepository _assignmentRepository;
 
         private readonly IHangfireService _hangfireService;
@@ -29,6 +30,7 @@ public class JobInstanceService : IJobInstanceService
                  OrderStatusMaintenanceService statusMaintenanceService,
                   IHangfireService hangfireService,
                   IReassignmentService reassignmentService,
+                  IReviewRepository reviewRepo,
                   IScheduleAssignmentRepository assignmentRepository,
                    ILogger<JobInstanceService> logger
                 )
@@ -39,6 +41,7 @@ public class JobInstanceService : IJobInstanceService
                 _statusMaintenanceService = statusMaintenanceService;
                 _hangfireService = hangfireService;
                 _reassignmentService = reassignmentService;
+                _reviewRepo = reviewRepo;
                 _assignmentRepository = assignmentRepository;
                 _logger = logger;
         }
@@ -149,15 +152,17 @@ public class JobInstanceService : IJobInstanceService
                         }
 
                         // Notifications
-                        await _notificationService.SendJobCompletedNotificationAsync(instance.ScheduleAssignment.Id, instance);
+                        await _notificationService.SendJobCompletedNotificationAsync(
+                                instance.ScheduleAssignment.StudentId, instance);
 
-                        await _notificationService.SendJobCompletedNotificationAsync(instance.Senior.CustomerId, instance);
+                        await _notificationService.SendJobCompletedNotificationAsync(
+                                instance.Senior.CustomerId, instance);
 
                         // Post-completion processing
                         await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
 
                         // Schedule review request
-                        var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
+                        var reviewRequestTime = DateTime.UtcNow.AddMinutes(10);
                         _hangfireService.Schedule<IJobInstanceService>(
                             s => s.RequestJobReviewAsync(instance.Id),
                             reviewRequestTime
@@ -183,14 +188,35 @@ public class JobInstanceService : IJobInstanceService
 
                 var customerId = instance.Senior.CustomerId;
 
+                // Create the pending review in DB
+                var review = new Review
+                {
+                        SeniorId = instance.SeniorId,
+                        SeniorFullName = instance.Senior.Contact.FullName,
+                        StudentId = instance.ScheduleAssignment.StudentId,
+                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                        JobInstanceId = jobInstanceId,
+                        Rating = 0, // not rated yet
+                        Comment = null,
+                        RetryCount = 0,
+                        MaxRetry = 2,
+                        NextRetryAt = DateTime.UtcNow,
+                        IsPending = true,
+                        CreatedAt = DateTime.UtcNow,
+                };
+
+                await _reviewRepo.AddAsync(review);
+
+                // Send notification to customer
                 var notification = new HNotification
                 {
                         RecieverUserId = customerId,
                         Title = "Review",
-                        Body = "How was your expirence? ",
+                        Body = "How was your experience?",
                         Type = NotificationType.ReviewRequest,
                         Payload = JsonSerializer.Serialize(new
                         {
+                                ReviewId = review.Id, // include review id for Flutter side
                                 RecieverUserId = customerId,
                                 JobInstanceId = jobInstanceId,
                                 SeniorId = instance.SeniorId,
@@ -200,9 +226,9 @@ public class JobInstanceService : IJobInstanceService
                         })
                 };
 
-
                 await _notificationService.SendPushNotificationAsync(customerId, notification);
         }
+
 
 
         /// can reschdule 

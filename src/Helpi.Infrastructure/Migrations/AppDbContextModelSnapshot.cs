@@ -959,11 +959,23 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("JobInstanceId")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("Rating")
-                        .HasColumnType("smallint");
+                    b.Property<int>("MaxRetry")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("NextRetryAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SeniorFullName")
                         .IsRequired()
@@ -1112,8 +1124,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Icon")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
 
                     b.Property<Dictionary<string, Translation>>("Translations")
                         .IsRequired()
@@ -1698,7 +1710,7 @@ namespace Helpi.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("PrevAssignmentId");
 
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "Assignment")
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
                         .WithMany("JobInstances")
                         .HasForeignKey("ScheduleAssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1710,11 +1722,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Assignment");
-
                     b.Navigation("Order");
 
                     b.Navigation("PrevAssignment");
+
+                    b.Navigation("ScheduleAssignment");
 
                     b.Navigation("Senior");
 

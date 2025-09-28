@@ -96,7 +96,7 @@ public class NotificationService : INotificationService
             RecieverUserId = userId,
             Title = "Job Ended",
             Body = "Your job is has completed.",
-            Type = NotificationType.JobInProgress,
+            Type = NotificationType.JobCompleted,
             Payload = JsonSerializer.Serialize(new
             {
                 RecieverUserId = userId,

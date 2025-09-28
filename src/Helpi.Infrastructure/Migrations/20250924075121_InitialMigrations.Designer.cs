@@ -15,8 +15,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250921120526_IklklknitialMigrations")]
-    partial class IklklknitialMigrations
+    [Migration("20250924075121_InitialMigrations")]
+    partial class InitialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -527,6 +527,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsReassignment")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
@@ -567,6 +570,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("JobInstanceId");
 
                     b.HasIndex("OrderId");
 
@@ -1696,7 +1701,7 @@ namespace Helpi.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("PrevAssignmentId");
 
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "Assignment")
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
                         .WithMany("JobInstances")
                         .HasForeignKey("ScheduleAssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1708,11 +1713,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Assignment");
-
                     b.Navigation("Order");
 
                     b.Navigation("PrevAssignment");
+
+                    b.Navigation("ScheduleAssignment");
 
                     b.Navigation("Senior");
 
@@ -1721,6 +1726,10 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>
                 {
+                    b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
+                        .WithMany()
+                        .HasForeignKey("JobInstanceId");
+
                     b.HasOne("Helpi.Domain.Entities.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
@@ -1748,6 +1757,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("JobInstance");
 
                     b.Navigation("Order");
 

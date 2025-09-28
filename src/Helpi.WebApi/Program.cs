@@ -84,6 +84,8 @@ builder.Logging.AddConsole();
 
 var app = builder.Build();
 
+
+
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
 
@@ -126,14 +128,17 @@ using (var scope = app.Services.CreateScope())
 /// Hangfire schedules
 using (var scope = app.Services.CreateScope())
 {
+
+    //
+    var studentBackgroundJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
+    studentBackgroundJobs.ProcessStudentContracts();
+
     var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
     jobInstanceJobs.GenerateFutureJobInstances();
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
 
-    //
-    var studentBackgroundJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
-    studentBackgroundJobs.ProcessStudentContracts();
+
 }
 
 
@@ -144,6 +149,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowFlutterAdminDashboard");
 app.UseCors("AllowAllForPreflight"); // Apply CORS middleware early in the pipeline
+
+
+// Serve static files from wwwroot
+app.UseStaticFiles();
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
 
 app.Use(async (context, next) =>
 {

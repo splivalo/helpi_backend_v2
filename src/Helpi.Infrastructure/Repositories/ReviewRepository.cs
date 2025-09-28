@@ -3,6 +3,7 @@ using Helpi.Domain.Entities;
 namespace Helpi.Infrastructure.Repositories;
 
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
@@ -71,4 +72,14 @@ public class ReviewRepository : IReviewRepository
 
                 return await query.AverageAsync(selector);
         }
+
+        public async Task<List<Review>> GetPendingSeniorReviews(int seniorId)
+        {
+                return await _context.Reviews
+                      .Where(r => r.SeniorId == seniorId && r.IsPending)
+                      .Where(r => r.RetryCount < r.MaxRetry)
+                      .ToListAsync();
+        }
+
+
 }

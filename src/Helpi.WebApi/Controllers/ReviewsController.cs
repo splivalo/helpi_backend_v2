@@ -21,10 +21,29 @@ public class ReviewsController : ControllerBase
                 var reviews = await _service.GetReviewsByStudentAsync(studentId);
                 return Ok(reviews);
         }
-        [HttpPost]
-        public async Task<ActionResult<ReviewDto>> Create(ReviewCreateDto dto)
+
+
+        [HttpGet("senior/{seniorId}/pending")]
+        public async Task<ActionResult<List<ReviewDto>>> GetPendingSeniorReviews(int seniorId)
         {
-                var newReview = await _service.CreateReviewAsync(dto);
-                return CreatedAtAction(nameof(GetByStudent), new { }, newReview);
+                var reviews = await _service.GetPendingSeniorReviews(seniorId);
+                return Ok(reviews);
+        }
+
+
+        [HttpPut("{reviewId}/decline")]
+        public async Task<ActionResult> DeclineToReview(int reviewId)
+        {
+                await _service.DeclineToReview(reviewId);
+                return Ok();
+        }
+
+
+        [HttpPut]
+        public async Task<ActionResult<ReviewDto>> Make(ReviewUpdateDto dto)
+        {
+                var newReview = await _service.MakeReviewAsync(dto);
+                return Ok(newReview);
         }
 }
+

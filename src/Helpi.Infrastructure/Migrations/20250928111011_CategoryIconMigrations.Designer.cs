@@ -15,8 +15,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250921071946_kkInitialMigrations")]
-    partial class kkInitialMigrations
+    [Migration("20250928111011_CategoryIconMigrations")]
+    partial class CategoryIconMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -527,6 +527,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsReassignment")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
@@ -567,6 +570,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("JobInstanceId");
 
                     b.HasIndex("OrderId");
 
@@ -957,11 +962,23 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("JobInstanceId")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("Rating")
-                        .HasColumnType("smallint");
+                    b.Property<int>("MaxRetry")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("NextRetryAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SeniorFullName")
                         .IsRequired()
@@ -1110,8 +1127,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Icon")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
 
                     b.Property<Dictionary<string, Translation>>("Translations")
                         .IsRequired()
@@ -1168,6 +1185,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<DateTime>("DateRegistered")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DaysToContractExpire")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("timestamp with time zone");
@@ -1693,7 +1713,7 @@ namespace Helpi.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("PrevAssignmentId");
 
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "Assignment")
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
                         .WithMany("JobInstances")
                         .HasForeignKey("ScheduleAssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1705,11 +1725,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Assignment");
-
                     b.Navigation("Order");
 
                     b.Navigation("PrevAssignment");
+
+                    b.Navigation("ScheduleAssignment");
 
                     b.Navigation("Senior");
 
@@ -1718,6 +1738,10 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>
                 {
+                    b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
+                        .WithMany()
+                        .HasForeignKey("JobInstanceId");
+
                     b.HasOne("Helpi.Domain.Entities.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
@@ -1745,6 +1769,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("JobInstance");
 
                     b.Navigation("Order");
 

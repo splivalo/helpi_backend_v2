@@ -108,25 +108,6 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "HNotifications",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RecieverUserId = table.Column<int>(type: "integer", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Body = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
-                    Payload = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_HNotifications", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PricingChangeHistories",
                 columns: table => new
                 {
@@ -438,6 +419,7 @@ namespace Helpi.Infrastructure.Migrations
                     DateRegistered = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    DaysToContractExpire = table.Column<int>(type: "integer", nullable: true),
                     DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BackgroundCheckDate = table.Column<DateTime>(type: "date", nullable: true),
                     TotalReviews = table.Column<int>(type: "integer", nullable: false),
@@ -587,6 +569,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
+                    DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ContractNumber = table.Column<string>(type: "text", nullable: false),
                     CloudPath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     EffectiveDate = table.Column<DateTime>(type: "date", nullable: false),
@@ -630,6 +613,37 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "HNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RecieverUserId = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Body = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    Payload = table.Column<string>(type: "text", nullable: true),
+                    StudentId = table.Column<int>(type: "integer", nullable: true),
+                    SeniorId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_HNotifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_HNotifications_Seniors_SeniorId",
+                        column: x => x.SeniorId,
+                        principalTable: "Seniors",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_HNotifications_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "UserId");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
@@ -642,6 +656,7 @@ namespace Helpi.Infrastructure.Migrations
                     RecurrencePattern = table.Column<int>(type: "integer", nullable: true),
                     StartDate = table.Column<DateTime>(type: "date", nullable: false),
                     EndDate = table.Column<DateTime>(type: "date", nullable: false),
+                    CancelledAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ServiceId = table.Column<int>(type: "integer", nullable: true)
@@ -817,6 +832,11 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "Seniors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobInstances_StudentContracts_ContractId",
+                        column: x => x.ContractId,
+                        principalTable: "StudentContracts",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1016,6 +1036,7 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
+                    JobInstanceId = table.Column<int>(type: "integer", nullable: true),
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
@@ -1034,6 +1055,11 @@ namespace Helpi.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_JobRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobRequests_JobInstances_JobInstanceId",
+                        column: x => x.JobInstanceId,
+                        principalTable: "JobInstances",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_JobRequests_OrderSchedules_OrderScheduleId",
                         column: x => x.OrderScheduleId,
@@ -1168,6 +1194,16 @@ namespace Helpi.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_HNotifications_SeniorId",
+                table: "HNotifications",
+                column: "SeniorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_HNotifications_StudentId",
+                table: "HNotifications",
+                column: "StudentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_InvoiceEmails_InvoiceId",
                 table: "InvoiceEmails",
                 column: "InvoiceId",
@@ -1182,6 +1218,11 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_Invoices_TransactionId",
                 table: "Invoices",
                 column: "TransactionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobInstances_ContractId",
+                table: "JobInstances",
+                column: "ContractId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobInstances_JobInstanceId",
@@ -1208,6 +1249,11 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_JobInstances_SeniorId",
                 table: "JobInstances",
                 column: "SeniorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobRequests_JobInstanceId",
+                table: "JobRequests",
+                column: "JobInstanceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobRequests_OrderId",
@@ -1488,9 +1534,6 @@ namespace Helpi.Infrastructure.Migrations
                 name: "StudentAvailabilitySlots");
 
             migrationBuilder.DropTable(
-                name: "StudentContracts");
-
-            migrationBuilder.DropTable(
                 name: "StudentServices");
 
             migrationBuilder.DropTable(
@@ -1510,6 +1553,9 @@ namespace Helpi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ScheduleAssignments");
+
+            migrationBuilder.DropTable(
+                name: "StudentContracts");
 
             migrationBuilder.DropTable(
                 name: "OrderSchedules");

@@ -22,6 +22,7 @@ public class TestingController : ControllerBase
 
     private readonly OrdersService _ordersService;
     private readonly JobRequestService _jobRequestService;
+    private readonly IJobInstanceService _jobInstanceService;
     private readonly IMinimaxService _minimaxService;
     private readonly ILogger<TestingController> _logger;
 
@@ -29,6 +30,7 @@ public class TestingController : ControllerBase
 
     public TestingController(INotificationService notificationService,
      JobRequestService jobRequestService,
+     IJobInstanceService jobInstanceService,
       OrdersService ordersService,
        IMinimaxService minimaxService,
       ILogger<TestingController> logger,
@@ -37,10 +39,26 @@ public class TestingController : ControllerBase
     {
         _notificationService = notificationService;
         _jobRequestService = jobRequestService;
+        _jobInstanceService = jobInstanceService;
         _ordersService = ordersService;
         _minimaxService = minimaxService;
         _logger = logger;
         _mediator = mediator;
+    }
+
+    [HttpGet("jobInstance/{jobInstanceId}/request-review")]
+    public async Task ReinitiateAllFailedMatches(int jobInstanceId)
+    {
+
+        try
+        {
+            await _jobInstanceService.RequestJobReviewAsync(jobInstanceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to request review");
+        }
+
     }
 
     [HttpGet("ReinitiateAllFailedMatches")]

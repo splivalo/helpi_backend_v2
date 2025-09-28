@@ -45,7 +45,7 @@ public class JobInstanceDto
 
     public SeniorDto Senior { get; set; } = null!;
 
-    public ScheduleAssignmentDto Assignment { get; set; } = null!;
+    public ScheduleAssignmentDto ScheduleAssignment { get; set; } = null!;
 
 }
 

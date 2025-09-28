@@ -157,7 +157,7 @@ public class MappingProfile : Profile
 
         // Review Mappings
         CreateMap<Review, ReviewDto>();
-        CreateMap<ReviewCreateDto, Review>();
+        // CreateMap<MakeReviewUpdateDto, Review>();
         CreateMap<ReviewUpdateDto, Review>();
 
         // Invoice Mappings

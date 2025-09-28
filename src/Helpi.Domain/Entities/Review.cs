@@ -11,10 +11,15 @@ namespace Helpi.Domain.Entities
         public int StudentId { get; set; }
         public string StudentFullName { get; set; } = null!;
         public int JobInstanceId { get; set; }
-        public byte Rating { get; set; }
+        public double Rating { get; set; }
 
         [Column(TypeName = "text")]
         public string? Comment { get; set; }
+
+        public int RetryCount { get; set; } = 0;
+        public int MaxRetry { get; set; } = 2;
+        public DateTime NextRetryAt { get; set; } = DateTime.UtcNow;
+        public bool IsPending { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Senior Senior { get; set; } = null!;

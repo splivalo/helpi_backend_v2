@@ -14,26 +14,19 @@ public class ReviewDto
     public string StudentFullName { get; set; } = null!;
     public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; }
+    public int RetryCount { get; set; } = 0;
+    public int MaxRetry { get; set; } = 2;
+    public DateTime NextRetryAt { get; set; } = DateTime.UtcNow;
+    public bool IsPending { get; set; } = true;
 }
 
-public class ReviewCreateDto
+public class ReviewUpdateDto
 {
+    public int ReviewId { get; set; }
+
     [Required]
     [Range(1, 5)]
-    public byte Rating { get; set; }
-
-
-    public int JobInstanceId { get; set; }
-    public int SeniorId { get; set; }
-    [StringLength(200)]
-    public string SeniorFullName { get; set; } = null!;
-
-    public int StudentId { get; set; }
-    [StringLength(200)]
-    public string StudentFullName { get; set; } = null!;
-
-    [StringLength(2000)]
+    public double Rating { get; set; }
     public string? Comment { get; set; }
 }
 
-public class ReviewUpdateDto : ReviewCreateDto { }

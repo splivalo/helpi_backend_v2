@@ -173,20 +173,22 @@ namespace Helpi.Domain.Enums
     public enum NotificationType
     {
         General,
-        JobRequest,
+
         AssignmentConfirmed,
         ScheduleChange,
         PaymentReceipt,
+        JobRequest,
         JobInProgress,
+        JobCompleted,
         ContractAboutToExpire,
-        ContractExpire,
+        ContractExpired,
         contractActive,
         NoEligableStudentAcceptedJobYet,
         NoEligibleStudents,
         ReviewRequest,
         ReassignmentFailed,
         ReassignmentCompleted,
-        ReassignmentStatusUpdate
+        ReassignmentStatusUpdate,
 
     }
 
