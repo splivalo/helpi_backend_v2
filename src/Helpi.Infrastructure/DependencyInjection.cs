@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<OrderStatusMaintenanceService>();
 
         services.AddScoped<IReassignmentService, ReassignmentService>();
+        services.AddScoped<IStudentStatisticsService, StudentStatisticsService>();
 
         // Register all repositories
         services.AddScoped<IReassignmentRecordRepository, ReassignmentRecordRepository>();

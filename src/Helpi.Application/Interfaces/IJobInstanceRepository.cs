@@ -35,4 +35,7 @@ public interface IJobInstanceRepository
     Task<List<JobInstance>> GetFromDateForScheduleAsync(DateOnly fromDate, int scheduleId);
     void MarkForDeleteRange(IEnumerable<JobInstance> jobs);
 
+    Task<IEnumerable<JobInstance>> GetCompletedJobInstancesForStudentAsync(int studentId, DateTime fromDate, DateTime toDate);
+    Task<decimal> GetTotalCompletedHoursForPeriodAsync(int studentId, DateTime startDate, DateTime endDate);
+
 }

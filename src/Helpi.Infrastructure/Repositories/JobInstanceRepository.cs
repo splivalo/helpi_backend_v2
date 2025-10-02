@@ -294,5 +294,29 @@ public class JobInstanceRepository : IJobInstanceRepository
                 _context.JobInstances.RemoveRange(jobs);
         }
 
+        public async Task<IEnumerable<JobInstance>> GetCompletedJobInstancesForStudentAsync(int studentId, DateTime fromDate, DateTime toDate)
+        {
+                return await _context.JobInstances
+                    .Include(ji => ji.ScheduleAssignment)
+                    .Where(ji => ji.ScheduleAssignment.StudentId == studentId)
+                    .Where(ji => ji.Status == JobInstanceStatus.Completed)
+                    .Where(ji => !ji.NeedsSubstitute)
+                    .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(fromDate) &&
+                                ji.ScheduledDate <= DateOnly.FromDateTime(toDate))
+                    .ToListAsync();
+        }
+
+        public async Task<decimal> GetTotalCompletedHoursForPeriodAsync(int studentId, DateTime startDate, DateTime endDate)
+        {
+                return await _context.JobInstances
+                    .Include(ji => ji.ScheduleAssignment)
+                    .Where(ji => ji.ScheduleAssignment.StudentId == studentId)
+                    .Where(ji => ji.Status == JobInstanceStatus.Completed)
+                    .Where(ji => !ji.NeedsSubstitute)
+                    .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(startDate) &&
+                                ji.ScheduledDate <= DateOnly.FromDateTime(endDate))
+                    .SumAsync(ji => ji.DurationHours);
+        }
+
 }
 
