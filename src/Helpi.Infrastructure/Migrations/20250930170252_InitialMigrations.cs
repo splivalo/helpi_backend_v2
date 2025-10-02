@@ -152,7 +152,7 @@ namespace Helpi.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Translations = table.Column<Dictionary<string, Translation>>(type: "jsonb", nullable: false),
-                    Icon = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
+                    Icon = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -659,6 +659,7 @@ namespace Helpi.Infrastructure.Migrations
                     CancelledAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    HangFireMatchingJobId = table.Column<string>(type: "text", nullable: true),
                     ServiceId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -969,8 +970,12 @@ namespace Helpi.Infrastructure.Migrations
                     StudentId = table.Column<int>(type: "integer", nullable: false),
                     StudentFullName = table.Column<string>(type: "text", nullable: false),
                     JobInstanceId = table.Column<int>(type: "integer", nullable: false),
-                    Rating = table.Column<byte>(type: "smallint", nullable: false),
+                    Rating = table.Column<double>(type: "double precision", nullable: false),
                     Comment = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false),
+                    MaxRetry = table.Column<int>(type: "integer", nullable: false),
+                    NextRetryAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsPending = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

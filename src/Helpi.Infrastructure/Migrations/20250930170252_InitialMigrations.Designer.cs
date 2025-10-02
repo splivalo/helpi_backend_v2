@@ -15,8 +15,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250926080535_ReviewsMigrations")]
-    partial class ReviewsMigrations
+    [Migration("20250930170252_InitialMigrations")]
+    partial class InitialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -603,6 +603,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("HangFireMatchingJobId")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("boolean");
 
@@ -1127,8 +1130,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Icon")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
 
                     b.Property<Dictionary<string, Translation>>("Translations")
                         .IsRequired()

@@ -191,6 +191,9 @@ namespace Helpi.Domain.Enums
         ReassignmentCompleted,
         ReassignmentStatusUpdate,
 
+        NewStudentAdded,
+        NewSeniorAdded
+
     }
 
     public enum DashboardTileType

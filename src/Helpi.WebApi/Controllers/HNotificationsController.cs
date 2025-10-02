@@ -89,7 +89,7 @@ public class HNotificationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("{id}/mark-read")]
+    [HttpPut("{id}/mark-read")]
     public async Task<ActionResult> MarkAsRead(int id)
     {
         var result = await _notificationService.MarkAsReadAsync(id);
@@ -99,7 +99,7 @@ public class HNotificationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("user/{userId}/mark-all-read")]
+    [HttpPut("user/{userId}/mark-all-read")]
     public async Task<ActionResult> MarkAllAsRead(int userId)
     {
         await _notificationService.MarkAllAsReadAsync(userId);

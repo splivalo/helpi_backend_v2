@@ -17,6 +17,8 @@ namespace Helpi.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? HangFireMatchingJobId { get; set; }
+
         public Senior Senior { get; set; } = null!;
         public PaymentMethod PaymentMethod { get; set; } = null!;
 

@@ -35,6 +35,7 @@ namespace Helpi.Application.Services
         private readonly IMailerLiteService _mailerLiteService;
         private readonly ICityRepository _cityRepo;
         private readonly IGooglePlaceService _googlePlaceService;
+        private readonly INotificationService _notificationService;
 
         private readonly IMapper _mapper;
 
@@ -49,7 +50,8 @@ namespace Helpi.Application.Services
         IFirebaseService firebaseService,
        IMailerLiteService mailerLiteService,
        ICityRepository cityRepo,
-       IGooglePlaceService googlePlaceService
+       IGooglePlaceService googlePlaceService,
+       INotificationService notificationService
        )
         {
             _userManager = userManager;
@@ -60,6 +62,7 @@ namespace Helpi.Application.Services
             _mapper = mapper;
             _cityRepo = cityRepo;
             _googlePlaceService = googlePlaceService;
+            _notificationService = notificationService;
 
 
             _secretKey = Environment.GetEnvironmentVariable("JwtSettings:Secret")
@@ -192,6 +195,7 @@ namespace Helpi.Application.Services
                     Phone = customerContactInfoDto.Phone,
                     Email = customerRegistrationDto.Email,
                     Gender = customerContactInfoDto.Gender,
+                    DateOfBirth = customerContactInfoDto.DateOfBirth,
                     GooglePlaceId = customerContactInfoDto.GooglePlaceId,
                     FullAddress = customerContactInfoDto.FullAddress,
                     CityId = city.Id,
@@ -212,7 +216,7 @@ namespace Helpi.Application.Services
                 if (customerRegistrationDto.Relationship != Relationship.Self)
                 {
 
-                    var seniorcCity = await GetCity(seniorContactInfoDto.GooglePlaceId);
+                    var seniorcCity = await GetCity(seniorContactInfoDto!.GooglePlaceId);
 
                     seniorContactInfo = new ContactInfo
                     {
@@ -221,6 +225,7 @@ namespace Helpi.Application.Services
                         Phone = seniorContactInfoDto.Phone,
                         Email = customerRegistrationDto.Email,
                         Gender = seniorContactInfoDto.Gender,
+                        DateOfBirth = seniorContactInfoDto.DateOfBirth,
                         GooglePlaceId = seniorContactInfoDto.GooglePlaceId,
                         FullAddress = seniorContactInfoDto.FullAddress,
                         CityId = seniorcCity.Id,
@@ -248,6 +253,9 @@ namespace Helpi.Application.Services
                 };
 
                 await _authRepository.RegisterCustomer(customer, customerContactInfo, senior, seniorContactInfo);
+
+                var notification = NotificationFactory.CreateNewSeniorNotification(1, senior.Id);
+                await _notificationService.StoreAndNotifyAsync(notification);
 
                 return (true, "Customer /Senior registered successfully");
             }
@@ -293,6 +301,9 @@ namespace Helpi.Application.Services
                 };
 
                 await _authRepository.RegisterStudent(student, contactInfo);
+
+                var notification = NotificationFactory.CreateNewStudentNotification(1, student.UserId);
+                await _notificationService.StoreAndNotifyAsync(notification);
 
                 return (true, "Student registered successfully");
 
@@ -476,6 +487,9 @@ namespace Helpi.Application.Services
         }
 
     }
+
+
+
 
 
 

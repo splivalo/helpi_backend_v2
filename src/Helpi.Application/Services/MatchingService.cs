@@ -1,11 +1,14 @@
 
 using System.Text.Json;
+using System.Threading.Tasks;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -32,6 +35,8 @@ public class MatchingService : IMatchingService
     private readonly int _retryIntervalMinutes = 10; /// todo: 10
     private readonly int _maxMatchingAttempts = 100000;
 
+    private readonly IServiceScopeFactory _scopeFactory;
+
     public MatchingService(
         StudentAvailabilitySlotService studentAvailabilityService,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
@@ -43,7 +48,9 @@ public class MatchingService : IMatchingService
         IJobRequestRepository jobRequestRepository,
         IMatchingBackgroundJobs matchingBackgroundJobs,
         IReassignmentRecordRepository reassignmentRecordRepository,
-        ILogger<MatchingService> logger)
+        ILogger<MatchingService> logger,
+        IServiceScopeFactory scopeFactory
+        )
     {
         _studentAvailabilityService = studentAvailabilityService;
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
@@ -56,13 +63,16 @@ public class MatchingService : IMatchingService
         _matchingBackgroundJobs = matchingBackgroundJobs;
         _reassignmentRecordRepository = reassignmentRecordRepository;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
 
 
-    public void StartMatching(int orderId)
+    public async void StartMatching(int orderId)
     {
-        ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
+
+        await ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
+
     }
 
     public async Task InitiateMatchingProcessAsync(int orderId)
@@ -86,7 +96,7 @@ public class MatchingService : IMatchingService
                 await ProcessAllSchedulesAsync(order);
 
 
-                ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(_retryIntervalMinutes));
+                await ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(_retryIntervalMinutes));
             }
         }
         catch (Exception ex)
@@ -97,11 +107,29 @@ public class MatchingService : IMatchingService
     }
 
 
-    private void ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
+    private async Task ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
     {
-        _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(orderId, executionTime);
-        _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
+        using var scope = _scopeFactory.CreateScope();
+        var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+        var matchingJobs = scope.ServiceProvider.GetRequiredService<IMatchingBackgroundJobs>();
+
+        var order = await orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions { });
+        if (order == null) return;
+
+
+        var jobId = matchingJobs.ScheduleFindAndNotifyStudents(
+                                orderId,
+                                order.HangFireMatchingJobId,
+                                    executionTime);
+
+        if (jobId != null)
+        {
+            order.HangFireMatchingJobId = jobId;
+            await orderRepository.UpdateAsync(order);
+
+            _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
             orderId, executionTime);
+        }
     }
 
     private async Task<ICollection<OrderSchedule>> UnassignedSchedulesAsync(ICollection<OrderSchedule> schedules)

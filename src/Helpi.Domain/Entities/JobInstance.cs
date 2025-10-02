@@ -66,7 +66,7 @@ namespace Helpi.Domain.Entities
         public string? HangFireEndStatusJobId { get; set; }
         public string? HangFirePaymentJobId { get; set; }
 
-        public string? HangFireMatchingJobId { get; set; }
+
 
         public bool IsTerminal
         {

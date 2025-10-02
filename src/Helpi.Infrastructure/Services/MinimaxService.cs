@@ -1,4 +1,5 @@
 
+using System.Text.Json;
 using Helpi.Application.DTOs.Minimax;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -6,8 +7,7 @@ using Helpi.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Stripe;
+using File = System.IO.File;
 
 namespace Helpi.Infrastructure.Services;
 
@@ -54,21 +54,35 @@ public class MinimaxService : IMinimaxService
         _configuration = configuration;
         _logger = logger;
 
+        var minimaxCredentialsPath = Environment.GetEnvironmentVariable("MINIMAX_CREDENTIALS_JSON")
+                           ?? configuration["MINIMAX:CredentialsJson"];
 
-        _clientId = Environment.GetEnvironmentVariable("Minimax:ClientID")
-        ?? _configuration["Minimax:ClientID"]
+        if (string.IsNullOrEmpty(minimaxCredentialsPath))
+        {
+            throw new InvalidOperationException("MINIMAX credentials not found in environment variables.");
+        }
+
+        if (!File.Exists(minimaxCredentialsPath))
+        {
+            throw new FileNotFoundException($"MINIMAX credentials file not found at {minimaxCredentialsPath}");
+        }
+
+        var minimaxCredentialsJson = File.ReadAllText(minimaxCredentialsPath);
+        using var jsonDoc = JsonDocument.Parse(minimaxCredentialsJson);
+        var root = jsonDoc.RootElement;
+
+        //-- 
+
+        _clientId = root.GetProperty("ClientID").GetString()
         ?? throw new ArgumentNullException("Minimax:ClientID");
 
-        _clientSecret = Environment.GetEnvironmentVariable("Minimax:ClientSecret")
-         ?? _configuration["Minimax:ClientSecret"]
-         ?? throw new ArgumentNullException("Minimax:ClientSecret");
+        _clientSecret = root.GetProperty("ClientSecret").GetString()
+        ?? throw new ArgumentNullException("Minimax:ClientSecret");
 
-        _username = Environment.GetEnvironmentVariable("Minimax:Username")
-         ?? _configuration["Minimax:Username"]
-         ?? throw new ArgumentNullException("Minimax:Username");
+        _username = root.GetProperty("Username").GetString()
+        ?? throw new ArgumentNullException("Minimax:Username");
 
-        _password = Environment.GetEnvironmentVariable("Minimax:Password")
-        ?? _configuration["Minimax:Password"]
+        _password = root.GetProperty("Password").GetString()
         ?? throw new ArgumentNullException("Minimax:Password");
     }
 
