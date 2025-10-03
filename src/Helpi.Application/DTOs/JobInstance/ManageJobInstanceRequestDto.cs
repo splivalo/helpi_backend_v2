@@ -6,7 +6,7 @@ public class ManageJobInstanceRequestDto
     public TimeOnly? NewStartTime { get; set; }
     public TimeOnly? NewEndTime { get; set; }
     public string Reason { get; set; } = string.Empty;
-    public int? PreferedStudentId { get; set; }
+    public int? PreferredStudentId { get; set; }
     public bool ReassignStudent { get; set; } = true;
     public int RequestedByUserId { get; set; } = 1;
 }
