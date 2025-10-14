@@ -18,6 +18,10 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
             .Must((o, EndDate) => EndDate >= o.StartDate)
             .WithMessage("Order EndDate must be greater than or equal to order StartDate");
 
+        RuleFor(o => o.Notes)
+        .MaximumLength(1000)
+        .WithMessage("Notes cannot exceed 1000 characters.");
+
         RuleFor(o => o)
            .Must(o => !o.IsRecurring || o.EndDate > o.StartDate)
            .WithMessage("For recurring orders, EndDate must be after StartDate.");

@@ -2,6 +2,7 @@
 using Hangfire.Dashboard;
 
 namespace Helpi.Infrastructure.BackgroundJobs.Filters;
+
 public class HangfireBasicAuthenticationFilter : IDashboardAuthorizationFilter
 {
     public string User { get; set; }
@@ -10,14 +11,15 @@ public class HangfireBasicAuthenticationFilter : IDashboardAuthorizationFilter
     public bool Authorize(DashboardContext context)
     {
         var httpContext = context.GetHttpContext();
-
-        // Get the Authorization header
         var header = httpContext.Request.Headers["Authorization"].ToString();
 
         if (string.IsNullOrEmpty(header) || !header.StartsWith("Basic "))
+        {
+            httpContext.Response.Headers["WWW-Authenticate"] = "Basic realm=\"Hangfire Dashboard\"";
             return false;
+        }
 
-        var encodedAuth = header.Substring(6);
+        var encodedAuth = header.Substring("Basic ".Length).Trim();
         var authBytes = Convert.FromBase64String(encodedAuth);
         var authString = System.Text.Encoding.UTF8.GetString(authBytes);
         var credentials = authString.Split(':');
@@ -26,4 +28,5 @@ public class HangfireBasicAuthenticationFilter : IDashboardAuthorizationFilter
                credentials[0] == User &&
                credentials[1] == Pass;
     }
+
 }

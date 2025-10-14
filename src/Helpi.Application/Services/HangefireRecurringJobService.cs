@@ -152,6 +152,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     SeniorId = order.SeniorId,
                     CustomerId = order.Senior.CustomerId,
                     OrderId = order.Id,
+                    Notes = order.Notes,
                     OrderScheduleId = assignment.OrderScheduleId,
                     HourlyRate = pricingConfiguration.JobHourlyRate,
                     CompanyPercentage = pricingConfiguration.CompanyPercentage,
@@ -208,8 +209,14 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         foreach (var instance in jobInstancesForToday)
         {
-            /// TODO: UPDATE status if job date passed and its not marked accordinly
-            /// 
+
+
+            if (instance.Status != JobInstanceStatus.Upcoming)
+            {
+                _logger.LogInformation("🚫[Skip] Job #{id} -> status {status} != Upcoming", instance.Id, instance.Status);
+                continue;
+            }
+
             var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
             var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
 
@@ -225,6 +232,15 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 s => s.UpdateToCompletedAsync(instance.Id),
                 endTime
             );
+
+
+            var remindAt = startTime.AddMinutes(-30);
+            instance.HangFireRemindStudentJobId = _hangfireService.Schedule<IJobInstanceService>(
+                s => s.RemindStudentAsync(instance.Id),
+                remindAt
+            );
+
+
 
             _logger.LogDebug("📌 JobInstance #{Id} scheduled — StartJobId: {StartJobId} 🟢, EndJobId: {EndJobId} 🔴.",
                 instance.Id,
@@ -254,11 +270,17 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         foreach (var instance in jobInstancesForToday)
         {
+            if (instance.Status != JobInstanceStatus.Upcoming)
+            {
+                _logger.LogInformation("🚫[Skip] Job #{id} -> status {status} != Upcoming", instance.Id, instance.Status);
+                continue;
+            }
+
             var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
             var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
 
 
-            var chargePaymentAt = startTime.AddMinutes(-30);
+            var chargePaymentAt = startTime.AddMinutes(-35); // this has to happen before RemindStudent
             _logger.LogDebug("⏳ Scheduling Payment -> JobInstance #{Id}.",
                 instance.Id);
 

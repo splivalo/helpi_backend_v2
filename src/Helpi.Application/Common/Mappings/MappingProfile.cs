@@ -165,8 +165,8 @@ public class MappingProfile : Profile
         CreateMap<InvoiceUpdateDto, Invoice>();
 
         // InvoiceEmail Mappings
-        CreateMap<InvoiceEmail, InvoiceEmailDto>();
-        CreateMap<InvoiceEmailUpdateDto, InvoiceEmail>();
+        CreateMap<HEmail, HEmailDto>();
+        CreateMap<HEmailUpdateDto, HEmail>();
 
         // City Mappings
         CreateMap<City, CityDto>();

@@ -6,37 +6,36 @@ using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-public class InvoiceEmailRepository : IInvoiceEmailRepository
+public class HEmailRepository : IHEmailRepository
 {
         private readonly AppDbContext _context;
 
-        public InvoiceEmailRepository(AppDbContext context) => _context = context;
+        public HEmailRepository(AppDbContext context) => _context = context;
 
-        public async Task<InvoiceEmail> GetByIdAsync(int id)
+        public async Task<HEmail> GetByIdAsync(int id)
             => await _context.InvoiceEmails
-                .Include(ie => ie.Invoice)
                 .FirstOrDefaultAsync(ie => ie.Id == id);
 
-        public async Task<IEnumerable<InvoiceEmail>> GetFailedEmailsAsync()
+        public async Task<IEnumerable<HEmail>> GetFailedEmailsAsync()
             => await _context.InvoiceEmails
                 .Where(ie => ie.Status == EmailStatus.Failed &&
                     ie.AttemptCount < 5)
                 .ToListAsync();
 
-        public async Task<InvoiceEmail> AddAsync(InvoiceEmail email)
+        public async Task<HEmail> AddAsync(HEmail email)
         {
                 await _context.InvoiceEmails.AddAsync(email);
                 await _context.SaveChangesAsync();
                 return email;
         }
 
-        public async Task UpdateAsync(InvoiceEmail email)
+        public async Task UpdateAsync(HEmail email)
         {
                 _context.InvoiceEmails.Update(email);
                 await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(InvoiceEmail email)
+        public async Task DeleteAsync(HEmail email)
         {
                 _context.InvoiceEmails.Remove(email);
                 await _context.SaveChangesAsync();

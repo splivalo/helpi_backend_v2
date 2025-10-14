@@ -5,18 +5,18 @@ using Helpi.Application.Interfaces;
 
 namespace Helpi.Application.Services;
 
-public class InvoiceEmailService
+public class HEmailService
 {
-        private readonly IInvoiceEmailRepository _repository;
+        private readonly IHEmailRepository _repository;
         private readonly IMapper _mapper;
 
-        public InvoiceEmailService(IInvoiceEmailRepository repository, IMapper mapper)
+        public HEmailService(IHEmailRepository repository, IMapper mapper)
         {
                 _repository = repository;
                 _mapper = mapper;
         }
 
-        public async Task<List<InvoiceEmailDto>> GetEmailsByInvoiceAsync(int invoiceId)
+        public async Task<List<HEmailDto>> GetEmailsByInvoiceAsync(int invoiceId)
         {
                 //     _mapper.Map<List<InvoiceEmailDto>>(await _repository.GetByInvoiceAsync(invoiceId));
                 return null;

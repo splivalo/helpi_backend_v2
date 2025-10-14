@@ -15,6 +15,11 @@ public class JobInstanceRepository : IJobInstanceRepository
 
         public JobInstanceRepository(AppDbContext context) => _context = context;
 
+        public async Task<JobInstance?> GetByIdSlimAsync(int id)
+        {
+                return await _context.JobInstances
+                .SingleAsync(ji => ji.Id == id);
+        }
         public async Task<JobInstance> GetByIdAsync(int id)
         {
                 return await _context.JobInstances
@@ -135,13 +140,14 @@ public class JobInstanceRepository : IJobInstanceRepository
         {
 
                 var instance = await GetByIdAsync(jobInstanceId);
-                if (instance?.Status == JobInstanceStatus.Upcoming)
-                {
-                        instance.Status = JobInstanceStatus.InProgress;
-                        await _context.SaveChangesAsync();
+                if (instance?.Status != JobInstanceStatus.Upcoming) return null;
+                if (instance?.PaymentStatus != PaymentStatus.Paid) return null;
 
-                        return instance;
-                }
+                instance.Status = JobInstanceStatus.InProgress;
+                await _context.SaveChangesAsync();
+
+                return instance;
+
 
                 return null;
         }

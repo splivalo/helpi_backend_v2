@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Helpi.WebApi.Hubs;
 
@@ -19,7 +20,7 @@ public class NotificationHub : Hub
     public override async Task OnConnectedAsync()
     {
         // Auto-join user to their group based on identity
-        var userId = Context.User?.FindFirst("userId")?.Value;
+        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrEmpty(userId))
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");

@@ -164,6 +164,10 @@ namespace Helpi.Domain.Enums
         Opened,
         Failed
     }
+    public enum EmailType
+    {
+        Invoice
+    }
 
     public enum Gender
     {
@@ -174,13 +178,15 @@ namespace Helpi.Domain.Enums
     public enum NotificationType
     {
         General,
-
-        AssignmentConfirmed,
-        ScheduleChange,
-        PaymentReceipt,
+        PaymentSuccess,
+        PaymentFailed,
+        PaymentRefunded,
         JobRequest,
+        JobStartReminder,
         JobInProgress,
         JobCompleted,
+        JobCancelled,
+        JobRescheduled,
         ContractAboutToExpire,
         ContractExpired,
         contractActive,
@@ -190,7 +196,6 @@ namespace Helpi.Domain.Enums
         ReassignmentFailed,
         ReassignmentCompleted,
         ReassignmentStatusUpdate,
-
         NewStudentAdded,
         NewSeniorAdded
 

@@ -81,6 +81,29 @@ public class JobInstanceService : IJobInstanceService
                 return _mapper.Map<List<JobInstanceDto>>(jobInstances);
         }
 
+        public async Task RemindStudentAsync(int jobInstanceId)
+        {
+
+                var instance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
+                {
+                        Assignment = true,
+                        AssignmentStudent = true
+                });
+
+                if (instance == null) return;
+
+                if (instance.Status != JobInstanceStatus.Upcoming) return;
+
+                if (instance.PaymentStatus != PaymentStatus.Paid) return;
+
+
+
+                var notification = NotificationFactory.CreateStudentJobReminderNotification(instance);
+                await _notificationService.SendPushNotificationAsync(notification.RecieverUserId, notification);
+
+
+        }
+
 
         public async Task UpdateToInProgressAsync(int jobInstanceId)
         {
@@ -92,11 +115,11 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.InProgress) return;
 
 
-                var assignedStudentId = instance.ScheduleAssignment.StudentId;
-                await _notificationService.SendJobStartedNotificationAsync(assignedStudentId, instance);
+                // var assignedStudentId = instance.ScheduleAssignment.StudentId;
+                // await _notificationService.SendJobStartedNotificationAsync(assignedStudentId, instance);
 
-                var customerId = instance.Senior.CustomerId;
-                await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
+                // var customerId = instance.Senior.CustomerId;
+                // await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
 
         }
 
@@ -152,11 +175,11 @@ public class JobInstanceService : IJobInstanceService
                         }
 
                         // Notifications
-                        await _notificationService.SendJobCompletedNotificationAsync(
-                                instance.ScheduleAssignment.StudentId, instance);
+                        // await _notificationService.SendJobCompletedNotificationAsync(
+                        //         instance.ScheduleAssignment.StudentId, instance);
 
-                        await _notificationService.SendJobCompletedNotificationAsync(
-                                instance.Senior.CustomerId, instance);
+                        // await _notificationService.SendJobCompletedNotificationAsync(
+                        //         instance.Senior.CustomerId, instance);
 
                         // Post-completion processing
                         await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
@@ -409,26 +432,6 @@ public class JobInstanceService : IJobInstanceService
 
 
 
-        private async Task NotifyReschedule(int studentId, JobInstance originalInstance, JobInstance rescheduledInstance, string reason)
-        {
-                var notification = new HNotification
-                {
-                        RecieverUserId = studentId,
-                        Title = "Schedule Changed",
-                        Body = $"Your job on {originalInstance.ScheduledDate} has been rescheduled to {rescheduledInstance.ScheduledDate} at {rescheduledInstance.StartTime}",
-                        Type = NotificationType.ScheduleChange,
-                        Payload = JsonSerializer.Serialize(new
-                        {
-                                OriginalInstanceId = originalInstance.Id,
-                                NewInstanceId = rescheduledInstance.Id,
-                                NewDate = rescheduledInstance.ScheduledDate,
-                                NewStartTime = rescheduledInstance.StartTime,
-                                Reason = reason
-                        })
-                };
-
-                await _notificationService.SendPushNotificationAsync(studentId, notification);
-        }
 
         public async Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId)
         {
@@ -483,6 +486,8 @@ public class JobInstanceService : IJobInstanceService
 
         private void LogException(int jobInstanceId, Exception ex) =>
             _logger.LogError(ex, "❌ Exception while updating JobInstance {jobInstanceId} to completed.", jobInstanceId);
+
+
 
 
         #endregion

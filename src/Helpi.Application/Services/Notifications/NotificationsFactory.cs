@@ -40,4 +40,120 @@ public static class NotificationFactory
             })
         };
     }
+
+    public static HNotification CreatePaymentFailedNotification(
+        int recieverUserId,
+         int seniorId,
+         int orderId,
+          int jobInstanceId)
+    {
+        return new HNotification
+        {
+            RecieverUserId = recieverUserId,
+            Title = "Payment Failed",
+            Body = "Payment failed",
+            Type = NotificationType.PaymentFailed,
+            SeniorId = seniorId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                RecieverUserId = recieverUserId,
+                SeniorId = seniorId,
+                OrderId = orderId,
+                JobInstanceId = jobInstanceId,
+            })
+        };
+    }
+    public static HNotification CreatePaymentSuccessNotification(
+        int recieverUserId,
+         int seniorId,
+         int orderId,
+          int jobInstanceId)
+    {
+        return new HNotification
+        {
+            RecieverUserId = recieverUserId,
+            Title = "Payment Success",
+            Body = "Invoice emailed",
+            Type = NotificationType.PaymentSuccess,
+            SeniorId = seniorId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                RecieverUserId = recieverUserId,
+                SeniorId = seniorId,
+                OrderId = orderId,
+                JobInstanceId = jobInstanceId,
+            })
+        };
+    }
+    public static HNotification CreateJobCancelledNotification(
+        int recieverUserId,
+         int seniorId,
+         int orderId,
+          int jobInstanceId)
+    {
+        return new HNotification
+        {
+            RecieverUserId = recieverUserId,
+            Title = "Job Cancelled",
+            Body = "Job cancelled",
+            Type = NotificationType.JobCancelled,
+            SeniorId = seniorId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                RecieverUserId = recieverUserId,
+                SeniorId = seniorId,
+                OrderId = orderId,
+                JobInstanceId = jobInstanceId,
+            })
+        };
+    }
+
+
+    public static HNotification CreateJobRescheduledNotification(
+        int recieverUserId,
+        JobInstance originalInstance,
+        JobInstance rescheduledInstance,
+         string reason)
+    {
+        return new HNotification
+        {
+            RecieverUserId = recieverUserId,
+            Title = "Schedule Changed",
+            Body = $"Your job on {originalInstance.ScheduledDate} has been rescheduled",
+            Type = NotificationType.JobRescheduled,
+            Payload = JsonSerializer.Serialize(new
+            {
+                OriginalInstanceId = originalInstance.Id,
+                NewInstanceId = rescheduledInstance.Id,
+                NewDate = rescheduledInstance.ScheduledDate,
+                NewStartTime = rescheduledInstance.StartTime,
+                Reason = reason
+            })
+        };
+
+
+    }
+
+    public static HNotification CreateStudentJobReminderNotification(
+
+        JobInstance jobInstance)
+    {
+        return new HNotification
+        {
+            RecieverUserId = jobInstance.ScheduleAssignment.StudentId,
+            Title = "Job Reminder",
+            Body = $"Your job starts at {jobInstance.StartTime}",
+            Type = NotificationType.JobStartReminder,
+            Payload = JsonSerializer.Serialize(new
+            {
+                jobInstance = jobInstance.StartTime,
+                StartTime = jobInstance.StartTime,
+            })
+        };
+
+
+    }
+
+
+
 }

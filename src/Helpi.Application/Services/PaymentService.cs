@@ -1,7 +1,9 @@
 
 using Helpi.Application.DTOs;
+using Helpi.Application.DTOs.Minimax;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -17,6 +19,10 @@ public class PaymentService : IPaymentService
     private readonly IMinimaxService _minimaxService;
     private readonly ILogger<PaymentService> _logger;
 
+    private readonly INotificationService _notificationService;
+    private readonly IMailgunService _mailgunService;
+    private readonly IHEmailRepository _hEmailRepository;
+
     public PaymentService(
         IPaymentTransactionRepository transactionRepository,
        IJobInstanceRepository jobInstanceRepo,
@@ -24,7 +30,12 @@ public class PaymentService : IPaymentService
        IPaymentProfileRepository paymentProfileRepo,
         IStripePaymentService stripePaymentService,
       IMinimaxService minimaxService,
-      ILogger<PaymentService> logger
+      ILogger<PaymentService> logger,
+   INotificationService notificationService,
+
+ IMailgunService mailgunService,
+
+IHEmailRepository hEmailRepository
         )
     {
         _transactionRepository = transactionRepository;
@@ -34,6 +45,9 @@ public class PaymentService : IPaymentService
         _stripePaymentService = stripePaymentService;
         _minimaxService = minimaxService;
         _logger = logger;
+        _notificationService = notificationService;
+        _mailgunService = mailgunService;
+        _hEmailRepository = hEmailRepository;
     }
 
 
@@ -42,7 +56,9 @@ public class PaymentService : IPaymentService
         var jobInstance = await _jobInstanceRepo.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
         {
             Order = true,
-            OrderPaymentMethod = true
+            OrderPaymentMethod = true,
+            Assignment = true,
+            AssignmentStudent = true,
         });
 
         if (jobInstance == null)
@@ -115,24 +131,24 @@ public class PaymentService : IPaymentService
         await _transactionRepository.UpdateAsync(transaction);
 
 
+        jobInstance.PaymentTransactionId = transaction.Id;
+        jobInstance.PaymentStatus = transaction.Status;
+        await _jobInstanceRepo.UpdateAsync(jobInstance);
+
 
         /// 
         /// ---  Minimax ------
         /// 
 
-        if (transaction.Status != PaymentStatus.Paid) return;
-
-        var customer = await _customerRepo.LoadCustomerWithIncludes(jobInstance.CustomerId, new CustomerIncludeOptions
+        if (transaction.Status != PaymentStatus.Paid)
         {
-            Contact = true
-        });
-
-        if (customer == null)
-        {
-            _logger.LogWarning("❌ [Failed] get customer in payment service Customer: {customerId}", jobInstance.CustomerId);
+            await HandlePaymentFailed(jobInstance);
+            return;
         }
 
-        await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
+        await HandlePaymentSuccess(jobInstance, paymentProfile!);
+
+
     }
 
 
@@ -140,6 +156,8 @@ public class PaymentService : IPaymentService
 
     public async Task HandlePaymentRefund(string paymentIntentId, string refundId, decimal refundAmount, string refundReason)
     {
+
+
         var transaction = await _transactionRepository.GetByPaymentIntentIdAsync(paymentIntentId);
 
         if (transaction == null)
@@ -153,16 +171,153 @@ public class PaymentService : IPaymentService
         transaction.RefundAmount = refundAmount;
         transaction.RefundReason = refundReason;
         transaction.RefundedAt = DateTime.UtcNow;
+        //
         transaction.JobInstance.Status = JobInstanceStatus.Cancelled;
+        transaction.JobInstance.PaymentStatus = PaymentStatus.Refunded;
 
         await _transactionRepository.UpdateAsync(transaction);
 
         _logger.LogInformation("✅ [Pass]  Refunded paymentIntentId: {paymentIntentId}", paymentIntentId);
 
+
+
     }
 
+    private async Task HandlePaymentFailed(JobInstance jobInstance)
+    {
+        try
+        {
+            var adminId = 1;
+            // notify admin
+            var notification = NotificationFactory.CreatePaymentFailedNotification(
+                adminId,
+                jobInstance.SeniorId,
+                jobInstance.OrderId,
+                jobInstance.Id
+                );
+
+            await _notificationService.StoreAndNotifyAsync(notification);
+
+            // notify customer
+            var customerNotification = NotificationFactory.CreatePaymentFailedNotification(
+               jobInstance.CustomerId,
+               jobInstance.SeniorId,
+               jobInstance.OrderId,
+               jobInstance.Id
+               );
+
+            await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);
+
+            // notify student
+            var studentId = jobInstance.ScheduleAssignment.StudentId;
+            var studentNotification = NotificationFactory.CreateJobCancelledNotification(
+                studentId,
+                jobInstance.SeniorId,
+                jobInstance.OrderId,
+                jobInstance.Id
+                );
+
+            await _notificationService.SendPushNotificationAsync(studentId, studentNotification);
+        }
+        catch (Exception)
+        {
+
+
+        }
+    }
+
+    private async Task HandlePaymentSuccess(JobInstance jobInstance, PaymentProfile paymentProfile)
+    {
+        try
+        {
+            var customer = await _customerRepo.LoadCustomerWithIncludes(jobInstance.CustomerId, new CustomerIncludeOptions
+            {
+                Contact = true
+            });
+
+            if (customer == null)
+            {
+                _logger.LogWarning("❌ [Failed] get customer in payment service Customer: {customerId}", jobInstance.CustomerId);
+            }
+
+            var invoice = await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
+
+            var customerEmail = customer.Contact.Email;
+
+            await EmailInvoiceToCustomer(invoice!, customerEmail!);
+
+            await PaymentSuccessNotifyCustomer(jobInstance);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ [Failed] [HandlePaymentSuccess]");
+
+        }
+    }
+
+    private async Task EmailInvoiceToCustomer(MinimaxIssuedInvoice invoice, string customerEmail)
+    {
+        try
+        {
+
+            _logger.LogInformation("📤 [Sending e-Invoice] ...");
+
+            var attachment = await _minimaxService.GenerateInvoicePdf(
+                    (int)invoice!.IssuedInvoiceId!,
+                     invoice.RowVersion!
+                     );
+
+            var attachmentData = new Dictionary<string, string>
+                {
+                    { attachment!.AttachmentFileName, attachment.AttachmentData }
+                };
+
+            var success = await _mailgunService.SendEmailAsync(
+                  to: customerEmail,
+                  subject: "Your Invoice",
+                  htmlBody: "<h1>Thank you for your order!</h1><p>Invoice attached.</p>",
+                  attachments: attachmentData
+              );
 
 
 
+            // Create HEmail record
+            var emailRecord = new HEmail
+            {
+                ExternalInvoiceId = (int)invoice.IssuedInvoiceId!,
+                Type = EmailType.Invoice,
+                Status = success ? EmailStatus.Sent : EmailStatus.Failed,
+                OpenedCount = 0,
+                AttemptCount = 1,
+                LastAttempt = DateTime.UtcNow,
+                NextAttempt = success ? null : DateTime.UtcNow.AddMinutes(10),
+                ErrorMessage = success ? null : "Failed to send email via Mailgun",
+
+            };
+
+            await _hEmailRepository.AddAsync(emailRecord);
+
+            _logger.LogInformation("✅ [EmailInvoiceToCustomer] Email sent and recorded successfully.");
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ [Failed] [EmailInvoiceToCustomer]");
+
+        }
+
+    }
+
+    private async Task PaymentSuccessNotifyCustomer(JobInstance jobInstance)
+    {
+        var customerNotification = NotificationFactory.CreatePaymentSuccessNotification(
+             jobInstance.CustomerId,
+             jobInstance.SeniorId,
+             jobInstance.OrderId,
+             jobInstance.Id
+             );
+
+        await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);
+    }
 
 }

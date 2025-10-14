@@ -337,7 +337,7 @@ namespace Helpi.Application.Services
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
 
-            var accessTokenExpiry = DateTime.Now.AddHours(1);
+            var accessTokenExpiry = DateTime.Now.AddHours(8780); // should be 1 hour
             var refreshTokenExpiry = accessTokenExpiry.AddDays(7);
 
             var token = new JwtSecurityToken(

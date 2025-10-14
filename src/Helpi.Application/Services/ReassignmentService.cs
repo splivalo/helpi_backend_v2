@@ -184,7 +184,7 @@ namespace Helpi.Application.Services
             }
 
             // Notify admin about the reassignment
-            await NotifyAdminAboutReassignment(reassignmentRecord, "Initiated");
+            await NotifyAdminAboutReassignment(reassignmentRecord, order.SeniorId, "Initiated");
 
             return reassignmentRecord;
         }
@@ -441,7 +441,7 @@ namespace Helpi.Application.Services
             };
         }
 
-        private async Task NotifyAdminAboutReassignment(ReassignmentRecord reassignmentRecord, string action)
+        private async Task NotifyAdminAboutReassignment(ReassignmentRecord reassignmentRecord, int seniorId, string action)
         {
             var adminId = await GetAdminId();
             var notification = new HNotification
@@ -457,7 +457,8 @@ namespace Helpi.Application.Services
                     EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
                     EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     ReassignmentRecordId = reassignmentRecord.Id
-                })
+                }),
+                SeniorId = seniorId
             };
 
             await _notificationService.StoreAndNotifyAsync(notification);
@@ -501,7 +502,8 @@ namespace Helpi.Application.Services
                     EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                     AttemptCount = reassignmentRecord.AttemptCount,
                     ReassignmentRecordId = reassignmentRecord.Id
-                })
+                }),
+                SeniorId = reassignmentRecord?.Order?.SeniorId
             };
 
             await _notificationService.StoreAndNotifyAsync(notification);

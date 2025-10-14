@@ -656,6 +656,7 @@ namespace Helpi.Infrastructure.Migrations
                     RecurrencePattern = table.Column<int>(type: "integer", nullable: true),
                     StartDate = table.Column<DateTime>(type: "date", nullable: false),
                     EndDate = table.Column<DateTime>(type: "date", nullable: false),
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     CancelledAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -778,6 +779,7 @@ namespace Helpi.Infrastructure.Migrations
                     SeniorId = table.Column<int>(type: "integer", nullable: false),
                     CustomerId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: true),
                     ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
@@ -797,9 +799,12 @@ namespace Helpi.Infrastructure.Migrations
                     HourlyRate = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     CompanyPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
                     ServiceProviderPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                    PaymentTransactionId = table.Column<int>(type: "integer", nullable: true),
+                    PaymentStatus = table.Column<int>(type: "integer", nullable: false),
                     HangFireStartStatusJobId = table.Column<string>(type: "text", nullable: true),
                     HangFireEndStatusJobId = table.Column<string>(type: "text", nullable: true),
                     HangFirePaymentJobId = table.Column<string>(type: "text", nullable: true),
+                    HangFireRemindStudentJobId = table.Column<string>(type: "text", nullable: true),
                     JobInstanceId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -1103,10 +1108,11 @@ namespace Helpi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     InvoiceId = table.Column<int>(type: "integer", nullable: false),
-                    MailerliteMessageId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    Type = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     OpenedCount = table.Column<int>(type: "integer", nullable: false),
                     LastAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NextAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AttemptCount = table.Column<int>(type: "integer", nullable: false),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true)
                 },

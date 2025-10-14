@@ -71,7 +71,7 @@ public class ReviewService
                 if (review.RetryCount >= review.MaxRetry) return;
 
                 var now = DateTime.UtcNow;
-                var nextRetry = now.AddHours(24); // try again next day
+                var nextRetry = now.AddHours(1); // try again
 
                 // Clamp retry to a user-friendly window (e.g. 9 AM – 8 PM UTC)
                 var startHour = 9;

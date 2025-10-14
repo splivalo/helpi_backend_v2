@@ -12,6 +12,8 @@ namespace Helpi.Domain.Entities
         public int CustomerId { get; set; }
         public int OrderId { get; set; }
 
+        public string? Notes { get; set; }
+
         public int OrderScheduleId { get; set; }
 
         [ForeignKey(nameof(StudentContract))]
@@ -45,6 +47,9 @@ namespace Helpi.Domain.Entities
         public decimal CompanyAmount => TotalAmount * (CompanyPercentage / 100);
         public decimal ServiceProviderAmount => TotalAmount * (ServiceProviderPercentage / 100);
 
+        public int? PaymentTransactionId { get; set; }
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+
 
         public ScheduleAssignment ScheduleAssignment { get; set; } = null!;
         public ScheduleAssignment? PrevAssignment { get; set; }
@@ -65,6 +70,7 @@ namespace Helpi.Domain.Entities
         public string? HangFireStartStatusJobId { get; set; }
         public string? HangFireEndStatusJobId { get; set; }
         public string? HangFirePaymentJobId { get; set; }
+        public string? HangFireRemindStudentJobId { get; set; }
 
 
 

@@ -18,6 +18,9 @@ public class JobInstanceDto
     public DateOnly ScheduledDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
+
+
+    public string? Notes { get; set; }
     public JobInstanceStatus Status { get; set; } = JobInstanceStatus.Upcoming;
     public bool NeedsSubstitute { get; set; } = false;
     public DateTime? ActualStartTime { get; set; }

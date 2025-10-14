@@ -35,13 +35,13 @@ public class MinimaxService : IMinimaxService
     /// -----------------
     /// </summary>
 
-    private int _organisationId = 39503; // Apoyo
+    private int _organisationId = 41293; // Apoyo
 
     private static readonly MinimaxEntityReference Country_HR = new() { Id = 95, Name = "HRVATSKA" };
     private static readonly MinimaxEntityReference Currency_EUR = new() { Id = 7, Name = "Euro" };
     private static readonly MinimaxEntityReference Vatrate_0 = new() { Id = 6, Name = "N" };
-    private static readonly MinimaxEntityReference PaymentMethod_Transactional = new() { Id = 165189, Name = "Transactional Account" };
-    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 39152 };
+    private static readonly MinimaxEntityReference PaymentMethod_Transactional = new() { Id = 173739, Name = "Transactional Account" };
+    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 40866 };
 
     /// ---------------------------
     public MinimaxService(IApiService apiService,
@@ -134,22 +134,9 @@ public class MinimaxService : IMinimaxService
 
             _logger.LogInformation("🚀 [Issuing Invoice] ...");
 
-            await CustomActionIssuedInvoice((int)invoiceId, fullInvoice.RowVersion!, "issue");
+            fullInvoice = await CustomActionIssuedInvoice((int)invoiceId, fullInvoice.RowVersion!, "issue");
 
-            _logger.LogInformation("📤 [Sending e-Invoice] ...");
 
-            try
-            {
-                /// can only send email to acount owner in trail mode , hence the try catch
-                await CustomActionIssuedInvoice((int)invoiceId, fullInvoice.RowVersion!, "sendEInvoice");
-
-                _logger.LogInformation("✅ [Done] Invoice {InvoiceId} issued and sent successfully", invoiceId);
-
-            }
-            catch (Exception)
-            {
-
-            }
             return fullInvoice;
         }
         catch (Exception)
@@ -172,10 +159,11 @@ public class MinimaxService : IMinimaxService
             _logger.LogInformation("🧑‍💼 [Customer Check] No MinimaxCustomerId found, creating new customer...");
 
             var customerId = contact.Id;
+            var code = GenerateCustomerCode(customerId);
 
             var newCustomer = new MinimaxCustomer
             {
-                Code = $"CUST{customerId:000}",
+                Code = code,
                 Name = contact.FullName,
                 Address = contact.FullAddress,
                 PostalCode = contact.PostalCode ?? "",
@@ -221,6 +209,11 @@ public class MinimaxService : IMinimaxService
             _logger.LogInformation("❌ Failed to create customer and contact");
             return null;
         }
+    }
+
+    private string GenerateCustomerCode(int customerId)
+    {
+        return $"CUST{DateTime.UtcNow:yyMMdd}-{customerId:000}";
     }
 
 
@@ -494,7 +487,7 @@ public class MinimaxService : IMinimaxService
     }
 
 
-    public async Task<bool> CustomActionIssuedInvoice(int issuedInvoiceId, string rowVersion, string actionName)
+    public async Task<MinimaxIssuedInvoice?> CustomActionIssuedInvoice(int issuedInvoiceId, string rowVersion, string actionName)
     {
         try
         {
@@ -507,12 +500,12 @@ public class MinimaxService : IMinimaxService
             var result = await _apiService.PutAsync(url, _cachedAccessToken, json);
 
 
-            return true;
+            return JsonConvert.DeserializeObject<MinimaxIssuedInvoice>($"{result["Data"]}");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-
-            return false;
+            _logger.LogError(ex, $"❌ [CustomActionIssuedInvoice] {actionName}");
+            return null;
         }
     }
 
@@ -525,6 +518,21 @@ public class MinimaxService : IMinimaxService
         var result = await _apiService.GetAsync(url, _cachedAccessToken);
 
         return JsonConvert.DeserializeObject<List<MinimaxEmployee>>($"{result["Rows"]}") ?? [];
+    }
+
+    public async Task<List<dynamic>> GetCurrentUserOrganisations()
+    {
+
+        _cachedAccessToken = await getAccessToken();
+
+        var url = $"{_baseUrl}/currentuser/orgs";
+
+        var result = await _apiService.GetAsync(url, _cachedAccessToken);
+
+        // _logger.LogInformation("📡 GET {Url}", result);
+
+        /// TODO:  returns corrent data but not parsed , so look at result in debugger
+        return JsonConvert.DeserializeObject<List<dynamic>>($"{result["Rows"]}") ?? [];
     }
 
 
@@ -584,43 +592,114 @@ public class MinimaxService : IMinimaxService
 
     private async Task<MinimaxItem> GetItemAsync()
     {
-        // 
-        return new MinimaxItem
+        try
         {
-            ItemId = 2878516,
-            Title = "Helpi usluga",
-            Code = "1",
-            UnitOfMeasurement = "Sat",
-            ItemType = "AS",
-            VatRate = Vatrate_0,
-            Price = 0
-        };
+
+            var items = await GetItems();
+
+            var item = items.First();
+            // 
+            return new MinimaxItem
+            {
+                ItemId = item.ItemId,
+                Title = item.Title,
+                Code = item.Code,
+                UnitOfMeasurement = item.UnitOfMeasurement,
+                ItemType = item.ItemType,
+                VatRate = Vatrate_0,
+                Price = item.Price,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error getting minimax item");
+            throw;
+        }
     }
     private async Task<MinimaxEmployee> GetCashierAsync()
     {
-        // 
-        return new MinimaxEmployee
+
+        try
         {
-            EmployeeId = 205878,
-            FirstName = "Marko",
-            LastName = "Strugar",
-            DateOfBirth = null,
-            TaxNumber = null,
-            EmploymentType = "ZD",
-            EmploymentStartDate = null,
-            EmploymentEndDate = null,
-            Country = new MinimaxEntityReference
-            {
-                Id = 95,
-                Name = "HR",
-                ResourceUrl = "/api/orgs/39503/countries/95"
-            },
-            CountryOfResidence = new MinimaxEntityReference
-            {
-                Id = 95,
-                Name = "HR",
-                ResourceUrl = "/api/orgs/39503/countries/95"
-            }
-        };
+            var employees = await GetEmployees();
+
+            var employee = employees.Find(e => e.FirstName.ToLower() == "marko" && e.LastName.ToLower() == "strugar");
+
+            return employee!;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error getting minimax cashier");
+            throw;
+        }
+        // 
+        // return new MinimaxEmployee
+        // {
+        //     EmployeeId = 225220,
+        //     FirstName = "Marko",
+        //     LastName = "Strugar",
+        //     DateOfBirth = null,
+        //     TaxNumber = null,
+        //     EmploymentType = "ZD",
+        //     EmploymentStartDate = null,
+        //     EmploymentEndDate = null,
+        //     Country = new MinimaxEntityReference
+        //     {
+        //         Id = 95,
+        //         Name = "HR",
+        //         ResourceUrl = $"/api/orgs/{_organisationId}/countries/95"
+        //     },
+        //     CountryOfResidence = new MinimaxEntityReference
+        //     {
+        //         Id = 95,
+        //         Name = "HR",
+        //         ResourceUrl = $"/api/orgs/{_organisationId}/countries/95"
+        //     }
+        // };
     }
+
+    public async Task<MinimaxAttachment?> GenerateInvoicePdf(int issuedInvoiceId, string rowVersion)
+    {
+        var actionName = "generatepdf";
+        try
+        {
+
+
+            _cachedAccessToken = await getAccessToken();
+
+            var url = $"{_baseUrl}/orgs/{_organisationId}/issuedinvoices/{issuedInvoiceId}/actions/{actionName}?rowVersion={rowVersion}";
+
+            string json = JsonConvert.SerializeObject(new { }, Formatting.Indented);
+            var result = await _apiService.PutAsync(url, _cachedAccessToken, json);
+
+            _logger.LogInformation($"{result}");
+            return JsonConvert.DeserializeObject<MinimaxAttachment>($"{result["Data"]}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"❌ [GetInvoicePdf] {actionName}");
+            return null;
+        }
+    }
+
+    public async Task<List<MinimaxIssuedInvoice>> GetAllIssuedInvoicesAsync()
+    {
+        try
+        {
+            _cachedAccessToken = await getAccessToken();
+            var url = $"{_baseUrl}/orgs/{_organisationId}/issuedinvoices";
+
+            var result = await _apiService.GetAsync(url, _cachedAccessToken);
+
+            return JsonConvert.DeserializeObject<List<MinimaxIssuedInvoice>>($"{result["Rows"]}") ?? null;
+        }
+        catch (Exception)
+        {
+            _logger.LogInformation($"❌  Failed to GET all issued invoicea");
+            return null;
+        }
+    }
+
+
+
 }

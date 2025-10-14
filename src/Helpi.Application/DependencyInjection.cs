@@ -51,7 +51,7 @@ public static class DependencyInjection
         // services.AddScoped<ScheduleAssignmentReplacementService>();
         services.AddScoped<ReviewService>();
         services.AddScoped<InvoiceService>();
-        services.AddScoped<InvoiceEmailService>();
+        services.AddScoped<HEmailService>();
         services.AddScoped<CityService>();
         services.AddScoped<ServiceRegionService>();
         services.AddScoped<PricingConfigurationService>();

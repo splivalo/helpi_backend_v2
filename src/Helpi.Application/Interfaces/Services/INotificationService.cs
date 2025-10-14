@@ -12,9 +12,4 @@ public interface INotificationService
 
     Task<bool> StoreAndNotifyAsync(HNotification notification, bool viaSignalR = true, bool viaFcm = false);
 
-    /// ====
-    Task<bool> SendJobStartedNotificationAsync(int userId, JobInstance jobInstance);
-    Task<bool> SendJobCompletedNotificationAsync(int userId, JobInstance jobInstance);
-
-
 }

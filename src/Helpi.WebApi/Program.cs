@@ -96,8 +96,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Hangfire dashboard (background jobs)
-app.UseHangfireDashboard();
+
 
 // Pre-flight CORS handling (must be early)
 if (app.Environment.IsDevelopment())
@@ -135,11 +134,17 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Hangfire dashboard (background jobs)
+app.UseHangfireDashboard();
+
 // ------------------------------------------------------------
 // 5️⃣  ENDPOINTS
 // ------------------------------------------------------------
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notification");
+app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
+
+
+app.UseWebSockets();
 
 // ------------------------------------------------------------
 // 6️⃣  STARTUP TASKS (Seed data, subscribe events, schedule jobs)

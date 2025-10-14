@@ -70,42 +70,8 @@ public class NotificationService : INotificationService
         }
     }
 
-    public async Task<bool> SendJobStartedNotificationAsync(int userId, JobInstance jobInstance)
-    {
 
-        var notification = new HNotification
-        {
-            RecieverUserId = userId,
-            Title = "Job Started",
-            Body = "Your job is now in progress.",
-            Type = NotificationType.JobInProgress,
-            Payload = JsonSerializer.Serialize(new
-            {
-                RecieverUserId = userId,
-                JobInstanceId = jobInstance.Id,
-            })
-        };
 
-        return await SendPushNotificationAsync(userId, notification);
-    }
-    public async Task<bool> SendJobCompletedNotificationAsync(int userId, JobInstance jobInstance)
-    {
-
-        var notification = new HNotification
-        {
-            RecieverUserId = userId,
-            Title = "Job Ended",
-            Body = "Your job is has completed.",
-            Type = NotificationType.JobCompleted,
-            Payload = JsonSerializer.Serialize(new
-            {
-                RecieverUserId = userId,
-                JobInstanceId = jobInstance.Id,
-            })
-        };
-
-        return await SendPushNotificationAsync(userId, notification);
-    }
 
 
     public async Task<bool> StoreAndNotifyAsync(HNotification notification, bool viaSignalR = true, bool viaFcm = false)
@@ -119,6 +85,10 @@ public class NotificationService : INotificationService
 
             // 1) store to db
             await _hNotificationRepo.CreateAsync(notification);
+
+            /// should use a notification dto
+            notification.Student = null;
+            notification.Senior = null;
 
 
             // 2) send notification

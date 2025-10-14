@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Infrastructure.Utilities;
 using Microsoft.Extensions.Configuration;
 
 namespace Helpi.Infrastructure.Services;
@@ -30,13 +31,16 @@ public class MailerLiteService : IMailerLiteService
         _configuration = configuration;
 
 
-        var apiKey = Environment.GetEnvironmentVariable("MailerLite:ApiKey")
-                     ?? _configuration["MailerLite:ApiKey"]
-                     ?? throw new ArgumentNullException("MailerLite:ApiKey");
+        var creds = CredentialLoader.Load(_configuration, "MailerLite");
+        var _apiKey = creds.GetString("ApiKey")!;
+
+
+
+
 
         _httpClient.BaseAddress = new Uri("https://connect.mailerlite.com/api/");
         _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", apiKey);
+            new AuthenticationHeaderValue("Bearer", _apiKey);
 
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -47,7 +51,9 @@ public class MailerLiteService : IMailerLiteService
     {
         try
         {
-            var groupId = _configuration[$"MailerLite:Groups:{subscriber.Group}"];
+
+            var creds = CredentialLoader.Load(_configuration, "MailerLite");
+            var groupId = creds.GetString($"Groups:{subscriber.Group}")!;
 
             var body = new
             {
