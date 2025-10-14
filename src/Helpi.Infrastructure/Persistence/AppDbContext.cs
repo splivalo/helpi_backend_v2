@@ -38,6 +38,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
     public DbSet<ContactInfo> ContactInfos { get; set; }
     public DbSet<FcmToken> FcmTokens { get; set; }
+    public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
 
     // Academic Structure
     public DbSet<Student> Students { get; set; }

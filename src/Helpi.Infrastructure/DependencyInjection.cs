@@ -66,6 +66,8 @@ public static class DependencyInjection
 
         services.AddScoped<IReassignmentService, ReassignmentService>();
         services.AddScoped<IStudentStatisticsService, StudentStatisticsService>();
+        services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+
 
         // Register all repositories
         services.AddScoped<IReassignmentRecordRepository, ReassignmentRecordRepository>();
