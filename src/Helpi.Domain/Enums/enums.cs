@@ -193,9 +193,9 @@ namespace Helpi.Domain.Enums
         NoEligableStudentAcceptedJobYet,
         NoEligibleStudents,
         ReviewRequest,
+        ReassignmentStarted,
         ReassignmentFailed,
         ReassignmentCompleted,
-        ReassignmentStatusUpdate,
         NewStudentAdded,
         NewSeniorAdded
 

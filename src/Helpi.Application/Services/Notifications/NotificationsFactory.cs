@@ -154,6 +154,68 @@ public static class NotificationFactory
 
     }
 
+    public static HNotification AdminJobReassignmentNotification(int adminId, ReassignmentRecord reassignmentRecord, int seniorId, NotificationType type)
+    {
+
+        return new HNotification
+        {
+            RecieverUserId = adminId,
+            Title = type.ToString(),
+            Body = $"{GetEntityDescription(reassignmentRecord)}",
+            Type = type,
+            Payload = JsonSerializer.Serialize(new
+            {
+                ReassignmentId = reassignmentRecord.Id,
+                Action = type,
+                reassignmentRecord.ReassignmentType,
+                EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
+                EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
+                ReassignmentRecordId = reassignmentRecord.Id
+            }),
+            SeniorId = seniorId
+        };
+
+
+    }
+    public static HNotification StudentJobReassignmentNotification(
+      int studentId,
+      ReassignmentRecord reassignmentRecord,
+      NotificationType type)
+    {
+
+        return new HNotification
+        {
+            RecieverUserId = studentId,
+            Title = type.ToString(),
+            Body = $"{GetEntityDescription(reassignmentRecord)}",
+            Type = type,
+            Payload = JsonSerializer.Serialize(new
+            {
+                reassignmentRecord.ReassignmentType,
+                ReassignmentId = reassignmentRecord.Id,
+                Action = type,
+                EntityType = reassignmentRecord.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
+                EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
+                ReassignmentRecordId = reassignmentRecord.Id
+            }),
+        };
+    }
+
+
+
+
+    private static string GetEntityDescription(ReassignmentRecord reassignmentRecord)
+    {
+        if (reassignmentRecord.ReassignJobInstanceId.HasValue)
+        {
+            return $"Job #{reassignmentRecord.ReassignJobInstanceId}";
+        }
+        else if (reassignmentRecord.ReassignmentType == ReassignmentType.CompleteTakeover)
+        {
+            return $"Schedule #{reassignmentRecord.OrderScheduleId}";
+        }
+        return "Unknown Entity";
+    }
 
 
 }

@@ -3,6 +3,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Helpi.Application.DTOs.ScheduleAssignments;
 
 namespace Helpi.WebApi.Controllers;
 
@@ -23,5 +24,32 @@ public class ScheduleAssignmentsController : ControllerBase
                 var student = await _service.GetActiveStudentForOrderScheduleAsync(orderScheduleId);
                 return Ok(student);
         }
+
+        [HttpGet("order-schedule/{orderScheduleId}/assignment")]
+        public async Task<ActionResult<ScheduleAssignmentDto>> GetAssignmentForOrderScheduleAsync(int orderScheduleId)
+        {
+                var ass = await _service.GetAssignmentForOrderScheduleAsync(orderScheduleId);
+                return Ok(ass);
+        }
         [HttpPost] public async Task<ActionResult<ScheduleAssignmentDto>> Create(ScheduleAssignmentCreateDto dto) => CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, await _service.CreateAssignmentAsync(dto));
+
+        [HttpPost("reassign")]
+        public async Task<IActionResult> ReassignScheduleAssignment([FromBody] ReassignScheduleAssignmentRequestDto request)
+        {
+                if (request == null || request.ScheduleAssignmentId <= 0)
+                        return BadRequest("Invalid request");
+
+
+
+
+                (bool success, string message) = await _service.ReassignScheduleAssignment(
+                   request.ScheduleAssignmentId,
+                   request.PreferedStudentId
+               );
+
+                if (!success)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new { success, message });
+
+                return Ok(new { message });
+        }
 }

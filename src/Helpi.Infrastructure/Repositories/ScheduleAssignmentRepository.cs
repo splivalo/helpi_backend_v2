@@ -103,9 +103,27 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 return await _context.ScheduleAssignments
                     .Where(sa => sa.OrderScheduleId == orderScheduleId)
                     .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                    .Where(sa => !sa.IsJobInstanceSub)
                     .OrderByDescending(sa => sa.AcceptedAt) // Get most recent
                     .Include(sa => sa.Student).ThenInclude(s => s.Contact)
                     .Select(sa => sa.Student)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+        }
+        public async Task<ScheduleAssignment?> GetAssignmentForOrderScheduleAsync(int orderScheduleId)
+        {
+                var activeStatuses = new[]
+               {
+                        AssignmentStatus.Completed,
+                        AssignmentStatus.Accepted
+                };
+
+                return await _context.ScheduleAssignments
+                    .Where(sa => sa.OrderScheduleId == orderScheduleId)
+                    .Where(sa => activeStatuses.Contains(sa.Status))
+                    .Where(sa => !sa.IsJobInstanceSub)
+                    .OrderByDescending(sa => sa.AcceptedAt) // Get most recent
+                    .Include(sa => sa.Student).ThenInclude(s => s.Contact)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
         }
@@ -119,7 +137,9 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 };
 
                 return await _context.ScheduleAssignments
-                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId && activeStatuses.Contains(sa.Status));
+                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId
+                    && activeStatuses.Contains(sa.Status)
+                    && !sa.IsJobInstanceSub);
         }
 
 

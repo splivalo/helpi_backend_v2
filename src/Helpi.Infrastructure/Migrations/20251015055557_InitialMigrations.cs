@@ -108,6 +108,43 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "InvoiceEmails",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ExternalInvoiceId = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    OpenedCount = table.Column<int>(type: "integer", nullable: false),
+                    LastAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NextAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    AttemptCount = table.Column<int>(type: "integer", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InvoiceEmails", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PasswordResetCodes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Used = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PasswordResetCodes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PricingChangeHistories",
                 columns: table => new
                 {
@@ -1020,11 +1057,17 @@ namespace Helpi.Infrastructure.Migrations
                     DueDate = table.Column<DateTime>(type: "date", nullable: false),
                     SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ViewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EmailId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Invoices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Invoices_InvoiceEmails_EmailId",
+                        column: x => x.EmailId,
+                        principalTable: "InvoiceEmails",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Invoices_JobInstances_JobInstanceId",
                         column: x => x.JobInstanceId,
@@ -1098,32 +1141,6 @@ namespace Helpi.Infrastructure.Migrations
                         column: x => x.StudentId,
                         principalTable: "Students",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "InvoiceEmails",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    InvoiceId = table.Column<int>(type: "integer", nullable: false),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    OpenedCount = table.Column<int>(type: "integer", nullable: false),
-                    LastAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    NextAttempt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    AttemptCount = table.Column<int>(type: "integer", nullable: false),
-                    ErrorMessage = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_InvoiceEmails", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_InvoiceEmails_Invoices_InvoiceId",
-                        column: x => x.InvoiceId,
-                        principalTable: "Invoices",
-                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1215,10 +1232,9 @@ namespace Helpi.Infrastructure.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceEmails_InvoiceId",
-                table: "InvoiceEmails",
-                column: "InvoiceId",
-                unique: true);
+                name: "IX_Invoices_EmailId",
+                table: "Invoices",
+                column: "EmailId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invoices_JobInstanceId",
@@ -1518,13 +1534,16 @@ namespace Helpi.Infrastructure.Migrations
                 name: "HNotifications");
 
             migrationBuilder.DropTable(
-                name: "InvoiceEmails");
+                name: "Invoices");
 
             migrationBuilder.DropTable(
                 name: "JobRequests");
 
             migrationBuilder.DropTable(
                 name: "OrderServices");
+
+            migrationBuilder.DropTable(
+                name: "PasswordResetCodes");
 
             migrationBuilder.DropTable(
                 name: "PaymentProfiles");
@@ -1551,13 +1570,13 @@ namespace Helpi.Infrastructure.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Invoices");
-
-            migrationBuilder.DropTable(
-                name: "ReassignmentRecords");
+                name: "InvoiceEmails");
 
             migrationBuilder.DropTable(
                 name: "PaymentTransactions");
+
+            migrationBuilder.DropTable(
+                name: "ReassignmentRecords");
 
             migrationBuilder.DropTable(
                 name: "JobInstances");

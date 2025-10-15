@@ -41,7 +41,7 @@ public class JobInstanceRepository : IJobInstanceRepository
         public async Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId)
         {
                 return await _context.JobInstances
-                 .Where(j => j.NeedsSubstitute == false)
+                     .Where(j => j.NeedsSubstitute == false)
                      .Where(j => j.ScheduleAssignment.StudentId == studentId)
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
                      .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
