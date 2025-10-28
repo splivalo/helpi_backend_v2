@@ -1,5 +1,6 @@
 using FirebaseAdmin.Auth;
 using FirebaseAdmin.Messaging;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,9 @@ public class FirebaseService : IFirebaseService
 {
     private readonly FirebaseMessaging _firebaseMessaging;
     private readonly ILogger<FirebaseService> _logger;
+
+
+
     public FirebaseService(
         ILogger<FirebaseService> logger
     )
@@ -26,7 +30,7 @@ public class FirebaseService : IFirebaseService
     }
 
 
-    public async Task<bool> SendPushNotificationAsync(List<string> deviceTokens, HNotification notification)
+    public async Task<bool> SendPushNotificationAsync(List<string> deviceTokens, HNotificationDto notification)
     {
 
         var message = new MulticastMessage
@@ -34,15 +38,18 @@ public class FirebaseService : IFirebaseService
             Tokens = deviceTokens,
             Data = new Dictionary<string, string>
             {
+                ["title"] = notification.Title,
+                ["body"] = notification.Body,
                 ["notificationId"] = notification.Id.ToString(),
                 ["type"] = notification.Type.ToString(),
                 ["payload"] = notification.Payload ?? string.Empty
             },
-            Notification = new Notification
-            {
-                Title = notification.Title,
-                Body = notification.Body
-            }
+            /// having 'Notification' triggers double notification in the app
+            // Notification = new Notification
+            // {
+            //     Title = notification.Title,
+            //     Body = notification.Body
+            // }
         };
 
         var response = await _firebaseMessaging.SendEachForMulticastAsync(message);

@@ -336,66 +336,15 @@ public class MatchingService : IMatchingService
         // 2. Find students qualified for ALL services who haven't been notified yet
         var availableStudents = await _studentRepository.FindEligibleStudentsForSchedule(
             schedule.Id,
-            notifiedStudentIds
+            notifiedStudentIds,
+            preferedStudentId: reassignment?.PreferredStudentId
         );
 
 
 
         // 3. Prioritize students
-        return await PrioritizeStudents(availableStudents, order, schedule);
+        return availableStudents;
     }
-
-    private async Task<List<Student>> PrioritizeStudents(List<Student> students, Order order, OrderSchedule schedule)
-    {
-
-        var senior = await _seniorRepository.GetByIdAsync(order.SeniorId);
-
-        // 1. Find students who've worked with this senior before
-        // var previouslyWorkedWith = await _studentRepository.StudentsWhoWorkedWithSenior(order.SeniorId);
-        // var prioritized = students
-        //     .OrderByDescending(s => previouslyWorkedWith.Contains(s.Id)) 
-        //     .ThenByDescending(s => s.AverageRating)                     
-        //     .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue) 
-        //     .ToList();
-
-        var prioritized = students
-       .OrderByDescending(s => s.AverageRating)
-       .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue)
-       .ToList();
-
-        return prioritized;
-
-    }
-
-
-
-    private double CalculateDistance(Student student, Senior senior)
-    {
-
-
-        if (student?.Contact == null || senior?.Contact == null)
-            return 0;
-
-        var lat1 = (double)student.Contact.Latitude;
-        var lon1 = (double)student.Contact.Longitude;
-        var lat2 = (double)senior.Contact.Latitude;
-        var lon2 = (double)senior.Contact.Longitude;
-
-
-        const double R = 6371; // Earth radius in kilometers
-        var dLat = DegreesToRadians(lat2 - lat1);
-        var dLon = DegreesToRadians(lon2 - lon1);
-
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
-    }
-
-    private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
-
 
     private async Task<bool> TrySendJobRequest(
         Student student,

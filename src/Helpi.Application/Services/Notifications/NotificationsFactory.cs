@@ -140,7 +140,7 @@ public static class NotificationFactory
     {
         return new HNotification
         {
-            RecieverUserId = jobInstance.ScheduleAssignment.StudentId,
+            RecieverUserId = jobInstance.ScheduleAssignment!.StudentId,
             Title = "Job Reminder",
             Body = $"Your job starts at {jobInstance.StartTime}",
             Type = NotificationType.JobStartReminder,
@@ -198,6 +198,45 @@ public static class NotificationFactory
                 EntityId = reassignmentRecord.ReassignJobInstanceId ?? reassignmentRecord.ReassignAssignmentId,
                 ReassignmentRecordId = reassignmentRecord.Id
             }),
+        };
+    }
+    public static HNotification StudentContractAboutToExpire(
+      int studentId,
+      int contractId)
+    {
+
+        return new HNotification
+        {
+            RecieverUserId = studentId,
+            Title = "Contract About To Expire",
+            Body = "Contract needs to be renewed",
+            Type = NotificationType.ContractAboutToExpire,
+            StudentId = studentId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                StudentId = studentId,
+                ContractId = contractId,
+            })
+        };
+    }
+
+    public static HNotification StudentContractExpired(
+      int studentId,
+      int contractId)
+    {
+
+        return new HNotification
+        {
+            RecieverUserId = studentId,
+            Title = "Contract Expired",
+            Body = "Contract needs to be renewed",
+            Type = NotificationType.ContractExpired,
+            StudentId = studentId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                StudentId = studentId,
+                ContractId = contractId,
+            })
         };
     }
 

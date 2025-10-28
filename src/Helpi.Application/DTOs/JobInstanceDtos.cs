@@ -13,7 +13,7 @@ public class JobInstanceDto
 
     public int OrderScheduleId { get; set; }
     public int? ContractId { get; set; }
-    public int ScheduleAssignmentId { get; set; }
+    public int? ScheduleAssignmentId { get; set; }
     public int? PrevAssignmentId { get; set; }
     public DateOnly ScheduledDate { get; set; }
     public TimeOnly StartTime { get; set; }
@@ -48,7 +48,7 @@ public class JobInstanceDto
 
     public SeniorDto Senior { get; set; } = null!;
 
-    public ScheduleAssignmentDto ScheduleAssignment { get; set; } = null!;
+    public ScheduleAssignmentDto? ScheduleAssignment { get; set; } = null!;
 
 }
 

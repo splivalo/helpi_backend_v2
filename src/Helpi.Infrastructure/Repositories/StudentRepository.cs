@@ -98,7 +98,8 @@ public class StudentRepository : IStudentRepository
 
     public async Task<List<Student>> FindEligibleStudentsForSchedule(
       int orderScheduleId,
-      List<int>? notifiedStudentIds = null)
+      List<int>? notifiedStudentIds = null,
+      int? preferedStudentId = null)
     {
         var orderSchedule = await _context.OrderSchedules
             .Include(os => os.Order)
@@ -119,9 +120,10 @@ public class StudentRepository : IStudentRepository
             targetDay: orderSchedule.DayOfWeek,
             targetStart: orderSchedule.StartTime,
             targetEnd: orderSchedule.EndTime,
-            seniorCityId: orderSchedule.Order.Senior.Contact.CityId,
+            seniorId: orderSchedule.Order.Senior.Id,
             requiredServiceIds: requiredServiceIds,
-            notifiedStudentIds: notifiedStudentIds
+            notifiedStudentIds: notifiedStudentIds,
+            preferedStudentId: preferedStudentId
         );
     }
 
@@ -129,9 +131,10 @@ public class StudentRepository : IStudentRepository
         DateOnly scheduledDate,
         TimeOnly startTime,
         TimeOnly endTime,
-        int seniorCityId,
+        int seniorId,
         List<int> serviceIds,
-        List<int>? notifiedStudentIds = null)
+        List<int>? notifiedStudentIds = null,
+        int? preferedStudentId = null)
     {
         var targetDay = ToIsoDayNumber(scheduledDate);
 
@@ -140,9 +143,10 @@ public class StudentRepository : IStudentRepository
             targetDay: targetDay,
             targetStart: startTime,
             targetEnd: endTime,
-            seniorCityId: seniorCityId,
+            seniorId: seniorId,
             requiredServiceIds: serviceIds,
-            notifiedStudentIds: notifiedStudentIds
+            notifiedStudentIds: notifiedStudentIds,
+            preferedStudentId: preferedStudentId
         );
     }
 
@@ -150,7 +154,8 @@ public class StudentRepository : IStudentRepository
        DateOnly scheduledDate,
        TimeOnly startTime,
        TimeOnly endTime,
-       int orderId
+       int orderId,
+int? preferedStudentId
        )
     {
 
@@ -176,9 +181,10 @@ public class StudentRepository : IStudentRepository
             targetDay: targetDay,
             targetStart: startTime,
             targetEnd: endTime,
-            seniorCityId: order!.Senior.Contact.CityId,
+            seniorId: order!.Senior.Id,
             requiredServiceIds: serviceIds,
-            notifiedStudentIds: null
+            notifiedStudentIds: null,
+            preferedStudentId: preferedStudentId
         );
     }
 
@@ -187,18 +193,24 @@ public class StudentRepository : IStudentRepository
         byte targetDay,
         TimeOnly targetStart,
         TimeOnly targetEnd,
-        int seniorCityId,
         List<int> requiredServiceIds,
-        List<int>? notifiedStudentIds)
+        List<int>? notifiedStudentIds,
+       int? preferedStudentId,
+        int? seniorId
+        )
     {
+        bool matchFullSchedule = scheduledDate == null;
+
         var query = _context.Students.WhereIsActive()
             .Include(s => s.Contact)
-            .Include(s => s.StudentServices)
-            .Include(s => s.AvailabilitySlots)
-            .Include(s => s.ScheduleAssignments)
-                .ThenInclude(sa => sa.OrderSchedule)
+            // .Include(s => s.StudentServices)
+            // .Include(s => s.AvailabilitySlots)
+            // .Include(s => s.ScheduleAssignments)
+            //     .ThenInclude(sa => sa.OrderSchedule)
             .AsNoTracking()
             .AsQueryable();
+
+
 
         // Filter out already notified students
         if (notifiedStudentIds != null && notifiedStudentIds.Any())
@@ -227,18 +239,100 @@ public class StudentRepository : IStudentRepository
         //         requiredServiceIds.Contains(sr.ServiceId)
         // ));
 
-        // Conflict check
-        query = query.Where(s => !s.ScheduleAssignments.Any(sa =>
-            sa.OrderSchedule.DayOfWeek == targetDay &&
-            sa.OrderSchedule.StartTime < targetEnd &&
-            sa.OrderSchedule.EndTime > targetStart &&
-            sa.Status != AssignmentStatus.Completed &&
-            sa.Status != AssignmentStatus.Terminated &&
-            sa.Status != AssignmentStatus.Declined
-        ));
+        if (matchFullSchedule)
+        {
+            // schedule Conflict  check
+            query = query.Where(s => !s.ScheduleAssignments
+                        .SelectMany(sa => sa.JobInstances)
+                        .Any(j =>
+                            j.ScheduledDate == scheduledDate &&
+                            j.StartTime < targetEnd &&
+                            j.EndTime > targetStart &&
+                            j.Status != JobInstanceStatus.Completed &&
+                            j.Status != JobInstanceStatus.Cancelled &&
+                            j.Status != JobInstanceStatus.Rescheduled
+                        ));
 
-        return await query.ToListAsync();
+        }
+        else
+        {
+            // Day Conflict  check  
+            query = query.Include(s => s.ScheduleAssignments.Where(sa => sa.Status == AssignmentStatus.Accepted))
+                            .ThenInclude(sa => sa.JobInstances)
+                         .Where(s => !s.ScheduleAssignments.Any(sa =>
+                            sa.JobInstances.Any(j =>
+                                j.ScheduledDate == scheduledDate &&
+                                j.StartTime < targetEnd &&
+                                j.EndTime > targetStart &&
+                                j.Status != JobInstanceStatus.Completed &&
+                                j.Status != JobInstanceStatus.Cancelled &&
+                                j.Status != JobInstanceStatus.Rescheduled
+                            )
+                        ));
+        }
+
+        var students = await query.ToListAsync();
+        students = await PrioritizeStudents(students, preferedStudentId, seniorId);
+        return students;
     }
+
+    private async Task<List<Student>> PrioritizeStudents(
+        List<Student> students,
+        int? preferedStudentId,
+        int? seniorId)
+    {
+
+        var senior = await _context.Seniors
+                            .Include(s => s.Contact)
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(s => s.Id == seniorId);
+
+
+        // 1. Find students who've worked with this senior before
+        // var previouslyWorkedWith = await _studentRepository.StudentsWhoWorkedWithSenior(order.SeniorId);
+        // var prioritized = students
+        //     .OrderByDescending(s => previouslyWorkedWith.Contains(s.Id)) 
+        //     .ThenByDescending(s => s.AverageRating)                     
+        //     .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue) 
+        //     .ToList();
+
+        var prioritized = students
+                    .OrderByDescending(s => preferedStudentId.HasValue && s.UserId == preferedStudentId.Value)
+                    .OrderByDescending(s => s.AverageRating)
+                    .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue)
+                    .ToList();
+
+        return prioritized;
+
+    }
+
+    private double CalculateDistance(Student student, Senior senior)
+    {
+
+
+        if (student?.Contact == null || senior?.Contact == null)
+            return 0;
+
+        var lat1 = (double)student.Contact.Latitude;
+        var lon1 = (double)student.Contact.Longitude;
+        var lat2 = (double)senior.Contact.Latitude;
+        var lon2 = (double)senior.Contact.Longitude;
+
+
+        const double R = 6371; // Earth radius in kilometers
+        var dLat = DegreesToRadians(lat2 - lat1);
+        var dLon = DegreesToRadians(lon2 - lon1);
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
+    private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
+
 
 
     public async Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions includes, List<StudentStatus>? withStatus = null,
@@ -290,6 +384,7 @@ public class StudentRepository : IStudentRepository
         int dotNetDay = (int)date.DayOfWeek;
         return (byte)(dotNetDay == 0 ? 7 : dotNetDay);
     }
+
 
 }
 

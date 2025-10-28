@@ -1,3 +1,4 @@
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.WebApi.Hubs;
@@ -15,13 +16,13 @@ public class SignalRNotificationService : ISignalRNotificationService
         _hubContext = hubContext;
     }
 
-    public async Task SendNotificationToUserAsync(int userId, HNotification notification)
+    public async Task SendNotificationToUserAsync(int userId, HNotificationDto notification)
     {
         await _hubContext.Clients.Group($"user_{userId}")
             .SendAsync("ReceiveNotification", notification);
     }
 
-    public async Task SendNotificationToGroupAsync(string groupName, HNotification notification)
+    public async Task SendNotificationToGroupAsync(string groupName, HNotificationDto notification)
     {
         await _hubContext.Clients.Group(groupName)
             .SendAsync("ReceiveNotification", notification);
@@ -39,7 +40,7 @@ public class SignalRNotificationService : ISignalRNotificationService
             .SendAsync("TypingIndicator", message);
     }
 
-    public async Task BroadcastSystemNotificationAsync(HNotification notification)
+    public async Task BroadcastSystemNotificationAsync(HNotificationDto notification)
     {
         await _hubContext.Clients.All
             .SendAsync("SystemNotification", notification);

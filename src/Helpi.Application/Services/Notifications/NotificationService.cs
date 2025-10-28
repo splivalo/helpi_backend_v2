@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AutoMapper;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
@@ -19,7 +21,10 @@ public class NotificationService : INotificationService
 
     private readonly ILogger<NotificationService> _logger;
 
+    private readonly IMapper _mapper;
+
     public NotificationService(
+  IMapper mapper,
          IFirebaseService firebaseService,
          IHNotificationRepository hNotificationRepo,
          ISignalRNotificationService signalRNotifier,
@@ -32,6 +37,7 @@ public class NotificationService : INotificationService
         _signalRNotifier = signalRNotifier;
         _fcmTokensRepository = fcmTokensRepository;
         _logger = logger;
+        _mapper = mapper;
     }
 
     public async Task<bool> SendInAppNotificationAsync(int userId, HNotification notification)
@@ -51,6 +57,8 @@ public class NotificationService : INotificationService
         try
         {
 
+            var notificationDto = _mapper.Map<HNotificationDto>(notification);
+
             var deviceTokens = await GetUserDeviceFcmTokens(userId);
             if (!deviceTokens.Any())
             {
@@ -58,7 +66,7 @@ public class NotificationService : INotificationService
                 return false;
             }
 
-            var hasSuccess = await _firebaseService.SendPushNotificationAsync(deviceTokens, notification);
+            var hasSuccess = await _firebaseService.SendPushNotificationAsync(deviceTokens, notificationDto);
 
             return hasSuccess;
         }
@@ -86,15 +94,13 @@ public class NotificationService : INotificationService
             // 1) store to db
             await _hNotificationRepo.CreateAsync(notification);
 
-            /// should use a notification dto
-            notification.Student = null;
-            notification.Senior = null;
 
 
             // 2) send notification
             if (viaSignalR)
             {
-                await _signalRNotifier.SendNotificationToUserAsync(userId, notification);
+                var notificationDto = _mapper.Map<HNotificationDto>(notification);
+                await _signalRNotifier.SendNotificationToUserAsync(userId, notificationDto);
             }
 
             if (viaFcm)

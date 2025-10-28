@@ -30,6 +30,7 @@ public interface IJobInstanceRepository
     Task SaveChangesAsync();
     Task<int> SumAsync(Expression<Func<JobInstance, bool>> predicate, Expression<Func<JobInstance, int>> selector);
     Task<List<JobInstance>> GetJobInstancesAsync(int? assignmentId,
+int? prevAssignmentId,
      JobInstanceStatus? status,
      JobInstanceIncludeOptions options);
     void Detach(JobInstance jobInstance);

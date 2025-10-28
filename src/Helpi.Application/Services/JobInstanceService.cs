@@ -141,8 +141,14 @@ public class JobInstanceService : IJobInstanceService
                                 return;
                         }
 
+                        if (instance.ScheduleAssignmentId == null)
+                        {
+                                return;
+                        }
+
+
                         var assignment = await _assignmentRepository.LoadAssignmentWithIncludes(
-                            instance.ScheduleAssignmentId,
+                            instance.ScheduleAssignmentId.Value,
                             new AssignmentIncludeOptions
                             {
                                     IncludeStudent = true,
@@ -151,7 +157,7 @@ public class JobInstanceService : IJobInstanceService
 
                         if (assignment == null)
                         {
-                                LogAssignmentNotFound(instance.ScheduleAssignmentId, jobInstanceId);
+                                LogAssignmentNotFound(instance.ScheduleAssignmentId.Value, jobInstanceId);
                                 return;
                         }
 
@@ -216,7 +222,7 @@ public class JobInstanceService : IJobInstanceService
                 {
                         SeniorId = instance.SeniorId,
                         SeniorFullName = instance.Senior.Contact.FullName,
-                        StudentId = instance.ScheduleAssignment.StudentId,
+                        StudentId = instance.ScheduleAssignment!.StudentId,
                         StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
                         JobInstanceId = jobInstanceId,
                         Rating = 0, // not rated yet

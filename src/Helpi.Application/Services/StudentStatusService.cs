@@ -108,9 +108,9 @@ IEventMediator mediator,
         }
         else
         {
-            if (student.Status != StudentStatus.Verified)
+            if (student.Status != StudentStatus.Active)
             {
-                student.Status = StudentStatus.Verified;
+                student.Status = StudentStatus.Active;
                 await _studentRepo.UpdateAsync(student);
 
 
@@ -119,7 +119,7 @@ IEventMediator mediator,
                     RecieverUserId = student.UserId,
                     Title = "Contract valid",
                     Body = "Contract valid",
-                    Type = NotificationType.contractActive,
+                    Type = NotificationType.ContractActive,
                     Payload = JsonSerializer.Serialize(new
                     {
                         RecieverUserId = student.UserId,
@@ -155,9 +155,9 @@ IEventMediator mediator,
         {
             _logger.LogWarning("Student {StudentId} has no contracts at all", student.UserId);
 
-            if (student.Status != StudentStatus.UnVerified)
+            if (student.Status != StudentStatus.InActive)
             {
-                student.Status = StudentStatus.UnVerified;
+                student.Status = StudentStatus.InActive;
                 await _studentRepo.UpdateAsync(student);
             }
 
@@ -173,30 +173,22 @@ IEventMediator mediator,
         _logger.LogInformation("Contract expired {DaysSinceExpiry} days ago for student {StudentId}",
             daysSinceExpiry, student.UserId);
 
+        bool expiredButNotMarked = student.Status == StudentStatus.Active;
 
-        if (student.Status == StudentStatus.Verified)
+
+        if (expiredButNotMarked)
         {
-            student.Status = StudentStatus.UnVerified;
+            student.Status = StudentStatus.Expired;
             await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+            await _studentRepo.UpdateAsync(student);
+            await SendContractENotification(student, contract);
         }
-
-
-        await _studentRepo.UpdateAsync(student);
-
-
-        // Reassign jobs immediately when contract expires
-        if (daysSinceExpiry == 1)
+        else if (daysSinceExpiry == 1)
         {
-            try
-            {
-                await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
-                await SendContractENotification(student, contract);
-            }
-            catch
-            {
-                //
-            }
+            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+            await SendContractENotification(student, contract);
         }
+
 
         switch (daysSinceExpiry)
         {
@@ -238,21 +230,10 @@ IEventMediator mediator,
         try
         {
 
-            student.Status = StudentStatus.ContractRenewalNeeded;
+            student.Status = StudentStatus.ContractAboutToExpire;
             await _studentRepo.UpdateAsync(student);
 
-            var notification = new HNotification
-            {
-                RecieverUserId = student.UserId,
-                Title = "Renew contract",
-                Body = "Contract needs to be renewed",
-                Type = NotificationType.ContractAboutToExpire,
-                Payload = JsonSerializer.Serialize(new
-                {
-                    RecieverUserId = student.UserId,
-                    ContractId = contract.Id,
-                })
-            };
+            var notification = NotificationFactory.StudentContractAboutToExpire(student.UserId, contract.Id);
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
@@ -299,21 +280,10 @@ IEventMediator mediator,
         try
         {
 
-            student.Status = StudentStatus.ContractRenewalNeeded;
+            student.Status = StudentStatus.ContractAboutToExpire;
             await _studentRepo.UpdateAsync(student);
 
-            var notification = new HNotification
-            {
-                RecieverUserId = student.UserId,
-                Title = "Contract Expired",
-                Body = "Contract needs to be renewed",
-                Type = NotificationType.ContractAboutToExpire,
-                Payload = JsonSerializer.Serialize(new
-                {
-                    RecieverUserId = student.UserId,
-                    ContractId = contract.Id,
-                })
-            };
+            var notification = NotificationFactory.StudentContractExpired(student.UserId, contract.Id);
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 

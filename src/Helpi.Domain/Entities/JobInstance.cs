@@ -18,7 +18,7 @@ namespace Helpi.Domain.Entities
 
         [ForeignKey(nameof(StudentContract))]
         public int? ContractId { get; set; }
-        public int ScheduleAssignmentId { get; set; }
+        public int? ScheduleAssignmentId { get; set; }
         public int? PrevAssignmentId { get; set; }
         public DateOnly ScheduledDate { get; set; }
         public TimeOnly StartTime { get; set; }
@@ -51,7 +51,7 @@ namespace Helpi.Domain.Entities
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
 
 
-        public ScheduleAssignment ScheduleAssignment { get; set; } = null!;
+        public ScheduleAssignment? ScheduleAssignment { get; set; } = null!;
         public ScheduleAssignment? PrevAssignment { get; set; }
         public PaymentTransaction? PaymentTransaction { get; set; }
 

@@ -208,7 +208,8 @@ public class JobRequestRepository : IJobRequestRepository
                         OrderId = jobRequest.OrderId,
                         StudentId = jobRequest.StudentId,
                         Status = AssignmentStatus.Accepted,
-                        AssignedAt = DateTime.UtcNow
+                        AssignedAt = DateTime.UtcNow,
+                        AcceptedAt = DateTime.UtcNow,
                 };
 
                 _context.ScheduleAssignments.Add(assignment);
@@ -272,6 +273,7 @@ public class JobRequestRepository : IJobRequestRepository
         {
                 return !await _context.ScheduleAssignments
                     .AnyAsync(sa => sa.OrderScheduleId == orderScheduleId
+                        && sa.IsJobInstanceSub == false
                         && sa.Status == AssignmentStatus.Accepted);
         }
 

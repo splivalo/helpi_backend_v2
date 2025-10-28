@@ -41,7 +41,8 @@ public class MinimaxService : IMinimaxService
     private static readonly MinimaxEntityReference Currency_EUR = new() { Id = 7, Name = "Euro" };
     private static readonly MinimaxEntityReference Vatrate_0 = new() { Id = 6, Name = "N" };
     private static readonly MinimaxEntityReference PaymentMethod_Transactional = new() { Id = 173739, Name = "Transactional Account" };
-    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 40866 };
+
+    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 41901 };
 
     /// ---------------------------
     public MinimaxService(IApiService apiService,

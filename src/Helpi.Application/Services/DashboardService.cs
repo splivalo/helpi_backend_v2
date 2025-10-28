@@ -182,8 +182,8 @@ public class DashboardService : IDashboardService
     {
 
         var activeStudentStatus = new[]{
-        StudentStatus.Verified,
-        StudentStatus.ContractRenewalNeeded
+        StudentStatus.Active,
+        StudentStatus.ContractAboutToExpire
     };
 
         var current = await _studentRepository.CountAsync(s =>

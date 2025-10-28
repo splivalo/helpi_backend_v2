@@ -128,7 +128,9 @@ namespace Helpi.Infrastructure.Utilities
                 var envVal = Environment.GetEnvironmentVariable(envKey);
                 if (!string.IsNullOrWhiteSpace(envVal))
                 {
-                    return CreateFromJsonString(envVal, origin: envKey);
+                    // return CreateFromJsonString(envVal, origin: envKey);
+                    if (!File.Exists(envVal)) throw new FileNotFoundException($"Credentials file not found at {envVal}");
+                    return CreateFromFile(envVal);
                 }
 
                 // 2) configuration keys

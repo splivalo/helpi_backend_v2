@@ -9,9 +9,10 @@ namespace Helpi.Domain.Enums
 
     public enum StudentStatus
     {
-        UnVerified,
-        Verified,
-        ContractRenewalNeeded,
+        InActive,
+        Active,
+        ContractAboutToExpire,
+        Expired,
         AccountDeactivated,  // Account soft-deleted after 3 months non-renewal
         PendingPermanentDeletion,  // Warned, awaiting 6-month mark for hard delete
         Deleted
@@ -189,13 +190,13 @@ namespace Helpi.Domain.Enums
         JobRescheduled,
         ContractAboutToExpire,
         ContractExpired,
-        contractActive,
+        ContractActive,
         NoEligableStudentAcceptedJobYet,
         NoEligibleStudents,
         ReviewRequest,
         ReassignmentStarted,
-        ReassignmentFailed,
         ReassignmentCompleted,
+        ReassignmentFailed,
         NewStudentAdded,
         NewSeniorAdded
 

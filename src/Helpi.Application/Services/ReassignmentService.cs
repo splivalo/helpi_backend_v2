@@ -85,16 +85,24 @@ namespace Helpi.Application.Services
                     {
                         Order = true,
                         Assignment = true,
-                        AssignmentOrderSchedule = true
+                        AssignmentOrderSchedule = true,
+                        PrevAssignment = true,
+                        PrevAssignmentOrderSchedule = true
                     });
 
                 if (jobInstance == null)
                     throw new ArgumentException($"Job instance {jobInstanceId} not found");
 
-                orderSchedule = jobInstance.ScheduleAssignment.OrderSchedule;
+
+                /// ScheduleAssignmentId can be null EG, schedule is being resassinged therefore the jobinstans has not assignment
+                var knownAssignment = jobInstance.ScheduleAssignmentId.HasValue ?
+                                                jobInstance.ScheduleAssignment
+                                                : jobInstance.PrevAssignment;
+
+                orderSchedule = knownAssignment!.OrderSchedule;
                 order = jobInstance.Order;
-                originalStudentId = jobInstance.ScheduleAssignment.StudentId;
-                currentAssignmentId = jobInstance.ScheduleAssignmentId;
+                originalStudentId = knownAssignment.StudentId;
+                currentAssignmentId = knownAssignment.Id;
             }
             else
             {
@@ -315,12 +323,36 @@ namespace Helpi.Application.Services
             reassignmentRecord.LastAttemptAt = DateTime.UtcNow;
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
+            await MarkJobInstancesForCompleteTakeover(assignment.Id);
+
 
             //
             _matchingService.StartMatching(assignment.OrderId);
             // await _completionStatusService.ProcessCompletionStatuses();
             // 
             //  TODO: goal is to reflect order not fully assigned
+        }
+
+        private async Task MarkJobInstancesForCompleteTakeover(int assignmentId)
+        {
+            // Update all job instances to show they not assigned
+            var upComingJobInstances = await _jobInstanceRepository.GetJobInstancesAsync(
+                assignmentId: assignmentId,
+                prevAssignmentId: null,
+                JobInstanceStatus.Upcoming,
+                new JobInstanceIncludeOptions { }
+                );
+
+            foreach (var instance in upComingJobInstances)
+            {
+                instance.ScheduleAssignmentId = null;
+                instance.ScheduleAssignment = null;
+                instance.PrevAssignmentId = assignmentId;
+                instance.NeedsSubstitute = true;
+                instance.ContractId = null;
+            }
+
+            await _jobInstanceRepository.UpdateRangeAsync(upComingJobInstances);
         }
 
         private async Task HandleOneDaySubstitution(ReassignmentRecord reassignmentRecord)
@@ -333,6 +365,8 @@ namespace Helpi.Application.Services
                 throw new ArgumentException($"Job instance {reassignmentRecord.ReassignJobInstanceId} not found");
 
             // Mark instance as needing substitution
+            jobInstance.ScheduleAssignmentId = null;
+            jobInstance.ScheduleAssignment = null;
             jobInstance.NeedsSubstitute = true;
             await _jobInstanceRepository.UpdateAsync(jobInstance);
 
@@ -380,13 +414,20 @@ namespace Helpi.Application.Services
 
             // Update all job instances to point to the new assignment
             var upComingJobInstances = await _jobInstanceRepository.GetJobInstancesAsync(
-                originalAssignment.Id,
+                assignmentId: null,
+                prevAssignmentId: originalAssignment.Id,
                 JobInstanceStatus.Upcoming,
                 new JobInstanceIncludeOptions { }
                 );
 
             foreach (var instance in upComingJobInstances)
             {
+                if (instance.ScheduleAssignmentId != null)
+                {
+                    _logger.LogInformation("[SKIP] Job {instanceId} already assigned", instance.Id);
+                    continue;
+                }
+
                 instance.ScheduleAssignmentId = newAssignment.Id;
                 instance.PrevAssignmentId = reassignmentRecord.CurrentAssignmentId;
                 instance.NeedsSubstitute = false;

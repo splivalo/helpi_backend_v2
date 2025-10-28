@@ -26,5 +26,24 @@ namespace Helpi.Domain.Entities
         public OrderSchedule OrderSchedule { get; set; } = null!;
         public Student Student { get; set; } = null!;
         public ICollection<JobInstance> JobInstances { get; set; } = new List<JobInstance>();
+
+
+        public bool IsTerminal
+        {
+            get
+            {
+
+                var terminalStatuses = new[]
+                {
+                    AssignmentStatus.Terminated,
+                    AssignmentStatus.Declined,
+                    AssignmentStatus.Completed,
+                };
+
+                return terminalStatuses.Contains(Status);
+            }
+        }
+
+
     }
 }

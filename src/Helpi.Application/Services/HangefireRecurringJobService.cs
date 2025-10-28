@@ -1,6 +1,7 @@
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Utilities;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -217,8 +218,11 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 continue;
             }
 
-            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
-            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+
+
+            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
+            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
+
 
             _logger.LogDebug("⏳ Scheduling JobInstance #{Id}: ▶️ InProgress at {StartTime}, ✅ Completed at {EndTime}.",
                 instance.Id, startTime, endTime);
@@ -276,8 +280,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 continue;
             }
 
-            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
-            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
+            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
 
 
             var chargePaymentAt = startTime.AddMinutes(-35); // this has to happen before RemindStudent

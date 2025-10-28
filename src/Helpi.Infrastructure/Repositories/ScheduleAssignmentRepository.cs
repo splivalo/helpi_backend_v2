@@ -55,10 +55,11 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                         // Get only the latest job instance per assignment
                         var latestJobInstances = await _context.JobInstances
                             .Where(ji => ji.IsRescheduleVariant == false)
-                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId))
+                            .Where(ji => ji.ScheduleAssignmentId.HasValue)
+                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId!.Value))
                             .GroupBy(ji => ji.ScheduleAssignmentId)
                             .Select(g => g.OrderByDescending(x => x.ScheduledDate).First())
-                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId);
+                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId!.Value);
 
                         // Attach to assignments
                         foreach (var assignment in assignments)
@@ -122,7 +123,7 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .Where(sa => sa.OrderScheduleId == orderScheduleId)
                     .Where(sa => activeStatuses.Contains(sa.Status))
                     .Where(sa => !sa.IsJobInstanceSub)
-                    .OrderByDescending(sa => sa.AcceptedAt) // Get most recent
+                    .OrderByDescending(sa => sa.AssignedAt) // Get most recent
                     .Include(sa => sa.Student).ThenInclude(s => s.Contact)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
