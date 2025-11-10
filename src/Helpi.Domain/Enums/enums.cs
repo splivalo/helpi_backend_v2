@@ -83,10 +83,12 @@ namespace Helpi.Domain.Enums
     {
         Requested,
         InProgress,
-        Completed,
-        Failed,
+        Assigned,
+        AllEligableStudentNotified,
+        NoEligibleStudents,
+        MaxAttemptsReached,
         Cancelled,
-        Expired
+
     }
 
     public enum ReassignmentType
@@ -188,15 +190,21 @@ namespace Helpi.Domain.Enums
         JobCompleted,
         JobCancelled,
         JobRescheduled,
+        ScheduleAssignmentCancelled,
+        OrderScheduleCancelled,
+        OrderCancelled,
         ContractAboutToExpire,
         ContractExpired,
-        ContractActive,
-        NoEligableStudentAcceptedJobYet,
+        ContractAdded,
+        ContractUpdated,
+        ContractDeleted,
+        AllEligableStudentNotified,
         NoEligibleStudents,
+        MatchingMaxAttemptsReached,
         ReviewRequest,
         ReassignmentStarted,
         ReassignmentCompleted,
-        ReassignmentFailed,
+
         NewStudentAdded,
         NewSeniorAdded
 

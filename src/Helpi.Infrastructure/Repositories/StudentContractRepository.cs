@@ -23,13 +23,14 @@ public class StudentContractRepository : IStudentContractRepository
         => await _context.StudentContracts
           .Where(c => c.DeletedOn == null)
             .Where(sc => sc.StudentId == studentId)
+             .OrderByDescending(sc => sc.ExpirationDate)
             .ToListAsync();
 
     public async Task<IEnumerable<StudentContract>> GetActiveContracts(DateOnly date)
         => await _context.StudentContracts
           .Where(c => c.DeletedOn == null)
             .Where(sc => sc.EffectiveDate <= date &&
-                (sc.ExpirationDate == null || sc.ExpirationDate >= date))
+                (sc.ExpirationDate >= date))
             .ToListAsync();
 
     public async Task<StudentContract> AddAsync(StudentContract contract)

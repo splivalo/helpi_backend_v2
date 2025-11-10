@@ -29,10 +29,7 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>
                 {
                     b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
@@ -42,7 +39,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContactId")
                         .IsUnique();
 
-                    b.ToTable("Admin");
+                    b.ToTable("Admins");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
@@ -125,6 +122,9 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("LanguageCode")
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Latitude")
                         .HasColumnType("numeric");
@@ -328,6 +328,15 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderScheduleId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Payload")
                         .HasColumnType("text");
 
@@ -341,6 +350,10 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TranslationKey")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -513,6 +526,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContractId");
 
                     b.HasIndex("JobInstanceId");
+
+                    b.HasIndex("OrderScheduleId");
 
                     b.HasIndex("PrevAssignmentId");
 
@@ -1661,6 +1676,12 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.User", null)
+                        .WithOne("Admin")
+                        .HasForeignKey("Helpi.Domain.Entities.Admin", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Contact");
                 });
 
@@ -1757,6 +1778,12 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.OrderSchedule", "OrderSchedule")
+                        .WithMany()
+                        .HasForeignKey("OrderScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "PrevAssignment")
                         .WithMany()
                         .HasForeignKey("PrevAssignmentId");
@@ -1772,6 +1799,8 @@ namespace Helpi.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+
+                    b.Navigation("OrderSchedule");
 
                     b.Navigation("PrevAssignment");
 
@@ -2290,6 +2319,8 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Admin");
+
                     b.Navigation("Customer");
 
                     b.Navigation("PaymentProfiles");

@@ -18,7 +18,7 @@ namespace Helpi.Application.Interfaces
         Task UpdateAsync(ReassignmentRecord record);
         Task DeleteAsync(ReassignmentRecord record);
         Task<int> GetCountByStatusAsync(ReassignmentStatus status);
-        Task<IEnumerable<ReassignmentRecord>> GetRecordsNeedingAttentionAsync();
+        Task<IEnumerable<ReassignmentRecord>> GetRecordsForRematchingAttemptAsync();
         Task<bool> HasActiveReassignmentsForAssignmentAsync(int assignmentId);
         Task<bool> HasActiveReassignmentsForInstanceAsync(int instanceId);
 

@@ -58,7 +58,7 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
         }
 
         // Reinitiate failed reassignment matches
-        var failedReassignments = await _reassignmentRecordRepository.GetByStatusAsync(ReassignmentStatus.Failed);
+        var failedReassignments = await _reassignmentRecordRepository.GetRecordsForRematchingAttemptAsync();
         foreach (var reassignment in failedReassignments)
         {
             await ReinitiateReassignmentMatching(reassignment);

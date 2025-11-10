@@ -197,9 +197,13 @@ namespace Helpi.Infrastructure.Repositories
                 .CountAsync();
         }
 
-        public async Task<IEnumerable<ReassignmentRecord>> GetRecordsNeedingAttentionAsync()
+        public async Task<IEnumerable<ReassignmentRecord>> GetRecordsForRematchingAttemptAsync()
         {
-            var attentionStatuses = new[] { ReassignmentStatus.Failed, ReassignmentStatus.Expired };
+            var attentionStatuses = new[] {
+                ReassignmentStatus.NoEligibleStudents,
+                ReassignmentStatus.AllEligableStudentNotified
+             };
+
             return await _context.ReassignmentRecords
                 .Where(r => attentionStatuses.Contains(r.Status))
                 .Include(r => r.ReassignJobInstance)

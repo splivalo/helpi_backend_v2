@@ -1,6 +1,7 @@
 
 using System.Text.Json;
 using System.Threading.Tasks;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
@@ -23,6 +24,7 @@ public class MatchingService : IMatchingService
     private readonly ISeniorRepository _seniorRepository;
     private readonly StudentAvailabilitySlotService _studentAvailabilityService;
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly IOrderRepository _orderRepository;
     private readonly ILogger<MatchingService> _logger;
     private readonly IMatchingBackgroundJobs _matchingBackgroundJobs;
@@ -42,6 +44,7 @@ public class MatchingService : IMatchingService
         IScheduleAssignmentRepository scheduleAssignmentRepository,
         IOrderScheduleRepository orderScheduleRepository,
         INotificationService notificationService,
+INotificationFactory notificationFactory,
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
         ISeniorRepository seniorRepository,
@@ -56,6 +59,7 @@ public class MatchingService : IMatchingService
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
         _orderScheduleRepository = orderScheduleRepository;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _orderRepository = orderRepository;
         _studentRepository = studentRepository;
         _seniorRepository = seniorRepository;
@@ -377,22 +381,8 @@ public class MatchingService : IMatchingService
             await _jobRequestRepository.AddAsync(jobRequest);
 
             // Send notification
-
-            var jobRequestNotification = new HNotification
-            {
-                RecieverUserId = student.UserId,
-                Title = "Job request",
-                Body = $"Expires: {expiresAt:MMM dd, yyyy hh:mm tt}",
-                Type = NotificationType.JobRequest,
-                Payload = JsonSerializer.Serialize(new
-                {
-                    OrderSchedule = orderSchedule.Id,
-                    ExpiresAt = expiresAt,
-                    IsReassignment = reassignment != null,
-                    ReassignmentType = reassignment?.ReassignmentType.ToString(),
-                    ReassignmentRecordId = reassignment?.Id
-                })
-            };
+            var studentCulture = student.Contact.LanguageCode ?? "en";
+            var jobRequestNotification = _notificationFactory.JobRequestNotification(student.UserId, orderSchedule, reassignment, culture: studentCulture);
 
 
             bool notificationSent = await _notificationService.SendPushNotificationAsync(
@@ -444,7 +434,7 @@ public class MatchingService : IMatchingService
         {
             if (reassignmentRecord != null)
             {
-                reassignmentRecord.Status = recordReason ?? ReassignmentStatus.Failed;
+                reassignmentRecord.Status = recordReason!.Value;
                 reassignmentRecord.AllowAutoScheduling = recordAllowAutoScheduling;
                 await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
             }
@@ -480,20 +470,14 @@ public class MatchingService : IMatchingService
 
         var adminId = await GetAdminId();
 
-        var notification = new HNotification
-        {
-            RecieverUserId = adminId,
-            Title = "No Eligible Students Available",
-            Body = $"Schedule #{schedule.Id} could not be assigned due to a lack of eligible students.",
-            Type = NotificationType.NoEligibleStudents,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-            }),
-            SeniorId = order.SeniorId,
-        };
+        var notification = _notificationFactory.NoEligibleStudentsNotification(
+                                adminId,
+                                order,
+                                schedule,
+                                reassignment
+                                );
+
+
 
 
 
@@ -507,7 +491,7 @@ public class MatchingService : IMatchingService
                 AutoScheduleDisableReason.noEligibleStudents,
                 reassignment,
                 recordAllowAutoScheduling: false,
-                ReassignmentStatus.Failed
+                ReassignmentStatus.NoEligibleStudents
                );
 
 
@@ -524,21 +508,12 @@ public class MatchingService : IMatchingService
 
         var adminId = await GetAdminId();
 
-        var notification = new HNotification
-        {
-            RecieverUserId = adminId,
-            Title = "Schedule Assignment Unaccepted",
-            Body = $"All {notifiedStudents.Count()} eligable students notified, none accepted yet",
-            Type = NotificationType.NoEligableStudentAcceptedJobYet,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-                NotifiedStudent = notifiedStudents,
-            }),
-            SeniorId = order.SeniorId,
-        };
+        var notification = _notificationFactory.AllEligibleStudentsNotified(
+                                    adminId,
+                                    order,
+                                    schedule,
+                                    reassignment
+                                    );
 
         await _notificationService.StoreAndNotifyAsync(notification);
 

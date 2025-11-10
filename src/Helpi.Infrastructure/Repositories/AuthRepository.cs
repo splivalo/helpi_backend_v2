@@ -4,6 +4,8 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
 
 public class AuthRepository : IAuthRepository
 {
@@ -105,4 +107,16 @@ public class AuthRepository : IAuthRepository
         }
     }
 
+    public Task<User?> FindByEmailAsync(string email)
+    {
+        var query = _context.Users.AsQueryable();
+
+        // Include optional roles with their contacts
+        query = query
+            .Include(u => u.Admin).ThenInclude(a => a.Contact)
+            .Include(u => u.Student).ThenInclude(s => s.Contact)
+            .Include(u => u.Customer).ThenInclude(c => c.Contact);
+
+        return query.FirstOrDefaultAsync(u => u.Email == email);
+    }
 }

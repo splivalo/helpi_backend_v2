@@ -1,5 +1,6 @@
 using System.Data;
 using System.Text.Json;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -15,6 +16,7 @@ public class StudentStatusService
     private readonly IStudentRepository _studentRepo;
 
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly StudentsService _studentService;
 
     private readonly ILogger<OrderStatusMaintenanceService> _logger;
@@ -26,6 +28,7 @@ public class StudentStatusService
         IStudentRepository studentRepo,
       StudentsService studentService,
       INotificationService notificationService,
+INotificationFactory notificationFactory,
      IReassignmentService reassignmentService,
 IEventMediator mediator,
         ILogger<OrderStatusMaintenanceService> logger
@@ -34,6 +37,7 @@ IEventMediator mediator,
         _studentRepo = studentRepo;
         _studentService = studentService;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _logger = logger;
         _reassignmentService = reassignmentService;
         _mediator = mediator;
@@ -113,19 +117,11 @@ IEventMediator mediator,
                 student.Status = StudentStatus.Active;
                 await _studentRepo.UpdateAsync(student);
 
-
-                var notification = new HNotification
-                {
-                    RecieverUserId = student.UserId,
-                    Title = "Contract valid",
-                    Body = "Contract valid",
-                    Type = NotificationType.ContractActive,
-                    Payload = JsonSerializer.Serialize(new
-                    {
-                        RecieverUserId = student.UserId,
-                        ContractId = activeContract.Id,
-                    })
-                };
+                var notification = _notificationFactory.StudentContractAdded(
+                     student.UserId,
+                     activeContract.Id,
+                     culture: student.Contact.LanguageCode ?? "en"
+                     );
 
                 await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
@@ -233,7 +229,10 @@ IEventMediator mediator,
             student.Status = StudentStatus.ContractAboutToExpire;
             await _studentRepo.UpdateAsync(student);
 
-            var notification = NotificationFactory.StudentContractAboutToExpire(student.UserId, contract.Id);
+            var notification = _notificationFactory.StudentContractAboutToExpire(student.UserId,
+             contract.Id,
+            culture: student.Contact.LanguageCode ?? "en"
+            );
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
@@ -283,7 +282,9 @@ IEventMediator mediator,
             student.Status = StudentStatus.ContractAboutToExpire;
             await _studentRepo.UpdateAsync(student);
 
-            var notification = NotificationFactory.StudentContractExpired(student.UserId, contract.Id);
+            var notification = _notificationFactory.StudentContractExpired(student.UserId,
+            contract.Id,
+            culture: student.Contact.LanguageCode ?? "en");
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 

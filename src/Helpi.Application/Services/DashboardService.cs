@@ -340,17 +340,16 @@ public class DashboardService : IDashboardService
 
         // Calculate total minutes worked
         var currentHours = await _jobInstanceRepository.SumAsync(
-     j => j.Status == JobInstanceStatus.Completed &&
-          j.ScheduledDate >= currentStartDate &&
-          j.ScheduledDate <= currentEndDate,
-     j => (int)(j.StartTime - j.EndTime).TotalHours
- );
+                        j => j.Status == JobInstanceStatus.Completed &&
+                        j.ScheduledDate >= currentStartDate &&
+                        j.ScheduledDate <= currentEndDate,
+                        j => (int)(j.EndTime - j.StartTime).TotalHours);
 
         var previousHours = await _jobInstanceRepository.SumAsync(
             j => j.Status == JobInstanceStatus.Completed &&
                  j.ScheduledDate >= prevStartDate &&
                  j.ScheduledDate <= prevEndDate,
-            j => (int)(j.StartTime - j.EndTime).TotalHours
+            j => (int)(j.EndTime - j.StartTime).TotalHours
         );
 
 

@@ -12,7 +12,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-
+        CreateMap<Admin, AdminDto>();
         CreateMap<HNotification, HNotificationDto>();
         CreateMap<CreateHNotificationDto, HNotification>();
         CreateMap<UpdateHNotificationDto, HNotification>()

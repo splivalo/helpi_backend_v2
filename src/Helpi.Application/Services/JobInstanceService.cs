@@ -1,6 +1,7 @@
 
 using System.Text.Json;
 using AutoMapper;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
@@ -16,6 +17,8 @@ public class JobInstanceService : IJobInstanceService
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
+        private readonly ICustomerRepository _customerRepo;
+        private readonly INotificationFactory _notificationFactory;
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly IReassignmentService _reassignmentService;
         private readonly IReviewRepository _reviewRepo;
@@ -27,23 +30,28 @@ public class JobInstanceService : IJobInstanceService
                 IJobInstanceRepository repository,
                 IMapper mapper,
                 INotificationService notificationService,
+INotificationFactory notificationFactory,
                  OrderStatusMaintenanceService statusMaintenanceService,
                   IHangfireService hangfireService,
                   IReassignmentService reassignmentService,
                   IReviewRepository reviewRepo,
                   IScheduleAssignmentRepository assignmentRepository,
-                   ILogger<JobInstanceService> logger
+                   ILogger<JobInstanceService> logger,
+
+ICustomerRepository customerRepo
                 )
         {
                 _jobInstanceRepository = repository;
                 _mapper = mapper;
                 _notificationService = notificationService;
+                _notificationFactory = notificationFactory;
                 _statusMaintenanceService = statusMaintenanceService;
                 _hangfireService = hangfireService;
                 _reassignmentService = reassignmentService;
                 _reviewRepo = reviewRepo;
                 _assignmentRepository = assignmentRepository;
                 _logger = logger;
+                _customerRepo = customerRepo;
         }
 
 
@@ -96,9 +104,9 @@ public class JobInstanceService : IJobInstanceService
 
                 if (instance.PaymentStatus != PaymentStatus.Paid) return;
 
+                var culture = instance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
 
-
-                var notification = NotificationFactory.CreateStudentJobReminderNotification(instance);
+                var notification = _notificationFactory.CreateStudentJobReminderNotification(instance, culture);
                 await _notificationService.SendPushNotificationAsync(notification.RecieverUserId, notification);
 
 
@@ -216,7 +224,8 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.Completed) return;
 
                 var customerId = instance.Senior.CustomerId;
-
+                var cutomer = await _customerRepo.GetByIdAsync(customerId);
+                var customerCulture = cutomer?.Contact.LanguageCode ?? "en";
                 // Create the pending review in DB
                 var review = new Review
                 {
@@ -237,23 +246,7 @@ public class JobInstanceService : IJobInstanceService
                 await _reviewRepo.AddAsync(review);
 
                 // Send notification to customer
-                var notification = new HNotification
-                {
-                        RecieverUserId = customerId,
-                        Title = "Review",
-                        Body = "How was your experience?",
-                        Type = NotificationType.ReviewRequest,
-                        Payload = JsonSerializer.Serialize(new
-                        {
-                                ReviewId = review.Id, // include review id for Flutter side
-                                RecieverUserId = customerId,
-                                JobInstanceId = jobInstanceId,
-                                SeniorId = instance.SeniorId,
-                                SeniorFullName = instance.Senior.Contact.FullName,
-                                StudentId = instance.ScheduleAssignment.StudentId,
-                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
-                        })
-                };
+                var notification = _notificationFactory.ReviewRequestNotification(customerId, review, instance, customerCulture);
 
                 await _notificationService.SendPushNotificationAsync(customerId, notification);
         }

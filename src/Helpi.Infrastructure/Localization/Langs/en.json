@@ -1,0 +1,104 @@
+{
+    "Entities": {
+        "Order": "Order #{0}",
+        "Job": "Job #{0}",
+        "Schedule": "Schedule #{0}",
+        "Assignment": "Assignment #{0}",
+        "Reassignment": "Reassignment #{0}",
+        "Student": "Student: {0}",
+        "Senior": "Senior: {0}",
+        "Unknown": "Unknown Entity"
+    },
+    "Notifications": {
+        "NewStudent": {
+            "Title": "New Student Added",
+            "Body": "A new student has been added"
+        },
+        "NewSenior": {
+            "Title": "New Senior Added",
+            "Body": "A new senior has been added"
+        },
+        "PaymentFailed": {
+            "Title": "Payment Failed",
+            "Body": "Payment failed"
+        },
+        "PaymentSuccess": {
+            "Title": "Payment Successful",
+            "Body": "Invoice emailed"
+        },
+        "JobRequest": {
+            "Title": "Job Request",
+            "Body": "New job request"
+        },
+        "JobCancelled": {
+            "Title": "Job Cancelled",
+            "Body": "Job on {0} cancelled"
+        },
+        "JobReminder": {
+            "Title": "Job Reminder",
+            "Body": "Your job starts at {0}"
+        },
+        "OrderCancelled": {
+            "Title": "Job Reminder",
+            "Body": "Your job starts at {0}"
+        },
+        "OrderScheduleCancelled": {
+            "Title": "Job Reminder",
+            "Body": "Your job starts at {0}"
+        },
+        "ScheduleAssignmentCancelled": {
+            "Title": "Job Reminder",
+            "Body": "Your job starts at {0}"
+        },
+        "ContractAdded": {
+            "Title": "Contract added",
+            "Body": "Contract added"
+        },
+        "ContractUpdated": {
+            "Title": "Contract updated",
+            "Body": "Contract updated"
+        },
+        "ContractDeleted": {
+            "Title": "Contract deleted",
+            "Body": "Contract deleted"
+        },
+        "ContractAboutToExpire": {
+            "Title": "Contract About To Expire",
+            "Body": "Contract needs to be renewed"
+        },
+        "ContractExpired": {
+            "Title": "Contract Expired",
+            "Body": "Contract has expired"
+        },
+        "ReviewRequest": {
+            "Title": "Review",
+            "Body": "How was your expirence?"
+        },
+        "ReassignmentStarted": {
+            "Title": "Reassignment Started",
+            "Body": "{description}."
+        },
+        "ReassignmentCompleted": {
+            "Title": "Reassignment Completed",
+            "Body": "{description}."
+        },
+        "NoEligibleStudents": {
+            "Title": "No Eligible Students",
+            "Body": "{description}."
+        },
+        "AllEligibleStudentsNotified": {
+            "Title": "All Eligible Students Notified",
+            "Body": "{description}."
+        }
+    },
+    "Emails": {
+        "PasswordReset": {
+            "Subject": "Password Reset Code",
+            "Body": "Your Helpi password reset code is <b>{0}</b>. It expires in 10 minutes."
+        },
+        "Invoice": {
+            "Subject": "Your Invoice",
+            "Body": "<h1>Thank you for your order!</h1><p>Invoice attached.</p>"
+        }
+    }
+}

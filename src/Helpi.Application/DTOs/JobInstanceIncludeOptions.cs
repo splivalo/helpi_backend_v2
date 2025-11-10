@@ -9,6 +9,7 @@ public class JobInstanceIncludeOptions
     public bool PrevAssignment { get; set; }
     public bool PrevAssignmentOrderSchedule { get; set; }
     public bool Order { get; set; }
+    public bool OrderSchedule { get; set; }
     public bool OrderPaymentMethod { get; set; }
     public bool OrderServices { get; set; }
 

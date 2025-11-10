@@ -1,4 +1,6 @@
 
+using Helpi.Application.DTOs.Order;
+using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -12,6 +14,7 @@ public class JobInstanceDto
     public int OrderId { get; set; }
 
     public int OrderScheduleId { get; set; }
+    public OrderScheduleDto? OrderSchedule { get; set; }
     public int? ContractId { get; set; }
     public int? ScheduleAssignmentId { get; set; }
     public int? PrevAssignmentId { get; set; }

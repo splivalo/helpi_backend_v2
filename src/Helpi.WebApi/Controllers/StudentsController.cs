@@ -63,12 +63,15 @@ public class StudentsController : ControllerBase
         public async Task<ActionResult<List<StudentDto>>> GetAvailableStudents(DateOnly date,
                                 TimeOnly startTime,
                                 TimeOnly endTime,
-                                int orderId)
+                                int orderId,
+ [FromQuery] List<int>? excludeJobInstanceIds = null
+                                )
         {
                 var students = await _service.FindEligibleStudentsForInstance2(date,
                                  startTime,
                                  endTime,
-                                 orderId);
+                                 orderId,
+                                 excludeJobInstanceIds ?? new List<int>());
                 return Ok(students);
         }
 

@@ -356,6 +356,7 @@ namespace Helpi.Infrastructure.Migrations
                     FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "date", nullable: false),
                     Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    LanguageCode = table.Column<string>(type: "text", nullable: true),
                     Email = table.Column<string>(type: "text", nullable: true),
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     GooglePlaceId = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -402,18 +403,23 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Admin",
+                name: "Admins",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Admin", x => x.UserId);
+                    table.PrimaryKey("PK_Admins", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_Admin_ContactInfos_ContactId",
+                        name: "FK_Admins_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Admins_ContactInfos_ContactId",
                         column: x => x.ContactId,
                         principalTable: "ContactInfos",
                         principalColumn: "Id",
@@ -658,12 +664,16 @@ namespace Helpi.Infrastructure.Migrations
                     RecieverUserId = table.Column<int>(type: "integer", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Body = table.Column<string>(type: "text", nullable: false),
+                    TranslationKey = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
                     Payload = table.Column<string>(type: "text", nullable: true),
                     StudentId = table.Column<int>(type: "integer", nullable: true),
-                    SeniorId = table.Column<int>(type: "integer", nullable: true)
+                    SeniorId = table.Column<int>(type: "integer", nullable: true),
+                    OrderId = table.Column<int>(type: "integer", nullable: true),
+                    OrderScheduleId = table.Column<int>(type: "integer", nullable: true),
+                    JobInstanceId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -819,7 +829,7 @@ namespace Helpi.Infrastructure.Migrations
                     Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     OrderScheduleId = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: true),
-                    ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: false),
+                    ScheduleAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     PrevAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
                     StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
@@ -853,6 +863,12 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "JobInstances",
                         principalColumn: "Id");
                     table.ForeignKey(
+                        name: "FK_JobInstances_OrderSchedules_OrderScheduleId",
+                        column: x => x.OrderScheduleId,
+                        principalTable: "OrderSchedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_JobInstances_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
@@ -867,8 +883,7 @@ namespace Helpi.Infrastructure.Migrations
                         name: "FK_JobInstances_ScheduleAssignments_ScheduleAssignmentId",
                         column: x => x.ScheduleAssignmentId,
                         principalTable: "ScheduleAssignments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_JobInstances_Seniors_SeniorId",
                         column: x => x.SeniorId,
@@ -1162,8 +1177,8 @@ namespace Helpi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Admin_ContactId",
-                table: "Admin",
+                name: "IX_Admins_ContactId",
+                table: "Admins",
                 column: "ContactId",
                 unique: true);
 
@@ -1255,6 +1270,11 @@ namespace Helpi.Infrastructure.Migrations
                 name: "IX_JobInstances_JobInstanceId",
                 table: "JobInstances",
                 column: "JobInstanceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobInstances_OrderScheduleId",
+                table: "JobInstances",
+                column: "OrderScheduleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobInstances_OrderStatus",
@@ -1507,7 +1527,7 @@ namespace Helpi.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Admin");
+                name: "Admins");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");

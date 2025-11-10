@@ -43,6 +43,7 @@ public interface IStudentRepository
    TimeOnly startTime,
    TimeOnly endTime,
    int orderId,
-int? preferedStudentId
+int? preferedStudentId,
+ List<int> excludeJobInstanceIds
    );
 }

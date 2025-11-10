@@ -24,4 +24,12 @@ public class ContactInfosController : ControllerBase
                 return NoContent();
         }
         [HttpDelete("{id}")] public async Task<IActionResult> Delete(int id) { await _service.DeleteContactInfoAsync(id); return NoContent(); }
+
+        [HttpPatch("{contactId}/language")]
+        public async Task<IActionResult> UpdateLanguage(int contactId, [FromBody] UpdateLanguageDto dto)
+        {
+                var updated = await _service.UpdateLanguageAsync(contactId, dto.LanguageCode);
+                if (!updated) return NotFound();
+                return NoContent();
+        }
 }

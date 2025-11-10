@@ -15,6 +15,7 @@ namespace Helpi.Domain.Entities
         public string? Notes { get; set; }
 
         public int OrderScheduleId { get; set; }
+        public OrderSchedule? OrderSchedule { get; set; }
 
         [ForeignKey(nameof(StudentContract))]
         public int? ContractId { get; set; }

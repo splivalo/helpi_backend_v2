@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Auth;
 using Helpi.Application.Interfaces;
@@ -36,6 +37,9 @@ public class AuthService
     private readonly ICityRepository _cityRepo;
     private readonly IGooglePlaceService _googlePlaceService;
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
+
+    private readonly ILocalizationService _loc;
 
     private readonly IPasswordResetRepository _passwordResetRepository;
     private readonly IMailgunService _mailgunService;
@@ -54,10 +58,11 @@ public class AuthService
    ICityRepository cityRepo,
    IGooglePlaceService googlePlaceService,
    INotificationService notificationService,
-
+INotificationFactory notificationFactory,
 IPasswordResetRepository passwordResetRepository,
 
-IMailgunService mailgunService
+IMailgunService mailgunService,
+ILocalizationService loc
    )
     {
         _userManager = userManager;
@@ -69,8 +74,11 @@ IMailgunService mailgunService
         _cityRepo = cityRepo;
         _googlePlaceService = googlePlaceService;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _passwordResetRepository = passwordResetRepository;
         _mailgunService = mailgunService;
+
+        _loc = loc;
 
 
         _secretKey = Environment.GetEnvironmentVariable("JwtSettings:Secret")
@@ -262,7 +270,7 @@ IMailgunService mailgunService
 
             await _authRepository.RegisterCustomer(customer, customerContactInfo, senior, seniorContactInfo);
 
-            var notification = NotificationFactory.CreateNewSeniorNotification(1, senior.Id);
+            var notification = _notificationFactory.CreateNewSeniorNotification(1, senior.Id);
             await _notificationService.StoreAndNotifyAsync(notification);
 
             return (true, "Customer /Senior registered successfully");
@@ -310,7 +318,7 @@ IMailgunService mailgunService
 
             await _authRepository.RegisterStudent(student, contactInfo);
 
-            var notification = NotificationFactory.CreateNewStudentNotification(1, student.UserId);
+            var notification = _notificationFactory.CreateNewStudentNotification(1, student.UserId);
             await _notificationService.StoreAndNotifyAsync(notification);
 
             return (true, "Student registered successfully");
@@ -390,7 +398,7 @@ IMailgunService mailgunService
 
             // Create contact info for the user
             var contactInfo = _mapper.Map<ContactInfo>(dto.ContactInfo);
-
+            contactInfo.Email = user.Email;
 
 
             var admin = new Admin
@@ -500,7 +508,7 @@ IMailgunService mailgunService
 
     public async Task<(bool Success, string Message)> ForgotPasswordAsync(string email)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _authRepository.FindByEmailAsync(email);
         if (user == null)
             return (false, "If an account exists, a reset code will be sent."); // security best practice
 
@@ -515,8 +523,33 @@ IMailgunService mailgunService
 
         await _passwordResetRepository.AddAsync(resetEntry);
 
-        await _mailgunService.SendEmailAsync(email, "Password Reset Code",
-            $"Your Helpi password reset code is <b>{code}</b>. It expires in 10 minutes.");
+        string culture;
+
+        switch (user.UserType)
+        {
+            case UserType.Admin:
+                culture = user.Admin!.Contact.LanguageCode!;
+                break;
+
+            case UserType.Student:
+                culture = user.Student!.Contact.LanguageCode!;
+                break;
+
+            case UserType.Customer:
+                culture = user.Customer!.Contact.LanguageCode!;
+                break;
+
+            default:
+                culture = "hr";
+                break;
+        }
+
+
+
+        var subject = _loc.GetString("Emails.PasswordReset.Subject", culture);
+        var body = _loc.GetString("Emails.PasswordReset.Body", culture, code);
+
+        await _mailgunService.SendEmailAsync(email, subject, body);
 
         return (true, "If an account exists, a reset code has been sent.");
     }

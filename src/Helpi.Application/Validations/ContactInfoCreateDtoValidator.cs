@@ -12,6 +12,10 @@ public class ContactInfoCreateDtoValidator : AbstractValidator<ContactInfoCreate
             .NotEmpty()
             .MaximumLength(255);
 
+        RuleFor(x => x.LanguageCode)
+            .NotEmpty()
+            .MaximumLength(2);
+
         RuleFor(x => x.DateOfBirth)
             .NotEmpty()
             .LessThan(DateOnly.FromDateTime(DateTime.Today))

@@ -1,0 +1,104 @@
+{
+    "Entities": {
+        "Order": "Narudžba #{0}",
+        "Job": "Posao #{0}",
+        "Schedule": "Raspored #{0}",
+        "Assignment": "Zadatak #{0}",
+        "Reassignment": "Ponovno dodjeljivanje #{0}",
+        "Student": "Student: {0}",
+        "Senior": "Starija osoba: {0}",
+        "Unknown": "Nepoznati entitet"
+    },
+    "Notifications": {
+        "NewStudent": {
+            "Title": "Dodan novi student",
+            "Body": "Novi student je dodan"
+        },
+        "NewSenior": {
+            "Title": "Dodan novi korisnik",
+            "Body": "Nova starija osoba je dodana"
+        },
+        "PaymentFailed": {
+            "Title": "Plaćanje nije uspjelo",
+            "Body": "Plaćanje nije uspjelo"
+        },
+        "PaymentSuccess": {
+            "Title": "Plaćanje uspješno",
+            "Body": "Račun je poslan e-poštom"
+        },
+        "JobRequest": {
+            "Title": "Zahtjev za posao",
+            "Body": "Novi zahtjev za posao"
+        },
+        "JobCancelled": {
+            "Title": "Posao otkazan",
+            "Body": "Posao na {0} je otkazan"
+        },
+        "JobReminder": {
+            "Title": "Podsjetnik za posao",
+            "Body": "Vaš posao počinje u {0}"
+        },
+        "OrderCancelled": {
+            "Title": "Narudžba otkazana",
+            "Body": "Vaša narudžba na {0} je otkazana"
+        },
+        "OrderScheduleCancelled": {
+            "Title": "Raspored narudžbe otkazan",
+            "Body": "Raspored za vašu narudžbu je otkazan"
+        },
+        "ScheduleAssignmentCancelled": {
+            "Title": "Zadatak otkazan",
+            "Body": "Zadatak zakazan za {0} je otkazan"
+        },
+        "ContractAdded": {
+            "Title": "Ugovor dodan",
+            "Body": "Novi ugovor je dodan"
+        },
+        "ContractUpdated": {
+            "Title": "Ugovor ažuriran",
+            "Body": "Ugovor je ažuriran"
+        },
+        "ContractDeleted": {
+            "Title": "Ugovor izbrisan",
+            "Body": "Ugovor je izbrisan"
+        },
+        "ContractAboutToExpire": {
+            "Title": "Ugovor uskoro istječe",
+            "Body": "Ugovor treba obnoviti"
+        },
+        "ContractExpired": {
+            "Title": "Ugovor istekao",
+            "Body": "Ugovor je istekao"
+        },
+        "ReviewRequest": {
+            "Title": "Recenzija",
+            "Body": "Kako je bilo vaše iskustvo?"
+        },
+        "ReassignmentStarted": {
+            "Title": "Ponovno dodjeljivanje započeto",
+            "Body": "{description}."
+        },
+        "ReassignmentCompleted": {
+            "Title": "Ponovno dodjeljivanje završeno",
+            "Body": "{description}."
+        },
+        "NoEligibleStudents": {
+            "Title": "Nema dostupnih studenata",
+            "Body": "{description}."
+        },
+        "AllEligibleStudentsNotified": {
+            "Title": "Svi dostupni studenti obaviješteni",
+            "Body": "{description}."
+        }
+    },
+    "Emails": {
+        "PasswordReset": {
+            "Subject": "Kod za poništavanje lozinke",
+            "Body": "Vaš Helpi kod za poništavanje lozinke je <b>{0}</b>. Istječe za 10 minuta."
+        },
+        "Invoice": {
+            "Subject": "Vaš račun",
+            "Body": "<h1>Hvala na vašoj narudžbi!</h1><p>Račun je u privitku.</p>"
+        }
+    }
+}

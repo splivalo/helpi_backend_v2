@@ -1,4 +1,5 @@
 
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Minimax;
 using Helpi.Application.Interfaces;
@@ -20,8 +21,11 @@ public class PaymentService : IPaymentService
     private readonly ILogger<PaymentService> _logger;
 
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly IMailgunService _mailgunService;
     private readonly IHEmailRepository _hEmailRepository;
+
+    private readonly ILocalizationService _loc;
 
     public PaymentService(
         IPaymentTransactionRepository transactionRepository,
@@ -32,10 +36,11 @@ public class PaymentService : IPaymentService
       IMinimaxService minimaxService,
       ILogger<PaymentService> logger,
    INotificationService notificationService,
-
+INotificationFactory notificationFactory,
  IMailgunService mailgunService,
 
-IHEmailRepository hEmailRepository
+IHEmailRepository hEmailRepository,
+ILocalizationService loc
         )
     {
         _transactionRepository = transactionRepository;
@@ -46,8 +51,10 @@ IHEmailRepository hEmailRepository
         _minimaxService = minimaxService;
         _logger = logger;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _mailgunService = mailgunService;
         _hEmailRepository = hEmailRepository;
+        _loc = loc;
     }
 
 
@@ -189,32 +196,40 @@ IHEmailRepository hEmailRepository
         {
             var adminId = 1;
             // notify admin
-            var notification = NotificationFactory.CreatePaymentFailedNotification(
+            var notification = _notificationFactory.CreatePaymentFailedNotification(
                 adminId,
                 jobInstance.SeniorId,
                 jobInstance.OrderId,
-                jobInstance.Id
+                jobInstance.Id,
+                culture: "en"
                 );
 
             await _notificationService.StoreAndNotifyAsync(notification);
 
+            var customer = await _customerRepo.GetByIdAsync(jobInstance.CustomerId);
+            var customerCulture = customer.Contact.LanguageCode ?? "en";
+
             // notify customer
-            var customerNotification = NotificationFactory.CreatePaymentFailedNotification(
+            var customerNotification = _notificationFactory.CreatePaymentFailedNotification(
                jobInstance.CustomerId,
                jobInstance.SeniorId,
                jobInstance.OrderId,
-               jobInstance.Id
+               jobInstance.Id,
+               culture: customerCulture
                );
 
             await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);
 
+
+            var studentCulture = jobInstance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
+
             // notify student
             var studentId = jobInstance.ScheduleAssignment.StudentId;
-            var studentNotification = NotificationFactory.CreateJobCancelledNotification(
+            var studentNotification = _notificationFactory.JobCancelledNotification(
                 studentId,
-                jobInstance.SeniorId,
-                jobInstance.OrderId,
-                jobInstance.Id
+                jobInstance,
+                culture: studentCulture
+
                 );
 
             await _notificationService.SendPushNotificationAsync(studentId, studentNotification);
@@ -243,10 +258,11 @@ IHEmailRepository hEmailRepository
             var invoice = await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
 
             var customerEmail = customer.Contact.Email;
+            var culture = customer.Contact.LanguageCode;
 
-            await EmailInvoiceToCustomer(invoice!, customerEmail!);
+            await EmailInvoiceToCustomer(invoice!, customerEmail!, culture);
 
-            await PaymentSuccessNotifyCustomer(jobInstance);
+            await PaymentSuccessNotifyCustomer(jobInstance, culture);
         }
         catch (Exception ex)
         {
@@ -255,7 +271,7 @@ IHEmailRepository hEmailRepository
         }
     }
 
-    private async Task EmailInvoiceToCustomer(MinimaxIssuedInvoice invoice, string customerEmail)
+    private async Task EmailInvoiceToCustomer(MinimaxIssuedInvoice invoice, string customerEmail, string culture)
     {
         try
         {
@@ -272,10 +288,13 @@ IHEmailRepository hEmailRepository
                     { attachment!.AttachmentFileName, attachment.AttachmentData }
                 };
 
+            var subject = _loc.GetString("Emails.Invoice.Subject", culture);
+            var body = _loc.GetString("Emails.Invoice.Body", culture);
+
             var success = await _mailgunService.SendEmailAsync(
                   to: customerEmail,
-                  subject: "Your Invoice",
-                  htmlBody: "<h1>Thank you for your order!</h1><p>Invoice attached.</p>",
+                  subject: subject,
+                  htmlBody: body,
                   attachments: attachmentData
               );
 
@@ -308,13 +327,14 @@ IHEmailRepository hEmailRepository
 
     }
 
-    private async Task PaymentSuccessNotifyCustomer(JobInstance jobInstance)
+    private async Task PaymentSuccessNotifyCustomer(JobInstance jobInstance, string culture)
     {
-        var customerNotification = NotificationFactory.CreatePaymentSuccessNotification(
+        var customerNotification = _notificationFactory.CreatePaymentSuccessNotification(
              jobInstance.CustomerId,
              jobInstance.SeniorId,
              jobInstance.OrderId,
-             jobInstance.Id
+             jobInstance.Id,
+             culture: culture
              );
 
         await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);

@@ -123,7 +123,8 @@ public class StudentRepository : IStudentRepository
             seniorId: orderSchedule.Order.Senior.Id,
             requiredServiceIds: requiredServiceIds,
             notifiedStudentIds: notifiedStudentIds,
-            preferedStudentId: preferedStudentId
+            preferedStudentId: preferedStudentId,
+            excludeJobInstanceIds: []
         );
     }
 
@@ -146,7 +147,8 @@ public class StudentRepository : IStudentRepository
             seniorId: seniorId,
             requiredServiceIds: serviceIds,
             notifiedStudentIds: notifiedStudentIds,
-            preferedStudentId: preferedStudentId
+            preferedStudentId: preferedStudentId,
+            excludeJobInstanceIds: []
         );
     }
 
@@ -155,7 +157,8 @@ public class StudentRepository : IStudentRepository
        TimeOnly startTime,
        TimeOnly endTime,
        int orderId,
-int? preferedStudentId
+        int? preferedStudentId,
+        List<int> excludeJobInstanceIds
        )
     {
 
@@ -184,7 +187,8 @@ int? preferedStudentId
             seniorId: order!.Senior.Id,
             requiredServiceIds: serviceIds,
             notifiedStudentIds: null,
-            preferedStudentId: preferedStudentId
+            preferedStudentId: preferedStudentId,
+            excludeJobInstanceIds: excludeJobInstanceIds ?? new List<int> { }
         );
     }
 
@@ -196,7 +200,8 @@ int? preferedStudentId
         List<int> requiredServiceIds,
         List<int>? notifiedStudentIds,
        int? preferedStudentId,
-        int? seniorId
+        int? seniorId,
+        List<int> excludeJobInstanceIds
         )
     {
         bool matchFullSchedule = scheduledDate == null;
@@ -264,6 +269,7 @@ int? preferedStudentId
                                 j.ScheduledDate == scheduledDate &&
                                 j.StartTime < targetEnd &&
                                 j.EndTime > targetStart &&
+                                !excludeJobInstanceIds.Contains(j.Id) &&
                                 j.Status != JobInstanceStatus.Completed &&
                                 j.Status != JobInstanceStatus.Cancelled &&
                                 j.Status != JobInstanceStatus.Rescheduled

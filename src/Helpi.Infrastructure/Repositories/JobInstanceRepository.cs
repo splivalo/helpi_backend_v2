@@ -205,7 +205,11 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 }
 
+                if (includes.OrderSchedule)
+                {
+                        query = query.Include(ji => ji.OrderSchedule);
 
+                }
 
                 if (includes.Assignment)
                 {
@@ -219,7 +223,6 @@ public class JobInstanceRepository : IJobInstanceRepository
                         }
 
                 }
-
 
                 if (includes.PrevAssignment)
                 {

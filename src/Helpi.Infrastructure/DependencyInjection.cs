@@ -1,5 +1,6 @@
 
 using System.Text;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using MyApp.Infrastructure.Localization;
 
 namespace Infrastructure;
 
@@ -34,11 +36,11 @@ public static class DependencyInjection
                 configuration.GetConnectionString("DefaultConnection"),
                 o => o.UseNetTopologySuite()), ServiceLifetime.Scoped);
 
-
+        services.AddSingleton<ILocalizationService>(new JsonLocalizationService("en"));
 
         services.AddSingleton<IEventMediator, EventMediator>();
 
-
+        services.AddScoped<INotificationFactory, NotificationFactory>();
 
         services.AddScoped<IHNotificationRepository, HNotificationRepository>();
 
@@ -98,7 +100,8 @@ public static class DependencyInjection
         services.AddScoped<IHEmailRepository, HEmailRepository>();
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IServiceRegionRepository, ServiceRegionRepository>();
-
+        services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<AdminService>();
         /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):
         //         var repositoryTypes = Assembly.GetAssembly(typeof(AppDbContext))!
         //     .GetTypes()

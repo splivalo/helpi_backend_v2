@@ -41,6 +41,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
 
     // Academic Structure
+    public DbSet<Admin> Admins { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Faculty> Faculties { get; set; }
     public DbSet<StudentContract> StudentContracts { get; set; }

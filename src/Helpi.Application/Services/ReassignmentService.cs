@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -19,6 +20,7 @@ namespace Helpi.Application.Services
         private readonly IJobInstanceMatchingService _jobInstanceMatchingService;
         private readonly ILogger<ReassignmentService> _logger;
         private readonly INotificationService _notificationService;
+        private readonly INotificationFactory _notificationFactory;
         private readonly IStudentRepository _studentRepository;
 
         public ReassignmentService(
@@ -31,6 +33,7 @@ namespace Helpi.Application.Services
              IJobInstanceMatchingService jobInstanceMatchingService,
             ILogger<ReassignmentService> logger,
             INotificationService notificationService,
+INotificationFactory notificationFactory,
             IStudentRepository studentRepository
             )
         {
@@ -43,6 +46,7 @@ namespace Helpi.Application.Services
             _jobInstanceMatchingService = jobInstanceMatchingService;
             _logger = logger;
             _notificationService = notificationService;
+            _notificationFactory = notificationFactory;
             _studentRepository = studentRepository;
         }
 
@@ -192,9 +196,9 @@ namespace Helpi.Application.Services
             }
 
             // Notify admin about the reassignment
-            await NotifyAdminAboutReassignment(reassignmentRecord, order.SeniorId, NotificationType.ReassignmentStarted);
+            await NotifyAdminAboutReassignmentStart(reassignmentRecord, order.SeniorId);
 
-            await NotifyStudentAboutReassignment(reassignmentRecord, NotificationType.ReassignmentStarted);
+            await NotifyStudentAboutReassignment(reassignmentRecord, order.SeniorId);
 
             return reassignmentRecord;
         }
@@ -211,7 +215,7 @@ namespace Helpi.Application.Services
 
 
             // Update the reassignment record
-            reassignmentRecord.Status = ReassignmentStatus.Completed;
+            reassignmentRecord.Status = ReassignmentStatus.Assigned;
             reassignmentRecord.NewStudentId = newStudentId;
             reassignmentRecord.CompletedAt = DateTime.UtcNow;
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
@@ -244,7 +248,7 @@ namespace Helpi.Application.Services
 
             if (reassignmentRecord.AttemptCount >= reassignmentRecord.MaxAttempts && !success)
             {
-                reassignmentRecord.Status = ReassignmentStatus.Failed;
+                reassignmentRecord.Status = ReassignmentStatus.MaxAttemptsReached;
                 await NotifyReassignmentFailure(reassignmentRecord);
             }
 
@@ -488,23 +492,47 @@ namespace Helpi.Application.Services
             };
         }
 
-        private async Task NotifyAdminAboutReassignment(ReassignmentRecord reassignmentRecord, int seniorId, NotificationType type)
+        private async Task NotifyAdminAboutReassignmentStart(ReassignmentRecord reassignmentRecord, int seniorId)
         {
             var adminId = await GetAdminId();
-            var notification = NotificationFactory.AdminJobReassignmentNotification(adminId,
-                            reassignmentRecord,
-                            seniorId,
-                            type);
-            await _notificationService.StoreAndNotifyAsync(notification);
+            var notification = _notificationFactory.ReassignmentStartNotification(
+                                        recieverId: adminId,
+                                        record: reassignmentRecord,
+                                        seniorId: seniorId,
+                                        type: NotificationType.ReassignmentStarted
+                                        );
+
+            if (notification == null) return;
+
+            await _notificationService.StoreAndNotifyAsync(notification!);
         }
 
         private async Task NotifyStudentAboutReassignment(
             ReassignmentRecord reassignmentRecord,
-            NotificationType type)
+            int seniorId)
         {
             var studentId = (int)reassignmentRecord.OriginalStudentId!;
+            var student = await _studentRepository.GetByIdAsync(studentId);
+            var culture = student.Contact.LanguageCode ?? "en";
 
-            var notifcation = NotificationFactory.StudentJobReassignmentNotification(studentId, reassignmentRecord, type);
+            HNotification notifcation;
+
+            if (reassignmentRecord.ReassignmentType == ReassignmentType.OneDaySubstitution)
+            {
+                notifcation = _notificationFactory.JobCancelledNotification(studentId,
+                 reassignmentRecord.ReassignJobInstance!,
+                 culture: culture
+                 );
+            }
+            else
+            {
+                notifcation = _notificationFactory.ScheduleAssignmentCancelledNotification(
+                                        recieverId: studentId,
+                                        scheduleAssignment: reassignmentRecord.ReassignAssignment!,
+                                        seniorId: seniorId,
+                                        culture: culture
+                                        );
+            }
 
             await _notificationService.SendPushNotificationAsync(studentId, notifcation);
         }
@@ -516,16 +544,23 @@ namespace Helpi.Application.Services
 
             try
             {
+
+
                 var adminId = await GetAdminId();
                 var seniorId = (int)reassignmentRecord?.Order?.SeniorId!;
-                var type = NotificationType.ReassignmentFailed;
 
-                var notification = NotificationFactory.AdminJobReassignmentNotification(adminId,
-                                reassignmentRecord,
-                                seniorId,
-                                type);
+                if (reassignmentRecord.Status == ReassignmentStatus.MaxAttemptsReached)
+                {
+                    return;
+                }
+                // var type = NotificationType.ReassignmentFailed;
 
-                await _notificationService.StoreAndNotifyAsync(notification);
+                // var notification = _notificationFactory.AdminJobReassignmentNotification(adminId,
+                //                 reassignmentRecord,
+                //                 seniorId,
+                //                 type);
+
+                // await _notificationService.StoreAndNotifyAsync(notification!);
             }
             catch (Exception)
             {
