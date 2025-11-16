@@ -73,7 +73,7 @@ public class OrderRepository : IOrderRepository
 
         public async Task<Order?> LoadOrderWithIncludes(int orderId, OrderIncludeOptions options)
         {
-                var query = _context.Orders.AsQueryable();
+                var query = _context.Orders.AsQueryable().AsNoTracking(); ;
 
                 if (options.Senior)
                         query = query.Include(o => o.Senior).ThenInclude(s => s.Contact);

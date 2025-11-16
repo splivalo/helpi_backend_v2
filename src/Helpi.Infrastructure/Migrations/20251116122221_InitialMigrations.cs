@@ -7,8 +7,6 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace Helpi.Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -100,7 +98,7 @@ namespace Helpi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FacultyName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                    Translations = table.Column<Dictionary<string, Translation>>(type: "json", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1157,23 +1155,6 @@ namespace Helpi.Infrastructure.Migrations
                         principalTable: "Students",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.InsertData(
-                table: "Faculties",
-                columns: new[] { "Id", "FacultyName" },
-                values: new object[,]
-                {
-                    { 1, "Business and Economics" },
-                    { 2, "Education" },
-                    { 3, "Engineering" },
-                    { 4, "Health Sciences" },
-                    { 5, "Law" },
-                    { 6, "Medicine" },
-                    { 7, "Science" },
-                    { 8, "Social Sciences" },
-                    { 9, "Computer Science" },
-                    { 10, "Arts and Humanities" }
                 });
 
             migrationBuilder.CreateIndex(

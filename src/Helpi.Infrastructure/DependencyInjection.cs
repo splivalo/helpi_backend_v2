@@ -190,6 +190,7 @@ public static class DependencyInjection
         services.AddTransient<RoleSeeder>();
         services.AddTransient<ContractNumberSequenceSeeder>();
         services.AddTransient<ServiceDataSeeder>();
+        services.AddTransient<FacultyDataSeeder>();
 
         return services;
     }

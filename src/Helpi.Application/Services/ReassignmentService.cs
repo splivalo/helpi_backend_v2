@@ -331,7 +331,7 @@ INotificationFactory notificationFactory,
 
 
             //
-            _matchingService.StartMatching(assignment.OrderId);
+            await _matchingService.StartMatching(assignment.OrderId);
             // await _completionStatusService.ProcessCompletionStatuses();
             // 
             //  TODO: goal is to reflect order not fully assigned
@@ -494,47 +494,61 @@ INotificationFactory notificationFactory,
 
         private async Task NotifyAdminAboutReassignmentStart(ReassignmentRecord reassignmentRecord, int seniorId)
         {
-            var adminId = await GetAdminId();
-            var notification = _notificationFactory.ReassignmentStartNotification(
-                                        recieverId: adminId,
-                                        record: reassignmentRecord,
-                                        seniorId: seniorId,
-                                        type: NotificationType.ReassignmentStarted
-                                        );
+            try
+            {
+                var adminId = await GetAdminId();
+                var notification = _notificationFactory.ReassignmentStartNotification(
+                                            recieverId: adminId,
+                                            record: reassignmentRecord,
+                                            seniorId: seniorId,
+                                            type: NotificationType.ReassignmentStarted
+                                            );
 
-            if (notification == null) return;
+                if (notification == null) return;
 
-            await _notificationService.StoreAndNotifyAsync(notification!);
+                await _notificationService.StoreAndNotifyAsync(notification!);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[FAILED] Sending notification to admin bout  reassignment #{id}", reassignmentRecord.Id);
+            }
         }
 
         private async Task NotifyStudentAboutReassignment(
             ReassignmentRecord reassignmentRecord,
             int seniorId)
         {
-            var studentId = (int)reassignmentRecord.OriginalStudentId!;
-            var student = await _studentRepository.GetByIdAsync(studentId);
-            var culture = student.Contact.LanguageCode ?? "en";
-
-            HNotification notifcation;
-
-            if (reassignmentRecord.ReassignmentType == ReassignmentType.OneDaySubstitution)
+            try
             {
-                notifcation = _notificationFactory.JobCancelledNotification(studentId,
-                 reassignmentRecord.ReassignJobInstance!,
-                 culture: culture
-                 );
-            }
-            else
-            {
-                notifcation = _notificationFactory.ScheduleAssignmentCancelledNotification(
-                                        recieverId: studentId,
-                                        scheduleAssignment: reassignmentRecord.ReassignAssignment!,
-                                        seniorId: seniorId,
-                                        culture: culture
-                                        );
-            }
+                var studentId = (int)reassignmentRecord.OriginalStudentId!;
+                var student = await _studentRepository.GetByIdAsync(studentId);
+                var culture = student.Contact.LanguageCode ?? "en";
 
-            await _notificationService.SendPushNotificationAsync(studentId, notifcation);
+                HNotification notifcation;
+
+                if (reassignmentRecord.ReassignmentType == ReassignmentType.OneDaySubstitution)
+                {
+                    notifcation = _notificationFactory.JobCancelledNotification(studentId,
+                     reassignmentRecord.ReassignJobInstance!,
+                     culture: culture
+                     );
+                }
+                else
+                {
+                    notifcation = _notificationFactory.ScheduleAssignmentCancelledNotification(
+                                            recieverId: studentId,
+                                            scheduleAssignment: reassignmentRecord.ReassignAssignment!,
+                                            seniorId: seniorId,
+                                            culture: culture
+                                            );
+                }
+
+                await _notificationService.SendPushNotificationAsync(studentId, notifcation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[FAILED] Sending notification to student bout  reassignment #{id}", reassignmentRecord.Id);
+            }
         }
 
 

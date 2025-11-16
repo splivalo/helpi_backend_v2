@@ -265,15 +265,26 @@ public class NotificationFactory : INotificationFactory
        int recieverId, ScheduleAssignment scheduleAssignment, int seniorId, string culture)
     {
 
+        int orderId = scheduleAssignment.OrderId;
+        int orderScheduleId = scheduleAssignment.OrderScheduleId;
+
+        var description = LocalizationUtils.GetEntityDescription(_loc,
+               orderId: orderId,
+               scheduleId: orderScheduleId,
+               jobInstanceId: null,
+               "en");
+
 
         return new HNotification
         {
             RecieverUserId = recieverId,
             TranslationKey = "Notifications.ScheduleAssignmentCancelled",
             Title = _loc.GetString("Notifications.ScheduleAssignmentCancelled.Title", culture),
-            Body = _loc.GetString("Notifications.ScheduleAssignmentCancelled.Body", culture),
+            Body = _loc.GetString("Notifications.ScheduleAssignmentCancelled.Body", culture, description),
             Type = NotificationType.ScheduleAssignmentCancelled,
             SeniorId = seniorId,
+            OrderId = orderId,
+            OrderScheduleId = orderScheduleId,
             Payload = JsonSerializer.Serialize(new
             {
                 ScheduleAssignmentId = scheduleAssignment.Id,

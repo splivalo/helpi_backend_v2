@@ -12,8 +12,15 @@ public class FacultyRepository : IFacultyRepository
         public FacultyRepository(AppDbContext context) => _context = context;
 
         public async Task<Faculty> GetByIdAsync(int id) => await _context.Faculties.FindAsync(id);
-        public async Task<Faculty> GetByNameAsync(string name)
-            => await _context.Faculties.FirstOrDefaultAsync(f => f.FacultyName == name);
+        public async Task<Faculty?> GetByNameAsync(string name)
+        {
+                var faculties = await _context.Faculties.AsNoTracking().ToListAsync();
+
+                return faculties.FirstOrDefault(f =>
+                    f.Translations.Values.Any(t =>
+                        string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)));
+        }
+
         public async Task<IEnumerable<Faculty>> GetAllAsync() => await _context.Faculties.ToListAsync();
         public async Task<Faculty> AddAsync(Faculty faculty)
         {

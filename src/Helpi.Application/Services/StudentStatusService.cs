@@ -24,6 +24,11 @@ public class StudentStatusService
     private readonly IReassignmentService _reassignmentService;
     private readonly IEventMediator _mediator;
 
+    private readonly IContractEvaluationService _contractEvaluator;
+
+    private readonly IMailgunService _mailgunService;
+    private readonly ILocalizationService _loc;
+
     public StudentStatusService(
         IStudentRepository studentRepo,
       StudentsService studentService,
@@ -31,7 +36,10 @@ public class StudentStatusService
 INotificationFactory notificationFactory,
      IReassignmentService reassignmentService,
 IEventMediator mediator,
-        ILogger<OrderStatusMaintenanceService> logger
+        ILogger<OrderStatusMaintenanceService> logger,
+              IContractEvaluationService contractEvaluator,
+              IMailgunService mailgunService,
+ILocalizationService loc
     )
     {
         _studentRepo = studentRepo;
@@ -41,22 +49,25 @@ IEventMediator mediator,
         _logger = logger;
         _reassignmentService = reassignmentService;
         _mediator = mediator;
+        _contractEvaluator = contractEvaluator;
+        _mailgunService = mailgunService;
+        _loc = loc;
     }
 
     public async Task ProcessStudentContracts()
     {
-
-        /// todo : concider puting a check to see if its 
         _logger.LogInformation("🔍 Starting ProcessStudentStatuses");
 
 
 
-        var students = await _studentRepo.LoadStudentsWithIncludes(null, new StudentIncludeOptions
-        {
-            Contracts = true
-        }
-        ,
-         excludeStatus: [StudentStatus.Deleted]);
+        var students = await _studentRepo.LoadStudentsWithIncludes(null,
+                        new StudentIncludeOptions
+                        {
+                            ContactInfo = true,
+                            Contracts = true
+                        },
+                        excludeStatus: [StudentStatus.Deleted]
+                        );
 
 
 
@@ -77,193 +88,184 @@ IEventMediator mediator,
     {
         _logger.LogInformation("📅 Processing Student: {StudentId}", student.UserId);
 
+        var eval = _contractEvaluator.Evaluate(student);
 
-        var activeContract = student.ActiveContract;
+        // Update DaysToContractExpire (safe: set null where appropriate)
+        UpdateDaysToContractExpire(student, eval.ActiveContract);
+        await _studentRepo.UpdateAsync(student);
 
-
-
-        if (activeContract == null)
+        // CASE A: Active contract exists
+        if (eval.ActiveContract != null)
         {
-            _logger.LogWarning("No active contract found for student {StudentId}", student.UserId);
-            // eg all expired || no contract
-            await HandleStudentWithoutActiveContract(student);
+            await HandleActiveContract(student, eval);
             return;
         }
 
-        UpdateDaysToContractExpire(student, activeContract);
-        await _studentRepo.UpdateAsync(student);
+        // CASE B: No active contract but a next contract exists and there's no gap -> treat as active/transition
+        if (eval.NextContract != null && !eval.HasGap)
+        {
+            await HandleSmoothTransition(student, eval);
+            return;
+        }
 
+        // CASE C: Truly expired or no contract
+        await HandleTrulyExpired(student, eval);
+    }
+
+    private async Task HandleActiveContract(Student student, ContractEvaluationResult eval)
+    {
+        var active = eval.ActiveContract!;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var daysUntilExpiry = activeContract.ExpirationDate.DayNumber - today.DayNumber;
-        var daysSinceExpiry = today.DayNumber - activeContract.ExpirationDate.DayNumber;
+        var daysUntilExpiry = active.ExpirationDate.DayNumber - today.DayNumber;
 
-        _logger.LogInformation("Contract expires on {ExpirationDate}, Days until/since expiry: {Days}",
-            activeContract.ExpirationDate, daysUntilExpiry);
-
-        // Check if contract is expiring in 5 days
         if (daysUntilExpiry == 5 && daysUntilExpiry > 0)
         {
-            await HandleContractRenewalNeeded(student, activeContract);
+            await HandleContractRenewalReminder(student, active);
+            return;
         }
-        // Check if contract expired and handle deletion timeline
-        else if (daysSinceExpiry > 0)
+
+        // Ensure student is Active if they have an active contract
+        if (student.Status != StudentStatus.Active)
         {
-            await HandleExpiredContract(student, activeContract, daysSinceExpiry);
-        }
-        else
-        {
-            if (student.Status != StudentStatus.Active)
-            {
-                student.Status = StudentStatus.Active;
-                await _studentRepo.UpdateAsync(student);
+            student.Status = StudentStatus.Active;
+            await _studentRepo.UpdateAsync(student);
 
-                var notification = _notificationFactory.StudentContractAdded(
-                     student.UserId,
-                     activeContract.Id,
-                     culture: student.Contact.LanguageCode ?? "en"
-                     );
+            var notification = _notificationFactory.StudentContractAdded(
+                student.UserId,
+                active.Id,
+                culture: student.Contact.LanguageCode ?? "en");
 
-                await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+            await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
-                await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
-            }
+            await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
         }
     }
 
-    private async Task HandleStudentWithoutActiveContract(Student student)
+    private async Task HandleSmoothTransition(Student student, ContractEvaluationResult eval)
     {
-        // Find the most recent expired contract to determine timeline
-        var lastContract = student.Contracts
-            .OrderByDescending(c => c.ExpirationDate)
-            .FirstOrDefault();
+        _logger.LogInformation("Student {StudentId} has immediate next contract; skipping expiry flows", student.UserId);
 
-        UpdateDaysToContractExpire(student, lastContract);
-        await _studentRepo.UpdateAsync(student);
-
-        if (lastContract != null)
+        // If not active, set active-like status (we keep Active)
+        if (student.Status != StudentStatus.Active)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var daysSinceExpiry = today.DayNumber - lastContract.ExpirationDate.DayNumber;
-
-            await HandleExpiredContract(student, lastContract, daysSinceExpiry);
-        }
-        else
-        {
-            _logger.LogWarning("Student {StudentId} has no contracts at all", student.UserId);
-
-            if (student.Status != StudentStatus.InActive)
-            {
-                student.Status = StudentStatus.InActive;
-                await _studentRepo.UpdateAsync(student);
-            }
-
+            student.Status = StudentStatus.Active;
+            await _studentRepo.UpdateAsync(student);
         }
     }
 
-    private async Task HandleExpiredContract(Student student, StudentContract contract, int daysSinceExpiry)
+    private async Task HandleTrulyExpired(Student student, ContractEvaluationResult eval)
     {
-        const int ThreeMonthsInDays = 90;
-        const int SixMonthsInDays = 180;
-        const int SevenDaysBeforeSixMonths = SixMonthsInDays - 7; // 173 days
+        // eval.ActiveContract == null
+        // eval.NextContract == null || eval.HasGap == true
+        var daysSinceExpiry = eval.DaysSinceExpiry ?? 0;
 
         _logger.LogInformation("Contract expired {DaysSinceExpiry} days ago for student {StudentId}",
             daysSinceExpiry, student.UserId);
 
-        bool expiredButNotMarked = student.Status == StudentStatus.Active;
-
+        var expiredButNotMarked = student.Status == StudentStatus.Active;
 
         if (expiredButNotMarked)
         {
             student.Status = StudentStatus.Expired;
             await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
             await _studentRepo.UpdateAsync(student);
-            await SendContractENotification(student, contract);
-        }
-        else if (daysSinceExpiry == 1)
-        {
-            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
-            await SendContractENotification(student, contract);
+            // send initial expired notification (day 0)
+            if (eval.DaysSinceExpiry == 0 || eval.DaysSinceExpiry == null)
+            {
+                // consider this moment the immediate expiration notice
+                var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
+                if (last != null)
+                    await SendContractExpiredNotification(student, last);
+            }
+            return;
         }
 
+        // If it was already expired but it's the first day after expiry -> reassign & notify
+        if (daysSinceExpiry == 1)
+        {
+            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+            var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
+            if (last != null) await SendContractExpiredNotification(student, last);
+        }
+
+        // lifecycle actions at 90 and 180 days
+        const int ThreeMonthsInDays = 90;
+        const int SixMonthsInDays = 180;
+        const int SevenDaysBeforeSixMonths = SixMonthsInDays - 7; // 173
 
         switch (daysSinceExpiry)
         {
             case SevenDaysBeforeSixMonths:
-                // Send final warning email 7 days before permanent deletion (173 days after expiry)
-                await SendFinalWarningEmail(student, contract);
+                var lc = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
+                if (lc != null) await SendFinalAccountDeletionWarningEmail(student, lc);
                 break;
-
             case ThreeMonthsInDays:
-                // Delete account but keep ID linked (90 days after expiry)
                 await _studentService.SoftDeleteStudent(student.UserId);
                 break;
-
             case SixMonthsInDays:
-                // Permanent deletion from database and admin panel (180 days after expiry)
                 await _studentService.PermanentlyDeleteStudent(student.UserId);
                 break;
-
             default:
-                // Log current status but no action needed
                 if (daysSinceExpiry < ThreeMonthsInDays)
                 {
-                    _logger.LogInformation("Student {StudentId} contract expired {Days} days ago - within grace period",
+                    _logger.LogInformation("Student {StudentId} expired {Days} days ago - within grace period",
                         student.UserId, daysSinceExpiry);
                 }
                 else if (daysSinceExpiry < SixMonthsInDays)
                 {
-                    _logger.LogInformation("Student {StudentId} account soft-deleted, {Days} days until permanent deletion",
+                    _logger.LogInformation("Student {StudentId} soft-deleted, {Days} days until permanent deletion",
                         student.UserId, SixMonthsInDays - daysSinceExpiry);
                 }
                 break;
         }
     }
 
-    private async Task HandleContractRenewalNeeded(Student student, StudentContract contract)
+    private async Task HandleContractRenewalReminder(Student student, StudentContract contract)
     {
-        _logger.LogInformation("🔔 Sending contract renewal notification to student {StudentId}", student.UserId);
+        _logger.LogInformation("🔔 Sending contract renewal reminder notification to student {StudentId}", student.UserId);
 
         try
         {
-
             student.Status = StudentStatus.ContractAboutToExpire;
             await _studentRepo.UpdateAsync(student);
 
             var notification = _notificationFactory.StudentContractAboutToExpire(student.UserId,
-             contract.Id,
-            culture: student.Contact.LanguageCode ?? "en"
-            );
+                contract.Id,
+                culture: student.Contact.LanguageCode ?? "en");
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
-            _logger.LogInformation("✅ Contract renewal notification sent to student {StudentId}", student.UserId);
+            _logger.LogInformation("✅ Contract renewal reminder notification sent to student {StudentId}", student.UserId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to send contract renewal notification to student {StudentId}", student.UserId);
+            _logger.LogError(ex, "❌ Failed to send contract renewal reminder notification to student {StudentId}", student.UserId);
         }
     }
 
-    private async Task SendFinalWarningEmail(Student student, StudentContract contract)
+    private async Task SendFinalAccountDeletionWarningEmail(Student student, StudentContract contract)
     {
-        _logger.LogInformation("📧 Sending final warning email via MailerLite to student {StudentId}", student.UserId);
+        _logger.LogInformation("📧 Sending final warning email to student {StudentId}", student.UserId);
 
         try
         {
-            // Send MailerLite email (implement based on your MailerLite integration)
-            // await _emailService.SendMailerLiteEmail(student.Contact.Email, new EmailDto
-            // {
-            //     Template = "FinalWarningTemplate",
-            //     Subject = "Final Notice - Account Deletion in 7 Days",
-            //     Data = new Dictionary<string, object>
-            //     {
-            //         ["StudentName"] = $"{student.Contact.FirstName} {student.Contact.LastName}",
-            //         ["StudentNumber"] = student.StudentNumber,
-            //         ["ContractExpirationDate"] = contract.ExpirationDate.ToString("yyyy-MM-dd"),
-            //         ["DeletionDate"] = contract.ExpirationDate.AddDays(180).ToString("yyyy-MM-dd")
-            //     }
-            // });
 
+            var email = student.Contact.Email;
+            var culture = student.Contact.LanguageCode;
+            var daysToAccountDelete = 7;
+
+            var subject = _loc.GetString("Emails.Student.FinalAccountDeletionWarning.Subject", culture);
+            var body = _loc.GetString(
+                "Emails.Student.FinalAccountDeletionWarning.Body",
+                culture,
+                student.Contact.FullName,
+                contract.ExpirationDate.ToString("yyyy-MM-dd"),
+                daysToAccountDelete
+            );
+
+            await _mailgunService.SendEmailAsync(email!, subject, body);
+
+            // Implement email send via email service
             _logger.LogInformation("✅ Final warning email sent to student {StudentId}", student.UserId);
         }
         catch (Exception ex)
@@ -272,23 +274,27 @@ IEventMediator mediator,
         }
     }
 
-    private async Task SendContractENotification(Student student, StudentContract contract)
+    private async Task SendContractExpiredNotification(Student student, StudentContract contract)
     {
         _logger.LogInformation("🔔 Sending contract expired notification to student {StudentId}", student.UserId);
 
         try
         {
-
-            student.Status = StudentStatus.ContractAboutToExpire;
-            await _studentRepo.UpdateAsync(student);
+            // Set an appropriate status for notification context
+            if (student.Status != StudentStatus.ContractAboutToExpire)
+            {
+                // Only set this transient status for notification
+                student.Status = StudentStatus.ContractAboutToExpire;
+                await _studentRepo.UpdateAsync(student);
+            }
 
             var notification = _notificationFactory.StudentContractExpired(student.UserId,
-            contract.Id,
-            culture: student.Contact.LanguageCode ?? "en");
+                contract.Id,
+                culture: student.Contact.LanguageCode ?? "en");
 
             await _notificationService.SendPushNotificationAsync(student.UserId, notification);
 
-            _logger.LogInformation("✅ Contract expired {StudentId}", student.UserId);
+            _logger.LogInformation("✅ Contract expired notification sent to {StudentId}", student.UserId);
         }
         catch (Exception ex)
         {
@@ -296,11 +302,8 @@ IEventMediator mediator,
         }
     }
 
-
-
     private void UpdateDaysToContractExpire(Student student, StudentContract? contract)
     {
-
         if (contract == null)
         {
             student.DaysToContractExpire = null;
@@ -308,21 +311,7 @@ IEventMediator mediator,
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        // If already expired, set 0
-        // if (today > contract.ExpirationDate)
-        // {
-        //     student.DaysToContractExpire = 0;
-        //     return;
-        // }
-
-        // Otherwise, calculate remaining days
         student.DaysToContractExpire = contract.ExpirationDate.DayNumber - today.DayNumber;
-
-
-
     }
-
-
 }
 

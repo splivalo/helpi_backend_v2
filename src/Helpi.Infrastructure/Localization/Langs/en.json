@@ -39,16 +39,16 @@
             "Body": "Your job starts at {0}"
         },
         "OrderCancelled": {
-            "Title": "Job Reminder",
-            "Body": "Your job starts at {0}"
+            "Title": "Order Cancelled",
+            "Body": "{0}"
         },
         "OrderScheduleCancelled": {
-            "Title": "Job Reminder",
-            "Body": "Your job starts at {0}"
+            "Title": "Schedule Cancelled",
+            "Body": "{0}"
         },
         "ScheduleAssignmentCancelled": {
-            "Title": "Job Reminder",
-            "Body": "Your job starts at {0}"
+            "Title": "Assignment Cancelled",
+            "Body": "{0}"
         },
         "ContractAdded": {
             "Title": "Contract added",
@@ -76,19 +76,19 @@
         },
         "ReassignmentStarted": {
             "Title": "Reassignment Started",
-            "Body": "{description}."
+            "Body": "{0}"
         },
         "ReassignmentCompleted": {
             "Title": "Reassignment Completed",
-            "Body": "{description}."
+            "Body": "{0}"
         },
         "NoEligibleStudents": {
             "Title": "No Eligible Students",
-            "Body": "{description}."
+            "Body": "{0}"
         },
         "AllEligibleStudentsNotified": {
             "Title": "All Eligible Students Notified",
-            "Body": "{description}."
+            "Body": "{0}"
         }
     },
     "Emails": {
@@ -99,6 +99,32 @@
         "Invoice": {
             "Subject": "Your Invoice",
             "Body": "<h1>Thank you for your order!</h1><p>Invoice attached.</p>"
+        },
+        "Student": {
+            "ContractAboutToExpire": {
+                "Subject": "Your Contract Will Expire Soon",
+                "Body": "Hello {0},<br/><br/>Your current contract will expire in <b>{1} days</b>. Please upload a new contract before it expires so your account remains active."
+            },
+            "ContractExpired": {
+                "Subject": "Your Contract Has Expired",
+                "Body": "Hello {0},<br/><br/>Your contract expired on <b>{1}</b>. Your account is now marked as expired. Please upload a new contract to reactivate your account."
+            },
+            "FinalAccountDeletionWarning": {
+                "Subject": "Final Warning – Your Account Will Be Deleted in 7 Days",
+                "Body": "Hello {0},<br/><br/>Your contract expired on <b>{1}</b>.<br/><br/>Your account is scheduled for permanent deletion in <b>{2} days</b>.<br/><br/>If you upload a new valid contract before then, your account will be restored automatically.<br/><br/>If no action is taken, your account will be permanently removed from our system.<br/><br/>Thank you."
+            },
+            "ContractRenewalReminder": {
+                "Subject": "Reminder: Renew Your Contract",
+                "Body": "Hello {0},<br/><br/>This is a reminder that your contract will expire soon. Please upload a new contract to avoid any interruption to your account."
+            },
+            "AccountSoftDeleted": {
+                "Subject": "Your Account Has Been Deactivated",
+                "Body": "Hello {0},<br/><br/>Your account has been deactivated because your contract expired over 90 days ago. You can still restore your account by uploading a new contract within the next 90 days."
+            },
+            "AccountPermanentlyDeleted": {
+                "Subject": "Your Account Has Been Deleted",
+                "Body": "Hello {0},<br/><br/>Your account has been permanently deleted because your contract remained expired for more than 180 days.<br/><br/>If you need assistance, please contact Helpi support."
+            }
         }
     }
 }

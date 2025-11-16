@@ -18,6 +18,8 @@ public static class DependencyInjection
         ConfigureStripe(configuration);
         // Register all services
 
+        services.AddSingleton<IContractEvaluationService, ContractEvaluationService>();
+
         services.AddScoped<IHNotificationService, HNotificationService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<StudentStatusService>();

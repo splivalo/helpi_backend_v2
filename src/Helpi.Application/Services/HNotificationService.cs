@@ -113,6 +113,10 @@ public class HNotificationService : IHNotificationService
         {
             NotificationType.NoEligibleStudents,
             NotificationType.AllEligableStudentNotified,
+            NotificationType.OrderCancelled,
+            NotificationType.OrderScheduleCancelled,
+            NotificationType.ReassignmentStarted,
+            NotificationType.ReassignmentCompleted,
         };
 
         foreach (var dto in notifications)

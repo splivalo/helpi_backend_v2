@@ -72,7 +72,7 @@ INotificationFactory notificationFactory,
 
 
 
-    public async void StartMatching(int orderId)
+    public async Task StartMatching(int orderId)
     {
 
         await ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));

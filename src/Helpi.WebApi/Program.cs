@@ -169,6 +169,9 @@ using (var scope = app.Services.CreateScope())
     var serviceDataSeeder = scope.ServiceProvider.GetRequiredService<ServiceDataSeeder>();
     await serviceDataSeeder.SeedAsync();
 
+    var facultyDataSeeder = scope.ServiceProvider.GetRequiredService<FacultyDataSeeder>();
+    await facultyDataSeeder.SeedAsync();
+
     await app.Services.SeedPriceConfigAsync();
 }
 
