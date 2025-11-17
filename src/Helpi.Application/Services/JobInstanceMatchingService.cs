@@ -317,6 +317,7 @@ INotificationFactory notificationFactory,
     private async Task HandleNoQualifiedStudents(JobInstance jobInstance, ReassignmentRecord reassignmentRecord)
     {
         reassignmentRecord.Status = ReassignmentStatus.NoEligibleStudents;
+        reassignmentRecord.AllowAutoScheduling = false;
         reassignmentRecord.Reason += "; No qualified students found";
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
@@ -337,6 +338,7 @@ INotificationFactory notificationFactory,
     {
         reassignmentRecord.Status = ReassignmentStatus.AllEligableStudentNotified;
         reassignmentRecord.Reason += $"; All {notifiedStudentIds.Count} qualified students notified, none accepted";
+        reassignmentRecord.AllowAutoScheduling = false;
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin
@@ -359,6 +361,7 @@ INotificationFactory notificationFactory,
     {
         reassignmentRecord.Status = ReassignmentStatus.Cancelled;
         reassignmentRecord.Reason += $"; {reason}";
+        reassignmentRecord.AllowAutoScheduling = false;
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin

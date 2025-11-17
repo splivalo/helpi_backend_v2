@@ -99,7 +99,7 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
             await _orderScheduleRepository.UpdateAsync(schedule);
 
             // Start matching process
-            _matchingService.StartMatching(schedule.OrderId);
+            await _matchingService.StartMatching(schedule.OrderId);
 
             _logger.LogInformation("✅ Reinitiated matching for schedule {ScheduleId}", schedule.Id);
         }
@@ -115,7 +115,7 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
         {
             // Reset the reassignment for matching
             reassignment.Status = ReassignmentStatus.InProgress;
-            // reassignment.Reason = null;
+            reassignment.AllowAutoScheduling = true;
             reassignment.AttemptCount = 0;
 
             await _reassignmentRecordRepository.UpdateAsync(reassignment);
@@ -137,7 +137,7 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
                 {
                     if (schedule.IsCancelled == false)
                     {
-                        _matchingService.StartMatching(reassignment.OrderId);
+                        await _matchingService.StartMatching(reassignment.OrderId);
                     }
 
                 }

@@ -216,6 +216,7 @@ INotificationFactory notificationFactory,
 
             // Update the reassignment record
             reassignmentRecord.Status = ReassignmentStatus.Assigned;
+            reassignmentRecord.AllowAutoScheduling = false;
             reassignmentRecord.NewStudentId = newStudentId;
             reassignmentRecord.CompletedAt = DateTime.UtcNow;
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
@@ -249,6 +250,7 @@ INotificationFactory notificationFactory,
             if (reassignmentRecord.AttemptCount >= reassignmentRecord.MaxAttempts && !success)
             {
                 reassignmentRecord.Status = ReassignmentStatus.MaxAttemptsReached;
+                reassignmentRecord.AllowAutoScheduling = false;
                 await NotifyReassignmentFailure(reassignmentRecord);
             }
 
@@ -324,6 +326,7 @@ INotificationFactory notificationFactory,
 
             // Update reassignment record status
             reassignmentRecord.Status = ReassignmentStatus.InProgress;
+            reassignmentRecord.AllowAutoScheduling = true;
             reassignmentRecord.LastAttemptAt = DateTime.UtcNow;
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
@@ -376,6 +379,7 @@ INotificationFactory notificationFactory,
 
             // Update reassignment record status
             reassignmentRecord.Status = ReassignmentStatus.InProgress;
+            reassignmentRecord.AllowAutoScheduling = true;
             reassignmentRecord.LastAttemptAt = DateTime.UtcNow;
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 

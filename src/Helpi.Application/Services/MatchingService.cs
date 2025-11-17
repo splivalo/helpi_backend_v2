@@ -211,6 +211,7 @@ INotificationFactory notificationFactory,
             {
                 _logger.LogWarning("⚠️ This is reassignment matching for  record {RecordId}", reassignmentRecord.Id);
                 currentAttempt = reassignmentRecord.AttemptCount;
+                if (reassignmentRecord.AllowAutoScheduling == false) return;
             }
             else
             {
