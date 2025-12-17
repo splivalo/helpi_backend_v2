@@ -1,3 +1,4 @@
+using Helpi.Application.Common.Extensions;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Enums;
 
@@ -30,7 +31,7 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
     {
 
         /// .net uses 0 - 6 ... WE store 1 -7
-        var dayOfWeek = FromIsoDayNumber((int)isoDayOfWeek);
+        var dayOfWeek = DayOfWeekExtensions.FromIsoWeekday((int)isoDayOfWeek);
 
         var dates = new List<DateOnly>();
 
@@ -74,15 +75,15 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
     }
 
 
-    private DayOfWeek FromIsoDayNumber(int isoDay)
-    {
-        if (isoDay < 1 || isoDay > 7)
-            throw new ArgumentOutOfRangeException(nameof(isoDay), "Day of week must be between 1 (Monday) and 7 (Sunday).");
+    // private DayOfWeek FromIsoDayNumber(int isoDay)
+    // {
+    //     if (isoDay < 1 || isoDay > 7)
+    //         throw new ArgumentOutOfRangeException(nameof(isoDay), "Day of week must be between 1 (Monday) and 7 (Sunday).");
 
-        // Adjust ISO 8601 day to .NET DayOfWeek:
-        // ISO: 1 (Mon) → .NET 1, ..., 6 (Sat) → 6, 7 (Sun) → 0
-        return (DayOfWeek)(isoDay % 7);
-    }
+    //     // Adjust ISO 8601 day to .NET DayOfWeek:
+    //     // ISO: 1 (Mon) → .NET 1, ..., 6 (Sat) → 6, 7 (Sun) → 0
+    //     return (DayOfWeek)(isoDay % 7);
+    // }
 
 
 }

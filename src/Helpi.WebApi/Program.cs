@@ -78,10 +78,16 @@ builder.Services.AddCors(options =>
     }
 });
 
+
+
+
+
 // ------------------------------------------------------------
 // 3️⃣  BUILD APP
 // ------------------------------------------------------------
 var app = builder.Build();
+
+
 
 // Initialize Firebase
 var logger = app.Services.GetRequiredService<ILogger<Program>>();

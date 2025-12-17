@@ -222,7 +222,7 @@ public class NotificationFactory : INotificationFactory
             RecieverUserId = recieverUserId,
             TranslationKey = "Notifications.AllEligibleStudentsNotified",
             Title = _loc.GetString("Notifications.AllEligibleStudentsNotified.Title"),
-            Body = _loc.GetString("Notifications.AllEligibleStudentsNotified.Body", description),
+            Body = _loc.GetString("Notifications.AllEligibleStudentsNotified.Body", null, description),
             Type = NotificationType.AllEligableStudentNotified,
             Payload = JsonSerializer.Serialize(new
             {

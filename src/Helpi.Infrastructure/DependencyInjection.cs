@@ -30,11 +30,35 @@ public static class DependencyInjection
         this IServiceCollection services, IConfiguration configuration)
     {
 
+
+
         // Register DbContext
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
-                o => o.UseNetTopologySuite()), ServiceLifetime.Scoped);
+             options.UseNpgsql(
+        configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            // Your existing NetTopologySuite
+            npgsqlOptions.UseNetTopologySuite();
+
+            // Add retry logic for transient failures
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null
+            );
+
+            // Command timeout (30 seconds)
+            npgsqlOptions.CommandTimeout(30);
+
+        }
+    )
+    );
+
+
+
+
+
 
         services.AddSingleton<ILocalizationService>(new JsonLocalizationService("en"));
 
@@ -60,11 +84,15 @@ public static class DependencyInjection
         services.AddHttpClient<IMailerLiteService, MailerLiteService>();
         services.AddScoped<IMailgunService, MailgunService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
-        services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
-        services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
-        services.AddScoped<StudentBackgroundJobs>();
+        //--
         services.AddScoped<IHangfireService, HangfireService>();
+        services.AddSingleton<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
+        services.AddSingleton<IJobInstanceJobs, JobInstanceJobs>();
+        services.AddSingleton<StudentBackgroundJobs>();
+        services.AddTransient<JobRunner>();
+        //--
         services.AddScoped<OrderStatusMaintenanceService>();
+
 
         services.AddScoped<IReassignmentService, ReassignmentService>();
         services.AddScoped<IStudentStatisticsService, StudentStatisticsService>();

@@ -124,24 +124,26 @@ INotificationFactory notificationFactory,
 
             if (!qualifiedStudents.Any())
             {
-                _logger.LogWarning("⚠️ No qualified students found for job instance {JobInstanceId}", jobInstanceId);
-                await HandleNoQualifiedStudents(jobInstance, reassignmentRecord);
-                return;
+                if (notifiedStudentIds.Any())
+                {
+                    _logger.LogInformation("📝 All qualified students already notified for reassignment record {RecordId}", reassignmentRecordId);
+                    await HandleAllStudentsNotified(jobInstance, reassignmentRecord, notifiedStudentIds);
+                    return;
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ No qualified students found for job instance {JobInstanceId}", jobInstanceId);
+                    await HandleNoQualifiedStudents(jobInstance, reassignmentRecord);
+                    return;
+                }
             }
 
 
 
             // Filter out already notified students
-            var unnotifiedStudents = qualifiedStudents
-                .Where(s => !notifiedStudentIds.Contains(s.UserId))
-                .ToList();
+            var unnotifiedStudents = qualifiedStudents;
 
-            if (!unnotifiedStudents.Any())
-            {
-                _logger.LogInformation("📝 All qualified students already notified for reassignment record {RecordId}", reassignmentRecordId);
-                await HandleAllStudentsNotified(jobInstance, reassignmentRecord, notifiedStudentIds);
-                return;
-            }
+
 
             // Take the top N students based on prioritization
             var studentsToNotify = unnotifiedStudents
@@ -190,7 +192,8 @@ INotificationFactory notificationFactory,
     {
         // Get the order to find required services
         var order = await _orderRepository.LoadOrderWithIncludes(jobInstance.OrderId,
-         new OrderIncludeOptions { Senior = true });
+         new OrderIncludeOptions { Senior = true }
+        );
 
         if (order == null)
         {
@@ -207,10 +210,10 @@ INotificationFactory notificationFactory,
             var originalStudentId = reassignmentRecord.OriginalStudentId.Value;
 
             // mark original student as notified , unless if he is mentioned as prefered
-            if (preferedStudentId != originalStudentId)
-            {
-                notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
-            }
+            // if (preferedStudentId != originalStudentId)
+            // {
+            // notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
+            // }
 
         }
 

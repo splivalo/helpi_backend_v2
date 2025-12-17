@@ -25,6 +25,7 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
         {
                 return await _context.StudentAvailabilitySlots
                  .Where(s => s.StudentId == studentId)
+                 .AsNoTracking()
                  .ToListAsync();
         }
 
@@ -35,6 +36,7 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
                         s.DayOfWeek == (byte)day &&
                         s.StartTime <= end &&
                         s.EndTime >= start)
+                         .AsNoTracking()
                         .ToListAsync();
         }
 

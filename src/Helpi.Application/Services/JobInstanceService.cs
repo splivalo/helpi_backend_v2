@@ -450,6 +450,14 @@ ICustomerRepository customerRepo
 
                 await _jobInstanceRepository.UpdateAsync(job);
 
+                // _jobInstanceRepository.Detach(job);
+
+                // if (job.ScheduleAssignment != null)
+                // {
+                //         _assignmentRepository.Detach(job.ScheduleAssignment!);
+                // }
+
+
                 await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
 
                 return _mapper.Map<JobInstanceDto>(job);

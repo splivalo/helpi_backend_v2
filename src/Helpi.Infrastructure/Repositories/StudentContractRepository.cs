@@ -14,10 +14,11 @@ public class StudentContractRepository : IStudentContractRepository
 
     public StudentContractRepository(AppDbContext context) => _context = context;
 
-    public async Task<StudentContract> GetByIdAsync(int id)
+    public async Task<StudentContract?> GetByIdAsync(int id)
         => await _context.StudentContracts
+            .Where(c => c.DeletedOn == null)
             .Include(sc => sc.Student)
-            .FirstOrDefaultAsync(sc => sc.Id == id);
+            .SingleOrDefaultAsync(sc => sc.Id == id);
 
     public async Task<IEnumerable<StudentContract>> GetByStudentIdAsync(int studentId)
         => await _context.StudentContracts

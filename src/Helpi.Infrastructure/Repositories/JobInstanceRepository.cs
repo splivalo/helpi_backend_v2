@@ -17,7 +17,7 @@ public class JobInstanceRepository : IJobInstanceRepository
 
         public async Task<JobInstance?> GetByIdSlimAsync(int id)
         {
-                return await _context.JobInstances
+                return await _context.JobInstances.AsNoTracking()
                 .SingleAsync(ji => ji.Id == id);
         }
         public async Task<JobInstance> GetByIdAsync(int id)
@@ -148,8 +148,6 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 return instance;
 
-
-                return null;
         }
 
         // public async Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId)

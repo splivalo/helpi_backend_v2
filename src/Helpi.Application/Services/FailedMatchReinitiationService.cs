@@ -77,7 +77,8 @@ public class FailedMatchReinitiationService : IFailedMatchReinitiationService,
     public async Task ReinitiateMatchingForReassignmentRecord(int reassignmentRecordId)
     {
         var reassignment = await _reassignmentRecordRepository.GetByIdAsync(reassignmentRecordId,
-        new ReassignmentIncludeOptions { });
+        new ReassignmentIncludeOptions { },
+        asNoTracking: false);
 
         if (reassignment != null)
         {

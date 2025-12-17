@@ -27,7 +27,8 @@ public interface IStudentRepository
         int? studentId,
         StudentIncludeOptions studentIncludeOptions,
          List<StudentStatus>? withStatus = null,
-    List<StudentStatus>? excludeStatus = null);
+    List<StudentStatus>? excludeStatus = null,
+    bool asNoTracking = true);
     Task<int> CountAsync(Expression<Func<Student, bool>> predicate);
     Task<List<Student>> FindEligibleStudentsForInstance(
                             DateOnly scheduledDate,

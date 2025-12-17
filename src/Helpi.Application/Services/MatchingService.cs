@@ -79,6 +79,8 @@ INotificationFactory notificationFactory,
 
     }
 
+
+
     public async Task InitiateMatchingProcessAsync(int orderId)
     {
         try
@@ -113,27 +115,44 @@ INotificationFactory notificationFactory,
 
     private async Task ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
-        var matchingJobs = scope.ServiceProvider.GetRequiredService<IMatchingBackgroundJobs>();
 
-        var order = await orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions { });
+        var order = await _orderRepository.GetByIdAsync(orderId);
         if (order == null) return;
 
-
-        var jobId = matchingJobs.ScheduleFindAndNotifyStudents(
-                                orderId,
-                                order.HangFireMatchingJobId,
-                                    executionTime);
+        var jobId = _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(
+            orderId,
+            order.HangFireMatchingJobId,
+            executionTime);
 
         if (jobId != null)
         {
             order.HangFireMatchingJobId = jobId;
-            await orderRepository.UpdateAsync(order);
+            await _orderRepository.UpdateAsync(order);
 
             _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
-            orderId, executionTime);
+                orderId, executionTime);
         }
+        // using var scope = _scopeFactory.CreateScope();
+        // var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+        // var matchingJobs = scope.ServiceProvider.GetRequiredService<IMatchingBackgroundJobs>();
+
+        // var order = await orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions { });
+        // if (order == null) return;
+
+
+        // var jobId = matchingJobs.ScheduleFindAndNotifyStudents(
+        //                         orderId,
+        //                         order.HangFireMatchingJobId,
+        //                             executionTime);
+
+        // if (jobId != null)
+        // {
+        //     order.HangFireMatchingJobId = jobId;
+        //     await orderRepository.UpdateAsync(order);
+
+        //     _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
+        //     orderId, executionTime);
+        // }
     }
 
     private async Task<ICollection<OrderSchedule>> UnassignedSchedulesAsync(ICollection<OrderSchedule> schedules)
@@ -266,24 +285,24 @@ INotificationFactory notificationFactory,
 
             if (!qualifiedStudents.Any())
             {
-
-                await HandleNoEligableStudents(order, schedule, reassignment);
-                return;
+                if (notifiedStudentIds.Any())
+                {
+                    _logger.LogInformation("📝  AllEligable  Students Notified  for schedule {ScheduleId}", schedule.Id);
+                    await HandleAllEligableStudentsNotified(order, schedule, reassignment);
+                    return;
+                }
+                else
+                {
+                    await HandleNoEligableStudents(order, schedule, reassignment);
+                    return;
+                }
             }
 
 
 
             // Filter out already notified students
-            var unnotifiedStudents = qualifiedStudents
-                .Where(s => !notifiedStudentIds.Contains(s.UserId))
-                .ToList();
+            var unnotifiedStudents = qualifiedStudents;
 
-            if (!unnotifiedStudents.Any())
-            {
-                _logger.LogInformation("📝 Out of qualified students  for schedule {ScheduleId}", schedule.Id);
-                await HandleEligableAllStudentsNotified(order, schedule, notifiedStudentIds, reassignment);
-                return;
-            }
 
             // Take the top N students based on our prioritization
             var studentsToNotify = unnotifiedStudents.Take(_maxConcurrentNotifications).ToList();
@@ -316,10 +335,10 @@ INotificationFactory notificationFactory,
             notifiedStudentIds = await _jobRequestRepository.NotifiedStudentIdsForReassignment(reassignment.Id);
 
             // Also exclude the original student if this is a reassignment
-            if (reassignment.OriginalStudentId.HasValue)
-            {
-                notifiedStudentIds.Add(reassignment.OriginalStudentId.Value);
-            }
+            // if (reassignment.OriginalStudentId.HasValue)
+            // {
+            // notifiedStudentIds.Add(reassignment.OriginalStudentId.Value);
+            // }
         }
         else
         {
@@ -499,10 +518,9 @@ INotificationFactory notificationFactory,
     }
 
     /// None of the notified students accepted
-    private async Task HandleEligableAllStudentsNotified(
+    private async Task HandleAllEligableStudentsNotified(
         Order order,
         OrderSchedule schedule,
-        List<int> notifiedStudents,
         ReassignmentRecord? reassignment = null)
     {
 

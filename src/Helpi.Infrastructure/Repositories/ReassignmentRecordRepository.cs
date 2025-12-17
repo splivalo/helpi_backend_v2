@@ -135,7 +135,6 @@ namespace Helpi.Infrastructure.Repositories
                 .Include(r => r.OriginalStudent)
                 .Include(r => r.NewStudent)
                 .OrderByDescending(r => r.RequestedAt)
-                .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
 
@@ -214,7 +213,6 @@ namespace Helpi.Infrastructure.Repositories
                 .Include(r => r.OriginalStudent)
                 .Include(r => r.NewStudent)
                 .OrderByDescending(r => r.RequestedAt)
-                .AsNoTracking()
                 .ToListAsync();
         }
 

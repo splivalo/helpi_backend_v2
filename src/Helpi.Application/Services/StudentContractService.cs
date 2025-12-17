@@ -171,7 +171,9 @@ public class StudentContractService
                 var students = await _studentRepository.LoadStudentsWithIncludes(studentId, new StudentIncludeOptions
                 {
                         Contracts = true,
-                });
+                        ContactInfo = true
+                },
+                asNoTracking: false);
 
                 var student = students.First();
 

@@ -37,6 +37,7 @@ namespace Helpi.Domain.Entities
 
         public StudentContract? ActiveContract
                 => Contracts
+                .Where(c => c.DeletedOn == null)
             .Where(c => c.Status == ContractStatus.Active)
             .OrderByDescending(c => c.ExpirationDate)
             .FirstOrDefault();

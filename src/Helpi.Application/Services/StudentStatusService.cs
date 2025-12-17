@@ -66,7 +66,8 @@ ILocalizationService loc
                             ContactInfo = true,
                             Contracts = true
                         },
-                        excludeStatus: [StudentStatus.Deleted]
+                        excludeStatus: [StudentStatus.Deleted],
+                        asNoTracking: false
                         );
 
 
@@ -102,14 +103,15 @@ ILocalizationService loc
         }
 
         // CASE B: No active contract but a next contract exists and there's no gap -> treat as active/transition
-        if (eval.NextContract != null && !eval.HasGap)
-        {
-            await HandleSmoothTransition(student, eval);
-            return;
-        }
+        // if (eval.NextContract != null && !eval.HasGap)
+        // {
+        //     await HandleSmoothTransition(student, eval);
+        //     return;
+        // }
 
         // CASE C: Truly expired or no contract
         await HandleTrulyExpired(student, eval);
+
     }
 
     private async Task HandleActiveContract(Student student, ContractEvaluationResult eval)
@@ -118,10 +120,22 @@ ILocalizationService loc
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var daysUntilExpiry = active.ExpirationDate.DayNumber - today.DayNumber;
 
-        if (daysUntilExpiry == 5 && daysUntilExpiry > 0)
+        var aboutToExpire = daysUntilExpiry <= 5 && daysUntilExpiry >= 0;
+        var notifiedBoutToExpire = student.Status == StudentStatus.ContractAboutToExpire;
+
+        if (aboutToExpire && !notifiedBoutToExpire)
         {
-            await HandleContractRenewalReminder(student, active);
-            return;
+            if (eval.NextContract != null && eval.HasGap == false)
+            {
+                await HandleSmoothTransition(student, eval);
+                return;
+            }
+            else
+            {
+                await HandleContractRenewalReminder(student, active);
+                return;
+            }
+
         }
 
         // Ensure student is Active if they have an active contract
@@ -280,13 +294,6 @@ ILocalizationService loc
 
         try
         {
-            // Set an appropriate status for notification context
-            if (student.Status != StudentStatus.ContractAboutToExpire)
-            {
-                // Only set this transient status for notification
-                student.Status = StudentStatus.ContractAboutToExpire;
-                await _studentRepo.UpdateAsync(student);
-            }
 
             var notification = _notificationFactory.StudentContractExpired(student.UserId,
                 contract.Id,

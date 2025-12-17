@@ -15,6 +15,7 @@ namespace Helpi.Application.Services
 
             // Ensure deterministic ordering by EffectiveDate ascending
             var ordered = student.Contracts
+                .Where(c => c.DeletedOn == null)
                 .OrderBy(c => c.EffectiveDate)
                 .ToList();
 

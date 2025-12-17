@@ -10,12 +10,17 @@ using Microsoft.EntityFrameworkCore;
 public class AuthRepository : IAuthRepository
 {
     private readonly AppDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public AuthRepository(AppDbContext context) => _context = context;
+    public AuthRepository(AppDbContext context, IUnitOfWork unitOfWork)
+    {
+        _context = context;
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task RegisterStudent(Student student, ContactInfo contactInfo)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        // using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
@@ -25,14 +30,15 @@ public class AuthRepository : IAuthRepository
             // Add Student (EF Core will handle ContactInfo automatically)
             _context.Set<Student>().Add(student);
 
+            await _unitOfWork.SaveChangesAsync();
             // Save all changes
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            // await _context.SaveChangesAsync();
+            // await transaction.CommitAsync();
 
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            // await transaction.RollbackAsync();
             throw;
         }
     }
@@ -42,7 +48,7 @@ public class AuthRepository : IAuthRepository
         Senior senior,
         ContactInfo? seniorContactInfo)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        // using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
@@ -68,24 +74,26 @@ public class AuthRepository : IAuthRepository
             // Add Customer and Senior to the context
             _context.Set<Customer>().Add(customer);
 
-            // Save all changes
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
-            // Commit the transaction
-            await transaction.CommitAsync();
+            // Save all changes
+            // await _context.SaveChangesAsync();
+
+            // // Commit the transaction
+            // await transaction.CommitAsync();
 
 
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            // await transaction.RollbackAsync();
             throw;
         }
     }
 
     public async Task RegisterAdmin(Admin admin, ContactInfo contactInfo)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        // using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
@@ -95,14 +103,15 @@ public class AuthRepository : IAuthRepository
 
             _context.Set<Admin>().Add(admin);
 
+            await _unitOfWork.SaveChangesAsync();
             // Save all changes
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            // await _context.SaveChangesAsync();
+            // await transaction.CommitAsync();
 
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            // await transaction.RollbackAsync();
             throw;
         }
     }

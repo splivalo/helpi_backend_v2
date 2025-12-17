@@ -10,6 +10,7 @@ namespace Helpi.Infrastructure.BackgroundJobs.Jobs;
 public class MatchingBackgroundJobs : IMatchingBackgroundJobs
 {
 
+
     public string? ScheduleFindAndNotifyStudents(
      int orderId,
      string? hangFireMatchingJobId,
@@ -21,14 +22,16 @@ public class MatchingBackgroundJobs : IMatchingBackgroundJobs
             var state = connection.GetStateData(hangFireMatchingJobId);
 
             // If a job with this ID is already scheduled, skip scheduling
-            if (state?.Name == ScheduledState.StateName)
+            if (state?.Name == ScheduledState.StateName ||
+            state?.Name == EnqueuedState.StateName ||
+            state?.Name == ProcessingState.StateName)
             {
                 return null;
             }
         }
 
         // Otherwise, schedule a new job
-        return BackgroundJob.Schedule<IMatchingService>(
+        return BackgroundJob.Schedule<JobRunner>(
             service => service.InitiateMatchingProcessAsync(orderId),
             executionTime
         );
@@ -37,7 +40,7 @@ public class MatchingBackgroundJobs : IMatchingBackgroundJobs
     public void ScheduleJobInstanceMatching(int jobInstanceId, int reassignmentRecordId, DateTime executionTime)
     {
 
-        BackgroundJob.Schedule<IJobInstanceMatchingService>(
+        BackgroundJob.Schedule<JobRunner>(
            service => service.ProcessJobInstanceMatchingAsync(
                         jobInstanceId,
                         reassignmentRecordId

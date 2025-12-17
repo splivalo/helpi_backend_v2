@@ -24,4 +24,6 @@ public interface IScheduleAssignmentRepository
 
     Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos);
 
+    void Detach(ScheduleAssignment assignment);
+
 }

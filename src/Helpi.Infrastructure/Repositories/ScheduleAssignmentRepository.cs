@@ -6,6 +6,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 {
@@ -243,5 +244,9 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                                    sa.Status == AssignmentStatus.Accepted);
         }
 
+        public void Detach(ScheduleAssignment assignment)
+        {
+                _context.DetachEntity(assignment);
+        }
 }
 

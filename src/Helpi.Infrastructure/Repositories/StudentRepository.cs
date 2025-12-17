@@ -342,9 +342,15 @@ public class StudentRepository : IStudentRepository
 
 
     public async Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions includes, List<StudentStatus>? withStatus = null,
-    List<StudentStatus>? excludeStatus = null)
+    List<StudentStatus>? excludeStatus = null,
+    bool asNoTracking = true)
     {
         var query = _context.Students.AsQueryable();
+
+        if (asNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
 
         // Status filter
         if (withStatus != null && withStatus.Any())
@@ -369,7 +375,7 @@ public class StudentRepository : IStudentRepository
 
         if (includes.Contracts)
         {
-            query = query.Include(s => s.Contracts);
+            query = query.Include(s => s.Contracts.Where(c => c.DeletedOn == null));
         }
 
 

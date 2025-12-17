@@ -25,6 +25,7 @@ public class ReviewRepository : IReviewRepository
         public async Task<IEnumerable<Review>> GetByStudentAsync(int studentId)
             => await _context.Reviews
                 .Where(r => r.StudentId == studentId)
+                .Where(r => r.IsPending == false)
                 .ToListAsync();
 
         public async Task<IEnumerable<Review>> GetBySeniorAsync(int seniorId)
@@ -35,6 +36,7 @@ public class ReviewRepository : IReviewRepository
         public async Task<decimal> GetAverageRatingAsync(int studentId)
             => await _context.Reviews
                 .Where(r => r.StudentId == studentId)
+                .Where(r => r.IsPending == false)
                 .AverageAsync(r => (decimal?)r.Rating) ?? 0m;
 
         public async Task<Review> AddAsync(Review review)
@@ -58,13 +60,15 @@ public class ReviewRepository : IReviewRepository
 
         public Task<int> CountAsync(Expression<Func<Review, bool>> predicate)
         {
-                return _context.Reviews.CountAsync(predicate);
+                return _context.Reviews.Where(r => r.IsPending == false).CountAsync(predicate);
         }
 
         public async Task<double?> AverageAsync(Expression<Func<Review, bool>> predicate, Expression<Func<Review, double>> selector)
         {
 
-                var query = _context.Reviews.Where(predicate);
+                var query = _context.Reviews
+                .Where(r => r.IsPending == false)
+                .Where(predicate);
                 if (!await query.AnyAsync())
                 {
                         return null;

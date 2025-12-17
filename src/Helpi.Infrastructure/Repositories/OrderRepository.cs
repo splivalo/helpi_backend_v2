@@ -6,6 +6,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 
 public class OrderRepository : IOrderRepository
@@ -71,9 +72,16 @@ public class OrderRepository : IOrderRepository
 
 
 
-        public async Task<Order?> LoadOrderWithIncludes(int orderId, OrderIncludeOptions options)
+        public async Task<Order?> LoadOrderWithIncludes(int orderId,
+        OrderIncludeOptions options,
+         bool asNoTracking = true)
         {
-                var query = _context.Orders.AsQueryable().AsNoTracking(); ;
+                var query = _context.Orders.AsQueryable();
+
+                if (asNoTracking)
+                {
+                        query = query.AsNoTracking();
+                }
 
                 if (options.Senior)
                         query = query.Include(o => o.Senior).ThenInclude(s => s.Contact);
@@ -113,4 +121,8 @@ public class OrderRepository : IOrderRepository
                 return _context.Orders.CountAsync(predicate);
         }
 
+        public void DetachAllEntities()
+        {
+                _context.DetachAllEntities();
+        }
 }

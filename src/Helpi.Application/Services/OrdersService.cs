@@ -101,8 +101,8 @@ public class OrdersService
                         // === 5. Re-fetch Order with related data ===
                         var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
 
-                        // === 6. Post-Creation: Trigger Matching (Non-blocking) ===
-                        _matchingService.StartMatching(order.Id);
+                        // === 6. Post-Creation:  ===
+                        await _matchingService.StartMatching(order.Id);
 
                         return _mapper.Map<OrderDto>(savedOrder);
                 }
@@ -140,20 +140,21 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
-                        // Update basic order properties
-                        UpdateOrderProperties(order, orderUpdateDto);
-
-                        // Handle services
-                        await HandleServiceUpdates(order, orderUpdateDto);
-
-                        // Handle schedules (note: uses new ScheduleCancellationHandler)
-                        await HandleScheduleUpdates(order, orderUpdateDto);
-
-                        // If order status is being set to canceled, cancel the order via handler
-                        if (orderUpdateDto.Status == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
+                        if (orderUpdateDto.Status == OrderStatus.Cancelled)
                         {
                                 _logger.LogInformation("Cancelling order {OrderId} as part of update", orderId);
                                 await _orderCancellationHandler.CancelOrderAsync(order);
+                        }
+                        else
+                        {
+                                // Update basic order properties
+                                UpdateOrderProperties(order, orderUpdateDto);
+
+                                // Handle services
+                                await HandleServiceUpdates(order, orderUpdateDto);
+
+                                // Handle schedules (note: uses new ScheduleCancellationHandler)
+                                await HandleScheduleUpdates(order, orderUpdateDto);
                         }
 
                         await _unitOfWork.SaveChangesAsync();
@@ -163,7 +164,7 @@ public class OrdersService
                         // Run maintenance 
                         await _statusMaintenanceService.MaintainOrderStatuses(orderId);
 
-                        _matchingService.StartMatching(order.Id);
+                        await _matchingService.StartMatching(order.Id);
 
                         // Refetch to get updated relationships
                         var updatedOrder = await GetLoadedOrderById(orderId);
@@ -294,7 +295,8 @@ public class OrdersService
                         SchedulesJobRequests = true,
                         ScheduleAssignments = true,
                         AssignmentsJobInstances = true,
-                });
+                },
+                asNoTracking: false);
 
                 return order;
         }
