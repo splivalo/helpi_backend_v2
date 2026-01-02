@@ -15,7 +15,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251116122221_InitialMigrations")]
+    [Migration("20251223131709_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -217,6 +217,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<string>("Token")
                         .HasColumnType("text");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId", "Token");
 

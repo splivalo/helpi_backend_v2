@@ -1,5 +1,7 @@
 
 
+using Helpi.Domain.Enums;
+
 namespace Helpi.Domain.Entities
 {
 
@@ -7,6 +9,7 @@ namespace Helpi.Domain.Entities
     {
         public int UserId { get; set; }
         public string Token { get; set; } = null!;
+        public DevicePlatform Platform { get; set; }
 
     }
 }

@@ -23,8 +23,7 @@ public class MatchingBackgroundJobs : IMatchingBackgroundJobs
 
             // If a job with this ID is already scheduled, skip scheduling
             if (state?.Name == ScheduledState.StateName ||
-            state?.Name == EnqueuedState.StateName ||
-            state?.Name == ProcessingState.StateName)
+            state?.Name == EnqueuedState.StateName)
             {
                 return null;
             }

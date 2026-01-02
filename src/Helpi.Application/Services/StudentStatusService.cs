@@ -176,7 +176,15 @@ ILocalizationService loc
         _logger.LogInformation("Contract expired {DaysSinceExpiry} days ago for student {StudentId}",
             daysSinceExpiry, student.UserId);
 
-        var expiredButNotMarked = student.Status == StudentStatus.Active;
+
+        var activeStatuses = new[]
+        {
+            StudentStatus.InActive,
+            StudentStatus.Active,
+            StudentStatus.ContractAboutToExpire
+        };
+
+        var expiredButNotMarked = activeStatuses.Contains(student.Status);
 
         if (expiredButNotMarked)
         {
@@ -195,12 +203,12 @@ ILocalizationService loc
         }
 
         // If it was already expired but it's the first day after expiry -> reassign & notify
-        if (daysSinceExpiry == 1)
-        {
-            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
-            var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
-            if (last != null) await SendContractExpiredNotification(student, last);
-        }
+        // if (daysSinceExpiry == 1)
+        // {
+        //     await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+        //     var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
+        //     if (last != null) await SendContractExpiredNotification(student, last);
+        // }
 
         // lifecycle actions at 90 and 180 days
         const int ThreeMonthsInDays = 90;

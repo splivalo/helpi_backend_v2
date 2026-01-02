@@ -287,7 +287,7 @@ INotificationFactory notificationFactory,
             {
                 if (notifiedStudentIds.Any())
                 {
-                    _logger.LogInformation("📝  AllEligable  Students Notified  for schedule {ScheduleId}", schedule.Id);
+                    _logger.LogInformation("📝  All Eligable  Students Notified  for schedule {ScheduleId}", schedule.Id);
                     await HandleAllEligableStudentsNotified(order, schedule, reassignment);
                     return;
                 }

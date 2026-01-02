@@ -215,6 +215,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<string>("Token")
                         .HasColumnType("text");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId", "Token");
 
                     b.ToTable("FcmTokens");

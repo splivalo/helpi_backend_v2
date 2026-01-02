@@ -8,5 +8,5 @@ public interface IFirebaseService
 {
     public Task<string> GenerateCustomTokenAsync(string userId, Dictionary<string, dynamic>? claims);
 
-    public Task<bool> SendPushNotificationAsync(List<string> deviceTokens, HNotificationDto notification);
+    public Task<bool> SendPushNotificationAsync(List<FcmToken> deviceTokens, HNotificationDto notification);
 }

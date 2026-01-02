@@ -45,11 +45,11 @@ public class NotificationService : INotificationService
         throw new NotImplementedException();
     }
 
-    private async Task<List<string>> GetUserDeviceFcmTokens(int userId)
+    private async Task<List<FcmToken>> GetUserDeviceFcmTokens(int userId)
     {
         var fcmTokens = await _fcmTokensRepository.GetTokensByUserIdAsync(userId);
-        var deviceTokens = fcmTokens.Select(fcmToken => fcmToken.Token).ToList();
-        return deviceTokens;
+        // var deviceTokens = fcmTokens.Select(fcmToken => fcmToken.Token).ToList();
+        return fcmTokens;
     }
 
     public async Task<bool> SendPushNotificationAsync(int userId, HNotification notification)

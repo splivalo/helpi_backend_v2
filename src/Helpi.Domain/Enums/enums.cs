@@ -239,4 +239,11 @@ namespace Helpi.Domain.Enums
         noEligibleStudents,
         allEligibleStudentsNotified,
     }
+
+    public enum DevicePlatform
+    {
+        Android,
+        iOS
+    }
+
 }

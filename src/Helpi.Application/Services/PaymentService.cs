@@ -80,6 +80,21 @@ ILocalizationService loc
             return;
         }
 
+        var activeStudent = new[]
+        {
+            StudentStatus.Active,
+            StudentStatus.ContractAboutToExpire,
+        };
+
+        var student = jobInstance!.ScheduleAssignment!.Student;
+        var studentStatus = student.Status;
+
+        if (!activeStudent.Contains(studentStatus))
+        {
+            _logger.LogInformation("🚫 JobInstance {JobInstanceId} Student {studentId} has status {status}", jobInstanceId, student.UserId, studentStatus);
+            return;
+        }
+
         if (jobInstance.Order?.PaymentMethodId == null)
         {
             _logger.LogWarning("⚠️ JobInstance {JobInstanceId} has no payment method", jobInstanceId);
