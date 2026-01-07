@@ -384,8 +384,8 @@ public class JobRequestRepository : IJobRequestRepository
                                 jr.OrderSchedule.Order.StartDate <= endDate &&
                                 jr.OrderSchedule.Order.EndDate >= startDate &&
                                 jr.OrderSchedule.DayOfWeek == DayOfWeekExtensions.ToIsoWeekday(startDate.DayOfWeek) &&
-                                jr.OrderSchedule.StartTime < endTime &&
-                                jr.OrderSchedule.EndTime > startTime
+                                jr.OrderSchedule.StartTime <= endTime &&
+                                jr.OrderSchedule.EndTime >= startTime
                                 )
                         )
                         .ToListAsync();

@@ -97,8 +97,8 @@
             "Body": "Vaš Helpi kod za poništavanje lozinke je <b>{0}</b>. Istječe za 10 minuta."
         },
         "Invoice": {
-            "Subject": "Vaš račun",
-            "Body": "<h1>Hvala na vašoj narudžbi!</h1><p>Račun je priložen.</p>"
+            "Subject": "Potvrda vaše rezervacije i račun",
+            "Body": "<h1>Vaš termin je potvrđen!</h1><p>Hvala vam što koristite našu uslugu. Kako bismo osigurali dolazak studenta u dogovoreno vrijeme, sustav automatski vrši naplatu 30 minuta prije početka termina. U privitku se nalazi vaš račun.</p><br/><br/><p>Vidimo se uskoro!</p>"
         },
         "Student": {
             "ContractAboutToExpire": {

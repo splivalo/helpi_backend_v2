@@ -8,6 +8,7 @@ using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 using Helpi.Application.Services.Maintenance;
 using Microsoft.Extensions.Logging;
+using Helpi.Application.Common.Extensions;
 
 namespace Helpi.Application.Services;
 
@@ -67,10 +68,48 @@ public class OrdersService
                 return _mapper.Map<List<OrderDto>>(orders);
         }
 
+        private DateOnly AdjustStartDateToNearestWeekday(
+    DateOnly startDate,
+    IEnumerable<OrderScheduleCreateDto> schedules)
+        {
+                var allowedDays = schedules
+                    .Select(s => DayOfWeekExtensions.FromIsoWeekday(s.DayOfWeek))
+                    .Distinct()
+                    .ToHashSet();
+
+                var cursor = startDate;
+
+                for (int i = 0; i < 7; i++) // max one week lookahead
+                {
+                        if (allowedDays.Contains(cursor.DayOfWeek))
+                        {
+                                _logger.LogInformation("Adjusted: startDate: {old} to NewStart: {new} -- .Net Day of week {DOW}", startDate, cursor, i);
+
+                                return cursor;
+                        }
+
+
+                        cursor = cursor.AddDays(1);
+                }
+
+                throw new DomainException(
+                    "❌  No valid weekday found within adjustment window."
+                );
+        }
+
+
         public async Task<OrderDto> CreateOrderAsync(OrderCreateDto orderCreateDto)
         {
                 try
                 {
+                        orderCreateDto.StartDate = AdjustStartDateToNearestWeekday(
+                            orderCreateDto.StartDate,
+                            orderCreateDto.Schedules
+                        );
+
+                        if (orderCreateDto.EndDate < orderCreateDto.StartDate)
+                                throw new DomainException("❌ EndDate cannot be before StartDate.");
+
                         // === 1. Create Order ===
                         var order = _mapper.Map<Order>(orderCreateDto);
                         order = await _orderRepository.AddNoSaveAsync(order);

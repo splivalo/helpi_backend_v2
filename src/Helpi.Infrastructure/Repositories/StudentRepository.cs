@@ -2,6 +2,7 @@ namespace Helpi.Infrastructure.Repositories;
 
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Helpi.Application.Common.Extensions;
 using Helpi.Application.DTOs;
 using Helpi.Application.Exceptions;
 using Helpi.Application.Interfaces;
@@ -116,8 +117,9 @@ public class StudentRepository : IStudentRepository
             .ToList();
 
         return await FindEligibleStudentsCore(
-            scheduledDate: null,
-            targetDay: orderSchedule.DayOfWeek,
+            startDate: orderSchedule.Order.StartDate,
+            endDate: orderSchedule.Order.EndDate,
+            isoTargetDay: orderSchedule.DayOfWeek,
             targetStart: orderSchedule.StartTime,
             targetEnd: orderSchedule.EndTime,
             seniorId: orderSchedule.Order.Senior.Id,
@@ -140,8 +142,9 @@ public class StudentRepository : IStudentRepository
         var targetDay = ToIsoDayNumber(scheduledDate);
 
         return await FindEligibleStudentsCore(
-            scheduledDate: scheduledDate,
-            targetDay: targetDay,
+            startDate: scheduledDate,
+            endDate: scheduledDate,
+            isoTargetDay: targetDay,
             targetStart: startTime,
             targetEnd: endTime,
             seniorId: seniorId,
@@ -180,8 +183,9 @@ public class StudentRepository : IStudentRepository
 
 
         return await FindEligibleStudentsCore(
-            scheduledDate: scheduledDate,
-            targetDay: targetDay,
+            startDate: scheduledDate,
+            endDate: scheduledDate,
+            isoTargetDay: targetDay,
             targetStart: startTime,
             targetEnd: endTime,
             seniorId: order!.Senior.Id,
@@ -193,94 +197,74 @@ public class StudentRepository : IStudentRepository
     }
 
     private async Task<List<Student>> FindEligibleStudentsCore(
-        DateOnly? scheduledDate,
-        byte targetDay,
-        TimeOnly targetStart,
-        TimeOnly targetEnd,
-        List<int> requiredServiceIds,
-        List<int>? notifiedStudentIds,
-       int? preferedStudentId,
-        int? seniorId,
-        List<int> excludeJobInstanceIds
-        )
+    DateOnly startDate,
+    DateOnly endDate,
+    byte isoTargetDay,
+    TimeOnly targetStart,
+    TimeOnly targetEnd,
+    List<int> requiredServiceIds,
+    List<int>? notifiedStudentIds,
+    int? preferedStudentId,
+    int? seniorId,
+    List<int> excludeJobInstanceIds
+)
     {
-        bool matchFullSchedule = scheduledDate == null;
+        bool isDateRange = startDate != endDate;
 
-        var query = _context.Students.WhereIsActive()
+
+        var query = _context.Students
+            .WhereIsActive()
             .Include(s => s.Contact)
-            // .Include(s => s.StudentServices)
-            // .Include(s => s.AvailabilitySlots)
-            // .Include(s => s.ScheduleAssignments)
-            //     .ThenInclude(sa => sa.OrderSchedule)
+            .Include(s => s.StudentServices)
+            .Include(s => s.AvailabilitySlots)
             .AsNoTracking()
             .AsQueryable();
 
-
-
-        // Filter out already notified students
-        if (notifiedStudentIds != null && notifiedStudentIds.Any())
+        if (notifiedStudentIds?.Any() == true)
         {
             query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
         }
 
-        // Availability check
-        query = query.Where(s => s.AvailabilitySlots.Any(a =>
-            a.DayOfWeek == targetDay &&
-            a.StartTime <= targetStart &&
-            a.EndTime >= targetEnd
-        ));
+        query = query.Where(s =>
+            s.AvailabilitySlots.Any(a =>
+                a.DayOfWeek == isoTargetDay &&
+                a.StartTime <= targetStart &&
+                a.EndTime >= targetEnd
+            )
+        );
 
-        // Student must offer ALL required services
-        query = query.Where(s => requiredServiceIds.All(rs =>
-            s.StudentServices.Any(ss => ss.ServiceId == rs)
-        ));
+        query = query.Where(s =>
+            requiredServiceIds.All(rs =>
+                s.StudentServices.Any(ss => ss.ServiceId == rs)
+            )
+        );
 
-        // Location validation (optional, uncomment if needed)
-        // query = query.Where(s =>
-        //     s.Contact.CityId == seniorCityId &&
-        //     _context.ServiceRegions.Any(sr =>
-        //         sr.CityId == seniorCityId &&
-        //         sr.active &&
-        //         requiredServiceIds.Contains(sr.ServiceId)
-        // ));
-
-        if (matchFullSchedule)
-        {
-            // schedule Conflict  check
-            query = query.Where(s => !s.ScheduleAssignments
-                        .SelectMany(sa => sa.JobInstances)
-                        .Any(j =>
-                            j.ScheduledDate == scheduledDate &&
-                            j.StartTime < targetEnd &&
-                            j.EndTime > targetStart &&
-                            j.Status != JobInstanceStatus.Completed &&
-                            j.Status != JobInstanceStatus.Cancelled &&
-                            j.Status != JobInstanceStatus.Rescheduled
-                        ));
-
-        }
-        else
-        {
-            // Day Conflict  check  
-            query = query.Include(s => s.ScheduleAssignments.Where(sa => sa.Status == AssignmentStatus.Accepted))
-                            .ThenInclude(sa => sa.JobInstances)
-                         .Where(s => !s.ScheduleAssignments.Any(sa =>
-                            sa.JobInstances.Any(j =>
-                                j.ScheduledDate == scheduledDate &&
-                                j.StartTime < targetEnd &&
-                                j.EndTime > targetStart &&
-                                !excludeJobInstanceIds.Contains(j.Id) &&
-                                j.Status != JobInstanceStatus.Completed &&
-                                j.Status != JobInstanceStatus.Cancelled &&
-                                j.Status != JobInstanceStatus.Rescheduled
-                            )
-                        ));
-        }
+        // ✅ Unified conflict detection
+        query = query.Where(s =>
+            !s.ScheduleAssignments
+                .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                .SelectMany(sa => sa.JobInstances)
+                .Any(j =>
+                    (
+                        isDateRange
+                            ? (j.ScheduledDate >= startDate &&
+                              j.ScheduledDate <= endDate &&
+                              j.ScheduledDate.DayOfWeek == DayOfWeekExtensions.FromIsoWeekday(isoTargetDay))
+                            : j.ScheduledDate == startDate
+                    )
+                    && j.StartTime <= targetEnd
+                    && j.EndTime >= targetStart
+                    && !excludeJobInstanceIds.Contains(j.Id)
+                    && j.Status != JobInstanceStatus.Completed
+                    && j.Status != JobInstanceStatus.Cancelled
+                    && j.Status != JobInstanceStatus.Rescheduled
+                )
+        );
 
         var students = await query.ToListAsync();
-        students = await PrioritizeStudents(students, preferedStudentId, seniorId);
-        return students;
+        return await PrioritizeStudents(students, preferedStudentId, seniorId);
     }
+
 
     private async Task<List<Student>> PrioritizeStudents(
         List<Student> students,

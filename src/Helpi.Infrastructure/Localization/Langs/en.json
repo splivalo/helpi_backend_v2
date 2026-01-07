@@ -97,8 +97,8 @@
             "Body": "Your Helpi password reset code is <b>{0}</b>. It expires in 10 minutes."
         },
         "Invoice": {
-            "Subject": "Your Invoice",
-            "Body": "<h1>Thank you for your order!</h1><p>Invoice attached.</p>"
+            "Subject": "Booking Confirmation & Invoice",
+            "Body": "<h1>Your booking is confirmed!</h1><p>Thank you for choosing our service. To secure your appointment and ensure the student's arrival, payment is processed automatically 30 minutes before the scheduled start. Please find your invoice attached.</p><br/><br/><p>We look forward to seeing you soon!</p>"
         },
         "Student": {
             "ContractAboutToExpire": {
