@@ -8,6 +8,7 @@ public class OrderIncludeOptions
 
     public bool SchedulesJobRequests { get; internal set; }
     public bool ScheduleAssignments { get; set; }
+    public bool ScheduleAssignmentStudent { get; set; }
     public bool AssignmentsJobInstances { get; set; }
 
 

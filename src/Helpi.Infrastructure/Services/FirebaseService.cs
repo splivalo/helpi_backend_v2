@@ -118,6 +118,8 @@ public class FirebaseService : IFirebaseService
                 },
                 Aps = new Aps
                 {
+                    // ContentAvailable = true,
+                    // MutableContent = true,
                     Sound = "default",
                     Badge = 1
                 }

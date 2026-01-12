@@ -276,7 +276,7 @@ INotificationFactory notificationFactory,
                                 );
 
 
-            bool notificationSent = await _notificationService.SendPushNotificationAsync(
+            bool notificationSent = await _notificationService.SendNotificationAsync(
                 student.UserId, jobRequestNotification);
 
             if (notificationSent)

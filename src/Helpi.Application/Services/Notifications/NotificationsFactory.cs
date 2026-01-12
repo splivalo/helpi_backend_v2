@@ -272,7 +272,7 @@ public class NotificationFactory : INotificationFactory
                orderId: orderId,
                scheduleId: orderScheduleId,
                jobInstanceId: null,
-               "en");
+               culture);
 
 
         return new HNotification
@@ -405,5 +405,24 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
+    public HNotification SeniorOrderCancelledNotification(int receiverUserId, Order order, string culture)
+    {
+
+        var desc = _loc.GetString("Entities.Order", culture, order.Id);
+
+        return new HNotification
+        {
+            RecieverUserId = receiverUserId,
+            TranslationKey = "Notifications.OrderCancelled",
+            Title = _loc.GetString("Notifications.OrderCancelled.Title", culture),
+            Body = desc,
+            Type = NotificationType.OrderCancelled,
+            SeniorId = order.SeniorId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                order = order.Id
+            })
+        };
+    }
 
 }

@@ -107,7 +107,7 @@ ICustomerRepository customerRepo
                 var culture = instance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
 
                 var notification = _notificationFactory.CreateStudentJobReminderNotification(instance, culture);
-                await _notificationService.SendPushNotificationAsync(notification.RecieverUserId, notification);
+                await _notificationService.SendNotificationAsync(notification.RecieverUserId, notification);
 
 
         }
@@ -248,7 +248,7 @@ ICustomerRepository customerRepo
                 // Send notification to customer
                 var notification = _notificationFactory.ReviewRequestNotification(customerId, review, instance, customerCulture);
 
-                await _notificationService.SendPushNotificationAsync(customerId, notification);
+                await _notificationService.SendNotificationAsync(customerId, notification);
         }
 
 
@@ -434,36 +434,94 @@ ICustomerRepository customerRepo
 
         public async Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId)
         {
-                var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
-
-                if (job == null)
+                try
                 {
-                        throw new ArgumentException($"Job instance {jobInstanceId} not found");
-                }
+                        var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
 
-                if (job.Status != JobInstanceStatus.Upcoming)
+                        if (job == null)
+                        {
+                                throw new ArgumentException($"Job instance {jobInstanceId} not found");
+                        }
+
+                        if (job.Status != JobInstanceStatus.Upcoming)
+                        {
+                                throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
+                        }
+
+                        job.Status = JobInstanceStatus.Cancelled;
+
+                        await _jobInstanceRepository.UpdateAsync(job);
+
+
+
+
+                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
+
+                        await NotifyUsersJobInstanceCancelled(job);
+
+                        return _mapper.Map<JobInstanceDto>(job);
+                }
+                catch (Exception ex)
                 {
-                        throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
+                        _logger.LogError("❌ [failed] Cancell  JobInstance {jobInstanceId}. {error}", jobInstanceId, ex);
+                        return null;
                 }
-
-                job.Status = JobInstanceStatus.Cancelled;
-
-                await _jobInstanceRepository.UpdateAsync(job);
-
-                // _jobInstanceRepository.Detach(job);
-
-                // if (job.ScheduleAssignment != null)
-                // {
-                //         _assignmentRepository.Detach(job.ScheduleAssignment!);
-                // }
-
-
-                await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
-
-                return _mapper.Map<JobInstanceDto>(job);
 
 
         }
+
+
+        private async Task NotifyUsersJobInstanceCancelled(JobInstance jobInstance)
+        {
+                try
+                {       // senior
+                        var senior = jobInstance.Senior;
+                        var customerId = senior.CustomerId;
+                        var culture = senior.Contact.LanguageCode ?? "hr";
+                        await NotifyJobInstanceCancelled(customerId, jobInstance, culture);
+
+                        // student
+                        if (jobInstance.ScheduleAssignment != null)
+                        {
+                                var student = jobInstance.ScheduleAssignment.Student;
+                                var studentId = student.UserId;
+                                var studentCulture = student.Contact.LanguageCode ?? "hr";
+                                await NotifyJobInstanceCancelled(studentId, jobInstance, studentCulture);
+                        }
+                }
+                catch (Exception)
+                {
+                        _logger.LogError("❌ Notify error JobInstance {jobInstanceId} .", jobInstance.Id);
+
+                }
+
+
+        }
+
+
+        private async Task NotifyJobInstanceCancelled(int recieverId, JobInstance jobInstance, string culture)
+        {
+                try
+                {
+                        var noti = _notificationFactory.JobCancelledNotification(
+                            recieverId,
+                            jobInstance,
+                            culture: culture
+
+                            );
+
+                        await _notificationService.SendNotificationAsync(recieverId, noti);
+                }
+                catch (Exception)
+                {
+                        _logger.LogError("❌ Notify error JobInstance {jobInstanceId} .", jobInstance.Id);
+
+                }
+
+
+        }
+
+
 
 
 

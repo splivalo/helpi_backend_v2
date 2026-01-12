@@ -233,7 +233,7 @@ ILocalizationService loc
                culture: customerCulture
                );
 
-            await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);
+            await _notificationService.SendNotificationAsync(jobInstance.CustomerId, customerNotification);
 
 
             var studentCulture = jobInstance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
@@ -247,7 +247,7 @@ ILocalizationService loc
 
                 );
 
-            await _notificationService.SendPushNotificationAsync(studentId, studentNotification);
+            await _notificationService.SendNotificationAsync(studentId, studentNotification);
         }
         catch (Exception)
         {
@@ -352,7 +352,7 @@ ILocalizationService loc
              culture: culture
              );
 
-        await _notificationService.SendPushNotificationAsync(jobInstance.CustomerId, customerNotification);
+        await _notificationService.SendNotificationAsync(jobInstance.CustomerId, customerNotification);
     }
 
 }

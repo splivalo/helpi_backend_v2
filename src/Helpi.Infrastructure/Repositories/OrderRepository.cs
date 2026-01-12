@@ -104,6 +104,11 @@ public class OrderRepository : IOrderRepository
                                 {
                                         query = query.Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.JobInstances.Where(j => !j.NeedsSubstitute));
                                 }
+
+                                if (options.ScheduleAssignmentStudent)
+                                {
+                                        query = query.Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact);
+                                }
                         }
 
                         if (options.SchedulesJobRequests)

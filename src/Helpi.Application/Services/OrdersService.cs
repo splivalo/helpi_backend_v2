@@ -9,6 +9,7 @@ using Helpi.Domain.Exceptions;
 using Helpi.Application.Services.Maintenance;
 using Microsoft.Extensions.Logging;
 using Helpi.Application.Common.Extensions;
+using Helpi.Application.Common.Interfaces;
 
 namespace Helpi.Application.Services;
 
@@ -31,6 +32,9 @@ public class OrdersService
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly OrderCancellationHandler _orderCancellationHandler;
         private readonly ScheduleCancellationHandler _scheduleCancellationHandler;
+        private readonly INotificationFactory _notificationFactory;
+
+        private readonly INotificationService _notificationService;
 
         public OrdersService(
             IOrderRepository orderRepository,
@@ -44,7 +48,9 @@ public class OrdersService
             ILogger<OrdersService> logger,
             OrderStatusMaintenanceService statusMaintenanceService,
             OrderCancellationHandler orderCancellationHandler,
-            ScheduleCancellationHandler scheduleCancellationHandler
+            ScheduleCancellationHandler scheduleCancellationHandler,
+            INotificationFactory notificationFactory,
+            INotificationService notificationService
         )
         {
                 _orderRepository = orderRepository;
@@ -59,6 +65,8 @@ public class OrdersService
                 _statusMaintenanceService = statusMaintenanceService;
                 _orderCancellationHandler = orderCancellationHandler;
                 _scheduleCancellationHandler = scheduleCancellationHandler;
+                _notificationFactory = notificationFactory;
+                _notificationService = notificationService;
         }
 
 
@@ -179,8 +187,15 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
+                        List<int> toBeCancelledScheduleIds = [];
                         if (orderUpdateDto.Status == OrderStatus.Cancelled)
                         {
+                                // id's of schedules that are currently not cancelld but will be
+                                toBeCancelledScheduleIds = order.Schedules
+                                                               .Where(s => !s.IsCancelled)
+                                                               .Select(s => s.Id)
+                                                               .ToList();
+
                                 _logger.LogInformation("Cancelling order {OrderId} as part of update", orderId);
                                 await _orderCancellationHandler.CancelOrderAsync(order);
                         }
@@ -198,6 +213,8 @@ public class OrdersService
 
                         await _unitOfWork.SaveChangesAsync();
 
+
+
                         _logger.LogInformation("Successfully updated order {OrderId}", orderId);
 
                         // Run maintenance 
@@ -207,6 +224,14 @@ public class OrdersService
 
                         // Refetch to get updated relationships
                         var updatedOrder = await GetLoadedOrderById(orderId);
+
+                        if (updatedOrder?.Status == OrderStatus.Cancelled)
+                        {
+
+                                await NotifySeniorAboutOrderCancel(order);
+                                await NotifyStudentsAboutOrderCancel(order, toBeCancelledScheduleIds);
+                        }
+
                         return _mapper.Map<OrderDto>(updatedOrder);
                 }
                 catch (Exception ex)
@@ -223,6 +248,8 @@ public class OrdersService
                         _logger.LogInformation("Cancelling order {OrderId}", orderId);
 
                         var order = await GetLoadedOrderById(orderId);
+
+
                         if (order == null)
                         {
                                 _logger.LogWarning("Order {OrderId} not found for cancellation", orderId);
@@ -236,6 +263,12 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
+                        // id's of schedules that are currently not cancelld but will be
+                        List<int> toBeCancelledScheduleIds = order.Schedules
+                                                        .Where(s => !s.IsCancelled)
+                                                        .Select(s => s.Id)
+                                                        .ToList();
+
                         // Use the centralized handler to cancel the order (will cascade to schedules)
                         await _orderCancellationHandler.CancelOrderAsync(order);
 
@@ -245,6 +278,10 @@ public class OrdersService
                         await _statusMaintenanceService.MaintainOrderStatuses(orderId);
 
                         _logger.LogInformation("Successfully cancelled order {OrderId}", orderId);
+
+                        await NotifySeniorAboutOrderCancel(order);
+                        await NotifyStudentsAboutOrderCancel(order, toBeCancelledScheduleIds);
+
                         return true;
                 }
                 catch (Exception ex)
@@ -329,14 +366,85 @@ public class OrdersService
                 var order = await _orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions
                 {
                         Senior = true,
+
                         OrderServices = true,
                         Schedules = true,
                         SchedulesJobRequests = true,
                         ScheduleAssignments = true,
+                        ScheduleAssignmentStudent = true,
                         AssignmentsJobInstances = true,
                 },
                 asNoTracking: false);
 
                 return order;
         }
+
+
+        private async Task NotifySeniorAboutOrderCancel(Order order)
+        {
+                try
+                {
+                        var recieverId = order.Senior.CustomerId;
+
+                        var notification = _notificationFactory.SeniorOrderCancelledNotification(
+                                receiverUserId: recieverId,
+                                        order: order,
+                                        culture: order.Senior.Contact.LanguageCode ?? "hr");
+
+                        await _notificationService.SendNotificationAsync(recieverId, notification);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to send cancellation notification. OrderId={orderId}",
+                                                          order.Id);
+                }
+        }
+
+
+
+        private async Task NotifyStudentsAboutOrderCancel(
+     Order order,
+     List<int> cancelledScheduleIds)
+        {
+                var cancelledScheduleSet = cancelledScheduleIds.ToHashSet();
+
+                var assignments = order.Schedules.SelectMany(s => s.Assignments);
+
+                foreach (var assignment in assignments)
+                {
+                        if (!cancelledScheduleSet.Contains(assignment.OrderScheduleId))
+                                continue;
+
+                        if (assignment.Student == null)
+                                continue;
+
+                        try
+                        {
+                                var student = assignment.Student;
+
+                                var notification =
+                                    _notificationFactory.ScheduleAssignmentCancelledNotification(
+                                        recieverId: assignment.StudentId,
+                                        scheduleAssignment: assignment,
+                                        seniorId: order.SeniorId,
+                                        culture: student.Contact.LanguageCode ?? "hr");
+
+                                await _notificationService.SendNotificationAsync(
+                                    student.UserId,
+                                    notification);
+                        }
+                        catch (Exception ex)
+                        {
+                                _logger.LogError(
+                                    ex,
+                                    "❌  Failed to send cancellation notification. AssignmentId={AssignmentId}",
+                                    assignment.Id);
+                        }
+                }
+        }
+
+
 }
+
+
+

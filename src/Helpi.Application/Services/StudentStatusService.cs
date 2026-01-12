@@ -58,8 +58,6 @@ ILocalizationService loc
     {
         _logger.LogInformation("🔍 Starting ProcessStudentStatuses");
 
-
-
         var students = await _studentRepo.LoadStudentsWithIncludes(null,
                         new StudentIncludeOptions
                         {
@@ -102,12 +100,12 @@ ILocalizationService loc
             return;
         }
 
-        // CASE B: No active contract but a next contract exists and there's no gap -> treat as active/transition
-        // if (eval.NextContract != null && !eval.HasGap)
-        // {
-        //     await HandleSmoothTransition(student, eval);
-        //     return;
-        // }
+        // CASE B: no contract at all
+        if (student.Contracts.Any() == false)
+        {
+            await HandleNoContractExists(student, eval);
+            return;
+        }
 
         // CASE C: Truly expired or no contract
         await HandleTrulyExpired(student, eval);
@@ -149,7 +147,7 @@ ILocalizationService loc
                 active.Id,
                 culture: student.Contact.LanguageCode ?? "en");
 
-            await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+            await _notificationService.SendNotificationAsync(student.UserId, notification);
 
             await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
         }
@@ -165,6 +163,18 @@ ILocalizationService loc
             student.Status = StudentStatus.Active;
             await _studentRepo.UpdateAsync(student);
         }
+    }
+
+
+    private async Task HandleNoContractExists(Student student, ContractEvaluationResult eval)
+    {
+        _logger.LogInformation("Student {StudentId} NO contract extists", student.UserId);
+
+        if (student.Status == StudentStatus.InActive) return;
+
+        student.Status = StudentStatus.InActive;
+        await _studentRepo.UpdateAsync(student);
+
     }
 
     private async Task HandleTrulyExpired(Student student, ContractEvaluationResult eval)
@@ -255,7 +265,7 @@ ILocalizationService loc
                 contract.Id,
                 culture: student.Contact.LanguageCode ?? "en");
 
-            await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+            await _notificationService.SendNotificationAsync(student.UserId, notification);
 
             _logger.LogInformation("✅ Contract renewal reminder notification sent to student {StudentId}", student.UserId);
         }
@@ -307,7 +317,7 @@ ILocalizationService loc
                 contract.Id,
                 culture: student.Contact.LanguageCode ?? "en");
 
-            await _notificationService.SendPushNotificationAsync(student.UserId, notification);
+            await _notificationService.SendNotificationAsync(student.UserId, notification);
 
             _logger.LogInformation("✅ Contract expired notification sent to {StudentId}", student.UserId);
         }

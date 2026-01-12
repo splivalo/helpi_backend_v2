@@ -114,7 +114,7 @@ public class TestingController : ControllerBase
             })
         };
 
-        bool notificationSent = await _notificationService.SendPushNotificationAsync(studentId, jobRequestNotification);
+        bool notificationSent = await _notificationService.SendNotificationAsync(studentId, jobRequestNotification);
         return Ok(new { Success = notificationSent });
     }
 

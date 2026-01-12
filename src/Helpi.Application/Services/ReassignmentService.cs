@@ -547,7 +547,7 @@ INotificationFactory notificationFactory,
                                             );
                 }
 
-                await _notificationService.SendPushNotificationAsync(studentId, notifcation);
+                await _notificationService.SendNotificationAsync(studentId, notifcation);
             }
             catch (Exception ex)
             {

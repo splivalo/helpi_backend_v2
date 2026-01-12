@@ -52,6 +52,37 @@ public class NotificationService : INotificationService
         return fcmTokens;
     }
 
+    public async Task<bool> SendNotificationAsync(int userId,
+     HNotification notification,
+     bool viaSignalR = true,
+      bool viaFcm = true)
+    {
+
+        try
+        {
+            var hasSuccess = true;
+
+            if (viaSignalR)
+            {
+                var notificationDto = _mapper.Map<HNotificationDto>(notification);
+                await _signalRNotifier.SendNotificationToUserAsync(userId, notificationDto);
+            }
+
+            if (viaFcm)
+            {
+                await SendPushNotificationAsync(userId, notification);
+            }
+
+            return hasSuccess;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌");
+            return false;
+        }
+
+    }
+
     public async Task<bool> SendPushNotificationAsync(int userId, HNotification notification)
     {
         try

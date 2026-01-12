@@ -16,7 +16,7 @@ namespace Helpi.Application.Common.Interfaces
                 ReassignmentRecord record,
                 int seniorId,
                 NotificationType type,
-                string culture = "en");
+                string culture = "hr");
 
         HNotification AdminOrderScheduleCancelledNotification(
        int adminId, OrderSchedule orderSchedule, int seniorId);
@@ -40,7 +40,8 @@ namespace Helpi.Application.Common.Interfaces
         HNotification ScheduleAssignmentCancelledNotification(
         int recieverId, ScheduleAssignment scheduleAssignment, int seniorId, string culture);
 
-
+        HNotification SeniorOrderCancelledNotification(
+                 int receiverUserId, Order order, string culture);
         HNotification StudentContractAboutToExpire(int studentId, int contractId, string culture);
         HNotification StudentContractAdded(int studentId, int contractId, string culture);
         HNotification StudentContractUpdated(int studentId, int contractId, string culture);

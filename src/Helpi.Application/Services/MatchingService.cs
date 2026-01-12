@@ -405,7 +405,7 @@ INotificationFactory notificationFactory,
             var jobRequestNotification = _notificationFactory.JobRequestNotification(student.UserId, orderSchedule, reassignment, culture: studentCulture);
 
 
-            bool notificationSent = await _notificationService.SendPushNotificationAsync(
+            bool notificationSent = await _notificationService.SendNotificationAsync(
                 student.UserId,
                 jobRequestNotification);
 
