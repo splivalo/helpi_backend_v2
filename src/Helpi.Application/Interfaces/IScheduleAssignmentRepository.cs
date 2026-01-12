@@ -14,6 +14,7 @@ public interface IScheduleAssignmentRepository
     Task UpdateAsync(ScheduleAssignment assignment);
     Task DeleteAsync(ScheduleAssignment assignment);
     Task<Student?> GetActiveStudentForOrderScheduleAsync(int orderScheduleId);
+    Task<ScheduleAssignment?> GetAssignmentForOrderScheduleAsync(int orderScheduleId);
     Task<bool> IsScheduleAssigned(int scheduleId);
     Task<bool> IsAllOrderAssignmentsCompleted(int orderId);
     Task<bool> IsScheduleCompleted(int scheduleId);
@@ -22,5 +23,7 @@ public interface IScheduleAssignmentRepository
     Task<bool> HasActiveAssignmentsForServicesAsync(int studentId, List<int> serviceIds);
 
     Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos);
+
+    void Detach(ScheduleAssignment assignment);
 
 }

@@ -9,6 +9,7 @@ public class HNotificationDto
     public int RecieverUserId { get; set; }
     public string Title { get; set; } = null!;
     public string Body { get; set; } = null!;
+    public string TranslationKey { get; set; } = null!;
     public NotificationType Type { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsRead { get; set; }
@@ -18,6 +19,10 @@ public class HNotificationDto
     public StudentDto? Student { get; set; }
     public int? SeniorId { get; set; }
     public SeniorDto? Senior { get; set; }
+
+    public int? OrderId { get; set; }
+    public int? OrderScheduleId { get; set; }
+    public int? JobInstanceId { get; set; }
 }
 
 public class CreateHNotificationDto

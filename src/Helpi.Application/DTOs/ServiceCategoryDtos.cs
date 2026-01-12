@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Helpi.Domain.Entities;
 using Helpi.Domain.ValueObjects;
+using Microsoft.AspNetCore.Http;
 
 namespace Helpi.Application.DTOs;
 
@@ -27,4 +28,17 @@ public class ServiceCategoryUpdateDto
 {
     public Dictionary<string, Translation>? Translations { get; set; } = new();
     public DateTime? DeletedOn { get; set; }
+}
+
+
+public class UploadIconDto
+{
+    public int ServiceCategoryId { get; set; }
+    public IFormFile[] IconFiles { get; set; } = null!;
+}
+
+public class ServiceCategoryIconDto
+{
+    public int Id { get; set; }
+    public string Icon { get; set; } = string.Empty;
 }

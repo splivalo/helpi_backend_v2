@@ -194,4 +194,35 @@ public class ApiService : IApiService
 
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<string> PostMultipartAsync(string url, string? accessToken = null, string? apiKey = null, MultipartFormDataContent? form = null)
+    {
+        _logger.LogInformation("📨 POST (multipart) to {Url}", url);
+
+        // Clear any previous Authorization headers
+        _httpClient.DefaultRequestHeaders.Authorization = null;
+
+        // Choose the appropriate auth type
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            // Mailgun-style Basic Auth (api:<key>)
+            var byteArray = Encoding.ASCII.GetBytes($"api:{apiKey}");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+        }
+        else if (!string.IsNullOrEmpty(accessToken))
+        {
+            // Bearer token auth
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        var response = await _httpClient.PostAsync(url, form ?? new MultipartFormDataContent());
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        _logger.LogInformation("📥 Multipart POST Response: {Content}", responseContent);
+
+        response.EnsureSuccessStatusCode();
+
+        return responseContent;
+    }
+
 }

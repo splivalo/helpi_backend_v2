@@ -10,5 +10,6 @@ public interface IAuthRepository
     Task RegisterCustomer(Customer customer, ContactInfo customerContactInfo, Senior senior, ContactInfo? seniorContactInfo);
 
     Task RegisterAdmin(Admin admin, ContactInfo contactInfo);
+    Task<User?> FindByEmailAsync(string email);
 
 }

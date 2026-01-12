@@ -1,11 +1,15 @@
 
 using System.Text.Json;
+using System.Threading.Tasks;
+using Helpi.Application.Common.Interfaces;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -20,6 +24,7 @@ public class MatchingService : IMatchingService
     private readonly ISeniorRepository _seniorRepository;
     private readonly StudentAvailabilitySlotService _studentAvailabilityService;
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly IOrderRepository _orderRepository;
     private readonly ILogger<MatchingService> _logger;
     private readonly IMatchingBackgroundJobs _matchingBackgroundJobs;
@@ -32,23 +37,29 @@ public class MatchingService : IMatchingService
     private readonly int _retryIntervalMinutes = 10; /// todo: 10
     private readonly int _maxMatchingAttempts = 100000;
 
+    private readonly IServiceScopeFactory _scopeFactory;
+
     public MatchingService(
         StudentAvailabilitySlotService studentAvailabilityService,
         IScheduleAssignmentRepository scheduleAssignmentRepository,
         IOrderScheduleRepository orderScheduleRepository,
         INotificationService notificationService,
+INotificationFactory notificationFactory,
         IOrderRepository orderRepository,
         IStudentRepository studentRepository,
         ISeniorRepository seniorRepository,
         IJobRequestRepository jobRequestRepository,
         IMatchingBackgroundJobs matchingBackgroundJobs,
         IReassignmentRecordRepository reassignmentRecordRepository,
-        ILogger<MatchingService> logger)
+        ILogger<MatchingService> logger,
+        IServiceScopeFactory scopeFactory
+        )
     {
         _studentAvailabilityService = studentAvailabilityService;
         _scheduleAssignmentRepository = scheduleAssignmentRepository;
         _orderScheduleRepository = orderScheduleRepository;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _orderRepository = orderRepository;
         _studentRepository = studentRepository;
         _seniorRepository = seniorRepository;
@@ -56,12 +67,19 @@ public class MatchingService : IMatchingService
         _matchingBackgroundJobs = matchingBackgroundJobs;
         _reassignmentRecordRepository = reassignmentRecordRepository;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
-    public void StartMatching(int orderId)
+
+
+    public async Task StartMatching(int orderId)
     {
-        ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
+
+        await ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddSeconds(5));
+
     }
+
+
 
     public async Task InitiateMatchingProcessAsync(int orderId)
     {
@@ -84,7 +102,7 @@ public class MatchingService : IMatchingService
                 await ProcessAllSchedulesAsync(order);
 
 
-                ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(_retryIntervalMinutes));
+                await ScheduleNextMatchingAttempt(orderId, DateTime.UtcNow.AddMinutes(_retryIntervalMinutes));
             }
         }
         catch (Exception ex)
@@ -92,6 +110,49 @@ public class MatchingService : IMatchingService
             _logger.LogError(ex, "❌ Failed to initiate matching process for order {OrderId}", orderId);
             throw new MatchingException($"Failed to initiate matching process for order {orderId}", ex);
         }
+    }
+
+
+    private async Task ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
+    {
+
+        var order = await _orderRepository.GetByIdAsync(orderId);
+        if (order == null) return;
+
+        var jobId = _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(
+            orderId,
+            order.HangFireMatchingJobId,
+            executionTime);
+
+        if (jobId != null)
+        {
+            order.HangFireMatchingJobId = jobId;
+            await _orderRepository.UpdateAsync(order);
+
+            _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
+                orderId, executionTime);
+        }
+        // using var scope = _scopeFactory.CreateScope();
+        // var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+        // var matchingJobs = scope.ServiceProvider.GetRequiredService<IMatchingBackgroundJobs>();
+
+        // var order = await orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions { });
+        // if (order == null) return;
+
+
+        // var jobId = matchingJobs.ScheduleFindAndNotifyStudents(
+        //                         orderId,
+        //                         order.HangFireMatchingJobId,
+        //                             executionTime);
+
+        // if (jobId != null)
+        // {
+        //     order.HangFireMatchingJobId = jobId;
+        //     await orderRepository.UpdateAsync(order);
+
+        //     _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
+        //     orderId, executionTime);
+        // }
     }
 
     private async Task<ICollection<OrderSchedule>> UnassignedSchedulesAsync(ICollection<OrderSchedule> schedules)
@@ -169,6 +230,7 @@ public class MatchingService : IMatchingService
             {
                 _logger.LogWarning("⚠️ This is reassignment matching for  record {RecordId}", reassignmentRecord.Id);
                 currentAttempt = reassignmentRecord.AttemptCount;
+                if (reassignmentRecord.AllowAutoScheduling == false) return;
             }
             else
             {
@@ -223,24 +285,24 @@ public class MatchingService : IMatchingService
 
             if (!qualifiedStudents.Any())
             {
-
-                await HandleNoEligableStudents(order, schedule, reassignment);
-                return;
+                if (notifiedStudentIds.Any())
+                {
+                    _logger.LogInformation("📝  All Eligable  Students Notified  for schedule {ScheduleId}", schedule.Id);
+                    await HandleAllEligableStudentsNotified(order, schedule, reassignment);
+                    return;
+                }
+                else
+                {
+                    await HandleNoEligableStudents(order, schedule, reassignment);
+                    return;
+                }
             }
 
 
 
             // Filter out already notified students
-            var unnotifiedStudents = qualifiedStudents
-                .Where(s => !notifiedStudentIds.Contains(s.UserId))
-                .ToList();
+            var unnotifiedStudents = qualifiedStudents;
 
-            if (!unnotifiedStudents.Any())
-            {
-                _logger.LogInformation("📝 Out of qualified students  for schedule {ScheduleId}", schedule.Id);
-                await HandleEligableAllStudentsNotified(order, schedule, notifiedStudentIds, reassignment);
-                return;
-            }
 
             // Take the top N students based on our prioritization
             var studentsToNotify = unnotifiedStudents.Take(_maxConcurrentNotifications).ToList();
@@ -273,10 +335,10 @@ public class MatchingService : IMatchingService
             notifiedStudentIds = await _jobRequestRepository.NotifiedStudentIdsForReassignment(reassignment.Id);
 
             // Also exclude the original student if this is a reassignment
-            if (reassignment.OriginalStudentId.HasValue)
-            {
-                notifiedStudentIds.Add(reassignment.OriginalStudentId.Value);
-            }
+            // if (reassignment.OriginalStudentId.HasValue)
+            // {
+            // notifiedStudentIds.Add(reassignment.OriginalStudentId.Value);
+            // }
         }
         else
         {
@@ -298,66 +360,15 @@ public class MatchingService : IMatchingService
         // 2. Find students qualified for ALL services who haven't been notified yet
         var availableStudents = await _studentRepository.FindEligibleStudentsForSchedule(
             schedule.Id,
-            notifiedStudentIds
+            notifiedStudentIds,
+            preferedStudentId: reassignment?.PreferredStudentId
         );
 
 
 
         // 3. Prioritize students
-        return await PrioritizeStudents(availableStudents, order, schedule);
+        return availableStudents;
     }
-
-    private async Task<List<Student>> PrioritizeStudents(List<Student> students, Order order, OrderSchedule schedule)
-    {
-
-        var senior = await _seniorRepository.GetByIdAsync(order.SeniorId);
-
-        // 1. Find students who've worked with this senior before
-        // var previouslyWorkedWith = await _studentRepository.StudentsWhoWorkedWithSenior(order.SeniorId);
-        // var prioritized = students
-        //     .OrderByDescending(s => previouslyWorkedWith.Contains(s.Id)) 
-        //     .ThenByDescending(s => s.AverageRating)                     
-        //     .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue) 
-        //     .ToList();
-
-        var prioritized = students
-       .OrderByDescending(s => s.AverageRating)
-       .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue)
-       .ToList();
-
-        return prioritized;
-
-    }
-
-
-
-    private double CalculateDistance(Student student, Senior senior)
-    {
-
-
-        if (student?.Contact == null || senior?.Contact == null)
-            return 0;
-
-        var lat1 = (double)student.Contact.Latitude;
-        var lon1 = (double)student.Contact.Longitude;
-        var lat2 = (double)senior.Contact.Latitude;
-        var lon2 = (double)senior.Contact.Longitude;
-
-
-        const double R = 6371; // Earth radius in kilometers
-        var dLat = DegreesToRadians(lat2 - lat1);
-        var dLon = DegreesToRadians(lon2 - lon1);
-
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
-    }
-
-    private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
-
 
     private async Task<bool> TrySendJobRequest(
         Student student,
@@ -390,25 +401,11 @@ public class MatchingService : IMatchingService
             await _jobRequestRepository.AddAsync(jobRequest);
 
             // Send notification
-
-            var jobRequestNotification = new HNotification
-            {
-                RecieverUserId = student.UserId,
-                Title = "Job request",
-                Body = $"Expires: {expiresAt:MMM dd, yyyy hh:mm tt}",
-                Type = NotificationType.JobRequest,
-                Payload = JsonSerializer.Serialize(new
-                {
-                    OrderSchedule = orderSchedule.Id,
-                    ExpiresAt = expiresAt,
-                    IsReassignment = reassignment != null,
-                    ReassignmentType = reassignment?.ReassignmentType.ToString(),
-                    ReassignmentRecordId = reassignment?.Id
-                })
-            };
+            var studentCulture = student.Contact.LanguageCode ?? "en";
+            var jobRequestNotification = _notificationFactory.JobRequestNotification(student.UserId, orderSchedule, reassignment, culture: studentCulture);
 
 
-            bool notificationSent = await _notificationService.SendPushNotificationAsync(
+            bool notificationSent = await _notificationService.SendNotificationAsync(
                 student.UserId,
                 jobRequestNotification);
 
@@ -429,12 +426,6 @@ public class MatchingService : IMatchingService
         }
     }
 
-    private void ScheduleNextMatchingAttempt(int orderId, DateTime executionTime)
-    {
-        _matchingBackgroundJobs.ScheduleFindAndNotifyStudents(orderId, executionTime);
-        _logger.LogInformation("⏰ Scheduled next matching attempt for order {OrderId} at {Time}",
-            orderId, executionTime);
-    }
 
     private async Task IncrementMatchingAttemptCount(OrderSchedule schedule, ReassignmentRecord? reassignmentRecord)
     {
@@ -463,7 +454,7 @@ public class MatchingService : IMatchingService
         {
             if (reassignmentRecord != null)
             {
-                reassignmentRecord.Status = recordReason ?? ReassignmentStatus.Failed;
+                reassignmentRecord.Status = recordReason!.Value;
                 reassignmentRecord.AllowAutoScheduling = recordAllowAutoScheduling;
                 await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
             }
@@ -499,20 +490,14 @@ public class MatchingService : IMatchingService
 
         var adminId = await GetAdminId();
 
-        var notification = new HNotification
-        {
-            RecieverUserId = adminId,
-            Title = "No Eligible Students Available",
-            Body = $"Schedule #{schedule.Id} could not be assigned due to a lack of eligible students.",
-            Type = NotificationType.NoEligibleStudents,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-            }),
-            SeniorId = order.SeniorId,
-        };
+        var notification = _notificationFactory.NoEligibleStudentsNotification(
+                                adminId,
+                                order,
+                                schedule,
+                                reassignment
+                                );
+
+
 
 
 
@@ -526,38 +511,28 @@ public class MatchingService : IMatchingService
                 AutoScheduleDisableReason.noEligibleStudents,
                 reassignment,
                 recordAllowAutoScheduling: false,
-                ReassignmentStatus.Failed
+                ReassignmentStatus.NoEligibleStudents
                );
 
 
     }
 
     /// None of the notified students accepted
-    private async Task HandleEligableAllStudentsNotified(
+    private async Task HandleAllEligableStudentsNotified(
         Order order,
         OrderSchedule schedule,
-        List<int> notifiedStudents,
         ReassignmentRecord? reassignment = null)
     {
 
 
         var adminId = await GetAdminId();
 
-        var notification = new HNotification
-        {
-            RecieverUserId = adminId,
-            Title = "Schedule Assignment Unaccepted",
-            Body = $"All {notifiedStudents.Count()} eligable students notified, none accepted yet",
-            Type = NotificationType.NoEligableStudentAcceptedJobYet,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-                NotifiedStudent = notifiedStudents,
-            }),
-            SeniorId = order.SeniorId,
-        };
+        var notification = _notificationFactory.AllEligibleStudentsNotified(
+                                    adminId,
+                                    order,
+                                    schedule,
+                                    reassignment
+                                    );
 
         await _notificationService.StoreAndNotifyAsync(notification);
 

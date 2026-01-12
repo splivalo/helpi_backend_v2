@@ -17,7 +17,7 @@ public static class PricingConfigurationSeeder
             db.PricingConfigurations.Add(new PricingConfiguration
             {
                 Id = 1,
-                JobHourlyRate = 20,
+                JobHourlyRate = 14,
                 CompanyPercentage = 40,
                 ServiceProviderPercentage = 60
             });

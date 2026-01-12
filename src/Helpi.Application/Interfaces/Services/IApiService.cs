@@ -14,4 +14,6 @@ public interface IApiService
     Task<string> MinimaxPostRawAsync(string url, string accessToken, string json);
     Task<JObject> PutAsync(string url, string accessToken, string json);
     Task DeleteAsync(string url, string accessToken);
+
+    Task<string> PostMultipartAsync(string url, string? accessToken = null, string? apiKey = null, MultipartFormDataContent? form = null);
 }

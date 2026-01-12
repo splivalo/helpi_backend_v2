@@ -1,3 +1,4 @@
+using Helpi.Application.Common.Extensions;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Enums;
 
@@ -30,16 +31,9 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
     {
 
         /// .net uses 0 - 6 ... WE store 1 -7
-        var dayOfWeek = FromIsoDayNumber((int)isoDayOfWeek);
+        var dayOfWeek = DayOfWeekExtensions.FromIsoWeekday((int)isoDayOfWeek);
 
         var dates = new List<DateOnly>();
-
-        // If the recurrence pattern is null, return a single occurrence at startDate
-        if (pattern == null)
-        {
-            dates.Add(startDate);
-            return dates;
-        }
 
         // Calculate the furthest date allowed (effectiveEndDate), which is the smaller of endDate or the horizon
         var maxHorizonDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(horizonMonths));
@@ -50,6 +44,15 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
         // Align the current date to the first occurrence of the scheduled dayOfWeek after or on startDate
         var daysToAdd = ((int)dayOfWeek - (int)startDate.DayOfWeek + 7) % 7;
         var current = startDate.AddDays(daysToAdd);
+
+        // If no recurrence → return ONLY the first valid aligned date (if in range)
+        if (pattern == null)
+        {
+            if (current <= effectiveEndDate)
+                dates.Add(current);
+
+            return dates;
+        }
 
         // Generate dates according to the recurrence pattern
         while (current <= effectiveEndDate)
@@ -74,15 +77,15 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
     }
 
 
-    private DayOfWeek FromIsoDayNumber(int isoDay)
-    {
-        if (isoDay < 1 || isoDay > 7)
-            throw new ArgumentOutOfRangeException(nameof(isoDay), "Day of week must be between 1 (Monday) and 7 (Sunday).");
+    // private DayOfWeek FromIsoDayNumber(int isoDay)
+    // {
+    //     if (isoDay < 1 || isoDay > 7)
+    //         throw new ArgumentOutOfRangeException(nameof(isoDay), "Day of week must be between 1 (Monday) and 7 (Sunday).");
 
-        // Adjust ISO 8601 day to .NET DayOfWeek:
-        // ISO: 1 (Mon) → .NET 1, ..., 6 (Sat) → 6, 7 (Sun) → 0
-        return (DayOfWeek)(isoDay % 7);
-    }
+    //     // Adjust ISO 8601 day to .NET DayOfWeek:
+    //     // ISO: 1 (Mon) → .NET 1, ..., 6 (Sat) → 6, 7 (Sun) → 0
+    //     return (DayOfWeek)(isoDay % 7);
+    // }
 
 
 }

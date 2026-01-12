@@ -18,6 +18,8 @@ public static class DependencyInjection
         ConfigureStripe(configuration);
         // Register all services
 
+        services.AddSingleton<IContractEvaluationService, ContractEvaluationService>();
+
         services.AddScoped<IHNotificationService, HNotificationService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<StudentStatusService>();
@@ -51,7 +53,7 @@ public static class DependencyInjection
         // services.AddScoped<ScheduleAssignmentReplacementService>();
         services.AddScoped<ReviewService>();
         services.AddScoped<InvoiceService>();
-        services.AddScoped<InvoiceEmailService>();
+        services.AddScoped<HEmailService>();
         services.AddScoped<CityService>();
         services.AddScoped<ServiceRegionService>();
         services.AddScoped<PricingConfigurationService>();

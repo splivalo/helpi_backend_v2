@@ -14,22 +14,24 @@ public class StudentContractRepository : IStudentContractRepository
 
     public StudentContractRepository(AppDbContext context) => _context = context;
 
-    public async Task<StudentContract> GetByIdAsync(int id)
+    public async Task<StudentContract?> GetByIdAsync(int id)
         => await _context.StudentContracts
+            .Where(c => c.DeletedOn == null)
             .Include(sc => sc.Student)
-            .FirstOrDefaultAsync(sc => sc.Id == id);
+            .SingleOrDefaultAsync(sc => sc.Id == id);
 
     public async Task<IEnumerable<StudentContract>> GetByStudentIdAsync(int studentId)
         => await _context.StudentContracts
           .Where(c => c.DeletedOn == null)
             .Where(sc => sc.StudentId == studentId)
+             .OrderByDescending(sc => sc.ExpirationDate)
             .ToListAsync();
 
     public async Task<IEnumerable<StudentContract>> GetActiveContracts(DateOnly date)
         => await _context.StudentContracts
           .Where(c => c.DeletedOn == null)
             .Where(sc => sc.EffectiveDate <= date &&
-                (sc.ExpirationDate == null || sc.ExpirationDate >= date))
+                (sc.ExpirationDate >= date))
             .ToListAsync();
 
     public async Task<StudentContract> AddAsync(StudentContract contract)

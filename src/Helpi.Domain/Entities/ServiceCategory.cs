@@ -17,7 +17,7 @@ namespace Helpi.Domain.Entities
         [Column(TypeName = "json")]
         public Dictionary<string, Translation> Translations { get; set; } = new();
 
-        [MaxLength(50)]
+        [MaxLength(400)]
         public string? Icon { get; set; } = "assets/images/pets.svg";
 
         public ICollection<Service> Services { get; set; } = new List<Service>();

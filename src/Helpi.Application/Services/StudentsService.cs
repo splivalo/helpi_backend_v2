@@ -65,17 +65,20 @@ public class StudentsService
 
         public async Task<List<StudentDto>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds)
         {
-                var students = await _repository.FindEligibleStudentsForSchedule(orderScheduleId, notifiedStudentIds);
+                var students = await _repository.FindEligibleStudentsForSchedule(
+                        orderScheduleId,
+                         notifiedStudentIds, preferedStudentId: null);
                 return _mapper.Map<List<StudentDto>>(students);
         }
 
         public async Task<List<StudentDto>> FindEligibleStudentsForInstance2(DateOnly date,
                                 TimeOnly startTime,
                                 TimeOnly endTime,
-                                int orderId)
+                                int orderId,
+                              List<int> excludeJobInstanceIds)
         {
                 var students = await _repository.FindEligibleStudentsForInstance2(
-                        date, startTime, endTime, orderId);
+                        date, startTime, endTime, orderId, preferedStudentId: null, excludeJobInstanceIds: excludeJobInstanceIds);
 
                 return _mapper.Map<List<StudentDto>>(students);
         }

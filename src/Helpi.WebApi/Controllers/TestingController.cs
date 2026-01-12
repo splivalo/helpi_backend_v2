@@ -1,4 +1,3 @@
-
 using System.Text.Json;
 using Helpi.Application.DTOs.JobRequest;
 using Helpi.Application.DTOs.Minimax;
@@ -12,55 +11,92 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
 
-
 [ApiController]
 [Route("api/testing")]
 public class TestingController : ControllerBase
 {
+    private readonly IWebHostEnvironment _env;
     private readonly INotificationService _notificationService;
-
-
     private readonly OrdersService _ordersService;
     private readonly JobRequestService _jobRequestService;
+    private readonly IJobInstanceService _jobInstanceService;
     private readonly IMinimaxService _minimaxService;
+    private readonly IMailgunService _mailgunService;
     private readonly ILogger<TestingController> _logger;
-
     private readonly IEventMediator _mediator;
 
-    public TestingController(INotificationService notificationService,
-     JobRequestService jobRequestService,
-      OrdersService ordersService,
-       IMinimaxService minimaxService,
-      ILogger<TestingController> logger,
-      IEventMediator mediator
-      )
+    public TestingController(
+        IWebHostEnvironment env,
+        INotificationService notificationService,
+        JobRequestService jobRequestService,
+        IJobInstanceService jobInstanceService,
+        OrdersService ordersService,
+        IMinimaxService minimaxService,
+        ILogger<TestingController> logger,
+        IEventMediator mediator,
+        IMailgunService mailgunService
+    )
     {
+        _env = env;
         _notificationService = notificationService;
         _jobRequestService = jobRequestService;
+        _jobInstanceService = jobInstanceService;
         _ordersService = ordersService;
         _minimaxService = minimaxService;
         _logger = logger;
         _mediator = mediator;
+        _mailgunService = mailgunService;
+    }
+
+    private bool IsDev() => _env.IsDevelopment();
+
+    private IActionResult DevOnly()
+    {
+        if (!IsDev()) return Forbid();
+        return null;
+    }
+
+    [HttpGet("jobInstance/{jobInstanceId}/request-review")]
+    public async Task<IActionResult> ReinitiateAllFailedMatches(int jobInstanceId)
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        try
+        {
+            await _jobInstanceService.RequestJobReviewAsync(jobInstanceId);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to request review");
+            return StatusCode(500);
+        }
     }
 
     [HttpGet("ReinitiateAllFailedMatches")]
-    public async Task ReinitiateAllFailedMatches()
+    public async Task<IActionResult> ReinitiateAllFailedMatches()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
         try
         {
             await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
+            return Ok();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Failed to reinitiate failed matches");
+            return StatusCode(500);
         }
-
     }
 
     [HttpGet("send-job-request-notification")]
-    public async Task SendNotficication()
+    public async Task<IActionResult> SendNotficication()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
         var studentId = 2;
         var expiresAt = DateTime.UtcNow.AddMinutes(10);
@@ -78,134 +114,179 @@ public class TestingController : ControllerBase
             })
         };
 
-
-        bool notificationSent = await _notificationService.SendPushNotificationAsync(
-            studentId,
-            jobRequestNotification);
+        bool notificationSent = await _notificationService.SendNotificationAsync(studentId, jobRequestNotification);
+        return Ok(new { Success = notificationSent });
     }
 
     [HttpGet("job-requests/student/{studentId}")]
-    public async Task<ActionResult<List<JobRequestDto>>> GetJobRequests(int studentId)
+    public async Task<IActionResult> GetJobRequests(int studentId)
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
         var requests = await _jobRequestService.GetStudentRequests(studentId);
+        return Ok(requests);
+    }
+
+    [HttpGet("pending/student/{studentId}")]
+    public async Task<IActionResult> GetStudentPendingRequests(int studentId)
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var requests = await _jobRequestService.GetStudentPendingRequests(studentId);
         return Ok(requests);
     }
 
     [HttpGet("order/{id}")]
     public async Task<IActionResult> GetOrder(int id)
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
         var order = await _ordersService.GetOrderByIdAsync(id);
         if (order == null) return NotFound();
         return Ok(order);
     }
 
-    [HttpGet("pending/student/{studentId}")]
-    public async Task<ActionResult<List<JobRequestDto>>> GetStudentPendingRequests(int studentId)
-    {
-        var requests = await _jobRequestService.GetStudentPendingRequests(studentId);
-        return Ok(requests);
-    }
-
-
     [HttpGet("minimax/getAccessToken")]
-    public async Task<ActionResult<string>> GetAccessToken()
+    public async Task<IActionResult> GetAccessToken()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
         var token = await _minimaxService.getAccessToken();
         return Ok(token);
     }
-    [HttpGet("minimax/getCurrencies")]
-    public async Task<ActionResult<string>> GetCurrencies()
-    {
-        var c = await _minimaxService.GetCurrencies();
-        return Ok(c);
-    }
-    [HttpGet("minimax/getCurencyByCode")]
-    public async Task<ActionResult<MinimaxCurrency>> GetCurrencyByCode()
-    {
 
-        var c = await _minimaxService.GetCurrencyByCode("eur");
-        return Ok(c);
-    }
-    [HttpGet("minimax/getCountries")]
-    public async Task<ActionResult<string>> GetCountries()
+    [HttpGet("minimax/getCurrentUserOrganisations")]
+    public async Task<IActionResult> GetCurrentUserOrganisations()
     {
-        var c = await _minimaxService.GetCountries();
-        return Ok(c);
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var orgs = await _minimaxService.GetCurrentUserOrganisations();
+        return Ok(orgs);
+    }
+
+    [HttpGet("minimax/getCurrencies")]
+    public async Task<IActionResult> GetCurrencies()
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var currencies = await _minimaxService.GetCurrencies();
+        return Ok(currencies);
+    }
+
+    [HttpGet("minimax/getCurencyByCode")]
+    public async Task<IActionResult> GetCurrencyByCode()
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var currency = await _minimaxService.GetCurrencyByCode("eur");
+        return Ok(currency);
+    }
+
+    [HttpGet("minimax/getCountries")]
+    public async Task<IActionResult> GetCountries()
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var countries = await _minimaxService.GetCountries();
+        return Ok(countries);
     }
 
     [HttpGet("minimax/getCountryByCode")]
-    public async Task<ActionResult<MinimaxCountry>> GetCountryByCode()
+    public async Task<IActionResult> GetCountryByCode()
     {
-        ///3520788
-        var c = await _minimaxService.GetCountryByCode("hu");
-        return Ok(c);
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var country = await _minimaxService.GetCountryByCode("hu");
+        return Ok(country);
     }
 
     [HttpGet("minimax/getItems")]
-    public async Task<ActionResult<string>> GetItems()
+    public async Task<IActionResult> GetItems()
     {
-        var c = await _minimaxService.GetItems();
-        return Ok(c);
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var items = await _minimaxService.GetItems();
+        return Ok(items);
     }
+
     [HttpGet("minimax/getCustomerByCode")]
-    public async Task<ActionResult<MinimaxCustomer>> GetCustomerByCode()
+    public async Task<IActionResult> GetCustomerByCode()
     {
-        ///3520788
-        var c = await _minimaxService.GetCustomerByCode("cust001");
-        return Ok(c);
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var customer = await _minimaxService.GetCustomerByCode("cust001");
+        return Ok(customer);
     }
+
     [HttpGet("minimax/paymentMethods")]
-    public async Task<ActionResult<MinimaxCustomer>> GetPaymentMethods()
+    public async Task<IActionResult> GetPaymentMethods()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-        var c = await _minimaxService.GetPaymentMethods();
-        return Ok(c);
+        var methods = await _minimaxService.GetPaymentMethods();
+        return Ok(methods);
     }
+
     [HttpGet("minimax/report-templates")]
-    public async Task<ActionResult<MinimaxReportTemplate>> GetReportTemplates()
+    public async Task<IActionResult> GetReportTemplates()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-        var c = await _minimaxService.GetReportTemplates();
-        return Ok(c);
+        var templates = await _minimaxService.GetReportTemplates();
+        return Ok(templates);
     }
+
     [HttpGet("minimax/vatrates")]
-    public async Task<ActionResult<MinimaxVatRate>> GetVatRates()
+    public async Task<IActionResult> GetVatRates()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-        var c = await _minimaxService.GetVatRates();
-        return Ok(c);
+        var rates = await _minimaxService.GetVatRates();
+        return Ok(rates);
     }
+
     [HttpGet("minimax/document-numbering")]
-    public async Task<ActionResult<List<MinimaxDocumentNumbering>>> GetDocumentNumbering()
+    public async Task<IActionResult> GetDocumentNumbering()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-        var c = await _minimaxService.GetDocumentNumbering();
-        return Ok(c);
+        var numbering = await _minimaxService.GetDocumentNumbering();
+        return Ok(numbering);
     }
-    [HttpGet("minimax/employees")]
-    public async Task<ActionResult<List<MinimaxEmployee>>> GetEmployees()
-    {
 
-        var c = await _minimaxService.GetEmployees();
-        return Ok(c);
+    [HttpGet("minimax/employees")]
+    public async Task<IActionResult> GetEmployees()
+    {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
+
+        var employees = await _minimaxService.GetEmployees();
+        return Ok(employees);
     }
 
     [HttpPost("minimax/createCustomer")]
-    public async Task<ActionResult<MinimaxCustomer>> CreateCustomer()
+    public async Task<IActionResult> CreateCustomer()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-        // {
-        //   "countryId": 95,
-        //   "code": "HR",
-        //   "name": "HRVATSKA"
-        // }
-        MinimaxEntityReference country = new MinimaxEntityReference
-        {
-            Id = 95,
-            Name = "HRVATSKA"
-        };
-
-        MinimaxCustomer minimaxCustomer = new MinimaxCustomer
+        MinimaxEntityReference country = new MinimaxEntityReference { Id = 95, Name = "HRVATSKA" };
+        MinimaxCustomer customer = new MinimaxCustomer
         {
             CustomerId = 0,
             Code = "CUST002",
@@ -216,212 +297,53 @@ public class TestingController : ControllerBase
             Country = country
         };
 
-        var customer = await _minimaxService.CreateCustomer(minimaxCustomer);
-        return Ok(customer);
+        var created = await _minimaxService.CreateCustomer(customer);
+        return Ok(created);
     }
 
     [HttpPost("minimax/addCustomerContact")]
-    public async Task<ActionResult<MinimaxCustomer>> AddCustomerContact()
+    public async Task<IActionResult> AddCustomerContact()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
-
-        MinimaxContact minimaxCustomer = new MinimaxContact
+        MinimaxContact contact = new MinimaxContact
         {
             ContactId = 0,
-            Customer = new MinimaxEntityReference
-            {
-                Id = 3520788,
-                Name = "Sidney Test",
-            },
+            Customer = new MinimaxEntityReference { Id = 3520788, Name = "Sidney Test" },
             FullName = "Sidney Test",
             Email = "sidneymachara@gmail.com"
         };
 
-        var customer = await _minimaxService.AddCustomerContact(minimaxCustomer);
-        return Ok(customer);
+        var added = await _minimaxService.AddCustomerContact(contact);
+        return Ok(added);
     }
 
-
-    [HttpPost("minimax/createIssuedInvoice")]
-    public async Task<ActionResult<MinimaxIssuedInvoice>> CreateIssuedInvoice()
+    [HttpPut("mailgun/sendInvoice")]
+    public async Task<IActionResult> SendInvoice()
     {
+        var forbidden = DevOnly();
+        if (forbidden != null) return forbidden;
 
+        var invoices = await _minimaxService.GetAllIssuedInvoicesAsync();
+        var invoice = invoices.First();
 
-        MinimaxEntityReference country = new MinimaxEntityReference
+        var attachment = await _minimaxService.GenerateInvoicePdf((int)invoice!.IssuedInvoiceId!, invoice.RowVersion);
+
+        var attachmentData = new Dictionary<string, string>
         {
-            Id = 97,
-            Name = "HRVATSKA"
-        };
-        MinimaxEntityReference currency = new MinimaxEntityReference
-        {
-            Id = 7,
-            Name = "Euro"
-        };
-
-
-        var minimaxItem = new MinimaxItem
-        {
-            ItemId = 2878516,
-            Title = "Helpi usluga",
-            Code = "1",
-            UnitOfMeasurement = "Sat",
-            MassPerUnit = 0,
-            ItemType = "AS",
-            VatRate = new MinimaxEntityReference
-            {
-                Id = 6,
-                Name = "N",
-                ResourceUrl = "/api/orgs/39503/vatrates/1"
-            },
-            Price = 0,
-            Currency = null,
-            RevenueAccountDomestic = null,
-            RevenueAccountOutsideEU = null,
-            RevenueAccountEU = null,
-            StocksAccount = null,
-            ProductGroup = null
-        };
-
-        var paymentMethod = new MinimaxPaymentMethod
-        {
-            PaymentMethodId = 165189,
-            Name = "Transactional Account",
-            Type = "T",
-            Usage = "D",
-            Default = "Y"
-        };
-
-        var employee = new MinimaxEmployee
-        {
-            EmployeeId = 205878,
-            FirstName = "Marko",
-            LastName = "Strugar",
-            DateOfBirth = null,
-            TaxNumber = null,
-            EmploymentType = "ZD",
-            EmploymentStartDate = null,
-            EmploymentEndDate = null,
-            Country = new MinimaxEntityReference
-            {
-                Id = 95,
-                Name = "HR",
-                ResourceUrl = "/api/orgs/39503/countries/95"
-            },
-            CountryOfResidence = new MinimaxEntityReference
-            {
-                Id = 95,
-                Name = "HR",
-                ResourceUrl = "/api/orgs/39503/countries/95"
-            }
-        };
-
-
-        double hourlyPrice = 500;
-        double jobHours = 3;
-
-        var documentNumbering = new MinimaxDocumentNumbering
-        {
-            DocumentNumberingId = 39152,
-            Document = "IR",
-            Code = "/AK/1",
-            Name = "Fiskalni lažni",
-            Default = "D",
-            Reverse = null,
-            ReferenceNumber = "00",
-            PackagingDepositReturnIncludedInPrice = null,
-            Usage = "D",
-            RecordDtModified = DateTime.Parse("2025-05-29T11:20:58.82"),
-            RowVersion = "AAAAAWlW5aE="
-        };
-
-
-        var vatrate = new MinimaxVatRate
-        {
-            VatRateId = 6,
-            Code = "N",
-            Percent = 0,
-            VatRatePercentage = new MinimaxEntityReference
-            {
-                Id = 12
-            }
-        };
-        var minimaxCustomer = new MinimaxIssuedInvoice
-        {
-            InvoiceType = "R",
-            PaymentType = "T",
-            // InvoiceNumber = "236541",
-            DocumentNumbering = new MinimaxEntityReference
-            {
-                Id = documentNumbering.DocumentNumberingId
-            },
-            Customer = new MinimaxEntityReference
-            {
-                Id = 3520788,
-            },
-            DateDue = DateTime.UtcNow,
-            DateIssued = DateTime.UtcNow,
-            DateTransaction = DateTime.UtcNow,
-            AddresseeName = " sidney test",
-            AddresseeAddress = "addy",
-            AddresseeCity = "city",
-            AddresseeCountryName = country.Name,
-            AddresseePostalCode = "1000",
-            AddresseeCountry = country,
-
-            Currency = currency,
-            Employee = new MinimaxEntityReference
-            {
-                Id = employee.EmployeeId
-            },
-            IssuedInvoiceRows = [
-                new MinimaxIssuedInvoiceRow
-                {
-                    SerialNumber ="J1", // concider orderId-jobInstanceId
-                    RowNumber = 1,
-                    Item = new MinimaxEntityReference
-                    {
-                      Id = minimaxItem.ItemId,
-                      Name = minimaxItem.Title
-                    },
-                    ItemCode = minimaxItem.Code,
-                    Quantity = jobHours,
-                    UnitOfMeasurement = minimaxItem.UnitOfMeasurement,
-                    Price = hourlyPrice,
-                    VatRate = new MinimaxEntityReference
-                    {
-                        Id = vatrate.VatRateId,
-                    },
-                },
-            ],
-            IssuedInvoicePaymentMethods = [
-                new MinimaxIssuedInvoicePaymentMethod
-                {
-                    PaymentMethod = new MinimaxEntityReference {
-                        Id =  paymentMethod.PaymentMethodId
-                    },
-                    Amount =  hourlyPrice,
-                    AlreadyPaid = "D"
-                }
-            ]
+            { attachment!.AttachmentFileName, attachment.AttachmentData }
         };
 
 
 
-        var issuedInvoiceId = await _minimaxService.CreateIssuedInvoice(minimaxCustomer);
+        await _mailgunService.SendEmailAsync(
+            to: "sidneymachara@gmail.com",
+            subject: "Your Invoice",
+            htmlBody: "<h1>Thank you for your order!</h1><p>Invoice attached.</p>",
+            attachments: attachmentData
+        );
 
-        var invoice = await _minimaxService.GetIssuedInvoiceByIdAsync((int)issuedInvoiceId);
-
-
-        var issueSuccess = await _minimaxService.CustomActionIssuedInvoice((int)issuedInvoiceId, invoice!.RowVersion!, "issue");
-
-        var emailSuccess = await _minimaxService.CustomActionIssuedInvoice((int)issuedInvoiceId, invoice!.RowVersion!, "sendEInvoice");
-
-
-        return Ok(invoice);
+        return Ok();
     }
-
-
 }
-
-
-

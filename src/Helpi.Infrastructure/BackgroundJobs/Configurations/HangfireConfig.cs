@@ -1,6 +1,7 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using Helpi.Infrastructure.BackgroundJobs.Filters;
+using Helpi.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,18 +37,25 @@ public static class HangfireConfig
 
     public static WebApplication UseHangfireDashboard(this WebApplication app)
     {
+
+        var creds = CredentialLoader.Load(app.Configuration, "Hangfire");
+        var user = creds.GetString("Dashboard:Username")!;
+        var pass = creds.GetString("Dashboard:Password")!;
+
         // Configure the dashboard
         app.UseHangfireDashboard("/hangfire", new DashboardOptions
         {
+
+
             // Optional: Configure authorization
-            // Authorization = new[]
-            // {
-            //     new HangfireBasicAuthenticationFilter
-            //     {
-            //         User = app.Configuration["Hangfire:Dashboard:Username"] ?? "admin",
-            //         Pass = app.Configuration["Hangfire:Dashboard:Password"] ?? "Password123!"
-            //     }
-            // },
+            Authorization = new[]
+            {
+                new HangfireBasicAuthenticationFilter
+                {
+                    User = user,
+                    Pass = pass
+                }
+            },
             DashboardTitle = "Helpi Background Jobs"
         });
 

@@ -1,6 +1,7 @@
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
+using Helpi.Application.Utilities;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -152,6 +153,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     SeniorId = order.SeniorId,
                     CustomerId = order.Senior.CustomerId,
                     OrderId = order.Id,
+                    Notes = order.Notes,
                     OrderScheduleId = assignment.OrderScheduleId,
                     HourlyRate = pricingConfiguration.JobHourlyRate,
                     CompanyPercentage = pricingConfiguration.CompanyPercentage,
@@ -208,10 +210,19 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         foreach (var instance in jobInstancesForToday)
         {
-            /// TODO: UPDATE status if job date passed and its not marked accordinly
-            /// 
-            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
-            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+
+
+            if (instance.Status != JobInstanceStatus.Upcoming)
+            {
+                _logger.LogInformation("🚫[Skip] Job #{id} -> status {status} != Upcoming", instance.Id, instance.Status);
+                continue;
+            }
+
+
+
+            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
+            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
+
 
             _logger.LogDebug("⏳ Scheduling JobInstance #{Id}: ▶️ InProgress at {StartTime}, ✅ Completed at {EndTime}.",
                 instance.Id, startTime, endTime);
@@ -225,6 +236,15 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 s => s.UpdateToCompletedAsync(instance.Id),
                 endTime
             );
+
+
+            var remindAt = startTime.AddMinutes(-30);
+            instance.HangFireRemindStudentJobId = _hangfireService.Schedule<IJobInstanceService>(
+                s => s.RemindStudentAsync(instance.Id),
+                remindAt
+            );
+
+
 
             _logger.LogDebug("📌 JobInstance #{Id} scheduled — StartJobId: {StartJobId} 🟢, EndJobId: {EndJobId} 🔴.",
                 instance.Id,
@@ -254,11 +274,17 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
         foreach (var instance in jobInstancesForToday)
         {
-            var startTime = instance.ScheduledDate.ToDateTime(instance.StartTime);
-            var endTime = instance.ScheduledDate.ToDateTime(instance.EndTime);
+            if (instance.Status != JobInstanceStatus.Upcoming)
+            {
+                _logger.LogInformation("🚫[Skip] Job #{id} -> status {status} != Upcoming", instance.Id, instance.Status);
+                continue;
+            }
+
+            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
+            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
 
 
-            var chargePaymentAt = startTime.AddMinutes(-30);
+            var chargePaymentAt = startTime.AddMinutes(-35); // this has to happen before RemindStudent
             _logger.LogDebug("⏳ Scheduling Payment -> JobInstance #{Id}.",
                 instance.Id);
 

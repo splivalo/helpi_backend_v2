@@ -2,17 +2,21 @@
 using System.Net;
 using Helpi.Domain.Exceptions;
 
+
 namespace Helpi.WebApi.Middleware
 {
     public class ExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+        private readonly IWebHostEnvironment _env;
 
-        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger,
+          IWebHostEnvironment env)
         {
             _next = next;
             _logger = logger;
+            _env = env;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -28,7 +32,7 @@ namespace Helpi.WebApi.Middleware
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -56,7 +60,7 @@ namespace Helpi.WebApi.Middleware
             {
                 error = "An unexpected error occurred.",
                 details = exception.Message,
-                stackTrace = exception.StackTrace, /// TODO ⚠️  Remove in production for security,
+                stackTrace = _env.IsDevelopment() ? exception.StackTrace : null,
                 source = exception.Source
             };
 

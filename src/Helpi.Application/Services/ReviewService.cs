@@ -22,32 +22,83 @@ public class ReviewService
                 _mapper = mapper;
         }
 
-        public async Task<List<ReviewDto>> GetReviewsByStudentAsync(int studentId) =>
-            _mapper.Map<List<ReviewDto>>(await _repository.GetByStudentAsync(studentId));
+        public async Task<List<ReviewDto>> GetPendingSeniorReviews(int seniorId)
+        {
+                var pendingReviews = await _repository.GetPendingSeniorReviews(seniorId);
+                return _mapper.Map<List<ReviewDto>>(pendingReviews);
+        }
 
-        public async Task<ReviewDto> CreateReviewAsync(ReviewCreateDto dto)
+        public async Task<List<ReviewDto>> GetReviewsByStudentAsync(int studentId) =>
+                _mapper.Map<List<ReviewDto>>(await _repository.GetByStudentAsync(studentId));
+
+        public async Task<ReviewDto> MakeReviewAsync(ReviewUpdateDto dto)
         {
                 // 1. Add the review
-                var review = _mapper.Map<Review>(dto);
-                await _repository.AddAsync(review);
+                var review = await _repository.GetByIdAsync(dto.ReviewId);
+
+                review.Rating = dto.Rating;
+                review.Comment = dto.Comment;
+                review.IsPending = false;
+
+                await _repository.UpdateAsync(review);
 
                 // 2. Update student rating fields incrementally
-                var student = await _studentRepository.GetByIdAsync(dto.StudentId);
+                var student = await _studentRepository.GetByIdAsync(review.StudentId);
 
 
                 if (student == null)
                 {
-                        throw new Exception($"Student with ID {dto.StudentId} not found.");
+                        throw new Exception($"Student with ID {review.StudentId} not found.");
                 }
 
                 // Increment totals
                 student.TotalReviews += 1;
-                student.TotalRatingSum += dto.Rating;
+                student.TotalRatingSum += (decimal)dto.Rating;
                 student.AverageRating = Math.Round(student.TotalRatingSum / student.TotalReviews, 2);
 
                 await _studentRepository.UpdateAsync(student);
 
                 return _mapper.Map<ReviewDto>(review);
         }
+
+        public async Task DeclineToReview(int reviewId)
+        {
+                var review = await _repository.GetByIdAsync(reviewId);
+
+                if (review == null || review.IsPending == false) return;
+
+                // Stop if already reached max retry
+                if (review.RetryCount >= review.MaxRetry) return;
+
+                var now = DateTime.UtcNow;
+                var nextRetry = now.AddHours(1); // try again
+
+                // Clamp retry to a user-friendly window (e.g. 9 AM – 8 PM UTC)
+                var startHour = 9;
+                var endHour = 20;
+
+                if (nextRetry.Hour < startHour)
+                {
+                        nextRetry = new DateTime(
+                            nextRetry.Year, nextRetry.Month, nextRetry.Day,
+                            startHour, 0, 0, DateTimeKind.Utc
+                        );
+                }
+                else if (nextRetry.Hour > endHour)
+                {
+                        // push to next day at startHour
+                        var tomorrow = nextRetry.AddDays(1);
+                        nextRetry = new DateTime(
+                            tomorrow.Year, tomorrow.Month, tomorrow.Day,
+                            startHour, 0, 0, DateTimeKind.Utc
+                        );
+                }
+
+                review.RetryCount += 1;
+                review.NextRetryAt = nextRetry;
+
+                await _repository.UpdateAsync(review);
+        }
+
 
 }

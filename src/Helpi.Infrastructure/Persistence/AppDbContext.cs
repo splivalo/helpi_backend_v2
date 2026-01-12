@@ -38,8 +38,10 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
     public DbSet<ContactInfo> ContactInfos { get; set; }
     public DbSet<FcmToken> FcmTokens { get; set; }
+    public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
 
     // Academic Structure
+    public DbSet<Admin> Admins { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Faculty> Faculties { get; set; }
     public DbSet<StudentContract> StudentContracts { get; set; }
@@ -74,7 +76,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Feedback & Billing
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
-    public DbSet<InvoiceEmail> InvoiceEmails { get; set; }
+    public DbSet<HEmail> InvoiceEmails { get; set; }
 
     // Geographic Data
     public DbSet<City> Cities { get; set; }
@@ -189,6 +191,15 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             os.ServiceId
         });
 
+        modelBuilder.Entity<Order>(entity =>
+           {
+               entity.Property(o => o.Notes)
+                .HasMaxLength(1000)
+                .IsUnicode(true);
+           });
+
+
+
 
         // fcm token
         modelBuilder.Entity<FcmToken>()
@@ -247,6 +258,15 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.Property(p => p.HourlyRate).HasColumnType("decimal(18,2)");
             entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
             entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
+
+            entity.Property(j => j.Notes)
+            .HasMaxLength(1000)
+            .IsUnicode(true);
+
+            entity.HasOne(j => j.PaymentTransaction)
+                    .WithOne(p => p.JobInstance)
+                    .HasForeignKey<PaymentTransaction>(p => p.JobInstanceId)
+                    .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PricingConfiguration>(entity =>

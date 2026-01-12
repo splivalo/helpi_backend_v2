@@ -23,6 +23,6 @@ namespace Helpi.Domain.Entities
 
         public JobInstance JobInstance { get; set; } = null!;
         public PaymentTransaction Transaction { get; set; } = null!;
-        public InvoiceEmail? Email { get; set; }
+        public HEmail? Email { get; set; }
     }
 }

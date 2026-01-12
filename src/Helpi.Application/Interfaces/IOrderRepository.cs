@@ -8,7 +8,8 @@ namespace Helpi.Application.Interfaces;
 public interface IOrderRepository
 {
     Task<Order?> GetByIdAsync(int id);
-    Task<Order?> LoadOrderWithIncludes(int orderId, OrderIncludeOptions options);
+    Task<Order?> LoadOrderWithIncludes(int orderId,
+     OrderIncludeOptions options, bool asNoTracking = true);
 
     Task<IEnumerable<Order>> GetBySeniorAsync(int seniorId);
     Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status);
@@ -18,5 +19,7 @@ public interface IOrderRepository
 
     Task AddServicesToOrderAsync(int orderId, IEnumerable<OrderService> services);
     Task<int> CountAsync(Expression<Func<Order, bool>> predicate);
+
+    void DetachAllEntities();
 
 }

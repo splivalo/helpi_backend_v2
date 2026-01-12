@@ -29,10 +29,7 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>
                 {
                     b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
@@ -42,7 +39,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContactId")
                         .IsUnique();
 
-                    b.ToTable("Admin");
+                    b.ToTable("Admins");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
@@ -126,6 +123,9 @@ namespace Helpi.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("LanguageCode")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("Latitude")
                         .HasColumnType("numeric");
 
@@ -198,66 +198,13 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("FacultyName")
+                    b.Property<Dictionary<string, Translation>>("Translations")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("json");
 
                     b.HasKey("Id");
 
                     b.ToTable("Faculties");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            FacultyName = "Business and Economics"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            FacultyName = "Education"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            FacultyName = "Engineering"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            FacultyName = "Health Sciences"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            FacultyName = "Law"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            FacultyName = "Medicine"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            FacultyName = "Science"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            FacultyName = "Social Sciences"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            FacultyName = "Computer Science"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            FacultyName = "Arts and Humanities"
-                        });
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
@@ -268,9 +215,49 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<string>("Token")
                         .HasColumnType("text");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId", "Token");
 
                     b.ToTable("FcmTokens");
+                });
+
+            modelBuilder.Entity("Helpi.Domain.Entities.HEmail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ExternalInvoiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NextAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OpenedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InvoiceEmails");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.HNotification", b =>
@@ -291,6 +278,15 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("JobInstanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderScheduleId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Payload")
                         .HasColumnType("text");
 
@@ -304,6 +300,10 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TranslationKey")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -333,6 +333,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("date");
 
+                    b.Property<int?>("EmailId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("InvoiceNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -359,49 +362,13 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EmailId");
+
                     b.HasIndex("JobInstanceId");
 
                     b.HasIndex("TransactionId");
 
                     b.ToTable("Invoices");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.InvoiceEmail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
-
-                    b.Property<int>("InvoiceId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastAttempt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MailerliteMessageId")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<int>("OpenedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InvoiceId")
-                        .IsUnique();
-
-                    b.ToTable("InvoiceEmails");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
@@ -436,6 +403,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<string>("HangFirePaymentJobId")
                         .HasColumnType("text");
 
+                    b.Property<string>("HangFireRemindStudentJobId")
+                        .HasColumnType("text");
+
                     b.Property<string>("HangFireStartStatusJobId")
                         .HasColumnType("text");
 
@@ -451,10 +421,21 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<bool>("NeedsSubstitute")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
                     b.Property<int>("OrderScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PaymentTransactionId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("PrevAssignmentId")
@@ -472,7 +453,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("RescheduledToId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ScheduleAssignmentId")
+                    b.Property<int?>("ScheduleAssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("ScheduledDate")
@@ -495,6 +476,8 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContractId");
 
                     b.HasIndex("JobInstanceId");
+
+                    b.HasIndex("OrderScheduleId");
 
                     b.HasIndex("PrevAssignmentId");
 
@@ -600,8 +583,16 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("HangFireMatchingJobId")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("PaymentMethodId")
                         .HasColumnType("integer");
@@ -959,11 +950,23 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("JobInstanceId")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("Rating")
-                        .HasColumnType("smallint");
+                    b.Property<int>("MaxRetry")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("NextRetryAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SeniorFullName")
                         .IsRequired()
@@ -1112,8 +1115,8 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Icon")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
 
                     b.Property<Dictionary<string, Translation>>("Translations")
                         .IsRequired()
@@ -1500,6 +1503,36 @@ namespace Helpi.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PasswordResetCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PasswordResetCodes");
+                });
+
             modelBuilder.Entity("ReassignmentRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -1593,6 +1626,12 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.User", null)
+                        .WithOne("Admin")
+                        .HasForeignKey("Helpi.Domain.Entities.Admin", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Contact");
                 });
 
@@ -1650,6 +1689,10 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
                 {
+                    b.HasOne("Helpi.Domain.Entities.HEmail", "Email")
+                        .WithMany()
+                        .HasForeignKey("EmailId");
+
                     b.HasOne("Helpi.Domain.Entities.JobInstance", "JobInstance")
                         .WithMany()
                         .HasForeignKey("JobInstanceId")
@@ -1662,20 +1705,11 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Email");
+
                     b.Navigation("JobInstance");
 
                     b.Navigation("Transaction");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.InvoiceEmail", b =>
-                {
-                    b.HasOne("Helpi.Domain.Entities.Invoice", "Invoice")
-                        .WithOne("Email")
-                        .HasForeignKey("Helpi.Domain.Entities.InvoiceEmail", "InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
@@ -1694,15 +1728,19 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Helpi.Domain.Entities.OrderSchedule", "OrderSchedule")
+                        .WithMany()
+                        .HasForeignKey("OrderScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "PrevAssignment")
                         .WithMany()
                         .HasForeignKey("PrevAssignmentId");
 
-                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "Assignment")
+                    b.HasOne("Helpi.Domain.Entities.ScheduleAssignment", "ScheduleAssignment")
                         .WithMany("JobInstances")
-                        .HasForeignKey("ScheduleAssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ScheduleAssignmentId");
 
                     b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
                         .WithMany()
@@ -1710,11 +1748,13 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Assignment");
-
                     b.Navigation("Order");
 
+                    b.Navigation("OrderSchedule");
+
                     b.Navigation("PrevAssignment");
+
+                    b.Navigation("ScheduleAssignment");
 
                     b.Navigation("Senior");
 
@@ -2163,11 +2203,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Students");
                 });
 
-            modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
-                {
-                    b.Navigation("Email");
-                });
-
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
                 {
                     b.Navigation("PaymentTransaction");
@@ -2234,6 +2269,8 @@ namespace Helpi.Infrastructure.Migrations
 
             modelBuilder.Entity("Helpi.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Admin");
+
                     b.Navigation("Customer");
 
                     b.Navigation("PaymentProfiles");

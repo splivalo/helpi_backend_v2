@@ -1,0 +1,130 @@
+{
+    "Entities": {
+        "Order": "Order #{0}",
+        "Job": "Job #{0}",
+        "Schedule": "Schedule #{0}",
+        "Assignment": "Assignment #{0}",
+        "Reassignment": "Reassignment #{0}",
+        "Student": "Student: {0}",
+        "Senior": "Senior: {0}",
+        "Unknown": "Unknown Entity"
+    },
+    "Notifications": {
+        "NewStudent": {
+            "Title": "New Student Added",
+            "Body": "A new student has been added"
+        },
+        "NewSenior": {
+            "Title": "New Senior Added",
+            "Body": "A new senior has been added"
+        },
+        "PaymentFailed": {
+            "Title": "Payment Failed",
+            "Body": "Payment failed"
+        },
+        "PaymentSuccess": {
+            "Title": "Payment Successful",
+            "Body": "Invoice emailed"
+        },
+        "JobRequest": {
+            "Title": "Job Request",
+            "Body": "New job request"
+        },
+        "JobCancelled": {
+            "Title": "Job Cancelled",
+            "Body": "Job on {0} cancelled"
+        },
+        "JobReminder": {
+            "Title": "Job Reminder",
+            "Body": "Your job starts at {0}"
+        },
+        "OrderCancelled": {
+            "Title": "Order Cancelled",
+            "Body": "{0}"
+        },
+        "OrderScheduleCancelled": {
+            "Title": "Schedule Cancelled",
+            "Body": "{0}"
+        },
+        "ScheduleAssignmentCancelled": {
+            "Title": "Assignment Cancelled",
+            "Body": "{0}"
+        },
+        "ContractAdded": {
+            "Title": "Contract added",
+            "Body": "Contract added"
+        },
+        "ContractUpdated": {
+            "Title": "Contract updated",
+            "Body": "Contract updated"
+        },
+        "ContractDeleted": {
+            "Title": "Contract deleted",
+            "Body": "Contract deleted"
+        },
+        "ContractAboutToExpire": {
+            "Title": "Contract About To Expire",
+            "Body": "Contract needs to be renewed"
+        },
+        "ContractExpired": {
+            "Title": "Contract Expired",
+            "Body": "Contract has expired"
+        },
+        "ReviewRequest": {
+            "Title": "Review",
+            "Body": "How was your expirence?"
+        },
+        "ReassignmentStarted": {
+            "Title": "Reassignment Started",
+            "Body": "{0}"
+        },
+        "ReassignmentCompleted": {
+            "Title": "Reassignment Completed",
+            "Body": "{0}"
+        },
+        "NoEligibleStudents": {
+            "Title": "No Eligible Students",
+            "Body": "{0}"
+        },
+        "AllEligibleStudentsNotified": {
+            "Title": "All Eligible Students Notified",
+            "Body": "{0}"
+        }
+    },
+    "Emails": {
+        "PasswordReset": {
+            "Subject": "Password Reset Code",
+            "Body": "Your Helpi password reset code is <b>{0}</b>. It expires in 10 minutes."
+        },
+        "Invoice": {
+            "Subject": "Booking Confirmation & Invoice",
+            "Body": "<h1>Your booking is confirmed!</h1><p>Thank you for choosing our service. To secure your appointment and ensure the student's arrival, payment is processed automatically 30 minutes before the scheduled start. Please find your invoice attached.</p><br/><br/><p>We look forward to seeing you soon!</p>"
+        },
+        "Student": {
+            "ContractAboutToExpire": {
+                "Subject": "Your Contract Will Expire Soon",
+                "Body": "Hello {0},<br/><br/>Your current contract will expire in <b>{1} days</b>. Please upload a new contract before it expires so your account remains active."
+            },
+            "ContractExpired": {
+                "Subject": "Your Contract Has Expired",
+                "Body": "Hello {0},<br/><br/>Your contract expired on <b>{1}</b>. Your account is now marked as expired. Please upload a new contract to reactivate your account."
+            },
+            "FinalAccountDeletionWarning": {
+                "Subject": "Final Warning – Your Account Will Be Deleted in 7 Days",
+                "Body": "Hello {0},<br/><br/>Your contract expired on <b>{1}</b>.<br/><br/>Your account is scheduled for permanent deletion in <b>{2} days</b>.<br/><br/>If you upload a new valid contract before then, your account will be restored automatically.<br/><br/>If no action is taken, your account will be permanently removed from our system.<br/><br/>Thank you."
+            },
+            "ContractRenewalReminder": {
+                "Subject": "Reminder: Renew Your Contract",
+                "Body": "Hello {0},<br/><br/>This is a reminder that your contract will expire soon. Please upload a new contract to avoid any interruption to your account."
+            },
+            "AccountSoftDeleted": {
+                "Subject": "Your Account Has Been Deactivated",
+                "Body": "Hello {0},<br/><br/>Your account has been deactivated because your contract expired over 90 days ago. You can still restore your account by uploading a new contract within the next 90 days."
+            },
+            "AccountPermanentlyDeleted": {
+                "Subject": "Your Account Has Been Deleted",
+                "Body": "Hello {0},<br/><br/>Your account has been permanently deleted because your contract remained expired for more than 180 days.<br/><br/>If you need assistance, please contact Helpi support."
+            }
+        }
+    }
+}

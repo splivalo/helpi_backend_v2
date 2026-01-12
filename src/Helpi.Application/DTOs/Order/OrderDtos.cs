@@ -8,6 +8,8 @@ public class OrderDto
     public int Id { get; set; }
     public int SeniorId { get; set; }
     public OrderStatus Status { get; set; }
+
+    public string? Notes { get; set; }
     public bool IsRecurring { get; set; }
     public int? PaymentMethodId { get; set; }
     public RecurrencePattern? RecurrencePattern { get; set; }
@@ -28,6 +30,8 @@ public class OrderCreateDto
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+
+    public string? Notes { get; set; }
 
     public ICollection<OrderServiceCreateDto> Services { get; set; } = new List<OrderServiceCreateDto>();
     public ICollection<OrderScheduleCreateDto> Schedules { get; set; } = new List<OrderScheduleCreateDto>();

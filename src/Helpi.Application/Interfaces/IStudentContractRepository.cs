@@ -5,7 +5,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IStudentContractRepository
 {
-    Task<StudentContract> GetByIdAsync(int id);
+    Task<StudentContract?> GetByIdAsync(int id);
     Task<IEnumerable<StudentContract>> GetByStudentIdAsync(int studentId);
     Task<IEnumerable<StudentContract>> GetActiveContracts(DateOnly date);
     Task<StudentContract> AddAsync(StudentContract contract);

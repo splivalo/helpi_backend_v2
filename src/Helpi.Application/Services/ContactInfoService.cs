@@ -75,4 +75,15 @@ public class ContactInfoService
 
         public async Task DeleteContactInfoAsync(int id) =>
             await _repository.DeleteAsync(await _repository.GetByIdAsync(id));
+
+        public async Task<bool> UpdateLanguageAsync(int contactId, string languageCode)
+        {
+                var contact = await _repository.GetByIdAsync(contactId);
+                if (contact == null) return false;
+
+                contact.LanguageCode = languageCode;
+                await _repository.UpdateAsync(contact);
+
+                return true;
+        }
 }

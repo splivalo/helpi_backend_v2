@@ -19,6 +19,7 @@ public class AssignmentStatusUpdater
         {
             foreach (var assignment in schedule.Assignments)
             {
+
                 if (schedule.IsCancelled)
                 {
                     if (assignment.Status == AssignmentStatus.Accepted)
@@ -28,8 +29,10 @@ public class AssignmentStatusUpdater
                     continue;
                 }
 
+                if (assignment.IsTerminal) continue;
+
                 //
-                var jobInstances = assignment.JobInstances.Where(j => j.NeedsSubstitute == false);
+                // var jobInstances = assignment.JobInstances.Where(j => j.NeedsSubstitute == false);
 
                 var allJobsTerminal = assignment.JobInstances.All(ji => ji.IsTerminal);
 

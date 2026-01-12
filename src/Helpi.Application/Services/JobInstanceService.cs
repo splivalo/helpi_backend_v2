@@ -1,6 +1,7 @@
 
 using System.Text.Json;
 using AutoMapper;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
@@ -16,8 +17,11 @@ public class JobInstanceService : IJobInstanceService
         private readonly IJobInstanceRepository _jobInstanceRepository;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
+        private readonly ICustomerRepository _customerRepo;
+        private readonly INotificationFactory _notificationFactory;
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly IReassignmentService _reassignmentService;
+        private readonly IReviewRepository _reviewRepo;
         private readonly IScheduleAssignmentRepository _assignmentRepository;
 
         private readonly IHangfireService _hangfireService;
@@ -26,21 +30,28 @@ public class JobInstanceService : IJobInstanceService
                 IJobInstanceRepository repository,
                 IMapper mapper,
                 INotificationService notificationService,
+INotificationFactory notificationFactory,
                  OrderStatusMaintenanceService statusMaintenanceService,
                   IHangfireService hangfireService,
                   IReassignmentService reassignmentService,
+                  IReviewRepository reviewRepo,
                   IScheduleAssignmentRepository assignmentRepository,
-                   ILogger<JobInstanceService> logger
+                   ILogger<JobInstanceService> logger,
+
+ICustomerRepository customerRepo
                 )
         {
                 _jobInstanceRepository = repository;
                 _mapper = mapper;
                 _notificationService = notificationService;
+                _notificationFactory = notificationFactory;
                 _statusMaintenanceService = statusMaintenanceService;
                 _hangfireService = hangfireService;
                 _reassignmentService = reassignmentService;
+                _reviewRepo = reviewRepo;
                 _assignmentRepository = assignmentRepository;
                 _logger = logger;
+                _customerRepo = customerRepo;
         }
 
 
@@ -78,6 +89,29 @@ public class JobInstanceService : IJobInstanceService
                 return _mapper.Map<List<JobInstanceDto>>(jobInstances);
         }
 
+        public async Task RemindStudentAsync(int jobInstanceId)
+        {
+
+                var instance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
+                {
+                        Assignment = true,
+                        AssignmentStudent = true
+                });
+
+                if (instance == null) return;
+
+                if (instance.Status != JobInstanceStatus.Upcoming) return;
+
+                if (instance.PaymentStatus != PaymentStatus.Paid) return;
+
+                var culture = instance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
+
+                var notification = _notificationFactory.CreateStudentJobReminderNotification(instance, culture);
+                await _notificationService.SendNotificationAsync(notification.RecieverUserId, notification);
+
+
+        }
+
 
         public async Task UpdateToInProgressAsync(int jobInstanceId)
         {
@@ -89,11 +123,11 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.InProgress) return;
 
 
-                var assignedStudentId = instance.ScheduleAssignment.StudentId;
-                await _notificationService.SendJobStartedNotificationAsync(assignedStudentId, instance);
+                // var assignedStudentId = instance.ScheduleAssignment.StudentId;
+                // await _notificationService.SendJobStartedNotificationAsync(assignedStudentId, instance);
 
-                var customerId = instance.Senior.CustomerId;
-                await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
+                // var customerId = instance.Senior.CustomerId;
+                // await _notificationService.SendJobCompletedNotificationAsync(customerId, instance);
 
         }
 
@@ -115,8 +149,14 @@ public class JobInstanceService : IJobInstanceService
                                 return;
                         }
 
+                        if (instance.ScheduleAssignmentId == null)
+                        {
+                                return;
+                        }
+
+
                         var assignment = await _assignmentRepository.LoadAssignmentWithIncludes(
-                            instance.ScheduleAssignmentId,
+                            instance.ScheduleAssignmentId.Value,
                             new AssignmentIncludeOptions
                             {
                                     IncludeStudent = true,
@@ -125,7 +165,7 @@ public class JobInstanceService : IJobInstanceService
 
                         if (assignment == null)
                         {
-                                LogAssignmentNotFound(instance.ScheduleAssignmentId, jobInstanceId);
+                                LogAssignmentNotFound(instance.ScheduleAssignmentId.Value, jobInstanceId);
                                 return;
                         }
 
@@ -149,15 +189,17 @@ public class JobInstanceService : IJobInstanceService
                         }
 
                         // Notifications
-                        await _notificationService.SendJobCompletedNotificationAsync(instance.ScheduleAssignment.Id, instance);
+                        // await _notificationService.SendJobCompletedNotificationAsync(
+                        //         instance.ScheduleAssignment.StudentId, instance);
 
-                        await _notificationService.SendJobCompletedNotificationAsync(instance.Senior.CustomerId, instance);
+                        // await _notificationService.SendJobCompletedNotificationAsync(
+                        //         instance.Senior.CustomerId, instance);
 
                         // Post-completion processing
                         await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
 
                         // Schedule review request
-                        var reviewRequestTime = DateTime.UtcNow.AddMinutes(5);
+                        var reviewRequestTime = DateTime.UtcNow.AddMinutes(10);
                         _hangfireService.Schedule<IJobInstanceService>(
                             s => s.RequestJobReviewAsync(instance.Id),
                             reviewRequestTime
@@ -182,27 +224,33 @@ public class JobInstanceService : IJobInstanceService
                 if (instance.Status != JobInstanceStatus.Completed) return;
 
                 var customerId = instance.Senior.CustomerId;
-
-                var notification = new HNotification
+                var cutomer = await _customerRepo.GetByIdAsync(customerId);
+                var customerCulture = cutomer?.Contact.LanguageCode ?? "en";
+                // Create the pending review in DB
+                var review = new Review
                 {
-                        RecieverUserId = customerId,
-                        Title = "Review",
-                        Body = "How was your expirence? ",
-                        Type = NotificationType.ReviewRequest,
-                        Payload = JsonSerializer.Serialize(new
-                        {
-                                RecieverUserId = customerId,
-                                JobInstanceId = jobInstanceId,
-                                SeniorId = instance.SeniorId,
-                                SeniorFullName = instance.Senior.Contact.FullName,
-                                StudentId = instance.ScheduleAssignment.StudentId,
-                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
-                        })
+                        SeniorId = instance.SeniorId,
+                        SeniorFullName = instance.Senior.Contact.FullName,
+                        StudentId = instance.ScheduleAssignment!.StudentId,
+                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                        JobInstanceId = jobInstanceId,
+                        Rating = 0, // not rated yet
+                        Comment = null,
+                        RetryCount = 0,
+                        MaxRetry = 2,
+                        NextRetryAt = DateTime.UtcNow,
+                        IsPending = true,
+                        CreatedAt = DateTime.UtcNow,
                 };
 
+                await _reviewRepo.AddAsync(review);
 
-                await _notificationService.SendPushNotificationAsync(customerId, notification);
+                // Send notification to customer
+                var notification = _notificationFactory.ReviewRequestNotification(customerId, review, instance, customerCulture);
+
+                await _notificationService.SendNotificationAsync(customerId, notification);
         }
+
 
 
         /// can reschdule 
@@ -383,51 +431,97 @@ public class JobInstanceService : IJobInstanceService
 
 
 
-        private async Task NotifyReschedule(int studentId, JobInstance originalInstance, JobInstance rescheduledInstance, string reason)
-        {
-                var notification = new HNotification
-                {
-                        RecieverUserId = studentId,
-                        Title = "Schedule Changed",
-                        Body = $"Your job on {originalInstance.ScheduledDate} has been rescheduled to {rescheduledInstance.ScheduledDate} at {rescheduledInstance.StartTime}",
-                        Type = NotificationType.ScheduleChange,
-                        Payload = JsonSerializer.Serialize(new
-                        {
-                                OriginalInstanceId = originalInstance.Id,
-                                NewInstanceId = rescheduledInstance.Id,
-                                NewDate = rescheduledInstance.ScheduledDate,
-                                NewStartTime = rescheduledInstance.StartTime,
-                                Reason = reason
-                        })
-                };
-
-                await _notificationService.SendPushNotificationAsync(studentId, notification);
-        }
 
         public async Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId)
         {
-                var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
-
-                if (job == null)
+                try
                 {
-                        throw new ArgumentException($"Job instance {jobInstanceId} not found");
-                }
+                        var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
 
-                if (job.Status != JobInstanceStatus.Upcoming)
+                        if (job == null)
+                        {
+                                throw new ArgumentException($"Job instance {jobInstanceId} not found");
+                        }
+
+                        if (job.Status != JobInstanceStatus.Upcoming)
+                        {
+                                throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
+                        }
+
+                        job.Status = JobInstanceStatus.Cancelled;
+
+                        await _jobInstanceRepository.UpdateAsync(job);
+
+
+
+
+                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
+
+                        await NotifyUsersJobInstanceCancelled(job);
+
+                        return _mapper.Map<JobInstanceDto>(job);
+                }
+                catch (Exception ex)
                 {
-                        throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
+                        _logger.LogError("❌ [failed] Cancell  JobInstance {jobInstanceId}. {error}", jobInstanceId, ex);
+                        return null;
                 }
-
-                job.Status = JobInstanceStatus.Cancelled;
-
-                await _jobInstanceRepository.UpdateAsync(job);
-
-                await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
-
-                return _mapper.Map<JobInstanceDto>(job);
 
 
         }
+
+
+        private async Task NotifyUsersJobInstanceCancelled(JobInstance jobInstance)
+        {
+                try
+                {       // senior
+                        var senior = jobInstance.Senior;
+                        var customerId = senior.CustomerId;
+                        var culture = senior.Contact.LanguageCode ?? "hr";
+                        await NotifyJobInstanceCancelled(customerId, jobInstance, culture);
+
+                        // student
+                        if (jobInstance.ScheduleAssignment != null)
+                        {
+                                var student = jobInstance.ScheduleAssignment.Student;
+                                var studentId = student.UserId;
+                                var studentCulture = student.Contact.LanguageCode ?? "hr";
+                                await NotifyJobInstanceCancelled(studentId, jobInstance, studentCulture);
+                        }
+                }
+                catch (Exception)
+                {
+                        _logger.LogError("❌ Notify error JobInstance {jobInstanceId} .", jobInstance.Id);
+
+                }
+
+
+        }
+
+
+        private async Task NotifyJobInstanceCancelled(int recieverId, JobInstance jobInstance, string culture)
+        {
+                try
+                {
+                        var noti = _notificationFactory.JobCancelledNotification(
+                            recieverId,
+                            jobInstance,
+                            culture: culture
+
+                            );
+
+                        await _notificationService.SendNotificationAsync(recieverId, noti);
+                }
+                catch (Exception)
+                {
+                        _logger.LogError("❌ Notify error JobInstance {jobInstanceId} .", jobInstance.Id);
+
+                }
+
+
+        }
+
+
 
 
 
@@ -457,6 +551,8 @@ public class JobInstanceService : IJobInstanceService
 
         private void LogException(int jobInstanceId, Exception ex) =>
             _logger.LogError(ex, "❌ Exception while updating JobInstance {jobInstanceId} to completed.", jobInstanceId);
+
+
 
 
         #endregion

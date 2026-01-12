@@ -29,6 +29,7 @@ public class HNotificationRepository : IHNotificationRepository
             .Include(n => n.Senior).ThenInclude(s => s.Contact)
             .Include(n => n.Student).ThenInclude(st => st.Contact)
             .OrderByDescending(n => n.CreatedAt)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -39,6 +40,7 @@ public class HNotificationRepository : IHNotificationRepository
                      .Include(n => n.Senior).ThenInclude(s => s.Contact)
             .Include(n => n.Student).ThenInclude(st => st.Contact)
             .OrderByDescending(n => n.CreatedAt)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -96,11 +98,12 @@ public class HNotificationRepository : IHNotificationRepository
     {
         return await _context.HNotifications
             .Where(n => n.RecieverUserId == userId)
-                    .Include(n => n.Senior)
-                    .Include(n => n.Student)
+                    .Include(n => n.Senior).ThenInclude(sn => sn.Contact)
+                    .Include(n => n.Student).ThenInclude(st => st.Contact)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .AsNoTracking()
             .ToListAsync();
     }
 }

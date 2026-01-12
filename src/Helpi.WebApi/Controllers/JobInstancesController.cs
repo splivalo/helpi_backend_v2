@@ -73,7 +73,7 @@ public class JobInstancesController : ControllerBase
                             request.NewStartTime,
                             request.NewEndTime,
                             request.Reason,
-                            request.PreferedStudentId,
+                            request.PreferredStudentId,
                             request.ReassignStudent,
                             request.RequestedByUserId);
 

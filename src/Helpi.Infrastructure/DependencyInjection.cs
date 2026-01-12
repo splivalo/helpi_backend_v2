@@ -1,5 +1,6 @@
 
 using System.Text;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using MyApp.Infrastructure.Localization;
 
 namespace Infrastructure;
 
@@ -28,17 +30,41 @@ public static class DependencyInjection
         this IServiceCollection services, IConfiguration configuration)
     {
 
+
+
         // Register DbContext
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
-                o => o.UseNetTopologySuite()), ServiceLifetime.Scoped);
+             options.UseNpgsql(
+        configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            // Your existing NetTopologySuite
+            npgsqlOptions.UseNetTopologySuite();
+
+            // Add retry logic for transient failures
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null
+            );
+
+            // Command timeout (30 seconds)
+            npgsqlOptions.CommandTimeout(30);
+
+        }
+    )
+    );
 
 
+
+
+
+
+        services.AddSingleton<ILocalizationService>(new JsonLocalizationService("en"));
 
         services.AddSingleton<IEventMediator, EventMediator>();
 
-
+        services.AddScoped<INotificationFactory, NotificationFactory>();
 
         services.AddScoped<IHNotificationRepository, HNotificationRepository>();
 
@@ -53,17 +79,25 @@ public static class DependencyInjection
         services.AddScoped<IPaymentProfileRepository, PaymentProfileRepository>();
         services.AddScoped<IContractNumberSequenceRepository, ContractNumberSequenceRepository>();
 
+
         services.AddScoped<IFcmTokensRepository, FcmTokensRepository>();
-        // services.AddScoped<IMailerLiteService, MailerLiteService>();
         services.AddHttpClient<IMailerLiteService, MailerLiteService>();
+        services.AddScoped<IMailgunService, MailgunService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
-        services.AddScoped<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
-        services.AddScoped<IJobInstanceJobs, JobInstanceJobs>();
-        services.AddScoped<StudentBackgroundJobs>();
+        //--
         services.AddScoped<IHangfireService, HangfireService>();
+        services.AddSingleton<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
+        services.AddSingleton<IJobInstanceJobs, JobInstanceJobs>();
+        services.AddSingleton<StudentBackgroundJobs>();
+        services.AddTransient<JobRunner>();
+        //--
         services.AddScoped<OrderStatusMaintenanceService>();
 
+
         services.AddScoped<IReassignmentService, ReassignmentService>();
+        services.AddScoped<IStudentStatisticsService, StudentStatisticsService>();
+        services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+
 
         // Register all repositories
         services.AddScoped<IReassignmentRecordRepository, ReassignmentRecordRepository>();
@@ -91,10 +125,11 @@ public static class DependencyInjection
         // services.AddScoped<IScheduleAssignmentReplacementRepository, ScheduleAssignmentReplacementRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
-        services.AddScoped<IInvoiceEmailRepository, InvoiceEmailRepository>();
+        services.AddScoped<IHEmailRepository, HEmailRepository>();
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IServiceRegionRepository, ServiceRegionRepository>();
-
+        services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<AdminService>();
         /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):
         //         var repositoryTypes = Assembly.GetAssembly(typeof(AppDbContext))!
         //     .GetTypes()
@@ -137,10 +172,10 @@ public static class DependencyInjection
         var IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes);
 
         services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = false;
@@ -155,6 +190,26 @@ public static class DependencyInjection
                     ValidAudience = configuration["JwtSettings:Audience"],
                     IssuerSigningKey = IssuerSigningKey
                 };
+
+
+                // 👇 Required for SignalR over WebSockets
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        {
+                            // Read the token from the query string
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddAuthorization();
@@ -162,9 +217,8 @@ public static class DependencyInjection
 
         services.AddTransient<RoleSeeder>();
         services.AddTransient<ContractNumberSequenceSeeder>();
-        // TODO: seeders 
-        // services.AddTransient<CitySeeder>();
         services.AddTransient<ServiceDataSeeder>();
+        services.AddTransient<FacultyDataSeeder>();
 
         return services;
     }

@@ -16,6 +16,7 @@ namespace Helpi.Domain.Entities
 
         public Student? Student { get; set; }
         public Customer? Customer { get; set; }
+        public Admin? Admin { get; set; }
 
 
         public ICollection<FcmToken> fcmTokens { get; set; } = new List<FcmToken>();

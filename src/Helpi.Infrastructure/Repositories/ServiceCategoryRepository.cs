@@ -24,6 +24,7 @@ public class ServiceCategoryRepository : IServiceCategoryRepository
         {
                 var query = _context.ServiceCategories
                         .Include(sc => sc.Services)
+                        .AsNoTracking()
                         .AsQueryable();
 
                 if (excludeDeleted)

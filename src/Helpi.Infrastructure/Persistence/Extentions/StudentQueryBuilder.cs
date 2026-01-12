@@ -234,7 +234,7 @@ public class StudentQueryBuilder
             Faculty = new FacultyDto
             {
                 Id = s.Faculty.Id,
-                FacultyName = s.Faculty.FacultyName
+                Translations = s.Faculty.Translations
             },
         }).ToListAsync();
     }

@@ -7,6 +7,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IJobInstanceRepository
 {
+    Task<JobInstance?> GetByIdSlimAsync(int id);
     Task<JobInstance> GetByIdAsync(int id);
     Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId);
     Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId);
@@ -29,10 +30,14 @@ public interface IJobInstanceRepository
     Task SaveChangesAsync();
     Task<int> SumAsync(Expression<Func<JobInstance, bool>> predicate, Expression<Func<JobInstance, int>> selector);
     Task<List<JobInstance>> GetJobInstancesAsync(int? assignmentId,
+int? prevAssignmentId,
      JobInstanceStatus? status,
      JobInstanceIncludeOptions options);
     void Detach(JobInstance jobInstance);
     Task<List<JobInstance>> GetFromDateForScheduleAsync(DateOnly fromDate, int scheduleId);
     void MarkForDeleteRange(IEnumerable<JobInstance> jobs);
+
+    Task<IEnumerable<JobInstance>> GetCompletedJobInstancesForStudentAsync(int studentId, DateTime fromDate, DateTime toDate);
+    Task<decimal> GetTotalCompletedHoursForPeriodAsync(int studentId, DateTime startDate, DateTime endDate);
 
 }

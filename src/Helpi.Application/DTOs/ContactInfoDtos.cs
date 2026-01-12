@@ -11,6 +11,8 @@ public class ContactInfoDto
     public DateOnly DateOfBirth { get; set; }
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
+
+    public string? LanguageCode { get; set; } = "hr";
     public Gender Gender { get; set; }
     public required string GooglePlaceId { get; set; } = null!;
     public required string FullAddress { get; set; } = null!;
@@ -36,6 +38,8 @@ public class ContactInfoCreateDto
     public DateOnly DateOfBirth { get; set; }
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
+
+    public string? LanguageCode { get; set; } = "hr";
     public Gender Gender { get; set; }
     public string GooglePlaceId { get; set; } = null!;
     public string FullAddress { get; set; } = null!;

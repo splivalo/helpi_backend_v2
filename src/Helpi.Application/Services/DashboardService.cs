@@ -156,7 +156,8 @@ public class DashboardService : IDashboardService
         //     c.ExpirationDate >= prevStart &&
         //     c.ExpirationDate <= prevEnd);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var expiredContracts = await _contractRepository.CountAsync(c => today > c.ExpirationDate);
+        var expiredContracts = await _studentRepository.CountAsync(s => s.Status == StudentStatus.Expired);
+
         var current = expiredContracts;
         var previous = expiredContracts;
 
@@ -182,8 +183,8 @@ public class DashboardService : IDashboardService
     {
 
         var activeStudentStatus = new[]{
-        StudentStatus.Verified,
-        StudentStatus.ContractRenewalNeeded
+        StudentStatus.Active,
+        StudentStatus.ContractAboutToExpire
     };
 
         var current = await _studentRepository.CountAsync(s =>
@@ -203,20 +204,30 @@ public class DashboardService : IDashboardService
 
     private async Task<DashboardTileData> GetInvalidContractsDataAsync(DateTime lastMonthEnd)
     {
-        // Students without valid contracts (expired or missing)
-        // var validStudentIds = await _contractRepository.GetValidContractStudentIdsAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var prevToday = DateOnly.FromDateTime(lastMonthEnd);
 
-        var current = 0;
-        // await _studentRepository.CountAsync(s =>
-        //     s.VerificationStatus == VerificationStatus.Verified &&
-        //     !validStudentIds.Contains(s.UserId));
+        // CURRENT: invalid contracts as of today
+        var current = await _contractRepository.CountAsync(c =>
+            c.DeletedOn == null &&
+            c.ExpirationDate < today &&
+            !c.Student.Contracts.Any(ac =>
+                ac.DeletedOn == null &&
+                ac.EffectiveDate <= today &&
+                ac.ExpirationDate >= today
+            )
+        );
 
-        // var previousValidIds = await _contractRepository.GetValidContractStudentIdsAsync(lastMonthEnd);
-        var previous = 0;
-        //  await _studentRepository.CountAsync(s =>
-        //     s.VerificationStatus == VerificationStatus.Verified &&
-        //     s.DateRegistered <= lastMonthEnd &&
-        //     !previousValidIds.Contains(s.UserId));
+        // PREVIOUS: invalid contracts as of last month end
+        var previous = await _contractRepository.CountAsync(c =>
+            c.DeletedOn == null &&
+            c.ExpirationDate < prevToday &&
+            !c.Student.Contracts.Any(ac =>
+                ac.DeletedOn == null &&
+                ac.EffectiveDate <= prevToday &&
+                ac.ExpirationDate >= prevToday
+            )
+        );
 
         return CreateTileData(
             DashboardTileType.invalidContracts,
@@ -225,6 +236,7 @@ public class DashboardService : IDashboardService
             changeType: DetermineChangeType(current, previous)
         );
     }
+
 
     private async Task<DashboardTileData> GetReviewCountDataAsync(
         DateTime currentStart, DateTime currentEnd,
@@ -340,17 +352,16 @@ public class DashboardService : IDashboardService
 
         // Calculate total minutes worked
         var currentHours = await _jobInstanceRepository.SumAsync(
-     j => j.Status == JobInstanceStatus.Completed &&
-          j.ScheduledDate >= currentStartDate &&
-          j.ScheduledDate <= currentEndDate,
-     j => (int)(j.StartTime - j.EndTime).TotalHours
- );
+                        j => j.Status == JobInstanceStatus.Completed &&
+                        j.ScheduledDate >= currentStartDate &&
+                        j.ScheduledDate <= currentEndDate,
+                        j => (int)(j.EndTime - j.StartTime).TotalHours);
 
         var previousHours = await _jobInstanceRepository.SumAsync(
             j => j.Status == JobInstanceStatus.Completed &&
                  j.ScheduledDate >= prevStartDate &&
                  j.ScheduledDate <= prevEndDate,
-            j => (int)(j.StartTime - j.EndTime).TotalHours
+            j => (int)(j.EndTime - j.StartTime).TotalHours
         );
 
 
