@@ -101,6 +101,7 @@ public class OrderScheduleRepository : IOrderScheduleRepository
                                 && !os.Assignments.Any(a =>
                                     assignedStatuses.Contains(a.Status) &&
                                     !a.IsJobInstanceSub))
+                    .AsNoTracking()
                     .ToListAsync();
         }
 

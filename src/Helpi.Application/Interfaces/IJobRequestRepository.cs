@@ -19,5 +19,11 @@ public interface IJobRequestRepository
     Task<List<JobRequest>> GetStudentRequests(int studentId);
     Task<JobRequest> RespondToJobRequestAsync(JobRequest jobRequest);
     void MarkForDeleteRange(ICollection<JobRequest> jobRequests);
+    Task<List<JobRequest>> GetStudentConflictingPendingRequests(int studentId,
+                        DateOnly startDate,
+                        DateOnly endDate,
+                        TimeOnly startTime,
+                        TimeOnly endTime,
+                        int? excludeJobRequestId = null);
 
 }

@@ -16,7 +16,7 @@ public interface IMinimaxService
     public Task<int?> CreateIssuedInvoice(MinimaxIssuedInvoice issuedInvoice);
 
     public Task<MinimaxIssuedInvoice?> GetIssuedInvoiceByIdAsync(int issuedInvoiceId);
-    public Task<bool> CustomActionIssuedInvoice(int issuedInvoiceId, string rowVersion, string actionName);
+    public Task<MinimaxIssuedInvoice?> CustomActionIssuedInvoice(int issuedInvoiceId, string rowVersion, string actionName);
     public Task<List<MinimaxCurrency>> GetCurrencies();
     public Task<MinimaxCurrency?> GetCurrencyByCode(string code);
     public Task<List<MinimaxCountry>> GetCountries();
@@ -24,10 +24,11 @@ public interface IMinimaxService
     public Task<List<MinimaxItem>> GetItems();
     public Task<List<MinimaxEmployee>> GetEmployees();
     public Task<List<MinimaxPaymentMethod>> GetPaymentMethods();
+    public Task<List<dynamic>> GetCurrentUserOrganisations();
     public Task<List<MinimaxReportTemplate>> GetReportTemplates();
     public Task<List<MinimaxVatRate>> GetVatRates();
     public Task<List<MinimaxDocumentNumbering>> GetDocumentNumbering();
 
-
-
+    public Task<List<MinimaxIssuedInvoice>> GetAllIssuedInvoicesAsync();
+    public Task<MinimaxAttachment?> GenerateInvoicePdf(int issuedInvoiceId, string rowVersion);
 }

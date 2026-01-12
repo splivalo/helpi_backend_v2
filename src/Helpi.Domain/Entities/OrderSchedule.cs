@@ -23,6 +23,8 @@ namespace Helpi.Domain.Entities
         [Column(TypeName = "text")]
         public string? CancellationReason { get; set; }
 
+
+
         public Order Order { get; set; } = null!;
 
 

@@ -8,6 +8,8 @@ using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 using Helpi.Application.Services.Maintenance;
 using Microsoft.Extensions.Logging;
+using Helpi.Application.Common.Extensions;
+using Helpi.Application.Common.Interfaces;
 
 namespace Helpi.Application.Services;
 
@@ -30,6 +32,9 @@ public class OrdersService
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
         private readonly OrderCancellationHandler _orderCancellationHandler;
         private readonly ScheduleCancellationHandler _scheduleCancellationHandler;
+        private readonly INotificationFactory _notificationFactory;
+
+        private readonly INotificationService _notificationService;
 
         public OrdersService(
             IOrderRepository orderRepository,
@@ -43,7 +48,9 @@ public class OrdersService
             ILogger<OrdersService> logger,
             OrderStatusMaintenanceService statusMaintenanceService,
             OrderCancellationHandler orderCancellationHandler,
-            ScheduleCancellationHandler scheduleCancellationHandler
+            ScheduleCancellationHandler scheduleCancellationHandler,
+            INotificationFactory notificationFactory,
+            INotificationService notificationService
         )
         {
                 _orderRepository = orderRepository;
@@ -58,6 +65,8 @@ public class OrdersService
                 _statusMaintenanceService = statusMaintenanceService;
                 _orderCancellationHandler = orderCancellationHandler;
                 _scheduleCancellationHandler = scheduleCancellationHandler;
+                _notificationFactory = notificationFactory;
+                _notificationService = notificationService;
         }
 
 
@@ -67,10 +76,48 @@ public class OrdersService
                 return _mapper.Map<List<OrderDto>>(orders);
         }
 
+        private DateOnly AdjustStartDateToNearestWeekday(
+    DateOnly startDate,
+    IEnumerable<OrderScheduleCreateDto> schedules)
+        {
+                var allowedDays = schedules
+                    .Select(s => DayOfWeekExtensions.FromIsoWeekday(s.DayOfWeek))
+                    .Distinct()
+                    .ToHashSet();
+
+                var cursor = startDate;
+
+                for (int i = 0; i < 7; i++) // max one week lookahead
+                {
+                        if (allowedDays.Contains(cursor.DayOfWeek))
+                        {
+                                _logger.LogInformation("Adjusted: startDate: {old} to NewStart: {new} -- .Net Day of week {DOW}", startDate, cursor, i);
+
+                                return cursor;
+                        }
+
+
+                        cursor = cursor.AddDays(1);
+                }
+
+                throw new DomainException(
+                    "❌  No valid weekday found within adjustment window."
+                );
+        }
+
+
         public async Task<OrderDto> CreateOrderAsync(OrderCreateDto orderCreateDto)
         {
                 try
                 {
+                        orderCreateDto.StartDate = AdjustStartDateToNearestWeekday(
+                            orderCreateDto.StartDate,
+                            orderCreateDto.Schedules
+                        );
+
+                        if (orderCreateDto.EndDate < orderCreateDto.StartDate)
+                                throw new DomainException("❌ EndDate cannot be before StartDate.");
+
                         // === 1. Create Order ===
                         var order = _mapper.Map<Order>(orderCreateDto);
                         order = await _orderRepository.AddNoSaveAsync(order);
@@ -101,8 +148,8 @@ public class OrdersService
                         // === 5. Re-fetch Order with related data ===
                         var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
 
-                        // === 6. Post-Creation: Trigger Matching (Non-blocking) ===
-                        _matchingService.StartMatching(order.Id);
+                        // === 6. Post-Creation:  ===
+                        await _matchingService.StartMatching(order.Id);
 
                         return _mapper.Map<OrderDto>(savedOrder);
                 }
@@ -140,33 +187,51 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
-                        // Update basic order properties
-                        UpdateOrderProperties(order, orderUpdateDto);
-
-                        // Handle services
-                        await HandleServiceUpdates(order, orderUpdateDto);
-
-                        // Handle schedules (note: uses new ScheduleCancellationHandler)
-                        await HandleScheduleUpdates(order, orderUpdateDto);
-
-                        // If order status is being set to canceled, cancel the order via handler
-                        if (orderUpdateDto.Status == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
+                        List<int> toBeCancelledScheduleIds = [];
+                        if (orderUpdateDto.Status == OrderStatus.Cancelled)
                         {
+                                // id's of schedules that are currently not cancelld but will be
+                                toBeCancelledScheduleIds = order.Schedules
+                                                               .Where(s => !s.IsCancelled)
+                                                               .Select(s => s.Id)
+                                                               .ToList();
+
                                 _logger.LogInformation("Cancelling order {OrderId} as part of update", orderId);
                                 await _orderCancellationHandler.CancelOrderAsync(order);
                         }
+                        else
+                        {
+                                // Update basic order properties
+                                UpdateOrderProperties(order, orderUpdateDto);
+
+                                // Handle services
+                                await HandleServiceUpdates(order, orderUpdateDto);
+
+                                // Handle schedules (note: uses new ScheduleCancellationHandler)
+                                await HandleScheduleUpdates(order, orderUpdateDto);
+                        }
 
                         await _unitOfWork.SaveChangesAsync();
+
+
 
                         _logger.LogInformation("Successfully updated order {OrderId}", orderId);
 
                         // Run maintenance 
                         await _statusMaintenanceService.MaintainOrderStatuses(orderId);
 
-                        _matchingService.StartMatching(order.Id);
+                        await _matchingService.StartMatching(order.Id);
 
                         // Refetch to get updated relationships
                         var updatedOrder = await GetLoadedOrderById(orderId);
+
+                        if (updatedOrder?.Status == OrderStatus.Cancelled)
+                        {
+
+                                await NotifySeniorAboutOrderCancel(order);
+                                await NotifyStudentsAboutOrderCancel(order, toBeCancelledScheduleIds);
+                        }
+
                         return _mapper.Map<OrderDto>(updatedOrder);
                 }
                 catch (Exception ex)
@@ -183,6 +248,8 @@ public class OrdersService
                         _logger.LogInformation("Cancelling order {OrderId}", orderId);
 
                         var order = await GetLoadedOrderById(orderId);
+
+
                         if (order == null)
                         {
                                 _logger.LogWarning("Order {OrderId} not found for cancellation", orderId);
@@ -196,6 +263,12 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
+                        // id's of schedules that are currently not cancelld but will be
+                        List<int> toBeCancelledScheduleIds = order.Schedules
+                                                        .Where(s => !s.IsCancelled)
+                                                        .Select(s => s.Id)
+                                                        .ToList();
+
                         // Use the centralized handler to cancel the order (will cascade to schedules)
                         await _orderCancellationHandler.CancelOrderAsync(order);
 
@@ -205,6 +278,10 @@ public class OrdersService
                         await _statusMaintenanceService.MaintainOrderStatuses(orderId);
 
                         _logger.LogInformation("Successfully cancelled order {OrderId}", orderId);
+
+                        await NotifySeniorAboutOrderCancel(order);
+                        await NotifyStudentsAboutOrderCancel(order, toBeCancelledScheduleIds);
+
                         return true;
                 }
                 catch (Exception ex)
@@ -289,13 +366,85 @@ public class OrdersService
                 var order = await _orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions
                 {
                         Senior = true,
+
                         OrderServices = true,
                         Schedules = true,
                         SchedulesJobRequests = true,
                         ScheduleAssignments = true,
+                        ScheduleAssignmentStudent = true,
                         AssignmentsJobInstances = true,
-                });
+                },
+                asNoTracking: false);
 
                 return order;
         }
+
+
+        private async Task NotifySeniorAboutOrderCancel(Order order)
+        {
+                try
+                {
+                        var recieverId = order.Senior.CustomerId;
+
+                        var notification = _notificationFactory.SeniorOrderCancelledNotification(
+                                receiverUserId: recieverId,
+                                        order: order,
+                                        culture: order.Senior.Contact.LanguageCode ?? "hr");
+
+                        await _notificationService.SendNotificationAsync(recieverId, notification);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to send cancellation notification. OrderId={orderId}",
+                                                          order.Id);
+                }
+        }
+
+
+
+        private async Task NotifyStudentsAboutOrderCancel(
+     Order order,
+     List<int> cancelledScheduleIds)
+        {
+                var cancelledScheduleSet = cancelledScheduleIds.ToHashSet();
+
+                var assignments = order.Schedules.SelectMany(s => s.Assignments);
+
+                foreach (var assignment in assignments)
+                {
+                        if (!cancelledScheduleSet.Contains(assignment.OrderScheduleId))
+                                continue;
+
+                        if (assignment.Student == null)
+                                continue;
+
+                        try
+                        {
+                                var student = assignment.Student;
+
+                                var notification =
+                                    _notificationFactory.ScheduleAssignmentCancelledNotification(
+                                        recieverId: assignment.StudentId,
+                                        scheduleAssignment: assignment,
+                                        seniorId: order.SeniorId,
+                                        culture: student.Contact.LanguageCode ?? "hr");
+
+                                await _notificationService.SendNotificationAsync(
+                                    student.UserId,
+                                    notification);
+                        }
+                        catch (Exception ex)
+                        {
+                                _logger.LogError(
+                                    ex,
+                                    "❌  Failed to send cancellation notification. AssignmentId={AssignmentId}",
+                                    assignment.Id);
+                        }
+                }
+        }
+
+
 }
+
+
+

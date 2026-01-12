@@ -9,9 +9,10 @@ namespace Helpi.Domain.Enums
 
     public enum StudentStatus
     {
-        UnVerified,
-        Verified,
-        ContractRenewalNeeded,
+        InActive,
+        Active,
+        ContractAboutToExpire,
+        Expired,
         AccountDeactivated,  // Account soft-deleted after 3 months non-renewal
         PendingPermanentDeletion,  // Warned, awaiting 6-month mark for hard delete
         Deleted
@@ -66,7 +67,8 @@ namespace Helpi.Domain.Enums
         Pending,
         Accepted,
         Declined,
-        AssignedToOther
+        AssignedToOther,
+        Cancelled
     }
 
     public enum ReassignmentTrigger
@@ -81,10 +83,12 @@ namespace Helpi.Domain.Enums
     {
         Requested,
         InProgress,
-        Completed,
-        Failed,
+        Assigned,
+        AllEligableStudentNotified,
+        NoEligibleStudents,
+        MaxAttemptsReached,
         Cancelled,
-        Expired
+
     }
 
     public enum ReassignmentType
@@ -163,6 +167,10 @@ namespace Helpi.Domain.Enums
         Opened,
         Failed
     }
+    public enum EmailType
+    {
+        Invoice
+    }
 
     public enum Gender
     {
@@ -173,20 +181,32 @@ namespace Helpi.Domain.Enums
     public enum NotificationType
     {
         General,
+        PaymentSuccess,
+        PaymentFailed,
+        PaymentRefunded,
         JobRequest,
-        AssignmentConfirmed,
-        ScheduleChange,
-        PaymentReceipt,
+        JobStartReminder,
         JobInProgress,
+        JobCompleted,
+        JobCancelled,
+        JobRescheduled,
+        ScheduleAssignmentCancelled,
+        OrderScheduleCancelled,
+        OrderCancelled,
         ContractAboutToExpire,
-        ContractExpire,
-        contractActive,
-        NoEligableStudentAcceptedJobYet,
+        ContractExpired,
+        ContractAdded,
+        ContractUpdated,
+        ContractDeleted,
+        AllEligableStudentNotified,
         NoEligibleStudents,
+        MatchingMaxAttemptsReached,
         ReviewRequest,
-        ReassignmentFailed,
+        ReassignmentStarted,
         ReassignmentCompleted,
-        ReassignmentStatusUpdate
+
+        NewStudentAdded,
+        NewSeniorAdded
 
     }
 
@@ -219,4 +239,11 @@ namespace Helpi.Domain.Enums
         noEligibleStudents,
         allEligibleStudentsNotified,
     }
+
+    public enum DevicePlatform
+    {
+        Android,
+        iOS
+    }
+
 }

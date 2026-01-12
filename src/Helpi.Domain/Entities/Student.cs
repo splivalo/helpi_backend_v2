@@ -14,7 +14,7 @@ namespace Helpi.Domain.Entities
         public int FacultyId { get; set; }
         public DateTime DateRegistered { get; set; } = DateTime.UtcNow;
         public int ContactId { get; set; }
-        public StudentStatus Status { get; set; } = StudentStatus.UnVerified;
+        public StudentStatus Status { get; set; } = StudentStatus.InActive;
 
         public int? DaysToContractExpire { get; set; }
 
@@ -37,6 +37,7 @@ namespace Helpi.Domain.Entities
 
         public StudentContract? ActiveContract
                 => Contracts
+                .Where(c => c.DeletedOn == null)
             .Where(c => c.Status == ContractStatus.Active)
             .OrderByDescending(c => c.ExpirationDate)
             .FirstOrDefault();

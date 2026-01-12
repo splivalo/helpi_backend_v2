@@ -10,6 +10,7 @@ public class HNotification
     public int RecieverUserId { get; set; }
     public string Title { get; set; } = null!;
     public string Body { get; set; } = null!;
+    public string TranslationKey { get; set; } = null!;
     public NotificationType Type { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsRead { get; set; }
@@ -22,4 +23,9 @@ public class HNotification
     [ForeignKey(nameof(Senior))]
     public int? SeniorId { get; set; }
     public Senior? Senior { get; set; }
+
+    public int? OrderId { get; set; }
+    public int? OrderScheduleId { get; set; }
+    public int? JobInstanceId { get; set; }
+
 }

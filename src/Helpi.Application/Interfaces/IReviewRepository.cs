@@ -14,4 +14,7 @@ public interface IReviewRepository
     Task DeleteAsync(Review review);
     Task<int> CountAsync(Expression<Func<Review, bool>> predicate);
     Task<double?> AverageAsync(Expression<Func<Review, bool>> predicate, Expression<Func<Review, double>> selector);
+    Task<List<Review>> GetPendingSeniorReviews(int seniorId);
+
+
 }

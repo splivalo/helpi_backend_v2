@@ -1,0 +1,130 @@
+{
+    "Entities": {
+        "Order": "Narudžba #{0}",
+        "Job": "Posao #{0}",
+        "Schedule": "Raspored #{0}",
+        "Assignment": "Zadatak #{0}",
+        "Reassignment": "Ponovno dodjeljivanje #{0}",
+        "Student": "Student: {0}",
+        "Senior": "Starija osoba: {0}",
+        "Unknown": "Nepoznat entitet"
+    },
+    "Notifications": {
+        "NewStudent": {
+            "Title": "Novi student dodan",
+            "Body": "Dodan je novi student"
+        },
+        "NewSenior": {
+            "Title": "Nova starija osoba dodana",
+            "Body": "Dodan je novi korisnik"
+        },
+        "PaymentFailed": {
+            "Title": "Plaćanje nije uspjelo",
+            "Body": "Plaćanje nije uspjelo"
+        },
+        "PaymentSuccess": {
+            "Title": "Plaćanje uspješno",
+            "Body": "Račun je poslan e-poštom"
+        },
+        "JobRequest": {
+            "Title": "Zahtjev za posao",
+            "Body": "Novi zahtjev za posao"
+        },
+        "JobCancelled": {
+            "Title": "Posao otkazan",
+            "Body": "Posao na {0} je otkazan"
+        },
+        "JobReminder": {
+            "Title": "Podsjetnik za posao",
+            "Body": "Vaš posao počinje u {0}"
+        },
+        "OrderCancelled": {
+            "Title": "Narudžba otkazana",
+            "Body": "{0}"
+        },
+        "OrderScheduleCancelled": {
+            "Title": "Raspored otkazan",
+            "Body": "{0}"
+        },
+        "ScheduleAssignmentCancelled": {
+            "Title": "Zadatak otkazan",
+            "Body": "{0}"
+        },
+        "ContractAdded": {
+            "Title": "Ugovor dodan",
+            "Body": "Ugovor je dodan"
+        },
+        "ContractUpdated": {
+            "Title": "Ugovor ažuriran",
+            "Body": "Ugovor je ažuriran"
+        },
+        "ContractDeleted": {
+            "Title": "Ugovor izbrisan",
+            "Body": "Ugovor je izbrisan"
+        },
+        "ContractAboutToExpire": {
+            "Title": "Ugovor uskoro istječe",
+            "Body": "Ugovor treba obnoviti"
+        },
+        "ContractExpired": {
+            "Title": "Ugovor istekao",
+            "Body": "Ugovor je istekao"
+        },
+        "ReviewRequest": {
+            "Title": "Recenzija",
+            "Body": "Kako je bilo vaše iskustvo?"
+        },
+        "ReassignmentStarted": {
+            "Title": "Ponovno dodjeljivanje započeto",
+            "Body": "{0}"
+        },
+        "ReassignmentCompleted": {
+            "Title": "Ponovno dodjeljivanje završeno",
+            "Body": "{0}"
+        },
+        "NoEligibleStudents": {
+            "Title": "Nema dostupnih studenata",
+            "Body": "{0}"
+        },
+        "AllEligibleStudentsNotified": {
+            "Title": "Svi dostupni studenti su obaviješteni",
+            "Body": "{0}"
+        }
+    },
+    "Emails": {
+        "PasswordReset": {
+            "Subject": "Kod za poništavanje lozinke",
+            "Body": "Vaš Helpi kod za poništavanje lozinke je <b>{0}</b>. Istječe za 10 minuta."
+        },
+        "Invoice": {
+            "Subject": "Potvrda vaše rezervacije i račun",
+            "Body": "<h1>Vaš termin je potvrđen!</h1><p>Hvala vam što koristite našu uslugu. Kako bismo osigurali dolazak studenta u dogovoreno vrijeme, sustav automatski vrši naplatu 30 minuta prije početka termina. U privitku se nalazi vaš račun.</p><br/><br/><p>Vidimo se uskoro!</p>"
+        },
+        "Student": {
+            "ContractAboutToExpire": {
+                "Subject": "Vaš ugovor uskoro istječe",
+                "Body": "Pozdrav {0},<br/><br/>Vaš trenutni ugovor istječe za <b>{1} dana</b>. Molimo vas da učitate novi ugovor prije isteka kako bi vaš račun ostao aktivan."
+            },
+            "ContractExpired": {
+                "Subject": "Vaš ugovor je istekao",
+                "Body": "Pozdrav {0},<br/><br/>Vaš ugovor je istekao <b>{1}</b>. Vaš račun je sada označen kao istekao. Učitajte novi ugovor kako biste ponovno aktivirali račun."
+            },
+            "FinalAccountDeletionWarning": {
+                "Subject": "Zadnje upozorenje – Vaš račun bit će izbrisan za 7 dana",
+                "Body": "Pozdrav {0},<br/><br/>Vaš ugovor je istekao <b>{1}</b>.<br/><br/>Vaš račun bit će trajno izbrisan za <b>{2} dana</b>.<br/><br/>Ako učitate novi važeći ugovor prije tog roka, vaš račun će se automatski obnoviti.<br/><br/>Ako ne poduzmete ništa, račun će biti trajno uklonjen iz našeg sustava.<br/><br/>Hvala."
+            },
+            "ContractRenewalReminder": {
+                "Subject": "Podsjetnik: Obnovite svoj ugovor",
+                "Body": "Pozdrav {0},<br/><br/>Ovo je podsjetnik da vaš ugovor uskoro istječe. Molimo učitajte novi ugovor kako biste izbjegli prekid korištenja računa."
+            },
+            "AccountSoftDeleted": {
+                "Subject": "Vaš račun je deaktiviran",
+                "Body": "Pozdrav {0},<br/><br/>Vaš račun je deaktiviran jer je vaš ugovor istekao prije više od 90 dana. Račun možete vratiti učitavanjem novog ugovora u roku od sljedećih 90 dana."
+            },
+            "AccountPermanentlyDeleted": {
+                "Subject": "Vaš račun je trajno izbrisan",
+                "Body": "Pozdrav {0},<br/><br/>Vaš račun je trajno izbrisan jer vaš ugovor nije obnovljen više od 180 dana.<br/><br/>Ako trebate pomoć, kontaktirajte Helpi podršku."
+            }
+        }
+    }
+}

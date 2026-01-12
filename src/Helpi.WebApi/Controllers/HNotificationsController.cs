@@ -16,9 +16,9 @@ public class HNotificationsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<HNotificationDto>> GetById(int id)
+    public async Task<ActionResult<HNotificationDto>> GetById(int id, [FromQuery] string languageCode = "en")
     {
-        var notification = await _notificationService.GetByIdAsync(id);
+        var notification = await _notificationService.GetByIdAsync(id, languageCode);
         if (notification == null)
             return NotFound();
 
@@ -26,16 +26,18 @@ public class HNotificationsController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<HNotificationDto>>> GetByUserId(int userId)
+    public async Task<ActionResult<IEnumerable<HNotificationDto>>> GetByUserId(int userId,
+    [FromQuery] string languageCode = "en")
     {
-        var notifications = await _notificationService.GetByUserIdAsync(userId);
+        var notifications = await _notificationService.GetByUserIdAsync(userId, languageCode);
         return Ok(notifications);
     }
 
     [HttpGet("user/{userId}/unread")]
-    public async Task<ActionResult<IEnumerable<HNotificationDto>>> GetUnreadByUserId(int userId)
+    public async Task<ActionResult<IEnumerable<HNotificationDto>>> GetUnreadByUserId(int userId,
+     [FromQuery] string languageCode = "en")
     {
-        var notifications = await _notificationService.GetUnreadByUserIdAsync(userId);
+        var notifications = await _notificationService.GetUnreadByUserIdAsync(userId, languageCode);
         return Ok(notifications);
     }
 
@@ -50,9 +52,11 @@ public class HNotificationsController : ControllerBase
     public async Task<ActionResult<PagedHNotificationDto>> GetPaged(
         int userId,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string languageCode = "en"
+        )
     {
-        var result = await _notificationService.GetPagedAsync(userId, page, pageSize);
+        var result = await _notificationService.GetPagedAsync(userId, page, pageSize, languageCode);
         return Ok(result);
     }
 
@@ -89,7 +93,7 @@ public class HNotificationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("{id}/mark-read")]
+    [HttpPut("{id}/mark-read")]
     public async Task<ActionResult> MarkAsRead(int id)
     {
         var result = await _notificationService.MarkAsReadAsync(id);
@@ -99,7 +103,7 @@ public class HNotificationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("user/{userId}/mark-all-read")]
+    [HttpPut("user/{userId}/mark-all-read")]
     public async Task<ActionResult> MarkAllAsRead(int userId)
     {
         await _notificationService.MarkAllAsReadAsync(userId);

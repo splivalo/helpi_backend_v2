@@ -6,6 +6,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
+using Helpi.Infrastructure.Persistence.Extentions;
 using Microsoft.EntityFrameworkCore;
 public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 {
@@ -55,10 +56,11 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                         // Get only the latest job instance per assignment
                         var latestJobInstances = await _context.JobInstances
                             .Where(ji => ji.IsRescheduleVariant == false)
-                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId))
+                            .Where(ji => ji.ScheduleAssignmentId.HasValue)
+                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId!.Value))
                             .GroupBy(ji => ji.ScheduleAssignmentId)
                             .Select(g => g.OrderByDescending(x => x.ScheduledDate).First())
-                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId);
+                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId!.Value);
 
                         // Attach to assignments
                         foreach (var assignment in assignments)
@@ -103,9 +105,27 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 return await _context.ScheduleAssignments
                     .Where(sa => sa.OrderScheduleId == orderScheduleId)
                     .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                    .Where(sa => !sa.IsJobInstanceSub)
                     .OrderByDescending(sa => sa.AcceptedAt) // Get most recent
                     .Include(sa => sa.Student).ThenInclude(s => s.Contact)
                     .Select(sa => sa.Student)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+        }
+        public async Task<ScheduleAssignment?> GetAssignmentForOrderScheduleAsync(int orderScheduleId)
+        {
+                var activeStatuses = new[]
+               {
+                        AssignmentStatus.Completed,
+                        AssignmentStatus.Accepted
+                };
+
+                return await _context.ScheduleAssignments
+                    .Where(sa => sa.OrderScheduleId == orderScheduleId)
+                    .Where(sa => activeStatuses.Contains(sa.Status))
+                    .Where(sa => !sa.IsJobInstanceSub)
+                    .OrderByDescending(sa => sa.AssignedAt) // Get most recent
+                    .Include(sa => sa.Student).ThenInclude(s => s.Contact)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
         }
@@ -119,7 +139,9 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 };
 
                 return await _context.ScheduleAssignments
-                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId && activeStatuses.Contains(sa.Status));
+                    .AnyAsync(sa => sa.OrderScheduleId == scheduleId
+                    && activeStatuses.Contains(sa.Status)
+                    && !sa.IsJobInstanceSub);
         }
 
 
@@ -222,5 +244,9 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                                    sa.Status == AssignmentStatus.Accepted);
         }
 
+        public void Detach(ScheduleAssignment assignment)
+        {
+                _context.DetachEntity(assignment);
+        }
 }
 

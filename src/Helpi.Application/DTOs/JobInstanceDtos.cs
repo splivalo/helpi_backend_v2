@@ -1,4 +1,6 @@
 
+using Helpi.Application.DTOs.Order;
+using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
@@ -12,12 +14,16 @@ public class JobInstanceDto
     public int OrderId { get; set; }
 
     public int OrderScheduleId { get; set; }
+    public OrderScheduleDto? OrderSchedule { get; set; }
     public int? ContractId { get; set; }
-    public int ScheduleAssignmentId { get; set; }
+    public int? ScheduleAssignmentId { get; set; }
     public int? PrevAssignmentId { get; set; }
     public DateOnly ScheduledDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
+
+
+    public string? Notes { get; set; }
     public JobInstanceStatus Status { get; set; } = JobInstanceStatus.Upcoming;
     public bool NeedsSubstitute { get; set; } = false;
     public DateTime? ActualStartTime { get; set; }
@@ -45,7 +51,7 @@ public class JobInstanceDto
 
     public SeniorDto Senior { get; set; } = null!;
 
-    public ScheduleAssignmentDto Assignment { get; set; } = null!;
+    public ScheduleAssignmentDto? ScheduleAssignment { get; set; } = null!;
 
 }
 

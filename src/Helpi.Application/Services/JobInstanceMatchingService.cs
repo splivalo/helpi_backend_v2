@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.BackgroundJobs;
@@ -17,6 +18,7 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
     private readonly IStudentRepository _studentRepository;
     private readonly IJobRequestRepository _jobRequestRepository;
     private readonly INotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly IOrderRepository _orderRepository;
     private readonly ISeniorRepository _seniorRepository;
     private readonly ILogger<JobInstanceMatchingService> _logger;
@@ -34,6 +36,7 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
         IStudentRepository studentRepository,
         IJobRequestRepository jobRequestRepository,
         INotificationService notificationService,
+INotificationFactory notificationFactory,
         IOrderRepository orderRepository,
         ISeniorRepository seniorRepository,
         ILogger<JobInstanceMatchingService> logger,
@@ -44,6 +47,7 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
         _studentRepository = studentRepository;
         _jobRequestRepository = jobRequestRepository;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _orderRepository = orderRepository;
         _seniorRepository = seniorRepository;
         _logger = logger;
@@ -69,8 +73,8 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             // Get the job instance and reassignment record
             var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
             {
-                Order = true
-                // Assignment = true
+                Order = true,
+                OrderSchedule = true,
             });
 
 
@@ -120,24 +124,26 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
 
             if (!qualifiedStudents.Any())
             {
-                _logger.LogWarning("⚠️ No qualified students found for job instance {JobInstanceId}", jobInstanceId);
-                await HandleNoQualifiedStudents(jobInstance, reassignmentRecord);
-                return;
+                if (notifiedStudentIds.Any())
+                {
+                    _logger.LogInformation("📝 All qualified students already notified for reassignment record {RecordId}", reassignmentRecordId);
+                    await HandleAllStudentsNotified(jobInstance, reassignmentRecord, notifiedStudentIds);
+                    return;
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ No qualified students found for job instance {JobInstanceId}", jobInstanceId);
+                    await HandleNoQualifiedStudents(jobInstance, reassignmentRecord);
+                    return;
+                }
             }
 
 
 
             // Filter out already notified students
-            var unnotifiedStudents = qualifiedStudents
-                .Where(s => !notifiedStudentIds.Contains(s.UserId))
-                .ToList();
+            var unnotifiedStudents = qualifiedStudents;
 
-            if (!unnotifiedStudents.Any())
-            {
-                _logger.LogInformation("📝 All qualified students already notified for reassignment record {RecordId}", reassignmentRecordId);
-                await HandleAllStudentsNotified(jobInstance, reassignmentRecord, notifiedStudentIds);
-                return;
-            }
+
 
             // Take the top N students based on prioritization
             var studentsToNotify = unnotifiedStudents
@@ -166,26 +172,13 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             else if (!anyNotificationSent)
             {
                 _logger.LogWarning("⚠️ No notifications sent for reassignment record {RecordId}, stopping matching", reassignmentRecordId);
-                await HandleMatchingFailed(reassignmentRecord, "No notifications could be sent");
+                await HandleMatchingCancel(reassignmentRecord, "No notifications could be sent");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error processing job instance matching for instance {JobInstanceId}, reassignment record {RecordId}",
                 jobInstanceId, reassignmentRecordId);
-
-            // Update reassignment record with error
-            var reassignmentRecord = await _reassignmentRecordRepository.GetByIdAsync(
-                        reassignmentRecordId,
-                        new ReassignmentIncludeOptions { }
-                        );
-
-            if (reassignmentRecord != null)
-            {
-                reassignmentRecord.Status = ReassignmentStatus.Failed;
-                reassignmentRecord.Reason += $"; Error: {ex.Message}";
-                await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
-            }
         }
     }
 
@@ -199,7 +192,8 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
     {
         // Get the order to find required services
         var order = await _orderRepository.LoadOrderWithIncludes(jobInstance.OrderId,
-         new OrderIncludeOptions { Senior = true });
+         new OrderIncludeOptions { Senior = true }
+        );
 
         if (order == null)
         {
@@ -216,10 +210,10 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             var originalStudentId = reassignmentRecord.OriginalStudentId.Value;
 
             // mark original student as notified , unless if he is mentioned as prefered
-            if (preferedStudentId != originalStudentId)
-            {
-                notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
-            }
+            // if (preferedStudentId != originalStudentId)
+            // {
+            // notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
+            // }
 
         }
 
@@ -230,56 +224,17 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             jobInstance.EndTime,
             order.Senior.Contact.CityId,
             serviceIds,
-            notifiedStudentIds
+            notifiedStudentIds,
+             reassignmentRecord?.PreferredStudentId
         );
 
+
+
         // Prioritize students
-        return await PrioritizeStudents(
-            availableStudents,
-            order,
-             jobInstance,
-             preferedStudentId
-             );
+        return availableStudents;
     }
 
-    private async Task<List<Student>> PrioritizeStudents(
-        List<Student> students,
-         Order order,
-          JobInstance jobInstance,
-          int? preferedStudentId)
-    {
-        var senior = await _seniorRepository.GetByIdAsync(order.SeniorId);
 
-        return students
-       .OrderByDescending(s => preferedStudentId.HasValue && s.UserId == preferedStudentId.Value)
-       .ThenByDescending(s => s.AverageRating)
-       .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue)
-       .ToList();
-    }
-
-    private double CalculateDistance(Student student, Senior senior)
-    {
-        if (student?.Contact == null || senior?.Contact == null)
-            return 0;
-
-        var lat1 = (double)student.Contact.Latitude;
-        var lon1 = (double)student.Contact.Longitude;
-        var lat2 = (double)senior.Contact.Latitude;
-        var lon2 = (double)senior.Contact.Longitude;
-
-        const double R = 6371; // Earth radius in kilometers
-        var dLat = DegreesToRadians(lat2 - lat1);
-        var dLon = DegreesToRadians(lon2 - lon1);
-
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
-    }
-
-    private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
 
     private async Task<bool> TrySendJobRequest(
             Student student,
@@ -313,27 +268,15 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
             await _jobRequestRepository.AddAsync(jobRequest);
 
             // Send notification
-            var jobRequestNotification = new HNotification
-            {
-                RecieverUserId = student.UserId,
-                Title = "Urgent: Substitution Needed",
-                Body = $"Urgent substitution needed for {jobInstance.ScheduledDate:MMM dd} at {jobInstance.StartTime:hh:mm tt}. " +
-                      $"Expires: {expiresAt:MMM dd, yyyy hh:mm tt}",
-                Type = NotificationType.JobRequest,
-                Payload = JsonSerializer.Serialize(new
-                {
-                    InstanceId = jobInstance.Id,
-                    ScheduledDate = jobInstance.ScheduledDate,
-                    StartTime = jobInstance.StartTime,
-                    EndTime = jobInstance.EndTime,
-                    ExpiresAt = expiresAt,
-                    IsReassignment = true,
-                    ReassignmentType = reassignmentRecord.ReassignmentType.ToString(),
-                    ReassignmentRecordId = reassignmentRecord.Id
-                })
-            };
+            var jobRequestNotification = _notificationFactory.JobRequestNotification(
+                                student.UserId,
+                                jobInstance.OrderSchedule!,
+                                reassignmentRecord,
+                                student.Contact.LanguageCode ?? "en"
+                                );
 
-            bool notificationSent = await _notificationService.SendPushNotificationAsync(
+
+            bool notificationSent = await _notificationService.SendNotificationAsync(
                 student.UserId, jobRequestNotification);
 
             if (notificationSent)
@@ -366,72 +309,67 @@ public class JobInstanceMatchingService : IJobInstanceMatchingService
 
     private async Task HandleMaxAttemptsReached(ReassignmentRecord reassignmentRecord)
     {
-        reassignmentRecord.Status = ReassignmentStatus.Failed;
+        reassignmentRecord.Status = ReassignmentStatus.MaxAttemptsReached;
         reassignmentRecord.Reason += "; Max matching attempts reached";
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin
-        await NotifyAdminAboutReassignmentFailure(reassignmentRecord, "Max matching attempts reached");
+
     }
 
     private async Task HandleNoQualifiedStudents(JobInstance jobInstance, ReassignmentRecord reassignmentRecord)
     {
-        reassignmentRecord.Status = ReassignmentStatus.Failed;
+        reassignmentRecord.Status = ReassignmentStatus.NoEligibleStudents;
+        reassignmentRecord.AllowAutoScheduling = false;
         reassignmentRecord.Reason += "; No qualified students found";
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin
-        await NotifyAdminAboutReassignmentFailure(reassignmentRecord, "No qualified students found");
+        var adminId = await GetAdminId();
+        var notification = _notificationFactory.NoEligibleStudentsNotification(
+                   adminId,
+                   order: reassignmentRecord.Order,
+                   schedule: reassignmentRecord.OrderSchedule,
+                   reassignment: reassignmentRecord
+                   );
 
+        await _notificationService.StoreAndNotifyAsync(notification);
 
     }
 
     private async Task HandleAllStudentsNotified(JobInstance jobInstance, ReassignmentRecord reassignmentRecord, List<int> notifiedStudentIds)
     {
-        reassignmentRecord.Status = ReassignmentStatus.Failed;
+        reassignmentRecord.Status = ReassignmentStatus.AllEligableStudentNotified;
         reassignmentRecord.Reason += $"; All {notifiedStudentIds.Count} qualified students notified, none accepted";
+        reassignmentRecord.AllowAutoScheduling = false;
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin
-        await NotifyAdminAboutReassignmentFailure(reassignmentRecord,
-            $"All {notifiedStudentIds.Count} qualified students notified, none accepted");
+        var adminId = await GetAdminId();
+        var notification = _notificationFactory.AllEligibleStudentsNotified(
+                   adminId,
+                   order: reassignmentRecord.Order,
+                   schedule: reassignmentRecord.OrderSchedule,
+                   reassignment: reassignmentRecord
+                   );
+
+        await _notificationService.StoreAndNotifyAsync(notification);
 
         // Also update the job instance status if needed
         jobInstance.NeedsSubstitute = false;
         await _jobInstanceRepository.UpdateAsync(jobInstance);
     }
 
-    private async Task HandleMatchingFailed(ReassignmentRecord reassignmentRecord, string reason)
+    private async Task HandleMatchingCancel(ReassignmentRecord reassignmentRecord, string reason)
     {
-        reassignmentRecord.Status = ReassignmentStatus.Failed;
+        reassignmentRecord.Status = ReassignmentStatus.Cancelled;
         reassignmentRecord.Reason += $"; {reason}";
+        reassignmentRecord.AllowAutoScheduling = false;
         await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
         // Notify admin
-        await NotifyAdminAboutReassignmentFailure(reassignmentRecord, reason);
     }
 
-    private async Task NotifyAdminAboutReassignmentFailure(ReassignmentRecord reassignmentRecord, string reason)
-    {
-        var adminId = await GetAdminId();
-        var notification = new HNotification
-        {
-            RecieverUserId = adminId,
-            Title = "Reassignment Failed",
-            Body = $"Reassignment #{reassignmentRecord.Id} failed. Reason: {reason}",
-            Type = NotificationType.ReassignmentFailed,
-            Payload = JsonSerializer.Serialize(new
-            {
-                ReassignmentId = reassignmentRecord.Id,
-                Reason = reason,
-                AttemptCount = reassignmentRecord.AttemptCount,
-                ReassignmentRecordId = reassignmentRecord.Id
-            }),
-            SeniorId = reassignmentRecord.Order.SeniorId,
-        };
-
-        await _notificationService.StoreAndNotifyAsync(notification);
-    }
 
     private Task<int> GetAdminId() => Task.FromResult(1);
 }

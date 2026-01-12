@@ -1,7 +1,9 @@
 using FirebaseAdmin.Auth;
 using FirebaseAdmin.Messaging;
+using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Infrastructure.Services;
@@ -12,6 +14,9 @@ public class FirebaseService : IFirebaseService
 {
     private readonly FirebaseMessaging _firebaseMessaging;
     private readonly ILogger<FirebaseService> _logger;
+
+
+
     public FirebaseService(
         ILogger<FirebaseService> logger
     )
@@ -26,30 +31,109 @@ public class FirebaseService : IFirebaseService
     }
 
 
-    public async Task<bool> SendPushNotificationAsync(List<string> deviceTokens, HNotification notification)
+    public async Task<bool> SendPushNotificationAsync(List<FcmToken> deviceTokens, HNotificationDto notification)
     {
 
+        var androidTokens = deviceTokens
+         .Where(d => d.Platform == DevicePlatform.Android)
+         .Select(d => d.Token)
+         .ToList();
+
+        var iosTokens = deviceTokens
+            .Where(d => d.Platform == DevicePlatform.iOS)
+            .Select(d => d.Token)
+            .ToList();
+
+        var results = new List<BatchResponse>();
+
+        if (androidTokens.Count > 0)
+        {
+            results.Add(await SendAndroidAsync(androidTokens, notification));
+        }
+
+        if (iosTokens.Count > 0)
+        {
+            results.Add(await SendIosAsync(iosTokens, notification));
+        }
+
+        return results.Any(r => r.SuccessCount > 0);
+
+    }
+
+    private async Task<BatchResponse> SendAndroidAsync(
+    List<string> tokens,
+    HNotificationDto n)
+    {
         var message = new MulticastMessage
         {
-            Tokens = deviceTokens,
+            Tokens = tokens,
             Data = new Dictionary<string, string>
             {
-                ["notificationId"] = notification.Id.ToString(),
-                ["type"] = notification.Type.ToString(),
-                ["payload"] = notification.Payload ?? string.Empty
+                ["title"] = n.Title,
+                ["body"] = n.Body,
+                ["notificationId"] = n.Id.ToString(),
+                ["type"] = n.Type.ToString(),
+                ["payload"] = n.Payload ?? string.Empty
             },
-            Notification = new Notification
+            Android = new AndroidConfig
             {
-                Title = notification.Title,
-                Body = notification.Body
+                Priority = Priority.High
             }
         };
 
         var response = await _firebaseMessaging.SendEachForMulticastAsync(message);
-        var failCount = LogFailedAttempts(response, notification.RecieverUserId);
+        LogFailedAttempts(response, n.RecieverUserId);
 
-        return failCount < response.Responses.Count;
+        return response;
     }
+
+    private async Task<BatchResponse> SendIosAsync(
+    List<string> tokens,
+    HNotificationDto n)
+    {
+        var message = new MulticastMessage
+        {
+            Tokens = tokens,
+
+            Notification = new Notification
+            {
+                Title = n.Title,
+                Body = n.Body
+            },
+
+            Data = new Dictionary<string, string>
+            {
+                ["title"] = n.Title,
+                ["body"] = n.Body,
+                ["notificationId"] = n.Id.ToString(),
+                ["type"] = n.Type.ToString(),
+                ["payload"] = n.Payload ?? string.Empty
+            },
+
+            Apns = new ApnsConfig
+            {
+                Headers = new Dictionary<string, string>
+                {
+                    ["apns-priority"] = "10"
+                },
+                Aps = new Aps
+                {
+                    // ContentAvailable = true,
+                    // MutableContent = true,
+                    Sound = "default",
+                    Badge = 1
+                }
+            }
+        };
+
+        var response = await _firebaseMessaging.SendEachForMulticastAsync(message);
+        LogFailedAttempts(response, n.RecieverUserId);
+
+        return response;
+    }
+
+
+
 
     private int LogFailedAttempts(BatchResponse response, int userId)
     {

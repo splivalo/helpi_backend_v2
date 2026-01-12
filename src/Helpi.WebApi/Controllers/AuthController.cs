@@ -117,5 +117,27 @@ public class AuthController : ControllerBase
         return Ok(tokenResponseDto);
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        var (success, message) = await _authService.ForgotPasswordAsync(dto.Email);
+        return Ok(new
+        {
+            success,
+            message
+        });
+    }
+
+    [HttpPost("reset-password-code")]
+    public async Task<IActionResult> ResetPasswordCode([FromBody] VerifyResetCodeDto dto)
+    {
+        var (success, message) = await _authService.ResetPasswordWithCodeAsync(dto.Email, dto.Code, dto.NewPassword);
+        return Ok(new
+        {
+            success,
+            message
+        });
+    }
+
 
 }

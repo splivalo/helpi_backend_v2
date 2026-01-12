@@ -19,12 +19,16 @@ public interface IStudentRepository
     Task DeleteAsync(Student student);
     Task GetByFacultyAsync(int facultyId);
 
-    Task<List<Student>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds);
+    Task<List<Student>> FindEligibleStudentsForSchedule(
+        int orderScheduleId,
+        List<int>? notifiedStudentIds,
+         int? preferedStudentId);
     Task<List<Student>> LoadStudentsWithIncludes(
         int? studentId,
         StudentIncludeOptions studentIncludeOptions,
          List<StudentStatus>? withStatus = null,
-    List<StudentStatus>? excludeStatus = null);
+    List<StudentStatus>? excludeStatus = null,
+    bool asNoTracking = true);
     Task<int> CountAsync(Expression<Func<Student, bool>> predicate);
     Task<List<Student>> FindEligibleStudentsForInstance(
                             DateOnly scheduledDate,
@@ -32,11 +36,15 @@ public interface IStudentRepository
                             TimeOnly endTime,
                             int seniorCityId,
                             List<int> serviceIds,
-                            List<int> notifiedStudentIds);
+                            List<int> notifiedStudentIds,
+                            int? preferedStudentId);
 
     Task<List<Student>> FindEligibleStudentsForInstance2(
    DateOnly date,
    TimeOnly startTime,
    TimeOnly endTime,
-   int orderId);
+   int orderId,
+int? preferedStudentId,
+ List<int> excludeJobInstanceIds
+   );
 }

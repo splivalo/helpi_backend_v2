@@ -1,4 +1,3 @@
-
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Helpi.Application;
@@ -17,33 +16,40 @@ using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
+// ------------------------------------------------------------
+// 1️⃣  CONFIGURATION & LOGGING
+// ------------------------------------------------------------
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>()      // Development secrets
+    .AddEnvironmentVariables();     // Environment overrides
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+// ------------------------------------------------------------
+// 2️⃣  SERVICE REGISTRATION
+// ------------------------------------------------------------
+
+// Core framework services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Infrastructure & application layers
 builder.Services.AddInfrastructure(builder.Configuration);
-
+builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddIdentityServices(builder.Configuration);
+builder.Services.AddHangfireServices(builder.Configuration);
+builder.Services.AddSignalRServices(builder.Configuration);
 builder.Services.AddGoogleDriveServices(builder.Configuration);
 
-// here because of NotificationHub
+// SignalR notifications
 builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
 
-builder.Services.AddSignalRServices(builder.Configuration);
-
-
-builder.Services.AddApplication(builder.Configuration);
-
-
-builder.Services.AddIdentityServices(builder.Configuration);
-
-builder.Services.AddHangfireServices(builder.Configuration);
-
-
-
-
+// FluentValidation (automatic model validation)
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<OrderCreateDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<OrderScheduleCreateDtoValidator>();
@@ -53,128 +59,141 @@ builder.Services.AddValidatorsFromAssemblyContaining<AdminRegisterDtoValidator>(
 builder.Services.AddValidatorsFromAssemblyContaining<StudentRegisterDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CustomerRegisterDtoValidator>();
 
+// CORS policies
 builder.Services.AddCors(options =>
 {
     if (env.IsDevelopment())
     {
         options.AddPolicy("AllowAll", policy => policy
-           .AllowAnyOrigin()  // For development ONLY! 
-           .AllowAnyMethod()
-           .AllowAnyHeader());
+            .AllowAnyOrigin()   // Development only
+            .AllowAnyMethod()
+            .AllowAnyHeader());
     }
     else
     {
         options.AddPolicy("AllowFlutterAdminDashboard", policy => policy
-               .WithOrigins("https://admin.helpi.social")
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               );
+            .WithOrigins("https://admin.helpi.social")
+            .AllowAnyMethod()
+            .AllowAnyHeader());
     }
 });
 
 
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddUserSecrets<Program>() // 👈 Loads secrets for dev
-    .AddEnvironmentVariables(); // 👈 Prepares for prod
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
 
+
+// ------------------------------------------------------------
+// 3️⃣  BUILD APP
+// ------------------------------------------------------------
 var app = builder.Build();
 
+
+
+// Initialize Firebase
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
 
-
-
-// Configure the HTTP request pipeline.
+// ------------------------------------------------------------
+// 4️⃣  MIDDLEWARE PIPELINE
+// ------------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+
+
+// Pre-flight CORS handling (must be early)
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
+app.UseCors("AllowFlutterAdminDashboard");
+app.UseCors("AllowAllForPreflight");
+
+// Serve static files
+app.UseStaticFiles();
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
+// Short-circuit OPTIONS requests
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        await context.Response.CompleteAsync();
+        return;
+    }
+    await next();
+});
+
+app.UseRouting();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// app.UseHttpsRedirection(); // Disabled on server—enable when HTTPS is ready
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Hangfire dashboard (background jobs)
 app.UseHangfireDashboard();
 
+// ------------------------------------------------------------
+// 5️⃣  ENDPOINTS
+// ------------------------------------------------------------
+app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 
+
+app.UseWebSockets();
+
+// ------------------------------------------------------------
+// 6️⃣  STARTUP TASKS (Seed data, subscribe events, schedule jobs)
+// ------------------------------------------------------------
+
+// Domain event subscriptions
 using (var scope = app.Services.CreateScope())
 {
     var mediator = scope.ServiceProvider.GetRequiredService<IEventMediator>();
     mediator?.Subscribe<ReinitiateAllFailedMatchesEvent, FailedMatchReinitiationService>();
 }
 
-
-
-/// Seeds
+// Seed essential data
 using (var scope = app.Services.CreateScope())
 {
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
     await roleSeeder.SeedRolesAsync();
 
-    var contractNumberSequenceSeeder = scope.ServiceProvider.GetRequiredService<ContractNumberSequenceSeeder>();
-    await contractNumberSequenceSeeder.SeedAsync();
+    var contractSeeder = scope.ServiceProvider.GetRequiredService<ContractNumberSequenceSeeder>();
+    await contractSeeder.SeedAsync();
 
     var serviceDataSeeder = scope.ServiceProvider.GetRequiredService<ServiceDataSeeder>();
     await serviceDataSeeder.SeedAsync();
 
+    var facultyDataSeeder = scope.ServiceProvider.GetRequiredService<FacultyDataSeeder>();
+    await facultyDataSeeder.SeedAsync();
+
     await app.Services.SeedPriceConfigAsync();
 }
 
-
-/// Hangfire schedules
+// Hangfire recurring jobs
 using (var scope = app.Services.CreateScope())
 {
+    var studentJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
+    studentJobs.ProcessStudentContracts();
+
     var jobInstanceJobs = scope.ServiceProvider.GetRequiredService<IJobInstanceJobs>();
     jobInstanceJobs.GenerateFutureJobInstances();
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
-
-    //
-    var studentBackgroundJobs = scope.ServiceProvider.GetRequiredService<StudentBackgroundJobs>();
-    studentBackgroundJobs.ProcessStudentContracts();
 }
 
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAll");
-}
-
-app.UseCors("AllowFlutterAdminDashboard");
-app.UseCors("AllowAllForPreflight"); // Apply CORS middleware early in the pipeline
-
-app.Use(async (context, next) =>
-{
-
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 204; // No Content
-        await context.Response.CompleteAsync();
-        return; // Short-circuit the pipeline for OPTIONS
-    }
-    await next();
-});
-
-
-
-app.UseRouting();
-
-
-
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-// app.UseHttpsRedirection(); <-- problem on server
-
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-
-app.MapControllers();
-
-app.MapHub<NotificationHub>("/hubs/notification");
-
+// ------------------------------------------------------------
+// 7️⃣  RUN APPLICATION
+// ------------------------------------------------------------
 app.Run();
-

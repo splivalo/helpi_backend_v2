@@ -16,6 +16,7 @@ public interface IJobInstanceService
 
     Task UpdateToInProgressAsync(int jobInstanceId);
     Task UpdateToCompletedAsync(int jobInstanceId);
+    Task RemindStudentAsync(int jobInstanceId);
     Task RequestJobReviewAsync(int jobInstanceId);
 
     Task<JobInstanceDto?> ManageJobInstance(
