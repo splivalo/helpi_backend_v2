@@ -8,6 +8,8 @@ using Helpi.Domain.ValueObjects;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Text.Json;
+using File = System.IO.File;
 
 namespace Helpi.Application.Services
 {
@@ -38,20 +40,33 @@ namespace Helpi.Application.Services
             _mapper = mapper;
             _paymentErrorMapper = paymentErrorMapper;
 
+            // Load Stripe credentials from JSON file
+            var stripeCredentialsPath = Environment.GetEnvironmentVariable("STRIPE_CREDENTIALS_JSON")
+                           ?? configuration["Stripe:CredentialsJson"];
 
+            if (string.IsNullOrEmpty(stripeCredentialsPath))
+            {
+                throw new InvalidOperationException("Stripe credentials not found in environment variables or configuration.");
+            }
 
+            if (!File.Exists(stripeCredentialsPath))
+            {
+                throw new FileNotFoundException($"Stripe credentials file not found at {stripeCredentialsPath}");
+            }
 
-            // Initialize Stripe API with your secret key
+            var stripeCredentialsJson = File.ReadAllText(stripeCredentialsPath);
+            using var jsonDoc = JsonDocument.Parse(stripeCredentialsJson);
+            var root = jsonDoc.RootElement;
 
+            var stripeSecretKey = root.GetProperty("SecretKey").GetString()
+                ?? throw new ArgumentNullException("Stripe:SecretKey");
 
-            var stripeSecretKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
-                                  ??
-                                  configuration["Stripe:SecretKey"];
-
-
+            if (string.IsNullOrWhiteSpace(stripeSecretKey))
+            {
+                throw new InvalidOperationException("Stripe SecretKey is missing or empty in credentials file.");
+            }
 
             StripeConfiguration.ApiKey = stripeSecretKey;
-
         }
 
         public async Task<string> CreateCustomerAsync(User user)

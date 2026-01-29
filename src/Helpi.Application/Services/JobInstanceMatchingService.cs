@@ -210,10 +210,13 @@ INotificationFactory notificationFactory,
             var originalStudentId = reassignmentRecord.OriginalStudentId.Value;
 
             // mark original student as notified , unless if he is mentioned as prefered
-            // if (preferedStudentId != originalStudentId)
-            // {
-            // notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
-            // }
+            if (preferedStudentId != null)
+            {
+                if (preferedStudentId != originalStudentId)
+                {
+                    notifiedStudentIds.Add(reassignmentRecord.OriginalStudentId.Value);
+                }
+            }
 
         }
 

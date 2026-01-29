@@ -1,8 +1,10 @@
 
 using System.Reflection.Metadata.Ecma335;
 using AutoMapper;
+using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -19,13 +21,25 @@ public class StudentsService
         private readonly IContactInfoRepository _contactInfoRepo;
         private readonly IStudentServiceRepository _studentServiceRepo;
         private readonly IStudentAvailabilitySlotRepository _studentAvailabilityRepo;
+        private readonly IReassignmentService _reassignmentService;
+        private readonly FcmTokensService _fcmTokensService;
+        private readonly IFirebaseService _firebaseService;
+        private readonly IUserRepository _userRepository;
+        private readonly INotificationService _notificationService;
+        private readonly INotificationFactory _notificationFactory;
 
         public StudentsService(IStudentRepository repository,
          IMapper mapper,
            ILogger<StudentsService> logger,
              IStudentServiceRepository studentServiceRepo,
         IStudentAvailabilitySlotRepository studentAvailabilityRepo,
-        IContactInfoRepository contactInfoRepo
+        IContactInfoRepository contactInfoRepo,
+        IReassignmentService reassignmentService,
+        FcmTokensService fcmTokensService,
+        IFirebaseService firebaseService,
+        IUserRepository userRepository,
+        INotificationService notificationService,
+        INotificationFactory notificationFactory
          )
         {
                 _repository = repository;
@@ -34,6 +48,12 @@ public class StudentsService
                 _studentServiceRepo = studentServiceRepo;
                 _studentAvailabilityRepo = studentAvailabilityRepo;
                 _contactInfoRepo = contactInfoRepo;
+                _reassignmentService = reassignmentService;
+                _fcmTokensService = fcmTokensService;
+                _firebaseService = firebaseService;
+                _userRepository = userRepository;
+                _notificationService = notificationService;
+                _notificationFactory = notificationFactory;
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(StudentFilterDto? filter = null)
@@ -114,6 +134,40 @@ public class StudentsService
                 {
                         var student = await _repository.GetByIdAsync(studentId);
 
+                        // Step 1: Reassign all active jobs for this student
+                        _logger.LogInformation("🔄 Reassigning jobs for student {StudentId}", student.UserId);
+                        await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+                        _logger.LogInformation("✅ Job reassignment completed for student {StudentId}", student.UserId);
+
+                        // Step 2: Delete FCM tokens (non-blocking on failure)
+                        try
+                        {
+                                _logger.LogInformation("🗑️ Deleting FCM tokens for student {StudentId}", student.UserId);
+                                await _fcmTokensService.DeleteUserFcmTokensAsync(student.UserId);
+                        }
+                        catch (Exception fcmEx)
+                        {
+                                _logger.LogError(fcmEx, "⚠️ Failed to delete FCM tokens for student {StudentId}, continuing with deletion", student.UserId);
+                        }
+
+                        // Step 3: Anonymize Firebase data and revoke sessions (non-blocking on failure)
+                        try
+                        {
+                                _logger.LogInformation("🔥 Anonymizing Firebase data for student {StudentId}", student.UserId);
+                                await _firebaseService.AnonymizeAndLogoutUserAsync(student.UserId);
+                        }
+                        catch (Exception firebaseEx)
+                        {
+                                _logger.LogError(firebaseEx, "⚠️ Failed to anonymize Firebase data for student {StudentId}, continuing with deletion", student.UserId);
+                        }
+
+                        // Step 4: Anonymize ASP.NET Core Identity user data
+                        _logger.LogInformation("🔐 Anonymizing Identity data for student {StudentId}", student.UserId);
+                        var originalUserNameFromIdentity = await _userRepository.AnonymizeAndLogoutUserAsync(student.UserId);
+                        var originalUserName = student.Contact?.FullName ?? originalUserNameFromIdentity;
+                        _logger.LogInformation("✅ Identity data anonymized for student {StudentId}", student.UserId);
+
+                        // Step 6: Update student status and anonymize contact info
                         student.Status = StudentStatus.Deleted;
 
                         var contact = student.Contact;
@@ -126,11 +180,27 @@ public class StudentsService
                         await _repository.UpdateAsync(student);
                         await _contactInfoRepo.UpdateAsync(contact);
 
-                        // Delete related entities first (maintaining referential integrity)
+                        // Step 7: Delete related entities (maintaining referential integrity)
                         await _studentAvailabilityRepo.RemoveAllByStudentIdAsync(student.UserId);
                         await _studentServiceRepo.RemoveAllByStudentIdAsync(student.UserId);
 
-
+                        // Step 8: Notify admin about the deletion
+                        try
+                        {
+                                _logger.LogInformation("📧 Sending deletion notification to admin for student {StudentId}", student.UserId);
+                                var notification = _notificationFactory.UserDeletedNotification(
+                                        receiverUserId: 1, // admin
+                                        deletedUserId: student.UserId,
+                                        deletedUserName: originalUserName,
+                                        NotificationType.StudentDeleted
+                                );
+                                await _notificationService.StoreAndNotifyAsync(notification);
+                                _logger.LogInformation("✅ Admin notification sent for deleted student {StudentId}", student.UserId);
+                        }
+                        catch (Exception notifyEx)
+                        {
+                                _logger.LogError(notifyEx, "⚠️ Failed to send deletion notification for student {StudentId}, but deletion completed", student.UserId);
+                        }
 
                         _logger.LogInformation("✅ Student {StudentId} permanently deleted from database", student.UserId);
 

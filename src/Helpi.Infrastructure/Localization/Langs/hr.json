@@ -7,6 +7,8 @@
         "Reassignment": "Ponovno dodjeljivanje #{0}",
         "Student": "Student: {0}",
         "Senior": "Starija osoba: {0}",
+        "Customer": "Kupac: {0}",
+        "Admin": "Administrator: {0}",
         "Unknown": "Nepoznat entitet"
     },
     "Notifications": {
@@ -89,6 +91,10 @@
         "AllEligibleStudentsNotified": {
             "Title": "Svi dostupni studenti su obaviješteni",
             "Body": "{0}"
+        },
+        "UserDeleted": {
+            "Title": "Korisnik izbrisan",
+            "Body": "{0} (ID: {1}) je trajno izbrisan"
         }
     },
     "Emails": {

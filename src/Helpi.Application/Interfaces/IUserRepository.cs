@@ -13,4 +13,12 @@ public interface IUserRepository
     Task DeleteAsync(User user);
     Task<int> CountAsync(Expression<Func<User, bool>> predicate);
 
+    /// <summary>
+    /// Anonymizes user data (email, username, phone, password) and invalidates all sessions
+    /// by regenerating the security stamp. Works for any user type.
+    /// </summary>
+    /// <param name="userId">The user ID to anonymize</param>
+    /// <returns>The original username/display name before anonymization</returns>
+    Task<string> AnonymizeAndLogoutUserAsync(int userId);
+
 }

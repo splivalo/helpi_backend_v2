@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using Helpi.Application.DTOs;
 using Helpi.Application.Services;
 using Helpi.Domain.Enums;
@@ -93,4 +94,32 @@ public class StudentsController : ControllerBase
 
         [HttpPatch("{id}/verification")]
         public async Task<IActionResult> UpdateVerification(int id, [FromBody] StudentStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+                // Get current user info from JWT claims
+                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(currentUserIdString) || !int.TryParse(currentUserIdString, out var currentUserId))
+                {
+                        return Unauthorized(new { message = "Invalid user identity" });
+                }
+
+                var isAdmin = User.IsInRole(UserType.Admin.ToString());
+                var isStudent = User.IsInRole(UserType.Student.ToString());
+
+                // Authorization: Admin can delete any student, Student can only delete their own account
+                if (!isAdmin && !(isStudent && currentUserId == id))
+                {
+                        return Forbid();
+                }
+
+                var result = await _service.PermanentlyDeleteStudent(id);
+                if (result)
+                {
+                        return NoContent();
+                }
+
+                return StatusCode(500, new { message = "Failed to delete student" });
+        }
 }

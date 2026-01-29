@@ -35,14 +35,13 @@ public class MinimaxService : IMinimaxService
     /// -----------------
     /// </summary>
 
-    private int _organisationId = 41293; // Apoyo
+    private readonly int _organisationId;
 
     private static readonly MinimaxEntityReference Country_HR = new() { Id = 95, Name = "HRVATSKA" };
     private static readonly MinimaxEntityReference Currency_EUR = new() { Id = 7, Name = "Euro" };
     private static readonly MinimaxEntityReference Vatrate_0 = new() { Id = 6, Name = "N" };
-    private static readonly MinimaxEntityReference PaymentMethod_Transactional = new() { Id = 173739, Name = "Transactional Account" };
-
-    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 41901 };
+    private readonly MinimaxEntityReference PaymentMethod_Transactional;
+    private readonly MinimaxEntityReference DocumentNumbering_Default;
 
     /// ---------------------------
     public MinimaxService(IApiService apiService,
@@ -85,6 +84,32 @@ public class MinimaxService : IMinimaxService
 
         _password = root.GetProperty("Password").GetString()
         ?? throw new ArgumentNullException("Minimax:Password");
+
+        // Load environment-specific settings from configuration
+        var settingsSection = _configuration.GetSection("Minimax:Settings");
+
+        // OrganisationId
+        if (!int.TryParse(settingsSection["OrganisationId"], out var organisationId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:OrganisationId is missing or invalid in configuration.");
+        }
+        _organisationId = organisationId;
+
+        // PaymentMethod
+        if (!int.TryParse(settingsSection["PaymentMethodId"], out var paymentMethodId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:PaymentMethodId is missing or invalid in configuration.");
+        }
+        var paymentMethodName = settingsSection["PaymentMethodName"]
+            ?? throw new InvalidOperationException("Minimax:Settings:PaymentMethodName is missing in configuration.");
+        PaymentMethod_Transactional = new MinimaxEntityReference { Id = paymentMethodId, Name = paymentMethodName };
+
+        // DocumentNumbering
+        if (!int.TryParse(settingsSection["DocumentNumberingId"], out var documentNumberingId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:DocumentNumberingId is missing or invalid in configuration.");
+        }
+        DocumentNumbering_Default = new MinimaxEntityReference { Id = documentNumberingId };
     }
 
 

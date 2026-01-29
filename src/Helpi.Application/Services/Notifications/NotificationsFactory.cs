@@ -425,4 +425,41 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
+    public HNotification UserDeletedNotification(int receiverUserId, int deletedUserId, string deletedUserName, NotificationType type)
+    {
+        // Use Entities key based on type for clearer messaging
+        var entityKey = type switch
+        {
+            NotificationType.StudentDeleted => "Entities.Student",
+            NotificationType.SeniorDeleted => "Entities.Senior",
+            NotificationType.CustomerDeleted => "Entities.Customer",
+            NotificationType.AdminDeleted => "Entities.Admin",
+            _ => "Entities.Unknown"
+        };
+
+        var entityDescription = _loc.GetString(entityKey, null, deletedUserName);
+
+        var notification = new HNotification
+        {
+            RecieverUserId = receiverUserId,
+            TranslationKey = "Notifications.UserDeleted",
+            Title = _loc.GetString("Notifications.UserDeleted.Title"),
+            Body = _loc.GetString("Notifications.UserDeleted.Body", null, entityDescription, deletedUserId),
+            Type = type,
+            Payload = JsonSerializer.Serialize(new { deletedUserId, deletedUserName, userType = type.ToString() })
+        };
+
+        // Assign StudentId or SeniorId based on notification type
+        if (type == NotificationType.StudentDeleted)
+        {
+            notification.StudentId = deletedUserId;
+        }
+        else if (type == NotificationType.SeniorDeleted)
+        {
+            notification.SeniorId = deletedUserId;
+        }
+
+        return notification;
+    }
+
 }

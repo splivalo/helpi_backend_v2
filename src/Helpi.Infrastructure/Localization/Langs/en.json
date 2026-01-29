@@ -7,6 +7,8 @@
         "Reassignment": "Reassignment #{0}",
         "Student": "Student: {0}",
         "Senior": "Senior: {0}",
+        "Customer": "Customer: {0}",
+        "Admin": "Admin: {0}",
         "Unknown": "Unknown Entity"
     },
     "Notifications": {
@@ -89,6 +91,10 @@
         "AllEligibleStudentsNotified": {
             "Title": "All Eligible Students Notified",
             "Body": "{0}"
+        },
+        "UserDeleted": {
+            "Title": "User Deleted",
+            "Body": "{0} (ID: {1}) has been permanently deleted"
         }
     },
     "Emails": {

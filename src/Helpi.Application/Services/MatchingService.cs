@@ -93,6 +93,14 @@ INotificationFactory notificationFactory,
                 return;
             }
 
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (today >= order.EndDate)
+            {
+                _logger.LogInformation("⏹️ Order {OrderId} end date ({EndDate}) is today or has passed, stopping matching",
+                    orderId, order.EndDate);
+                return; // Exit early, don't process
+            }
+
             var unassignedSchedules = await UnassignedSchedulesAsync(order.Schedules);
 
             if (unassignedSchedules.Any())
