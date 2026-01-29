@@ -32,4 +32,14 @@ public class ContactInfoRepository : IContactInfoRepository
                 _context.ContactInfos.Remove(contactInfo);
                 await _context.SaveChangesAsync();
         }
+
+        public async Task AnonymizeContactAsync(ContactInfo contact)
+        {
+                contact.Phone = "";
+                contact.Email = $"deleted_{contact.Id}@deleted.local";
+                contact.FullAddress = "";
+                contact.PostalCode = "";
+                contact.FullName = $"Deleted User {contact.Id}";
+                await UpdateAsync(contact);
+        }
 }

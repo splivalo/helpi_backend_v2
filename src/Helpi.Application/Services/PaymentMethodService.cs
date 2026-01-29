@@ -112,7 +112,7 @@ public class PaymentMethodService
                                 localPM.Last4 = stripePM.Card.Last4;
                                 localPM.ExpiryMonth = (int?)stripePM.Card.ExpMonth;
                                 localPM.ExpiryYear = (int?)stripePM.Card.ExpYear;
-                                localPM.IsActive = true;
+                                localPM.IsDeleted = false;
 
                                 await _repository.UpdateNoSaveAsync(localPM);
                         }
@@ -128,7 +128,7 @@ public class PaymentMethodService
                                         Last4 = stripePM.Card.Last4,
                                         ExpiryMonth = (int?)stripePM.Card.ExpMonth,
                                         ExpiryYear = (int?)stripePM.Card.ExpYear,
-                                        IsActive = true
+                                        IsDeleted = false
                                 };
 
 
@@ -136,13 +136,17 @@ public class PaymentMethodService
                         }
                 }
 
-                // Mark payment methods that no longer exist in Stripe as inactive
+                // Mark payment methods that no longer exist in Stripe as deleted and anonymize
                 foreach (var paymentMethod in localPaymentMethods)
                 {
                         if (!processedIds.Contains(paymentMethod.ProcessorToken!))
                         {
-                                paymentMethod.IsActive = false;
-                                await _repository.UpdateAsync(paymentMethod);
+                                paymentMethod.IsDeleted = true;
+                                paymentMethod.DeletedAt = DateTime.UtcNow;
+                                paymentMethod.Last4 = "****";
+                                paymentMethod.Brand = "deleted";
+                                paymentMethod.ProcessorToken = $"deleted_{paymentMethod.Id}";
+                                await _repository.UpdateNoSaveAsync(paymentMethod);
                         }
                 }
 

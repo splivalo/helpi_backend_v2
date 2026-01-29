@@ -163,22 +163,19 @@ public class StudentsService
 
                         // Step 4: Anonymize ASP.NET Core Identity user data
                         _logger.LogInformation("🔐 Anonymizing Identity data for student {StudentId}", student.UserId);
-                        var originalUserNameFromIdentity = await _userRepository.AnonymizeAndLogoutUserAsync(student.UserId);
-                        var originalUserName = student.Contact?.FullName ?? originalUserNameFromIdentity;
+                        await _userRepository.AnonymizeAndLogoutUserAsync(student.UserId);
+                        var originalUserName = $"Student {student.UserId}";
                         _logger.LogInformation("✅ Identity data anonymized for student {StudentId}", student.UserId);
 
                         // Step 6: Update student status and anonymize contact info
                         student.Status = StudentStatus.Deleted;
+                        student.StudentNumber = "Deleted";
 
-                        var contact = student.Contact;
 
-                        contact.Phone = "";
-                        contact.Email = $"deleted_{student.UserId}@deleted.local";
-                        contact.FullAddress = "";
-                        contact.PostalCode = "";
+
+                        await _contactInfoRepo.AnonymizeContactAsync(student.Contact);
 
                         await _repository.UpdateAsync(student);
-                        await _contactInfoRepo.UpdateAsync(contact);
 
                         // Step 7: Delete related entities (maintaining referential integrity)
                         await _studentAvailabilityRepo.RemoveAllByStudentIdAsync(student.UserId);

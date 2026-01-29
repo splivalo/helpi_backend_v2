@@ -14,6 +14,9 @@ namespace Helpi.Application.Interfaces.Services
         Task<PaymentResult> ChargePaymentAsync(string stripeCustomerId, PaymentTransaction transaction);
         Task<IEnumerable<PaymentMethodDto>> GetSavedPaymentMethodsAsync(string customerId);
 
+        /// cleanup methods for account deletion
+        Task DeletePaymentMethodsForCustomerAsync(string stripeCustomerId);
+        Task AnonymizeStripeCustomerAsync(string stripeCustomerId);
 
         /// methods for receiving payments
 

@@ -355,6 +355,27 @@ public class MinimaxService : IMinimaxService
         }
     }
 
+    public async Task<bool> UpdateCustomer(int customerId, MinimaxCustomer customer)
+    {
+        try
+        {
+            _cachedAccessToken = await getAccessToken();
+
+            string json = JsonConvert.SerializeObject(customer, Formatting.Indented);
+            var url = $"{_baseUrl}/orgs/{_organisationId}/customers/{customerId}";
+
+            var result = await _apiService.PutAsync(url, _cachedAccessToken, json);
+
+            _logger.LogInformation("✅ Customer {CustomerId} updated successfully", customerId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to update customer {CustomerId}", customerId);
+            return false;
+        }
+    }
+
     public async Task<List<MinimaxCurrency>> GetCurrencies()
     {
 
@@ -726,6 +747,33 @@ public class MinimaxService : IMinimaxService
         }
     }
 
+    public async Task AnonymizeCustomerAsync(int minimaxCustomerId)
+    {
+        try
+        {
+            var customer = await GetCustomerById(minimaxCustomerId);
+            if (customer == null)
+            {
+                _logger.LogWarning("⚠️ Customer {CustomerId} not found for anonymization", minimaxCustomerId);
+                return;
+            }
 
+            // Anonymize personal data
+            customer.Name = "ANONYMIZED";
+            customer.Address = "ANONYMIZED";
+            customer.City = "ANONYMIZED";
+            customer.PostalCode = "00000";
+
+            var success = await UpdateCustomer(minimaxCustomerId, customer);
+            if (success)
+            {
+                _logger.LogInformation("✅ Customer {CustomerId} anonymized successfully", minimaxCustomerId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to anonymize customer {CustomerId}", minimaxCustomerId);
+        }
+    }
 
 }
