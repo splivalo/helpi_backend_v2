@@ -39,6 +39,8 @@ namespace Helpi.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public DateTime? DeletedAt { get; set; }
+
         public City City { get; set; } = null!;
 
         public Admin Admin { get; set; } = null!;

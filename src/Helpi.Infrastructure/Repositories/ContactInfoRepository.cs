@@ -40,6 +40,7 @@ public class ContactInfoRepository : IContactInfoRepository
                 contact.FullAddress = "";
                 contact.PostalCode = "";
                 contact.FullName = $"Deleted User {contact.Id}";
+                contact.DeletedAt = DateTime.UtcNow;
                 await UpdateAsync(contact);
         }
 }

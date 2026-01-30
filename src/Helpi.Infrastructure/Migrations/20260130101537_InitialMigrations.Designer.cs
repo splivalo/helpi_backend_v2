@@ -15,7 +15,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251223131709_InitialMigrations")]
+    [Migration("20260130101537_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -106,6 +106,9 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -180,6 +183,9 @@ namespace Helpi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("PreferredNotificationMethod")
@@ -709,19 +715,19 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("CustomerUserId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("ExpiryMonth")
                         .HasColumnType("integer");
 
                     b.Property<int?>("ExpiryYear")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsAcctive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Last4")
@@ -1064,6 +1070,9 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Relationship")
                         .HasColumnType("integer");

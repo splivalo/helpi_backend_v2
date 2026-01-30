@@ -178,7 +178,12 @@ public class CustomerService
                                 await _contactInfoRepo.AnonymizeContactAsync(customer.Contact);
                         }
 
-                        // Step 9: Send admin notification
+                        // step 9: soft delete the customer
+                        customer.DeletedAt = DateTime.UtcNow;
+                        await _repository.UpdateAsync(customer);
+                        _logger.LogInformation("✅ Customer {CustomerId} soft deleted successfully", customerId);
+
+                        // Step 10: Send admin notification
                         try
                         {
                                 _logger.LogInformation("📧 Sending deletion notification to admin for customer {CustomerId}", customerId);

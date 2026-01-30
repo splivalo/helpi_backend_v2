@@ -367,7 +367,8 @@ namespace Helpi.Infrastructure.Migrations
                     State = table.Column<string>(type: "text", nullable: true),
                     PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Country = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -432,6 +433,7 @@ namespace Helpi.Infrastructure.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     PreferredNotificationMethod = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -533,8 +535,8 @@ namespace Helpi.Infrastructure.Migrations
                     PaymentProcessor = table.Column<int>(type: "integer", nullable: false),
                     ProcessorToken = table.Column<string>(type: "text", nullable: true),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    IsAcctive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CustomerUserId = table.Column<int>(type: "integer", nullable: true)
@@ -565,7 +567,8 @@ namespace Helpi.Infrastructure.Migrations
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     Relationship = table.Column<int>(type: "integer", nullable: false),
                     SpecialRequirements = table.Column<JsonDocument>(type: "jsonb", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {

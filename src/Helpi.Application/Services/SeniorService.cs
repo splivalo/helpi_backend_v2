@@ -74,80 +74,157 @@ public class SeniorService
 
         public async Task<bool> DeleteSeniorAsync(int seniorId)
         {
-                _logger.LogInformation("🗑️ Deleting senior {SeniorId}", seniorId);
+                _logger.LogInformation("Deleting senior {SeniorId}", seniorId);
 
                 try
                 {
-                        var senior = await _repository.GetByIdAsync(seniorId);
+                        var senior = await GetSeniorForDeletionAsync(seniorId);
                         if (senior == null)
                         {
-                                _logger.LogWarning("⚠️ Senior {SeniorId} not found", seniorId);
                                 return false;
                         }
 
                         var originalName = $"Senior {seniorId}";
 
-                        // Step 1: Cancel all orders that have active (non-cancelled) schedules
-                        _logger.LogInformation("🔄 Cancelling orders for senior {SeniorId}", seniorId);
-                        var orders = await _orderRepository.GetBySeniorAsync(seniorId);
+                        var affectedAssignments = await CancelOrdersAndCollectAffectedStudentsAsync(seniorId);
 
-                        foreach (var order in orders)
-                        {
-                                var hasActiveSchedules = order.Schedules.Any(s => !s.IsCancelled);
-                                if (hasActiveSchedules)
-                                {
-                                        _logger.LogInformation("❌ Cancelling order {OrderId} for senior {SeniorId}", order.Id, seniorId);
+                        await AnonymizeSeniorContactAsync(senior);
 
-                                        // Load with tracking for update
-                                        var trackedOrder = await _orderRepository.LoadOrderWithIncludes(order.Id, new OrderIncludeOptions
-                                        {
-                                                Schedules = true,
-                                                SchedulesJobRequests = true,
-                                                ScheduleAssignments = true,
-                                                AssignmentsJobInstances = true,
-                                        }, asNoTracking: false);
+                        await SoftDeleteSeniorAsync(senior);
 
-                                        if (trackedOrder != null)
-                                        {
-                                                await _orderCancellationHandler.CancelOrderAsync(trackedOrder);
-                                                await _orderRepository.UpdateAsync(trackedOrder);
-                                        }
-                                }
-                        }
-                        _logger.LogInformation("✅ Orders cancelled for senior {SeniorId}", seniorId);
+                        await NotifyAdminOfDeletionAsync(seniorId, originalName);
 
-                        // Step 2: Anonymize senior's contact info
-                        if (senior.Contact != null)
-                        {
-                                _logger.LogInformation("🔐 Anonymizing contact info for senior {SeniorId}", seniorId);
-                                await _contactInfoRepo.AnonymizeContactAsync(senior.Contact);
-                        }
+                        await NotifyAffectedStudentsAsync(affectedAssignments, seniorId);
 
-                        // Step 3: Send admin notification
-                        try
-                        {
-                                _logger.LogInformation("📧 Sending deletion notification to admin for senior {SeniorId}", seniorId);
-                                var notification = _notificationFactory.UserDeletedNotification(
-                                        receiverUserId: 1, // admin
-                                        deletedUserId: seniorId,
-                                        deletedUserName: originalName,
-                                        NotificationType.SeniorDeleted
-                                );
-                                await _notificationService.StoreAndNotifyAsync(notification);
-                                _logger.LogInformation("✅ Admin notification sent for deleted senior {SeniorId}", seniorId);
-                        }
-                        catch (Exception notifyEx)
-                        {
-                                _logger.LogError(notifyEx, "⚠️ Failed to send deletion notification for senior {SeniorId}, but deletion completed", seniorId);
-                        }
-
-                        _logger.LogInformation("✅ Senior {SeniorId} deleted successfully", seniorId);
+                        _logger.LogInformation("Senior {SeniorId} deleted successfully", seniorId);
                         return true;
                 }
                 catch (Exception ex)
                 {
-                        _logger.LogError(ex, "❌ Failed to delete senior {SeniorId}", seniorId);
+                        _logger.LogError(ex, "Failed to delete senior {SeniorId}", seniorId);
                         return false;
                 }
         }
+
+        #region DeleteSeniorAsync Helper Methods
+
+        private async Task<Senior?> GetSeniorForDeletionAsync(int seniorId)
+        {
+                var senior = await _repository.GetByIdAsync(seniorId);
+                if (senior == null)
+                {
+                        _logger.LogWarning("Senior {SeniorId} not found", seniorId);
+                }
+                return senior;
+        }
+
+        private async Task<List<ScheduleAssignment>> CancelOrdersAndCollectAffectedStudentsAsync(int seniorId)
+        {
+                _logger.LogInformation("Cancelling orders for senior {SeniorId}", seniorId);
+
+                var affectedAssignments = new List<ScheduleAssignment>();
+                var orders = await _orderRepository.GetBySeniorAsync(seniorId);
+
+                foreach (var order in orders)
+                {
+                        var hasActiveSchedules = order.Schedules.Any(s => !s.IsCancelled);
+                        if (hasActiveSchedules)
+                        {
+                                _logger.LogInformation("Cancelling order {OrderId} for senior {SeniorId}", order.Id, seniorId);
+
+                                var trackedOrder = await _orderRepository.LoadOrderWithIncludes(order.Id, new OrderIncludeOptions
+                                {
+                                        Schedules = true,
+                                        SchedulesJobRequests = true,
+                                        ScheduleAssignments = true,
+                                        ScheduleAssignmentStudent = true,
+                                        AssignmentsJobInstances = true,
+                                }, asNoTracking: false);
+
+                                if (trackedOrder != null)
+                                {
+                                        var activeAssignments = trackedOrder.Schedules
+                                                .SelectMany(s => s.Assignments)
+                                                .Where(a => !a.IsTerminal)
+                                                .ToList();
+
+                                        affectedAssignments.AddRange(activeAssignments);
+
+                                        await _orderCancellationHandler.CancelOrderAsync(trackedOrder);
+                                        await _orderRepository.UpdateAsync(trackedOrder);
+                                }
+                        }
+                }
+
+                _logger.LogInformation("Orders cancelled for senior {SeniorId}. Affected students: {Count}", seniorId, affectedAssignments.Count);
+                return affectedAssignments;
+        }
+
+        private async Task AnonymizeSeniorContactAsync(Senior senior)
+        {
+                if (senior.Contact != null)
+                {
+                        _logger.LogInformation("Anonymizing contact info for senior {SeniorId}", senior.Id);
+                        await _contactInfoRepo.AnonymizeContactAsync(senior.Contact);
+                }
+        }
+
+        private async Task SoftDeleteSeniorAsync(Senior senior)
+        {
+                senior.DeletedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(senior);
+                _logger.LogInformation("Senior {SeniorId} soft deleted successfully", senior.Id);
+        }
+
+        private async Task NotifyAdminOfDeletionAsync(int seniorId, string originalName)
+        {
+                try
+                {
+                        _logger.LogInformation("Sending deletion notification to admin for senior {SeniorId}", seniorId);
+                        var notification = _notificationFactory.UserDeletedNotification(
+                                receiverUserId: 1, // admin
+                                deletedUserId: seniorId,
+                                deletedUserName: originalName,
+                                NotificationType.SeniorDeleted
+                        );
+                        await _notificationService.StoreAndNotifyAsync(notification);
+                        _logger.LogInformation("Admin notification sent for deleted senior {SeniorId}", seniorId);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "Failed to send deletion notification for senior {SeniorId}, but deletion completed", seniorId);
+                }
+        }
+
+        private async Task NotifyAffectedStudentsAsync(List<ScheduleAssignment> assignments, int seniorId)
+        {
+                if (assignments.Count == 0)
+                {
+                        return;
+                }
+
+                _logger.LogInformation("Notifying {Count} affected students for senior {SeniorId} deletion", assignments.Count, seniorId);
+
+                foreach (var assignment in assignments)
+                {
+                        try
+                        {
+                                var culture = assignment.Student?.Contact?.LanguageCode ?? "hr";
+                                var notification = _notificationFactory.ScheduleAssignmentCancelledNotification(
+                                        recieverId: assignment.StudentId,
+                                        scheduleAssignment: assignment,
+                                        seniorId: seniorId,
+                                        culture: culture
+                                );
+                                await _notificationService.SendNotificationAsync(assignment.StudentId, notification);
+                                _logger.LogInformation("Notified student {StudentId} of assignment cancellation", assignment.StudentId);
+                        }
+                        catch (Exception ex)
+                        {
+                                _logger.LogError(ex, "Failed to notify student {StudentId}, continuing with deletion", assignment.StudentId);
+                        }
+                }
+        }
+
+        #endregion
 }

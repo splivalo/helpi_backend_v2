@@ -11,7 +11,6 @@ public interface ISeniorRepository
     Task<IEnumerable<Senior>> GetByRelationshipAsync(Relationship relationship);
     Task<Senior> AddAsync(Senior senior);
     Task UpdateAsync(Senior senior);
-    Task DeleteAsync(Senior senior);
     Task<List<Senior>> GetSeniorsAsync();
     Task<List<SeniorDto>> GetSeniorsWithExtraDetailsAsync(SeniorFilterDto? filter);
 }

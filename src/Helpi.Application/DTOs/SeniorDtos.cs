@@ -13,6 +13,8 @@ public class SeniorDto
     public JsonDocument? SpecialRequirements { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 
+    public DateTime? DeletedAt { get; set; }
+
     ///
     // Order status information
     public List<OrderStatus> OrderStatuses { get; set; } = new List<OrderStatus>();
