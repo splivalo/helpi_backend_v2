@@ -289,6 +289,24 @@ namespace Helpi.Application.Services
 
         }
 
+        public async Task DeletePaymentMethodAsync(string paymentMethodId)
+        {
+            try
+            {
+                _logger.LogInformation("🗑️ Deleting payment method {PaymentMethodId} from Stripe", paymentMethodId);
+
+                var paymentMethodService = new Stripe.PaymentMethodService();
+                await paymentMethodService.DetachAsync(paymentMethodId);
+
+                _logger.LogInformation("✅ Detached payment method {PaymentMethodId} from Stripe", paymentMethodId);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "❌ Error deleting payment method {PaymentMethodId}", paymentMethodId);
+                throw new ApplicationException("Failed to delete payment method", ex);
+            }
+        }
+
         public async Task DeletePaymentMethodsForCustomerAsync(string stripeCustomerId)
         {
             try

@@ -2,6 +2,7 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Stripe;
@@ -12,14 +13,19 @@ public class PaymentMethodService
 {
         private readonly IPaymentMethodRepository _repository;
         private readonly IMapper _mapper;
-
         private readonly IPaymentProfileRepository _paymentProfileRepository;
+        private readonly IStripePaymentService _stripePaymentService;
 
-        public PaymentMethodService(IPaymentMethodRepository repository, IMapper mapper, IPaymentProfileRepository paymentProfileRepository)
+        public PaymentMethodService(
+                IPaymentMethodRepository repository,
+                IMapper mapper,
+                IPaymentProfileRepository paymentProfileRepository,
+                IStripePaymentService stripePaymentService)
         {
                 _repository = repository;
                 _paymentProfileRepository = paymentProfileRepository;
                 _mapper = mapper;
+                _stripePaymentService = stripePaymentService;
         }
 
         public async Task<List<PaymentMethodDto>> GetMethodsByUserIdAsync(int userId)
@@ -34,6 +40,42 @@ public class PaymentMethodService
                 var method = _mapper.Map<Domain.Entities.PaymentMethod>(dto);
                 await _repository.AddAsync(method);
                 return _mapper.Map<PaymentMethodDto>(method);
+        }
+
+        /// <summary>
+        /// Delete a payment method from Stripe and soft delete from local database
+        /// </summary>
+        /// <param name="paymentMethodId">The local payment method ID</param>
+        /// <param name="userId">The user ID for ownership validation</param>
+        /// <returns>True if deleted successfully</returns>
+        /// <exception cref="KeyNotFoundException">Thrown when payment method not found or doesn't belong to user</exception>
+        public async Task<bool> DeletePaymentMethodAsync(int paymentMethodId, int userId)
+        {
+                // Get the payment method from local DB
+                var paymentMethod = await _repository.GetByIdAsync(paymentMethodId);
+
+                if (paymentMethod == null || paymentMethod.UserId != userId)
+                {
+                        throw new KeyNotFoundException("Payment method not found");
+                }
+
+                // Delete from Stripe first (if it has a processor token)
+                if (!string.IsNullOrEmpty(paymentMethod.ProcessorToken) &&
+                    !paymentMethod.ProcessorToken.StartsWith("deleted_"))
+                {
+                        await _stripePaymentService.DeletePaymentMethodAsync(paymentMethod.ProcessorToken);
+                }
+
+                // Soft delete and anonymize in local DB
+                paymentMethod.IsDeleted = true;
+                paymentMethod.DeletedAt = DateTime.UtcNow;
+                paymentMethod.Last4 = "****";
+                paymentMethod.Brand = "deleted";
+                paymentMethod.ProcessorToken = $"deleted_{paymentMethod.Id}";
+
+                await _repository.UpdateAsync(paymentMethod);
+
+                return true;
         }
 
         /// <summary>
