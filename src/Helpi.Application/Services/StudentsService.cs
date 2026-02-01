@@ -169,6 +169,7 @@ public class StudentsService
 
                         // Step 6: Update student status and anonymize contact info
                         student.Status = StudentStatus.Deleted;
+                        student.DeletedAt = DateTime.UtcNow;
                         student.StudentNumber = "Deleted";
 
 

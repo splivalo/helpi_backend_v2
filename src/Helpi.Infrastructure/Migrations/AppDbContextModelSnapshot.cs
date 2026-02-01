@@ -1186,7 +1186,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("DaysToContractExpire")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("DeletedOn")
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("FacultyId")

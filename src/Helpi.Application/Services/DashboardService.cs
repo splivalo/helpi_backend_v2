@@ -188,6 +188,7 @@ public class DashboardService : IDashboardService
     {
 
         var activeStudentStatus = new[]{
+        StudentStatus.InActive,
         StudentStatus.Active,
         StudentStatus.ContractAboutToExpire
     };

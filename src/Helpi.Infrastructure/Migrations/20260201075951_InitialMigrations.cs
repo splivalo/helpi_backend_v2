@@ -464,7 +464,7 @@ namespace Helpi.Infrastructure.Migrations
                     ContactId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     DaysToContractExpire = table.Column<int>(type: "integer", nullable: true),
-                    DeletedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BackgroundCheckDate = table.Column<DateTime>(type: "date", nullable: true),
                     TotalReviews = table.Column<int>(type: "integer", nullable: false),
                     TotalRatingSum = table.Column<decimal>(type: "numeric", nullable: false),

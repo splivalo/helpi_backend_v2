@@ -15,6 +15,7 @@ public class StudentQueryBuilder
     {
         _context = context;
         _query = context.Students
+            .Where(s => s.DeletedAt == null)
             .Include(s => s.Contact)
             .Include(s => s.Faculty)
             .AsNoTracking();
@@ -179,7 +180,7 @@ public class StudentQueryBuilder
     {
         if (!includeDeleted)
         {
-            _query = _query.Where(s => s.DeletedOn == null);
+            _query = _query.Where(s => s.DeletedAt == null);
         }
         return this;
     }
@@ -212,7 +213,7 @@ public class StudentQueryBuilder
             FacultyId = s.FacultyId,
             DateRegistered = s.DateRegistered,
             Status = s.Status,
-            DeletedOn = s.DeletedOn,
+            DeletedAt = s.DeletedAt,
             BackgroundCheckDate = s.BackgroundCheckDate,
             AverageRating = s.AverageRating,
 

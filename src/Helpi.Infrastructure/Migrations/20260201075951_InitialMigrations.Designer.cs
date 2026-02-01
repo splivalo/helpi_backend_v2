@@ -15,7 +15,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260130101537_InitialMigrations")]
+    [Migration("20260201075951_InitialMigrations")]
     partial class InitialMigrations
     {
         /// <inheritdoc />
@@ -1189,7 +1189,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("DaysToContractExpire")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("DeletedOn")
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("FacultyId")

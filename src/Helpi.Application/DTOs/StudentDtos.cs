@@ -17,7 +17,7 @@ public class StudentDto
     public decimal TotalRatingSum { get; set; } = 0.00m;
     public decimal AverageRating { get; set; } = 0.00m;
 
-    public DateTime? DeletedOn { get; set; }
+    public DateTime? DeletedAt { get; set; }
 
     public DateOnly? BackgroundCheckDate { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
