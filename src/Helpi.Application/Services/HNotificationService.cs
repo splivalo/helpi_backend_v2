@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AutoMapper;
 using Helpi.Application.Common.Interfaces;
 using Helpi.Application.DTOs;
@@ -119,6 +120,15 @@ public class HNotificationService : IHNotificationService
             NotificationType.ReassignmentCompleted,
         };
 
+        // User deleted types - need to parse Payload for format args
+        var userDeletedList = new[]
+        {
+            NotificationType.StudentDeleted,
+            NotificationType.SeniorDeleted,
+            NotificationType.CustomerDeleted,
+            NotificationType.AdminDeleted,
+        };
+
         foreach (var dto in notifications)
         {
             // Example keys:
@@ -141,6 +151,33 @@ public class HNotificationService : IHNotificationService
                 }
                 catch (Exception)
                 {
+                }
+            }
+            else if (userDeletedList.Contains(dto.Type))
+            {
+                try
+                {
+                    // Parse Payload to get format args: { deletedUserId, deletedUserName, userType }
+                    var payload = JsonSerializer.Deserialize<JsonElement>(dto.Payload ?? "{}");
+                    var deletedUserName = payload.GetProperty("deletedUserName").GetString() ?? "";
+                    var deletedUserId = payload.GetProperty("deletedUserId").GetInt32();
+
+                    // Get entity key based on type
+                    var entityKey = dto.Type switch
+                    {
+                        NotificationType.StudentDeleted => "Entities.Student",
+                        NotificationType.SeniorDeleted => "Entities.Senior",
+                        NotificationType.CustomerDeleted => "Entities.Customer",
+                        NotificationType.AdminDeleted => "Entities.Admin",
+                        _ => "Entities.Unknown"
+                    };
+
+                    var entityDescription = _localizer.GetString(entityKey, languageCode, deletedUserName);
+                    dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, entityDescription, deletedUserId);
+                }
+                catch (Exception)
+                {
+                    // Keep original body on parse error
                 }
             }
             else

@@ -22,7 +22,7 @@ public class StudentRepository : IStudentRepository
 
     public async Task<Student> GetByIdAsync(int id)
     {
-        var student = await _context.Students.Include(s => s.Contact).SingleOrDefaultAsync(s => s.UserId == id);
+        var student = await _context.Students.Where(s => s.DeletedAt == null).Include(s => s.Contact).SingleOrDefaultAsync(s => s.UserId == id);
 
         if (student == null)
         {
@@ -37,7 +37,7 @@ public class StudentRepository : IStudentRepository
 
     public async Task<Student?> GetByStudentNumberAsync(string studentNumber)
     {
-        return await _context.Students.SingleOrDefaultAsync(s => s.StudentNumber == studentNumber);
+        return await _context.Students.Where(s => s.DeletedAt == null).SingleOrDefaultAsync(s => s.StudentNumber == studentNumber);
 
     }
 
@@ -331,6 +331,8 @@ public class StudentRepository : IStudentRepository
     {
         var query = _context.Students.AsQueryable();
 
+        query = query.Where(s => s.DeletedAt == null);
+
         if (asNoTracking)
         {
             query = query.AsNoTracking();
@@ -369,7 +371,8 @@ public class StudentRepository : IStudentRepository
 
     public Task<int> CountAsync(Expression<Func<Student, bool>> predicate)
     {
-        return _context.Students.CountAsync(predicate);
+        return _context.Students.Where(s => s.DeletedAt == null).CountAsync(predicate);
+
     }
 
 

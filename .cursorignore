@@ -1,0 +1,13 @@
+# Block secrets
+.env
+secrets/
+private/
+credentials/
+
+# Block generated or sensitive data
+node_modules/
+dist/
+build/
+
+# Block a specific folder
+internal-only/

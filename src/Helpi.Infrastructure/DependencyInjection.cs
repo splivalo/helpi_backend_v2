@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using System.Text;
 using Helpi.Application.Common.Interfaces;
 using Helpi.Application.Interfaces;
@@ -208,6 +209,30 @@ public static class DependencyInjection
                         }
 
                         return Task.CompletedTask;
+                    },
+
+                    // Validate SecurityStamp to support token invalidation on logout/anonymization
+                    OnTokenValidated = async context =>
+                    {
+                        var userManager = context.HttpContext.RequestServices
+                            .GetRequiredService<UserManager<User>>();
+
+                        var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        var tokenSecurityStamp = context.Principal?.FindFirst("SecurityStamp")?.Value;
+
+                        if (userId == null)
+                        {
+                            context.Fail("Invalid token: missing user ID");
+                            return;
+                        }
+
+                        var user = await userManager.FindByIdAsync(userId);
+
+                        if (user == null || user.SecurityStamp != tokenSecurityStamp)
+                        {
+                            context.Fail("Token has been invalidated");
+                            return;
+                        }
                     }
                 };
             });

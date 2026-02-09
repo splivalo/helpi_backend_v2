@@ -4,6 +4,8 @@ using Helpi.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
+using System.Text.Json;
+using IOFile = System.IO.File;
 
 namespace Helpi.WebApi.Controllers
 {
@@ -33,10 +35,31 @@ namespace Helpi.WebApi.Controllers
 
             try
             {
+                // Load Stripe credentials from JSON file
+                var stripeCredentialsPath = Environment.GetEnvironmentVariable("STRIPE_CREDENTIALS_JSON")
+                               ?? _configuration["Stripe:CredentialsJson"];
 
-                var secret = Environment.GetEnvironmentVariable("Stripe:WebhookSecret")
-                                ?? _configuration["Stripe:WebhookSecret"]
-                                ?? throw new ArgumentNullException("Stripe:WebhookSecret");
+                if (string.IsNullOrEmpty(stripeCredentialsPath))
+                {
+                    throw new InvalidOperationException("Stripe credentials not found in environment variables or configuration.");
+                }
+
+                if (!IOFile.Exists(stripeCredentialsPath))
+                {
+                    throw new FileNotFoundException($"Stripe credentials file not found at {stripeCredentialsPath}");
+                }
+
+                var stripeCredentialsJson = IOFile.ReadAllText(stripeCredentialsPath);
+                using var jsonDoc = JsonDocument.Parse(stripeCredentialsJson);
+                var root = jsonDoc.RootElement;
+
+                var secret = root.GetProperty("WebhookSecret").GetString()
+                    ?? throw new ArgumentNullException("Stripe:WebhookSecret");
+
+                if (string.IsNullOrWhiteSpace(secret))
+                {
+                    throw new InvalidOperationException("Stripe WebhookSecret is missing or empty in credentials file.");
+                }
 
                 var stripeEvent = EventUtility.ConstructEvent(
                     json,

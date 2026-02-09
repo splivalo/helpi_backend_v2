@@ -41,4 +41,27 @@ public class UserRepository : IUserRepository
                 return _context.Users.CountAsync(predicate);
         }
 
+        public async Task<string> AnonymizeAndLogoutUserAsync(int userId)
+        {
+                var user = await _context.Users.FindAsync(userId)
+                        ?? throw new InvalidOperationException($"User with ID {userId} not found");
+
+                var originalUserName = user.UserName ?? "Unknown";
+
+                // Anonymize user data
+                user.Email = $"deleted_{userId}@deleted.local";
+                user.UserName = $"deleted_{userId}";
+                user.NormalizedEmail = $"DELETED_{userId}@DELETED.LOCAL";
+                user.NormalizedUserName = $"DELETED_{userId}";
+                user.PhoneNumber = null;
+                user.PasswordHash = null;
+
+                // Regenerate security stamp to invalidate all sessions (logout)
+                user.SecurityStamp = Guid.NewGuid().ToString();
+
+                await _context.SaveChangesAsync();
+
+                return originalUserName;
+        }
+
 }

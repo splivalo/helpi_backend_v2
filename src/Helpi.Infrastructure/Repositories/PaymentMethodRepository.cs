@@ -12,16 +12,17 @@ public class PaymentMethodRepository : IPaymentMethodRepository
         public PaymentMethodRepository(AppDbContext context) => _context = context;
 
         public async Task<PaymentMethod> GetByIdAsync(int id)
-            => await _context.PaymentMethods.FindAsync(id);
+            => await _context.PaymentMethods
+                .FirstOrDefaultAsync(pm => pm.Id == id && !pm.IsDeleted);
 
         public async Task<IEnumerable<PaymentMethod>> GetByUserIdAsync(int userId)
             => await _context.PaymentMethods
-                .Where(pm => pm.UserId == userId)
+                .Where(pm => pm.UserId == userId && !pm.IsDeleted)
                 .ToListAsync();
 
         public async Task<PaymentMethod> GetDefaultPaymentMethodAsync(int userId)
             => await _context.PaymentMethods
-                .FirstOrDefaultAsync(pm => pm.UserId == userId && pm.IsDefault);
+                .FirstOrDefaultAsync(pm => pm.UserId == userId && pm.IsDefault && !pm.IsDeleted);
 
         public async Task<PaymentMethod> AddAsync(PaymentMethod paymentMethod)
         {

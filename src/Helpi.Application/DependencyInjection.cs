@@ -6,6 +6,8 @@ using Helpi.Application.Services.Maintenance;
 using Helpi.Domain.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
+using File = System.IO.File;
 
 namespace Helpi.Application;
 
@@ -85,12 +87,29 @@ public static class DependencyInjection
 
     private static void ConfigureStripe(IConfiguration configuration)
     {
-        var stripeSecretKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
-            ?? configuration["Stripe:SecretKey"];
+        var stripeCredentialsPath = Environment.GetEnvironmentVariable("STRIPE_CREDENTIALS_JSON")
+                           ?? configuration["Stripe:CredentialsJson"];
+
+        if (string.IsNullOrEmpty(stripeCredentialsPath))
+        {
+            throw new InvalidOperationException("Stripe credentials not found in environment variables or configuration.");
+        }
+
+        if (!File.Exists(stripeCredentialsPath))
+        {
+            throw new FileNotFoundException($"Stripe credentials file not found at {stripeCredentialsPath}");
+        }
+
+        var stripeCredentialsJson = File.ReadAllText(stripeCredentialsPath);
+        using var jsonDoc = JsonDocument.Parse(stripeCredentialsJson);
+        var root = jsonDoc.RootElement;
+
+        var stripeSecretKey = root.GetProperty("SecretKey").GetString()
+            ?? throw new ArgumentNullException("Stripe:SecretKey");
 
         if (string.IsNullOrWhiteSpace(stripeSecretKey))
         {
-            throw new InvalidOperationException("Stripe Secret Key is not configured.");
+            throw new InvalidOperationException("Stripe SecretKey is missing or empty in credentials file.");
         }
 
         Stripe.StripeConfiguration.ApiKey = stripeSecretKey;

@@ -8,6 +8,8 @@ namespace Helpi.Application.DTOs;
 public class CustomerDto
 {
     public int UserId { get; set; }
+
+    public DateTime? DeletedAt { get; set; }
     public NotificationMethod PreferredNotificationMethod { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 

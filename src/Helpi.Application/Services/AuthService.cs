@@ -340,6 +340,7 @@ ILocalizationService loc
                 new Claim(ClaimTypes.Name, user.UserName!),
                 new Claim(ClaimTypes.Email, user.Email!),
                 new Claim("UserType", user.UserType.ToString()),
+                new Claim("SecurityStamp", user.SecurityStamp ?? ""),
             };
 
         // Add user roles as claims

@@ -206,7 +206,11 @@ namespace Helpi.Domain.Enums
         ReassignmentCompleted,
 
         NewStudentAdded,
-        NewSeniorAdded
+        NewSeniorAdded,
+        StudentDeleted,
+        SeniorDeleted,
+        CustomerDeleted,
+        AdminDeleted,
 
     }
 

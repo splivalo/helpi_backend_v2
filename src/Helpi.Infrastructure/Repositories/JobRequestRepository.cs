@@ -154,6 +154,33 @@ public class JobRequestRepository : IJobRequestRepository
                                 throw new NotFoundException("Job request not found");
                         }
 
+
+                        // Only enforce the end-date rule for non-reschedule variants.
+                        var isRescheduleVariant =
+                            jobRequest.JobInstanceId.HasValue &&
+                            jobRequest.JobInstance?.IsRescheduleVariant == true;
+
+                        if (!isRescheduleVariant)
+                        {
+                                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+                                if (today > jobRequest.Order.EndDate)
+                                {
+                                        // _logger.LogInformation(
+                                        //     "⏹️ jobRequest {JobRequestId}, Order {OrderId} end date ({EndDate}) is today or has passed, cannot respond / accept/decline",
+                                        //     jobRequest.Id,
+                                        //     jobRequest.Order.Id,
+                                        //     jobRequest.Order.EndDate
+                                        // );
+
+                                        throw new DomainException(
+                                            "Cannot respond / accept/decline job request for an order that has passed its end date"
+                                        );
+                                }
+                        }
+
+
+
                         // Validate student ownership
                         if (jobRequest.StudentId != resJobRequest.StudentId)
                                 throw new DomainException("Invalid student for this job request");

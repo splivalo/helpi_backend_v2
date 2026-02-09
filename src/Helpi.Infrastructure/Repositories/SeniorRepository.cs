@@ -18,17 +18,19 @@ public class SeniorRepository : ISeniorRepository
         public async Task<Senior?> GetByIdAsync(int id)
         {
                 return await _context.Seniors
-                 .Include(s => s.Contact).SingleOrDefaultAsync(s => s.Id == id);
+                 .Include(s => s.Contact).SingleOrDefaultAsync(s => s.Id == id && s.DeletedAt == null);
         }
 
         public async Task<IEnumerable<Senior>> GetByCustomerIdAsync(int customerId)
             => await _context.Seniors
                 .Where(s => s.CustomerId == customerId)
+                .Where(s => s.DeletedAt == null)
                 .ToListAsync();
 
         public async Task<IEnumerable<Senior>> GetByRelationshipAsync(Relationship relationship)
             => await _context.Seniors
                 .Where(s => s.Relationship == relationship)
+                .Where(s => s.DeletedAt == null)
                 .ToListAsync();
 
         public async Task<Senior> AddAsync(Senior senior)
@@ -44,15 +46,11 @@ public class SeniorRepository : ISeniorRepository
                 await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Senior senior)
-        {
-                _context.Seniors.Remove(senior);
-                await _context.SaveChangesAsync();
-        }
 
         public async Task<List<Senior>> GetSeniorsAsync()
         {
                 return await _context.Seniors
+                .Where(s => s.DeletedAt == null)
                 .Include(s => s.Contact)
                 .AsNoTracking()
                 .ToListAsync();

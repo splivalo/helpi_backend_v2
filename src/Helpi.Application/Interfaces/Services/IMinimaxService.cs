@@ -12,6 +12,7 @@ public interface IMinimaxService
     public Task<MinimaxCustomer?> GetCustomerByCode(string code);
     public Task<MinimaxCustomer?> GetCustomerById(int id);
     public Task<int?> AddCustomerContact(MinimaxContact minimaxContact);
+    public Task<bool> UpdateCustomer(int customerId, MinimaxCustomer customer);
 
     public Task<int?> CreateIssuedInvoice(MinimaxIssuedInvoice issuedInvoice);
 
@@ -31,4 +32,9 @@ public interface IMinimaxService
 
     public Task<List<MinimaxIssuedInvoice>> GetAllIssuedInvoicesAsync();
     public Task<MinimaxAttachment?> GenerateInvoicePdf(int issuedInvoiceId, string rowVersion);
+
+    /// <summary>
+    /// Anonymizes a customer in Minimax by replacing personal data with anonymized values.
+    /// </summary>
+    public Task AnonymizeCustomerAsync(int minimaxCustomerId);
 }

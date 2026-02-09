@@ -9,4 +9,5 @@ public interface IContactInfoRepository
     Task<ContactInfo> AddAsync(ContactInfo contactInfo);
     Task UpdateAsync(ContactInfo contactInfo);
     Task DeleteAsync(ContactInfo contactInfo);
+    Task AnonymizeContactAsync(ContactInfo contact);
 }

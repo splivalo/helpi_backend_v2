@@ -11,7 +11,7 @@ public class SeniorQueryBuilder
 
     public SeniorQueryBuilder(AppDbContext context)
     {
-        _query = context.Seniors
+        _query = context.Seniors.Where(s => s.DeletedAt == null)
             .Include(s => s.Contact)
             .AsNoTracking();
     }

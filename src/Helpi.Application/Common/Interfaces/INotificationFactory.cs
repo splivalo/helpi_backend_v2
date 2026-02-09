@@ -54,5 +54,7 @@ namespace Helpi.Application.Common.Interfaces
     OrderSchedule orderSchedule,
      ReassignmentRecord? reassignmentRecord,
       string culture);
+
+        HNotification UserDeletedNotification(int receiverUserId, int deletedUserId, string deletedUserName, NotificationType type);
     }
 }
