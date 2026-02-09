@@ -11,6 +11,8 @@ namespace Helpi.Domain.Entities
         public int ContactId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? DeletedAt { get; set; }
         public NotificationMethod PreferredNotificationMethod { get; set; } = NotificationMethod.Email;
 
         // public User User { get; set; } = null!;

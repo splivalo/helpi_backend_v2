@@ -35,4 +35,14 @@ public class FcmTokensRepository : IFcmTokensRepository
     {
         return await _context.FcmTokens.Where(t => t.UserId == userId).ToListAsync();
     }
+
+    public async Task DeleteByUserIdAsync(int userId)
+    {
+        var tokens = await _context.FcmTokens.Where(t => t.UserId == userId).ToListAsync();
+        if (tokens.Any())
+        {
+            _context.FcmTokens.RemoveRange(tokens);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

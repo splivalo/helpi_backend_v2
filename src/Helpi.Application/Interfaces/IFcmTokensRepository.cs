@@ -8,4 +8,5 @@ public interface IFcmTokensRepository
     Task<FcmToken> AddAsync(FcmToken fcmToken);
 
     Task DeleteAsync(FcmToken fcmToken);
+    Task DeleteByUserIdAsync(int userId);
 }

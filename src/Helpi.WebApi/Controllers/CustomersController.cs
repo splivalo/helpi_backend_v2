@@ -31,4 +31,13 @@ public class CustomersController : ControllerBase
         {
                 return CreatedAtAction(nameof(GetAll), await _service.CreateCustomerAsync(dto));
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+                var result = await _service.DeleteCustomerAsync(id);
+                if (!result)
+                        return BadRequest("Failed to delete customer");
+                return NoContent();
+        }
 }

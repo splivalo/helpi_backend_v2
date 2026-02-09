@@ -51,7 +51,7 @@ public class ScheduleCancellationHandler
         var pendingJobRequests = schedule.JobRequests.Where(j => j.Status == JobRequestStatus.Pending);
         foreach (var request in pendingJobRequests)
         {
-            request.Status = JobRequestStatus.Declined;
+            request.Status = JobRequestStatus.Cancelled;
         }
 
         _logger.LogDebug("Cancelled future jobs for schedule {ScheduleId}", schedule.Id);

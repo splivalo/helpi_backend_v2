@@ -13,7 +13,7 @@ namespace Helpi.Infrastructure.Persistence.Extentions
                 StudentStatus.ContractAboutToExpire
             };
 
-            return query.Where(s => activeStatuses.Contains(s.Status));
+            return query.Where(s => activeStatuses.Contains(s.Status)).Where(s => s.DeletedAt == null);
         }
     }
 }

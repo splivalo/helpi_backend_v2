@@ -35,14 +35,13 @@ public class MinimaxService : IMinimaxService
     /// -----------------
     /// </summary>
 
-    private int _organisationId = 41293; // Apoyo
+    private readonly int _organisationId;
 
     private static readonly MinimaxEntityReference Country_HR = new() { Id = 95, Name = "HRVATSKA" };
     private static readonly MinimaxEntityReference Currency_EUR = new() { Id = 7, Name = "Euro" };
     private static readonly MinimaxEntityReference Vatrate_0 = new() { Id = 6, Name = "N" };
-    private static readonly MinimaxEntityReference PaymentMethod_Transactional = new() { Id = 173739, Name = "Transactional Account" };
-
-    private static readonly MinimaxEntityReference DocumentNumbering_Default = new() { Id = 41901 };
+    private readonly MinimaxEntityReference PaymentMethod_Transactional;
+    private readonly MinimaxEntityReference DocumentNumbering_Default;
 
     /// ---------------------------
     public MinimaxService(IApiService apiService,
@@ -85,6 +84,32 @@ public class MinimaxService : IMinimaxService
 
         _password = root.GetProperty("Password").GetString()
         ?? throw new ArgumentNullException("Minimax:Password");
+
+        // Load environment-specific settings from configuration
+        var settingsSection = _configuration.GetSection("Minimax:Settings");
+
+        // OrganisationId
+        if (!int.TryParse(settingsSection["OrganisationId"], out var organisationId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:OrganisationId is missing or invalid in configuration.");
+        }
+        _organisationId = organisationId;
+
+        // PaymentMethod
+        if (!int.TryParse(settingsSection["PaymentMethodId"], out var paymentMethodId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:PaymentMethodId is missing or invalid in configuration.");
+        }
+        var paymentMethodName = settingsSection["PaymentMethodName"]
+            ?? throw new InvalidOperationException("Minimax:Settings:PaymentMethodName is missing in configuration.");
+        PaymentMethod_Transactional = new MinimaxEntityReference { Id = paymentMethodId, Name = paymentMethodName };
+
+        // DocumentNumbering
+        if (!int.TryParse(settingsSection["DocumentNumberingId"], out var documentNumberingId))
+        {
+            throw new InvalidOperationException("Minimax:Settings:DocumentNumberingId is missing or invalid in configuration.");
+        }
+        DocumentNumbering_Default = new MinimaxEntityReference { Id = documentNumberingId };
     }
 
 
@@ -327,6 +352,27 @@ public class MinimaxService : IMinimaxService
         {
             _logger.LogInformation($"❌ Failed top to create New Contact");
             return null;
+        }
+    }
+
+    public async Task<bool> UpdateCustomer(int customerId, MinimaxCustomer customer)
+    {
+        try
+        {
+            _cachedAccessToken = await getAccessToken();
+
+            string json = JsonConvert.SerializeObject(customer, Formatting.Indented);
+            var url = $"{_baseUrl}/orgs/{_organisationId}/customers/{customerId}";
+
+            var result = await _apiService.PutAsync(url, _cachedAccessToken, json);
+
+            _logger.LogInformation("✅ Customer {CustomerId} updated successfully", customerId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to update customer {CustomerId}", customerId);
+            return false;
         }
     }
 
@@ -701,6 +747,33 @@ public class MinimaxService : IMinimaxService
         }
     }
 
+    public async Task AnonymizeCustomerAsync(int minimaxCustomerId)
+    {
+        try
+        {
+            var customer = await GetCustomerById(minimaxCustomerId);
+            if (customer == null)
+            {
+                _logger.LogWarning("⚠️ Customer {CustomerId} not found for anonymization", minimaxCustomerId);
+                return;
+            }
 
+            // Anonymize personal data
+            customer.Name = "ANONYMIZED";
+            customer.Address = "ANONYMIZED";
+            customer.City = "ANONYMIZED";
+            customer.PostalCode = "00000";
+
+            var success = await UpdateCustomer(minimaxCustomerId, customer);
+            if (success)
+            {
+                _logger.LogInformation("✅ Customer {CustomerId} anonymized successfully", minimaxCustomerId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to anonymize customer {CustomerId}", minimaxCustomerId);
+        }
+    }
 
 }

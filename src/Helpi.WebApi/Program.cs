@@ -23,6 +23,7 @@ var env = builder.Environment;
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddUserSecrets<Program>()      // Development secrets
     .AddEnvironmentVariables();     // Environment overrides
 

@@ -23,7 +23,7 @@ public class CustomerRepository : ICustomerRepository
                   .Include(c => c.Seniors)
                   .ThenInclude(s => s.Contact)
                   .IgnoreAutoIncludes()
-                  .SingleOrDefaultAsync(c => c.UserId == id);
+                  .SingleOrDefaultAsync(c => c.UserId == id && c.DeletedAt == null);
 
 
                 return customer;
@@ -31,11 +31,12 @@ public class CustomerRepository : ICustomerRepository
 
         public async Task<Customer> GetByContactIdAsync(int contactId)
             => await _context.Customers
-                .FirstOrDefaultAsync(c => c.ContactId == contactId);
+                .FirstOrDefaultAsync(c => c.ContactId == contactId && c.DeletedAt == null);
 
         public async Task<IEnumerable<Customer>> GetCustomersByNotificationMethod(NotificationMethod method)
             => await _context.Customers
                 .Where(c => c.PreferredNotificationMethod == method)
+                .Where(c => c.DeletedAt == null)
                 .ToListAsync();
 
         public async Task<Customer> AddAsync(Customer customer)
@@ -51,11 +52,6 @@ public class CustomerRepository : ICustomerRepository
                 await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Customer customer)
-        {
-                _context.Customers.Remove(customer);
-                await _context.SaveChangesAsync();
-        }
 
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {
@@ -64,17 +60,20 @@ public class CustomerRepository : ICustomerRepository
                         .Include(c => c.Contact)
                         .Include(c => c.Seniors)
                         .ThenInclude(s => s.Contact)
+                        .Where(c => c.DeletedAt == null)
                         .ToListAsync();
         }
 
         public Task<int> CountAsync(Expression<Func<Customer, bool>> predicate)
         {
-                return _context.Customers.CountAsync(predicate);
+                return _context.Customers.Where(c => c.DeletedAt == null).CountAsync(predicate);
         }
 
         public async Task<Customer?> LoadCustomerWithIncludes(int customerId, CustomerIncludeOptions includes)
         {
                 var query = _context.Customers.AsQueryable();
+
+                query = query.Where(c => c.DeletedAt == null);
 
                 if (includes.Contact)
                         query = query.Include(c => c.Contact);

@@ -124,13 +124,18 @@ public class DashboardService : IDashboardService
         };
 
         // Count all "live" orders that have at least one active schedule
-        // where none of the assignments have been accepted (i.e. still uncovered)
+        // where none of the (schedule)assignments have been accepted (i.e. still uncovered)
+        // var uncoveredOrders = await _orderRepository.CountAsync(order =>
+        //     liveOrderStatuses.Contains(order.Status) &&
+        //     order.Schedules.Any(schedule =>
+        //         !schedule.IsCancelled &&
+        //         schedule.Assignments.Where(a => a.IsJobInstanceSub == false).All(assignment =>
+        //          assignment.Status != AssignmentStatus.Accepted)
+        //     )
+        // );
+
         var uncoveredOrders = await _orderRepository.CountAsync(order =>
-            liveOrderStatuses.Contains(order.Status) &&
-            order.Schedules.Any(schedule =>
-                !schedule.IsCancelled &&
-                schedule.Assignments.All(assignment => assignment.Status != AssignmentStatus.Accepted)
-            )
+            order.Status == OrderStatus.Pending
         );
 
         var current = uncoveredOrders;
@@ -183,6 +188,7 @@ public class DashboardService : IDashboardService
     {
 
         var activeStudentStatus = new[]{
+        StudentStatus.InActive,
         StudentStatus.Active,
         StudentStatus.ContractAboutToExpire
     };

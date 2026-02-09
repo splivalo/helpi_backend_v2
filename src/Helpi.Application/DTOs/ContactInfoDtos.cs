@@ -21,6 +21,8 @@ public class ContactInfoDto
     public decimal Longitude { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public DateTime? DeletedAt { get; set; }
+
     public string? State { get; set; }
 
     [MaxLength(20)]

@@ -20,14 +20,16 @@ namespace Helpi.Domain.Entities
         /// </summary>
         public PaymentProcessor PaymentProcessor { get; set; }
 
-        /// <summary>
+        /// <summary>s
         /// Eg Stripe PaymentMethodID 
         /// </summary>
         public string? ProcessorToken { get; set; }
 
         public bool IsDefault { get; set; } = false;
-        public bool IsActive { get; set; } = true;
-        public bool IsAcctive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
+
+        public DateTime? DeletedAt { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

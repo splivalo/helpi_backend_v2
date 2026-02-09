@@ -8,6 +8,8 @@ using Helpi.Domain.ValueObjects;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Text.Json;
+using File = System.IO.File;
 
 namespace Helpi.Application.Services
 {
@@ -38,20 +40,33 @@ namespace Helpi.Application.Services
             _mapper = mapper;
             _paymentErrorMapper = paymentErrorMapper;
 
+            // Load Stripe credentials from JSON file
+            var stripeCredentialsPath = Environment.GetEnvironmentVariable("STRIPE_CREDENTIALS_JSON")
+                           ?? configuration["Stripe:CredentialsJson"];
 
+            if (string.IsNullOrEmpty(stripeCredentialsPath))
+            {
+                throw new InvalidOperationException("Stripe credentials not found in environment variables or configuration.");
+            }
 
+            if (!File.Exists(stripeCredentialsPath))
+            {
+                throw new FileNotFoundException($"Stripe credentials file not found at {stripeCredentialsPath}");
+            }
 
-            // Initialize Stripe API with your secret key
+            var stripeCredentialsJson = File.ReadAllText(stripeCredentialsPath);
+            using var jsonDoc = JsonDocument.Parse(stripeCredentialsJson);
+            var root = jsonDoc.RootElement;
 
+            var stripeSecretKey = root.GetProperty("SecretKey").GetString()
+                ?? throw new ArgumentNullException("Stripe:SecretKey");
 
-            var stripeSecretKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
-                                  ??
-                                  configuration["Stripe:SecretKey"];
-
-
+            if (string.IsNullOrWhiteSpace(stripeSecretKey))
+            {
+                throw new InvalidOperationException("Stripe SecretKey is missing or empty in credentials file.");
+            }
 
             StripeConfiguration.ApiKey = stripeSecretKey;
-
         }
 
         public async Task<string> CreateCustomerAsync(User user)
@@ -274,6 +289,87 @@ namespace Helpi.Application.Services
 
         }
 
+        public async Task DeletePaymentMethodAsync(string paymentMethodId)
+        {
+            try
+            {
+                _logger.LogInformation("🗑️ Deleting payment method {PaymentMethodId} from Stripe", paymentMethodId);
+
+                var paymentMethodService = new Stripe.PaymentMethodService();
+                await paymentMethodService.DetachAsync(paymentMethodId);
+
+                _logger.LogInformation("✅ Detached payment method {PaymentMethodId} from Stripe", paymentMethodId);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "❌ Error deleting payment method {PaymentMethodId}", paymentMethodId);
+                throw new ApplicationException("Failed to delete payment method", ex);
+            }
+        }
+
+        public async Task DeletePaymentMethodsForCustomerAsync(string stripeCustomerId)
+        {
+            try
+            {
+                _logger.LogInformation("🗑️ Deleting all payment methods for Stripe customer {CustomerId}", stripeCustomerId);
+
+                var paymentMethodService = new Stripe.PaymentMethodService();
+                var options = new PaymentMethodListOptions
+                {
+                    Customer = stripeCustomerId,
+                    Type = "card"
+                };
+
+                var paymentMethods = await paymentMethodService.ListAsync(options);
+
+                foreach (var method in paymentMethods)
+                {
+                    try
+                    {
+                        await paymentMethodService.DetachAsync(method.Id);
+                        _logger.LogInformation("✅ Detached payment method {PaymentMethodId} from customer {CustomerId}", method.Id, stripeCustomerId);
+                    }
+                    catch (StripeException ex)
+                    {
+                        _logger.LogError(ex, "⚠️ Failed to detach payment method {PaymentMethodId}, continuing with others", method.Id);
+                    }
+                }
+
+                _logger.LogInformation("✅ All payment methods deleted for Stripe customer {CustomerId}", stripeCustomerId);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "❌ Error deleting payment methods for customer {CustomerId}", stripeCustomerId);
+                throw new ApplicationException("Failed to delete payment methods", ex);
+            }
+        }
+
+        public async Task AnonymizeStripeCustomerAsync(string stripeCustomerId)
+        {
+            try
+            {
+                _logger.LogInformation("🔐 Anonymizing Stripe customer {CustomerId}", stripeCustomerId);
+
+                var customerService = new Stripe.CustomerService();
+                await customerService.UpdateAsync(stripeCustomerId, new CustomerUpdateOptions
+                {
+                    Email = $"deleted_{stripeCustomerId}@deleted.local",
+                    Name = "Deleted User",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "deleted", "true" },
+                        { "deletedAt", DateTime.UtcNow.ToString("O") }
+                    }
+                });
+
+                _logger.LogInformation("✅ Stripe customer {CustomerId} anonymized", stripeCustomerId);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "❌ Error anonymizing Stripe customer {CustomerId}", stripeCustomerId);
+                throw new ApplicationException("Failed to anonymize Stripe customer", ex);
+            }
+        }
 
     }
 }

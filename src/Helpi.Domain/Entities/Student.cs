@@ -18,7 +18,7 @@ namespace Helpi.Domain.Entities
 
         public int? DaysToContractExpire { get; set; }
 
-        public DateTime? DeletedOn { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         public DateOnly? BackgroundCheckDate { get; set; }
 
