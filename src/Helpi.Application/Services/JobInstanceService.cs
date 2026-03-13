@@ -55,44 +55,44 @@ ICustomerRepository customerRepo
         }
 
 
-        public async Task<List<JobInstanceDto>> GetJobInstancesByAssignmentAsync(int assignmentId)
+        public async Task<List<SessionDto>> GetJobInstancesByAssignmentAsync(int assignmentId)
         {
 
-                return _mapper.Map<List<JobInstanceDto>>(await _jobInstanceRepository.GetByAssignmentAsync(assignmentId));
+                return _mapper.Map<List<SessionDto>>(await _jobInstanceRepository.GetByAssignmentAsync(assignmentId));
         }
 
-        public async Task<List<JobInstanceDto>> GetJobInstancesByStudentAsync(int studentId)
+        public async Task<List<SessionDto>> GetJobInstancesByStudentAsync(int studentId)
         {
                 var jobInstances = await _jobInstanceRepository.GetJobInstancesByStudentAsync(studentId);
-                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+                return _mapper.Map<List<SessionDto>>(jobInstances);
         }
 
-        public async Task<List<JobInstanceDto>> GetJobInstances()
+        public async Task<List<SessionDto>> GetJobInstances()
         {
                 var jobInstances = await _jobInstanceRepository.GetJobInstances();
-                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+                return _mapper.Map<List<SessionDto>>(jobInstances);
         }
 
-        public async Task<List<JobInstanceDto>> GetSeniorCompletedJobInstances(int seniorId)
+        public async Task<List<SessionDto>> GetSeniorCompletedJobInstances(int seniorId)
         {
                 var jobInstances = await _jobInstanceRepository.GetSeniorCompletedJobInstances(seniorId);
-                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+                return _mapper.Map<List<SessionDto>>(jobInstances);
         }
-        public async Task<List<JobInstanceDto>> GetStudentCompletedJobInstances(int studentId)
+        public async Task<List<SessionDto>> GetStudentCompletedJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceRepository.GetStudentCompletedJobInstances(studentId);
-                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+                return _mapper.Map<List<SessionDto>>(jobInstances);
         }
-        public async Task<List<JobInstanceDto>> GetStudentUpComingJobInstances(int studentId)
+        public async Task<List<SessionDto>> GetStudentUpComingJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceRepository.GetStudentUpComingJobInstances(studentId);
-                return _mapper.Map<List<JobInstanceDto>>(jobInstances);
+                return _mapper.Map<List<SessionDto>>(jobInstances);
         }
 
         public async Task RemindStudentAsync(int jobInstanceId)
         {
 
-                var instance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
+                var instance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new SessionIncludeOptions
                 {
                         Assignment = true,
                         AssignmentStudent = true
@@ -224,17 +224,20 @@ ICustomerRepository customerRepo
                 if (instance.Status != JobInstanceStatus.Completed) return;
 
                 var customerId = instance.Senior.CustomerId;
-                var cutomer = await _customerRepo.GetByIdAsync(customerId);
-                var customerCulture = cutomer?.Contact.LanguageCode ?? "en";
-                // Create the pending review in DB
-                var review = new Review
+                var customer = await _customerRepo.GetByIdAsync(customerId);
+                var customerCulture = customer?.Contact.LanguageCode ?? "en";
+                var studentId = instance.ScheduleAssignment!.StudentId;
+
+                // 1. Senior → Student review (same as v1)
+                var seniorReview = new Review
                 {
+                        Type = ReviewType.SeniorToStudent,
                         SeniorId = instance.SeniorId,
                         SeniorFullName = instance.Senior.Contact.FullName,
-                        StudentId = instance.ScheduleAssignment!.StudentId,
+                        StudentId = studentId,
                         StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
                         JobInstanceId = jobInstanceId,
-                        Rating = 0, // not rated yet
+                        Rating = 0,
                         Comment = null,
                         RetryCount = 0,
                         MaxRetry = 2,
@@ -242,13 +245,32 @@ ICustomerRepository customerRepo
                         IsPending = true,
                         CreatedAt = DateTime.UtcNow,
                 };
+                await _reviewRepo.AddAsync(seniorReview);
 
-                await _reviewRepo.AddAsync(review);
+                var seniorNotification = _notificationFactory.ReviewRequestNotification(customerId, seniorReview, instance, customerCulture);
+                await _notificationService.SendNotificationAsync(customerId, seniorNotification);
 
-                // Send notification to customer
-                var notification = _notificationFactory.ReviewRequestNotification(customerId, review, instance, customerCulture);
+                // 2. Student → Senior review (NEW in v2)
+                var studentReview = new Review
+                {
+                        Type = ReviewType.StudentToSenior,
+                        SeniorId = instance.SeniorId,
+                        SeniorFullName = instance.Senior.Contact.FullName,
+                        StudentId = studentId,
+                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                        JobInstanceId = jobInstanceId,
+                        Rating = 0,
+                        Comment = null,
+                        RetryCount = 0,
+                        MaxRetry = 2,
+                        NextRetryAt = DateTime.UtcNow,
+                        IsPending = true,
+                        CreatedAt = DateTime.UtcNow,
+                };
+                await _reviewRepo.AddAsync(studentReview);
 
-                await _notificationService.SendNotificationAsync(customerId, notification);
+                var studentNotification = _notificationFactory.ReviewRequestNotification(studentId, studentReview, instance, "hr");
+                await _notificationService.SendNotificationAsync(studentId, studentNotification);
         }
 
 
@@ -256,7 +278,7 @@ ICustomerRepository customerRepo
         /// can reschdule 
         /// can change assignmened student
 
-        public async Task<JobInstanceDto?> ManageJobInstance(
+        public async Task<SessionDto?> ManageJobInstance(
             int jobInstanceId,
             DateOnly? newDate,
             TimeOnly? newStartTime,
@@ -316,7 +338,7 @@ ICustomerRepository customerRepo
                                preferedStudentId);
                 }
 
-                return _mapper.Map<JobInstanceDto>(resultInstance);
+                return _mapper.Map<SessionDto>(resultInstance);
 
         }
 
@@ -432,7 +454,7 @@ ICustomerRepository customerRepo
 
 
 
-        public async Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId)
+        public async Task<SessionDto?> CancelJobInstance(int jobInstanceId)
         {
                 try
                 {
@@ -459,7 +481,7 @@ ICustomerRepository customerRepo
 
                         await NotifyUsersJobInstanceCancelled(job);
 
-                        return _mapper.Map<JobInstanceDto>(job);
+                        return _mapper.Map<SessionDto>(job);
                 }
                 catch (Exception ex)
                 {

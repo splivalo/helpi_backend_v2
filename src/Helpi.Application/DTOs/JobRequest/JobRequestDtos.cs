@@ -16,7 +16,7 @@ public class JobRequestDto
     public int SeniorId { get; set; }
     public int StudentId { get; set; }
     public JobRequestStatus Status { get; set; }
-    public JobInstanceDto? JobInstance { get; set; }
+    public SessionDto? JobInstance { get; set; }
     public DateTime SentAt { get; set; }
     public DateTime ExpiresAt { get; set; }
 

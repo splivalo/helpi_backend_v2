@@ -27,6 +27,7 @@ public class PricingConfigurationService
         {
             Id = c.Id,
             JobHourlyRate = c.JobHourlyRate,
+            SundayHourlyRate = c.SundayHourlyRate,
             CompanyPercentage = c.CompanyPercentage,
             ServiceProviderPercentage = c.ServiceProviderPercentage
         });
@@ -41,6 +42,7 @@ public class PricingConfigurationService
         {
             Id = config.Id,
             JobHourlyRate = config.JobHourlyRate,
+            SundayHourlyRate = config.SundayHourlyRate,
             CompanyPercentage = config.CompanyPercentage,
             ServiceProviderPercentage = config.ServiceProviderPercentage
         };
@@ -56,6 +58,7 @@ public class PricingConfigurationService
         var config = new PricingConfiguration
         {
             JobHourlyRate = configDto.JobHourlyRate,
+            SundayHourlyRate = configDto.SundayHourlyRate,
             CompanyPercentage = configDto.CompanyPercentage,
             ServiceProviderPercentage = configDto.ServiceProviderPercentage
         };
@@ -72,9 +75,11 @@ public class PricingConfigurationService
         {
             PricingConfigurationId = existingConfig.Id,
             OldJobHourlyRate = existingConfig.JobHourlyRate,
+            OldSundayHourlyRate = existingConfig.SundayHourlyRate,
             OldCompanyPercentage = existingConfig.CompanyPercentage,
             OldServiceProviderPercentage = existingConfig.ServiceProviderPercentage,
             NewJobHourlyRate = configDto.JobHourlyRate,
+            NewSundayHourlyRate = configDto.SundayHourlyRate,
             NewCompanyPercentage = configDto.CompanyPercentage,
             NewServiceProviderPercentage = configDto.ServiceProviderPercentage,
             ChangeDate = DateTime.UtcNow,
@@ -83,6 +88,7 @@ public class PricingConfigurationService
         };
 
         existingConfig.JobHourlyRate = configDto.JobHourlyRate;
+        existingConfig.SundayHourlyRate = configDto.SundayHourlyRate;
         existingConfig.CompanyPercentage = configDto.CompanyPercentage;
         existingConfig.ServiceProviderPercentage = configDto.ServiceProviderPercentage;
 

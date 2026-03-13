@@ -18,6 +18,7 @@ public static class PricingConfigurationSeeder
             {
                 Id = 1,
                 JobHourlyRate = 14,
+                SundayHourlyRate = 21,
                 CompanyPercentage = 40,
                 ServiceProviderPercentage = 60
             });

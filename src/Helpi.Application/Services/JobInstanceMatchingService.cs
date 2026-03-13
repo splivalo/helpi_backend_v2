@@ -71,7 +71,7 @@ INotificationFactory notificationFactory,
                 jobInstanceId, reassignmentRecordId);
 
             // Get the job instance and reassignment record
-            var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
+            var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(jobInstanceId, new SessionIncludeOptions
             {
                 Order = true,
                 OrderSchedule = true,

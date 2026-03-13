@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Helpi.Domain.Enums;
 
 namespace Helpi.Application.DTOs;
 
@@ -6,6 +7,7 @@ namespace Helpi.Application.DTOs;
 public class ReviewDto
 {
     public int Id { get; set; }
+    public ReviewType Type { get; set; }
     public byte Rating { get; set; }
     public int SeniorId { get; set; }
     public int JobInstanceId { get; set; }

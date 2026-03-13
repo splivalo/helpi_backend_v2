@@ -1,6 +1,6 @@
 namespace Helpi.Application.DTOs;
 
-public class JobInstanceIncludeOptions
+public class SessionIncludeOptions
 {
     public bool Senior { get; set; }
     public bool Assignment { get; set; }

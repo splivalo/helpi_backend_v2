@@ -3,6 +3,7 @@ using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 
 namespace Helpi.Application.Services;
 
@@ -10,15 +11,18 @@ public class ReviewService
 {
         private readonly IReviewRepository _repository;
         private readonly IStudentRepository _studentRepository;
+        private readonly ISeniorRepository _seniorRepository;
         private readonly IMapper _mapper;
 
         public ReviewService(
                 IReviewRepository repository,
                 IStudentRepository studentRepository,
-        IMapper mapper)
+                ISeniorRepository seniorRepository,
+                IMapper mapper)
         {
                 _repository = repository;
                 _studentRepository = studentRepository;
+                _seniorRepository = seniorRepository;
                 _mapper = mapper;
         }
 
@@ -28,12 +32,20 @@ public class ReviewService
                 return _mapper.Map<List<ReviewDto>>(pendingReviews);
         }
 
+        public async Task<List<ReviewDto>> GetPendingStudentReviews(int studentId)
+        {
+                var pendingReviews = await _repository.GetPendingStudentReviews(studentId);
+                return _mapper.Map<List<ReviewDto>>(pendingReviews);
+        }
+
         public async Task<List<ReviewDto>> GetReviewsByStudentAsync(int studentId) =>
                 _mapper.Map<List<ReviewDto>>(await _repository.GetByStudentAsync(studentId));
 
+        public async Task<List<ReviewDto>> GetReviewsAboutSeniorAsync(int seniorId) =>
+                _mapper.Map<List<ReviewDto>>(await _repository.GetAboutSeniorAsync(seniorId));
+
         public async Task<ReviewDto> MakeReviewAsync(ReviewUpdateDto dto)
         {
-                // 1. Add the review
                 var review = await _repository.GetByIdAsync(dto.ReviewId);
 
                 review.Rating = dto.Rating;
@@ -42,21 +54,32 @@ public class ReviewService
 
                 await _repository.UpdateAsync(review);
 
-                // 2. Update student rating fields incrementally
-                var student = await _studentRepository.GetByIdAsync(review.StudentId);
-
-
-                if (student == null)
+                if (review.Type == ReviewType.StudentToSenior)
                 {
-                        throw new Exception($"Student with ID {review.StudentId} not found.");
+                        var senior = await _seniorRepository.GetByIdAsync(review.SeniorId)
+                                ?? throw new Exception($"Senior with ID {review.SeniorId} not found.");
+
+                        senior.TotalReviews += 1;
+                        senior.TotalRatingSum += (decimal)dto.Rating;
+                        senior.AverageRating = Math.Round(senior.TotalRatingSum / senior.TotalReviews, 2);
+
+                        await _seniorRepository.UpdateAsync(senior);
                 }
+                else
+                {
+                        var student = await _studentRepository.GetByIdAsync(review.StudentId);
 
-                // Increment totals
-                student.TotalReviews += 1;
-                student.TotalRatingSum += (decimal)dto.Rating;
-                student.AverageRating = Math.Round(student.TotalRatingSum / student.TotalReviews, 2);
+                        if (student == null)
+                        {
+                                throw new Exception($"Student with ID {review.StudentId} not found.");
+                        }
 
-                await _studentRepository.UpdateAsync(student);
+                        student.TotalReviews += 1;
+                        student.TotalRatingSum += (decimal)dto.Rating;
+                        student.AverageRating = Math.Round(student.TotalRatingSum / student.TotalReviews, 2);
+
+                        await _studentRepository.UpdateAsync(student);
+                }
 
                 return _mapper.Map<ReviewDto>(review);
         }

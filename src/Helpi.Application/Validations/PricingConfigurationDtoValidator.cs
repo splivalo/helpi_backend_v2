@@ -10,6 +10,9 @@ public class PricingConfigurationDtoValidator : AbstractValidator<PricingConfigu
         RuleFor(x => x.JobHourlyRate)
             .GreaterThan(0).WithMessage("Job hourly rate must be greater than zero.");
 
+        RuleFor(x => x.SundayHourlyRate)
+            .GreaterThan(0).WithMessage("Sunday hourly rate must be greater than zero.");
+
         RuleFor(x => x.CompanyPercentage)
             .InclusiveBetween(0, 100).WithMessage("Company percentage must be between 0 and 100.");
 

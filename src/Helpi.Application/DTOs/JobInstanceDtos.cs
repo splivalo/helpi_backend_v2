@@ -6,7 +6,7 @@ using Helpi.Domain.Enums;
 namespace Helpi.Application.DTOs;
 
 
-public class JobInstanceDto
+public class SessionDto
 {
     public int Id { get; set; }
     public int SeniorId { get; set; }
@@ -55,7 +55,7 @@ public class JobInstanceDto
 
 }
 
-public class JobInstanceUpdateDto
+public class SessionUpdateDto
 {
     public JobInstanceStatus? Status { get; set; }
     public DateTime? ActualStartTime { get; set; }
@@ -63,7 +63,7 @@ public class JobInstanceUpdateDto
 }
 
 
-public class CompletedJobInstanceDto
+public class CompletedSessionDto
 {
 
     public int Id { get; set; }

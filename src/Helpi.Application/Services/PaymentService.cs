@@ -60,7 +60,7 @@ ILocalizationService loc
 
     public async Task ProcessPaymentAsync(int jobInstanceId)
     {
-        var jobInstance = await _jobInstanceRepo.LoadJobInstanceWithIncludes(jobInstanceId, new JobInstanceIncludeOptions
+        var jobInstance = await _jobInstanceRepo.LoadJobInstanceWithIncludes(jobInstanceId, new SessionIncludeOptions
         {
             Order = true,
             OrderPaymentMethod = true,

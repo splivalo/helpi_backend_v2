@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<ServiceRegionService>();
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
+        services.AddScoped<IPromoCodeService, PromoCodeService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
         services.AddScoped<IJobInstanceMatchingService, JobInstanceMatchingService>();
         services.AddScoped<IFailedMatchReinitiationService, FailedMatchReinitiationService>();

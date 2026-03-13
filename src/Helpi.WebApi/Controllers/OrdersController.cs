@@ -46,6 +46,7 @@ public class OrdersController : ControllerBase
         }
 
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<OrderDto>> UpdateOrder(int id, [FromBody] OrderUpdateDto updateDto)
         {
@@ -72,7 +73,8 @@ public class OrdersController : ControllerBase
         {
                 try
                 {
-                        var result = await _ordersService.CancelOrderAsync(id, cancelDto);
+                        var isAdmin = User.IsInRole("Admin");
+                        var result = await _ordersService.CancelOrderAsync(id, cancelDto, isAdmin);
                         return result ? Ok() : BadRequest();
                 }
                 catch (DomainException ex)

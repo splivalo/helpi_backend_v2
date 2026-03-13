@@ -216,6 +216,7 @@ namespace Helpi.Domain.Enums
 
     public enum DashboardTileType
     {
+        // Admin tiles
         uncoveredOrders,
         expiredContracts,
         newNotifications,
@@ -227,7 +228,22 @@ namespace Helpi.Domain.Enums
         userCount,
         orderCount,
         completedOrders,
-        workedHours
+        workedHours,
+
+        // Student tiles
+        upcomingSessions,
+        completedSessionsStudent,
+        totalEarnings,
+        myRating,
+        contractDaysRemaining,
+        workedHoursStudent,
+
+        // Senior tiles
+        upcomingSessionsSenior,
+        completedSessionsSenior,
+        totalSpent,
+        myRatingSenior,
+        activeOrders
     }
 
     public enum ChangeType
@@ -248,6 +264,18 @@ namespace Helpi.Domain.Enums
     {
         Android,
         iOS
+    }
+
+    public enum ReviewType
+    {
+        SeniorToStudent = 0,
+        StudentToSenior = 1
+    }
+
+    public enum PromoCodeType
+    {
+        Percentage = 0,
+        FixedAmount = 1
     }
 
 }

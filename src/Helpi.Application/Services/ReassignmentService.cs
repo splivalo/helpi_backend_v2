@@ -85,7 +85,7 @@ INotificationFactory notificationFactory,
 
                 var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(
                     jobInstanceId.Value,
-                    new JobInstanceIncludeOptions
+                    new SessionIncludeOptions
                     {
                         Order = true,
                         Assignment = true,
@@ -347,7 +347,7 @@ INotificationFactory notificationFactory,
                 assignmentId: assignmentId,
                 prevAssignmentId: null,
                 JobInstanceStatus.Upcoming,
-                new JobInstanceIncludeOptions { }
+                new SessionIncludeOptions { }
                 );
 
             foreach (var instance in upComingJobInstances)
@@ -425,7 +425,7 @@ INotificationFactory notificationFactory,
                 assignmentId: null,
                 prevAssignmentId: originalAssignment.Id,
                 JobInstanceStatus.Upcoming,
-                new JobInstanceIncludeOptions { }
+                new SessionIncludeOptions { }
                 );
 
             foreach (var instance in upComingJobInstances)
@@ -453,7 +453,7 @@ INotificationFactory notificationFactory,
             // Get the job instance
             var jobInstance = await _jobInstanceRepository.LoadJobInstanceWithIncludes(
                 reassignmentRecord.ReassignJobInstanceId.Value,
-                new JobInstanceIncludeOptions
+                new SessionIncludeOptions
                 {
                     Assignment = true
                 }

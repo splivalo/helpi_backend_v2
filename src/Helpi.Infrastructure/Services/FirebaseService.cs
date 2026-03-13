@@ -14,7 +14,7 @@ namespace Helpi.Infrastructure.Services;
 
 public class FirebaseService : IFirebaseService
 {
-    private readonly FirebaseMessaging _firebaseMessaging;
+    private readonly FirebaseMessaging? _firebaseMessaging;
     private readonly ILogger<FirebaseService> _logger;
     private readonly FirestoreDb? _firestoreDb;
 
@@ -26,6 +26,11 @@ public class FirebaseService : IFirebaseService
     {
         _firebaseMessaging = FirebaseMessaging.DefaultInstance;
         _logger = logger;
+
+        if (_firebaseMessaging == null)
+        {
+            _logger.LogWarning("⚠️ FirebaseMessaging not available — push notifications will be skipped.");
+        }
 
         // Initialize Firestore using the already-initialized Firebase app
         try
@@ -49,6 +54,11 @@ public class FirebaseService : IFirebaseService
 
     public async Task<string> GenerateCustomTokenAsync(string userId, Dictionary<string, object>? claims)
     {
+        if (FirebaseAuth.DefaultInstance == null)
+        {
+            _logger.LogWarning("⚠️ Firebase not initialized — returning empty token for user {UserId}", userId);
+            return string.Empty;
+        }
         return await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userId, claims);
     }
 

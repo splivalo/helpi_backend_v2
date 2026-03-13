@@ -241,7 +241,7 @@ public class OrdersService
                 }
         }
 
-        public async Task<bool> CancelOrderAsync(int orderId, OrderCancelDto cancelDto)
+        public async Task<bool> CancelOrderAsync(int orderId, OrderCancelDto cancelDto, bool isAdmin = false)
         {
                 try
                 {
@@ -261,6 +261,25 @@ public class OrdersService
                                 _logger.LogInformation("⚠️ Order ID {OrderId} is in terminal state [{Status}]. Skipping...",
                                     orderId, order.Status);
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
+                        }
+
+                        // v2: Non-admin users cannot cancel if any upcoming session starts within 24h
+                        if (!isAdmin)
+                        {
+                                var now = DateTime.UtcNow;
+                                var nearestUpcoming = order.Schedules
+                                        .SelectMany(s => s.Assignments)
+                                        .SelectMany(a => a.JobInstances)
+                                        .Where(ji => ji.Status == JobInstanceStatus.Upcoming)
+                                        .Select(ji => ji.ScheduledDate.ToDateTime(ji.StartTime))
+                                        .Where(dt => dt > now)
+                                        .OrderBy(dt => dt)
+                                        .FirstOrDefault();
+
+                                if (nearestUpcoming != default && nearestUpcoming <= now.AddHours(24))
+                                {
+                                        throw new DomainException("Cannot cancel order — the next session starts within 24 hours");
+                                }
                         }
 
                         // id's of schedules that are currently not cancelld but will be

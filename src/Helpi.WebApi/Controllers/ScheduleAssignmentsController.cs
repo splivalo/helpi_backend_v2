@@ -31,7 +31,16 @@ public class ScheduleAssignmentsController : ControllerBase
                 var ass = await _service.GetAssignmentForOrderScheduleAsync(orderScheduleId);
                 return Ok(ass);
         }
+        [Authorize(Roles = "Admin")]
         [HttpPost] public async Task<ActionResult<ScheduleAssignmentDto>> Create(ScheduleAssignmentCreateDto dto) => CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, await _service.CreateAssignmentAsync(dto));
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("admin-assign")]
+        public async Task<ActionResult<ScheduleAssignmentDto>> AdminDirectAssign([FromBody] ScheduleAssignmentCreateDto dto)
+        {
+                var result = await _service.AdminDirectAssignAsync(dto);
+                return CreatedAtAction(nameof(GetByStudent), new { studentId = dto.StudentId }, result);
+        }
 
         [HttpPost("reassign")]
         public async Task<IActionResult> ReassignScheduleAssignment([FromBody] ReassignScheduleAssignmentRequestDto request)

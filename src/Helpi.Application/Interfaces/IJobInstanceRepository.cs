@@ -25,14 +25,14 @@ public interface IJobInstanceRepository
 
     Task<JobInstance?> UpdateToInProgressAsync(int jobInstanceId);
     // Task<JobInstance?> UpdateToCompletedAsync(int jobInstanceId);
-    Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes);
+    Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, SessionIncludeOptions includes);
     Task<List<JobInstance>> GetByDateAsync(DateOnly today);
     Task SaveChangesAsync();
     Task<int> SumAsync(Expression<Func<JobInstance, bool>> predicate, Expression<Func<JobInstance, int>> selector);
     Task<List<JobInstance>> GetJobInstancesAsync(int? assignmentId,
 int? prevAssignmentId,
      JobInstanceStatus? status,
-     JobInstanceIncludeOptions options);
+     SessionIncludeOptions options);
     void Detach(JobInstance jobInstance);
     Task<List<JobInstance>> GetFromDateForScheduleAsync(DateOnly fromDate, int scheduleId);
     void MarkForDeleteRange(IEnumerable<JobInstance> jobs);

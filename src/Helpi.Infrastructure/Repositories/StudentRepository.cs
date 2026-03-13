@@ -211,6 +211,13 @@ public class StudentRepository : IStudentRepository
     {
         bool isDateRange = startDate != endDate;
 
+        // 15-min travel buffer: expand conflict window so students
+        // have time to travel between consecutive Helpi sessions.
+        // A job [10:00-12:00] blocks [09:45-12:15] for the student.
+        const int travelBufferMinutes = 15;
+        var bufferedStart = targetStart.AddMinutes(-travelBufferMinutes);
+        var bufferedEnd = targetEnd.AddMinutes(travelBufferMinutes);
+
 
         var query = _context.Students
             .WhereIsActive()
@@ -239,7 +246,7 @@ public class StudentRepository : IStudentRepository
             )
         );
 
-        // ✅ Unified conflict detection
+        // ✅ Unified conflict detection with 15-min travel buffer
         query = query.Where(s =>
             !s.ScheduleAssignments
                 .Where(sa => sa.Status == AssignmentStatus.Accepted)
@@ -252,8 +259,8 @@ public class StudentRepository : IStudentRepository
                               j.ScheduledDate.DayOfWeek == DayOfWeekExtensions.FromIsoWeekday(isoTargetDay))
                             : j.ScheduledDate == startDate
                     )
-                    && j.StartTime <= targetEnd
-                    && j.EndTime >= targetStart
+                    && j.StartTime < bufferedEnd
+                    && j.EndTime > bufferedStart
                     && !excludeJobInstanceIds.Contains(j.Id)
                     && j.Status != JobInstanceStatus.Completed
                     && j.Status != JobInstanceStatus.Cancelled
