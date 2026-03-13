@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,9 +82,26 @@ public class ReviewRepository : IReviewRepository
         {
                 return await _context.Reviews
                       .Where(r => r.SeniorId == seniorId && r.IsPending)
+                      .Where(r => r.Type == ReviewType.SeniorToStudent)
                       .Where(r => r.RetryCount < r.MaxRetry)
                       .ToListAsync();
         }
+
+        public async Task<List<Review>> GetPendingStudentReviews(int studentId)
+        {
+                return await _context.Reviews
+                      .Where(r => r.StudentId == studentId && r.IsPending)
+                      .Where(r => r.Type == ReviewType.StudentToSenior)
+                      .Where(r => r.RetryCount < r.MaxRetry)
+                      .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Review>> GetAboutSeniorAsync(int seniorId)
+            => await _context.Reviews
+                .Where(r => r.SeniorId == seniorId)
+                .Where(r => r.Type == ReviewType.StudentToSenior)
+                .Where(r => r.IsPending == false)
+                .ToListAsync();
 
 
 }

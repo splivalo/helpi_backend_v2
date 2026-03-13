@@ -1,6 +1,6 @@
 namespace Helpi.Application.DTOs.JobInstance;
 
-public class ManageJobInstanceRequestDto
+public class ManageSessionRequestDto
 {
     public DateOnly? NewDate { get; set; }
     public TimeOnly? NewStartTime { get; set; }

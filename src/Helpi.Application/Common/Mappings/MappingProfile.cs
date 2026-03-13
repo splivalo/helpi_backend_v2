@@ -56,7 +56,8 @@ public class MappingProfile : Profile
         CreateMap<FacultyUpdateDto, Faculty>();
 
         // StudentContract Mappings
-        CreateMap<StudentContract, StudentContractDto>();
+        CreateMap<StudentContract, StudentContractDto>()
+            .ForMember(dest => dest.Sessions, opt => opt.MapFrom(src => src.JobInstances));
         CreateMap<StudentContractCreateDto, StudentContract>();
         CreateMap<StudentContractUpdateDto, StudentContract>();
 
@@ -144,8 +145,8 @@ public class MappingProfile : Profile
         CreateMap<ScheduleAssignmentUpdateDto, ScheduleAssignment>();
 
         // JobInstance Mappings
-        CreateMap<JobInstance, JobInstanceDto>();
-        CreateMap<JobInstanceUpdateDto, JobInstance>();
+        CreateMap<JobInstance, SessionDto>();
+        CreateMap<SessionUpdateDto, JobInstance>();
 
         // PaymentTransaction Mappings
         CreateMap<PaymentTransaction, PaymentTransactionDto>();
@@ -159,6 +160,10 @@ public class MappingProfile : Profile
         CreateMap<Review, ReviewDto>();
         // CreateMap<MakeReviewUpdateDto, Review>();
         CreateMap<ReviewUpdateDto, Review>();
+
+        // PromoCode Mappings
+        CreateMap<PromoCode, PromoCodeDto>();
+        CreateMap<PromoCodeCreateDto, PromoCode>();
 
         // Invoice Mappings
         CreateMap<Invoice, InvoiceDto>();
@@ -202,8 +207,8 @@ public class MappingProfile : Profile
                     .Sum(j => j.ServiceProviderAmount)));
 
 
-        // Map JobInstance → CompletedJobInstanceDto
-        CreateMap<JobInstance, CompletedJobInstanceDto>();
+        // Map JobInstance → CompletedSessionDto
+        CreateMap<JobInstance, CompletedSessionDto>();
     }
 
 

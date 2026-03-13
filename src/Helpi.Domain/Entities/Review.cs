@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Helpi.Domain.Enums;
 
 namespace Helpi.Domain.Entities
 {
@@ -6,6 +7,7 @@ namespace Helpi.Domain.Entities
     public class Review
     {
         public int Id { get; set; }
+        public ReviewType Type { get; set; } = ReviewType.SeniorToStudent;
         public int SeniorId { get; set; }
         public string SeniorFullName { get; set; } = null!;
         public int StudentId { get; set; }

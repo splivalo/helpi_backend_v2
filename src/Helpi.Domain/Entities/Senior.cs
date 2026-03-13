@@ -24,6 +24,9 @@ namespace Helpi.Domain.Entities
         public ContactInfo Contact { get; set; } = null!;
         public ICollection<Order> Orders { get; set; } = new List<Order>();
 
+        public int TotalReviews { get; set; } = 0;
+        public decimal TotalRatingSum { get; set; } = 0.00m;
+        public decimal AverageRating { get; set; } = 0.00m;
 
     }
 }

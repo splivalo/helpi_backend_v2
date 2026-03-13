@@ -57,7 +57,7 @@ namespace Helpi.Domain.Entities
         public PaymentTransaction? PaymentTransaction { get; set; }
 
 
-        public Review? Review { get; set; }
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public Senior Senior { get; set; } = null!;
         public Order Order { get; set; } = null!;
 

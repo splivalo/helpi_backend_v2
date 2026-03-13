@@ -7,19 +7,19 @@ namespace Helpi.Application.Interfaces.Services;
 public interface IJobInstanceService
 {
 
-    Task<List<JobInstanceDto>> GetJobInstancesByAssignmentAsync(int assignmentId);
-    Task<List<JobInstanceDto>> GetJobInstancesByStudentAsync(int studentId);
-    Task<List<JobInstanceDto>> GetJobInstances();
-    Task<List<JobInstanceDto>> GetSeniorCompletedJobInstances(int seniorId);
-    Task<List<JobInstanceDto>> GetStudentCompletedJobInstances(int studentId);
-    Task<List<JobInstanceDto>> GetStudentUpComingJobInstances(int studentId);
+    Task<List<SessionDto>> GetJobInstancesByAssignmentAsync(int assignmentId);
+    Task<List<SessionDto>> GetJobInstancesByStudentAsync(int studentId);
+    Task<List<SessionDto>> GetJobInstances();
+    Task<List<SessionDto>> GetSeniorCompletedJobInstances(int seniorId);
+    Task<List<SessionDto>> GetStudentCompletedJobInstances(int studentId);
+    Task<List<SessionDto>> GetStudentUpComingJobInstances(int studentId);
 
     Task UpdateToInProgressAsync(int jobInstanceId);
     Task UpdateToCompletedAsync(int jobInstanceId);
     Task RemindStudentAsync(int jobInstanceId);
     Task RequestJobReviewAsync(int jobInstanceId);
 
-    Task<JobInstanceDto?> ManageJobInstance(
+    Task<SessionDto?> ManageJobInstance(
             int jobInstanceId,
             DateOnly? newDate,
             TimeOnly? newStartTime,
@@ -28,6 +28,6 @@ public interface IJobInstanceService
             int? preferedStudentId,
             bool reassignStudent,
             int requestedByUserId);
-    Task<JobInstanceDto?> CancelJobInstance(int jobInstanceId);
+    Task<SessionDto?> CancelJobInstance(int jobInstanceId);
 
 }

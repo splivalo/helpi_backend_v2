@@ -22,6 +22,12 @@ public class ReviewsController : ControllerBase
                 return Ok(reviews);
         }
 
+        [HttpGet("senior/{seniorId}")]
+        public async Task<ActionResult<List<ReviewDto>>> GetAboutSenior(int seniorId)
+        {
+                var reviews = await _service.GetReviewsAboutSeniorAsync(seniorId);
+                return Ok(reviews);
+        }
 
         [HttpGet("senior/{seniorId}/pending")]
         public async Task<ActionResult<List<ReviewDto>>> GetPendingSeniorReviews(int seniorId)
@@ -30,6 +36,12 @@ public class ReviewsController : ControllerBase
                 return Ok(reviews);
         }
 
+        [HttpGet("student/{studentId}/pending")]
+        public async Task<ActionResult<List<ReviewDto>>> GetPendingStudentReviews(int studentId)
+        {
+                var reviews = await _service.GetPendingStudentReviews(studentId);
+                return Ok(reviews);
+        }
 
         [HttpPut("{reviewId}/decline")]
         public async Task<ActionResult> DeclineToReview(int reviewId)

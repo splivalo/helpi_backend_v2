@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313133641_AddBidirectionalReviews")]
+    partial class AddBidirectionalReviews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -603,9 +606,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Property<int?>("PaymentMethodId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("PromoCodeId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("RecurrencePattern")
                         .HasColumnType("integer");
 
@@ -627,8 +627,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PaymentMethodId");
-
-                    b.HasIndex("PromoCodeId");
 
                     b.HasIndex("SeniorId");
 
@@ -954,85 +952,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PricingConfigurations");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.PromoCode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentUses")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("DiscountValue")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("MaxUses")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ValidFrom")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("ValidUntil")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("PromoCodes");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.PromoCodeUsage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("DiscountApplied")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PromoCodeId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("PromoCodeId");
-
-                    b.ToTable("PromoCodeUsages");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Review", b =>
@@ -1925,10 +1844,6 @@ namespace Helpi.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("PaymentMethodId");
 
-                    b.HasOne("Helpi.Domain.Entities.PromoCode", "PromoCode")
-                        .WithMany()
-                        .HasForeignKey("PromoCodeId");
-
                     b.HasOne("Helpi.Domain.Entities.Senior", "Senior")
                         .WithMany("Orders")
                         .HasForeignKey("SeniorId")
@@ -1940,8 +1855,6 @@ namespace Helpi.Infrastructure.Migrations
                         .HasForeignKey("ServiceId");
 
                     b.Navigation("PaymentMethod");
-
-                    b.Navigation("PromoCode");
 
                     b.Navigation("Senior");
                 });
@@ -2025,33 +1938,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("JobInstance");
 
                     b.Navigation("PaymentMethod");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.PromoCodeUsage", b =>
-                {
-                    b.HasOne("Helpi.Domain.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Helpi.Domain.Entities.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Helpi.Domain.Entities.PromoCode", "PromoCode")
-                        .WithMany("Usages")
-                        .HasForeignKey("PromoCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Order");
-
-                    b.Navigation("PromoCode");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Review", b =>
@@ -2375,11 +2261,6 @@ namespace Helpi.Infrastructure.Migrations
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
                 {
                     b.Navigation("Transactions");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.PromoCode", b =>
-                {
-                    b.Navigation("Usages");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ScheduleAssignment", b =>

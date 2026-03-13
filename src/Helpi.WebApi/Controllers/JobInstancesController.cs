@@ -10,47 +10,47 @@ namespace Helpi.WebApi.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/job-instances")]
-public class JobInstancesController : ControllerBase
+[Route("api/sessions")]
+public class SessionsController : ControllerBase
 {
         private readonly IJobInstanceService _jobInstanceService;
 
-        public JobInstancesController(IJobInstanceService service) => _jobInstanceService = service;
+        public SessionsController(IJobInstanceService service) => _jobInstanceService = service;
 
         [HttpGet("assignment/{assignmentId}")]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetByAssignment(int assignmentId)
+        public async Task<ActionResult<List<SessionDto>>> GetByAssignment(int assignmentId)
         {
 
                 return
                  Ok(await _jobInstanceService.GetJobInstancesByAssignmentAsync(assignmentId));
         }
         [HttpGet("student/{studentId}")]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetJobInstancesByStudent(int studentId)
+        public async Task<ActionResult<List<SessionDto>>> GetJobInstancesByStudent(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetJobInstancesByStudentAsync(studentId);
                 return Ok(jobInstances);
         }
         [HttpGet("completed/senior/{seniorId}")]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetSeniorCompletedJobInstances(int seniorId)
+        public async Task<ActionResult<List<SessionDto>>> GetSeniorCompletedJobInstances(int seniorId)
         {
                 var jobInstances = await _jobInstanceService.GetSeniorCompletedJobInstances(seniorId);
                 return Ok(jobInstances);
         }
         [HttpGet("completed/student/{studentId}")]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetStudentCompletedJobInstances(int studentId)
+        public async Task<ActionResult<List<SessionDto>>> GetStudentCompletedJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetStudentCompletedJobInstances(studentId);
                 return Ok(jobInstances);
         }
         [HttpGet("upcoming/student/{studentId}")]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetStudentUpComingJobInstances(int studentId)
+        public async Task<ActionResult<List<SessionDto>>> GetStudentUpComingJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetStudentUpComingJobInstances(studentId);
                 return Ok(jobInstances);
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<JobInstanceDto>>> GetJobInstances()
+        public async Task<ActionResult<List<SessionDto>>> GetJobInstances()
         {
                 var jobInstances = await _jobInstanceService.GetJobInstances();
                 return Ok(jobInstances);
@@ -63,7 +63,7 @@ public class JobInstancesController : ControllerBase
         [HttpPost("{jobInstanceId}/manage")]
         public async Task<IActionResult> ManageJobInstance(
             int jobInstanceId,
-            [FromBody] ManageJobInstanceRequestDto request)
+            [FromBody] ManageSessionRequestDto request)
         {
                 try
                 {
@@ -94,7 +94,7 @@ public class JobInstancesController : ControllerBase
         }
 
         [HttpPost("{jobInstanceId}/cancel")]
-        public async Task<ActionResult<JobInstanceDto>> CancelJobInstance(
+        public async Task<ActionResult<SessionDto>> CancelJobInstance(
            int jobInstanceId)
         {
                 try

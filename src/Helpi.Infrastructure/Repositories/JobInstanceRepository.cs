@@ -176,7 +176,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 await _context.SaveChangesAsync();
         }
 
-        public async Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, JobInstanceIncludeOptions includes)
+        public async Task<JobInstance?> LoadJobInstanceWithIncludes(int jobInstanceId, SessionIncludeOptions includes)
         {
                 var query = _context.JobInstances.AsQueryable();
 
@@ -248,7 +248,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 int? assignmentId,
                 int? prevAssignmentId,
                 JobInstanceStatus? status,
-                JobInstanceIncludeOptions options
+                SessionIncludeOptions options
      )
         {
                 var query = _context.JobInstances

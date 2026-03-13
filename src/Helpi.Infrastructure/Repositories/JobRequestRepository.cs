@@ -382,6 +382,11 @@ public class JobRequestRepository : IJobRequestRepository
                         int? excludeJobRequestId = null
                         )
         {
+                // 15-min travel buffer between consecutive Helpi sessions
+                const int travelBufferMinutes = 15;
+                var bufferedStart = startTime.AddMinutes(-travelBufferMinutes);
+                var bufferedEnd = endTime.AddMinutes(travelBufferMinutes);
+
                 // Base query: pending requests for this student
                 var jobRequests = _context.JobRequests
                     .Where(jr => jr.Status == JobRequestStatus.Pending &&
@@ -399,8 +404,8 @@ public class JobRequestRepository : IJobRequestRepository
                                 jr.JobInstance != null &&
                                 jr.JobInstance.ScheduledDate <= endDate &&
                                 jr.JobInstance.ScheduledDate >= startDate &&
-                                jr.JobInstance.StartTime < endTime &&
-                                jr.JobInstance.EndTime > startTime &&
+                                jr.JobInstance.StartTime < bufferedEnd &&
+                                jr.JobInstance.EndTime > bufferedStart &&
                                 jr.JobInstance.Status != JobInstanceStatus.Completed &&
                                 jr.JobInstance.Status != JobInstanceStatus.Cancelled &&
                                 jr.JobInstance.Status != JobInstanceStatus.Rescheduled
@@ -411,8 +416,8 @@ public class JobRequestRepository : IJobRequestRepository
                                 jr.OrderSchedule.Order.StartDate <= endDate &&
                                 jr.OrderSchedule.Order.EndDate >= startDate &&
                                 jr.OrderSchedule.DayOfWeek == DayOfWeekExtensions.ToIsoWeekday(startDate.DayOfWeek) &&
-                                jr.OrderSchedule.StartTime <= endTime &&
-                                jr.OrderSchedule.EndTime >= startTime
+                                jr.OrderSchedule.StartTime < bufferedEnd &&
+                                jr.OrderSchedule.EndTime > bufferedStart
                                 )
                         )
                         .ToListAsync();

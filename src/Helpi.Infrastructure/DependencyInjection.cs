@@ -129,6 +129,7 @@ public static class DependencyInjection
         services.AddScoped<IHEmailRepository, HEmailRepository>();
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IServiceRegionRepository, ServiceRegionRepository>();
+        services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<AdminService>();
         /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):

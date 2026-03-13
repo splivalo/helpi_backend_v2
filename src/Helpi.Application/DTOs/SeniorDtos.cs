@@ -15,6 +15,11 @@ public class SeniorDto
 
     public DateTime? DeletedAt { get; set; }
 
+    // Review aggregation
+    public int TotalReviews { get; set; }
+    public int TotalRatingSum { get; set; }
+    public double AverageRating { get; set; }
+
     ///
     // Order status information
     public List<OrderStatus> OrderStatuses { get; set; } = new List<OrderStatus>();

@@ -148,6 +148,11 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
             foreach (var date in newDates)
             {
+                var isSunday = date.DayOfWeek == DayOfWeek.Sunday;
+                var hourlyRate = isSunday
+                    ? pricingConfiguration.SundayHourlyRate
+                    : pricingConfiguration.JobHourlyRate;
+
                 jobInstances.Add(new JobInstance
                 {
                     SeniorId = order.SeniorId,
@@ -155,7 +160,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     OrderId = order.Id,
                     Notes = order.Notes,
                     OrderScheduleId = assignment.OrderScheduleId,
-                    HourlyRate = pricingConfiguration.JobHourlyRate,
+                    HourlyRate = hourlyRate,
                     CompanyPercentage = pricingConfiguration.CompanyPercentage,
                     ServiceProviderPercentage = pricingConfiguration.ServiceProviderPercentage,
                     ScheduleAssignmentId = assignment.Id,
@@ -165,7 +170,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     Status = JobInstanceStatus.Upcoming
                 });
 
-                _logger.LogDebug("✅ Added job instance for {Date} (Assignment {AssignmentId})", date, assignment.Id);
+                _logger.LogDebug("✅ Added job instance for {Date} (Assignment {AssignmentId}, Sunday={IsSunday}, Rate={Rate})",
+                    date, assignment.Id, isSunday, hourlyRate);
             }
 
             return jobInstances;

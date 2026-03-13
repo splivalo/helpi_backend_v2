@@ -18,7 +18,7 @@ public class StudentContractDto
 
     public string ContractNumber { get; set; } = null!;
 
-    public ICollection<JobInstanceDto> JobInstances { get; set; } = new List<JobInstanceDto>();
+    public ICollection<SessionDto> Sessions { get; set; } = new List<SessionDto>();
 }
 
 public class StudentContractCreateDto
@@ -81,5 +81,5 @@ public class CompletedStudentContractDto
     public decimal TotalCompanyEarnings { get; set; }
 
     // Completed JobInstances
-    public ICollection<CompletedJobInstanceDto> CompletedJobs { get; set; } = new List<CompletedJobInstanceDto>();
+    public ICollection<CompletedSessionDto> CompletedJobs { get; set; } = new List<CompletedSessionDto>();
 }
