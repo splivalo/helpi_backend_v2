@@ -124,8 +124,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCors("AllowAll");
 }
-app.UseCors("AllowFlutterAdminDashboard");
-app.UseCors("AllowAllForPreflight");
+else
+{
+    app.UseCors("AllowFlutterAdminDashboard");
+}
 
 // Serve static files
 app.UseStaticFiles();
