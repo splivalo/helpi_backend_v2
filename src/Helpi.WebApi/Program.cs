@@ -45,7 +45,14 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddHangfireServices(builder.Configuration);
 builder.Services.AddSignalRServices(builder.Configuration);
-builder.Services.AddGoogleDriveServices(builder.Configuration);
+if (!env.IsDevelopment() || File.Exists(builder.Configuration["GoogleDrive:CredentialsJson"] ?? ""))
+{
+    builder.Services.AddGoogleDriveServices(builder.Configuration);
+}
+else
+{
+    Console.WriteLine("⚠️ Google Drive services skipped in Development — credentials not available");
+}
 
 // SignalR notifications
 builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
@@ -92,7 +99,14 @@ var app = builder.Build();
 
 // Initialize Firebase
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
+try
+{
+    FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
+}
+catch (Exception ex) when (app.Environment.IsDevelopment())
+{
+    logger.LogWarning(ex, "⚠️ Firebase initialization skipped in Development — push notifications will not work");
+}
 
 // ------------------------------------------------------------
 // 4️⃣  MIDDLEWARE PIPELINE
