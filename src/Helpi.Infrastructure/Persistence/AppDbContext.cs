@@ -86,6 +86,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<City> Cities { get; set; }
     public DbSet<ServiceRegion> ServiceRegions { get; set; }
 
+    // Suspension
+    public DbSet<SuspensionLog> SuspensionLogs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 
@@ -307,6 +310,20 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // .WithOne(s => s.User)
         // .HasForeignKey<Student>(s => s.Id)
         // .OnDelete(DeleteBehavior.Cascade);
+
+        // SuspensionLog — two FKs to User, restrict to avoid cascade cycles
+        modelBuilder.Entity<SuspensionLog>(entity =>
+        {
+            entity.HasOne(s => s.User)
+                .WithMany(u => u.SuspensionLogs)
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.AdminUser)
+                .WithMany()
+                .HasForeignKey(s => s.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         /// Indexing
         modelBuilder.AddCustomIndexes();

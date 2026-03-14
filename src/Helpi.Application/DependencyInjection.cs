@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
         services.AddScoped<IPromoCodeService, PromoCodeService>();
+        services.AddScoped<SuspensionService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
         services.AddScoped<IJobInstanceMatchingService, JobInstanceMatchingService>();
         services.AddScoped<IFailedMatchReinitiationService, FailedMatchReinitiationService>();

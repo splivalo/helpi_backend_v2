@@ -10,6 +10,9 @@ public class UserDto
     public UserType UserType { get; set; }
     public string Email { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public bool IsSuspended { get; set; }
+    public string? SuspensionReason { get; set; }
+    public DateTime? SuspendedAt { get; set; }
 }
 
 public class UserCreateDto
