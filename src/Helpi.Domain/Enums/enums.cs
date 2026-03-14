@@ -278,4 +278,10 @@ namespace Helpi.Domain.Enums
         FixedAmount = 1
     }
 
+    public enum SuspensionAction
+    {
+        Suspended = 0,
+        Activated = 1
+    }
+
 }

@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260314140749_AddSuspensionSystem")]
+    partial class AddSuspensionSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,7 +42,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContactId")
                         .IsUnique();
 
-                    b.ToTable("Admins", (string)null);
+                    b.ToTable("Admins");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
@@ -75,7 +78,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("GooglePlaceId")
                         .IsUnique();
 
-                    b.ToTable("Cities", (string)null);
+                    b.ToTable("Cities");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ContactInfo", b =>
@@ -152,7 +155,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("CityId")
                         .HasDatabaseName("IX_Contacts_CityId");
 
-                    b.ToTable("ContactInfos", (string)null);
+                    b.ToTable("ContactInfos");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ContractNumberSequence", b =>
@@ -168,7 +171,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ContractNumberSequences", (string)null);
+                    b.ToTable("ContractNumberSequences");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Customer", b =>
@@ -193,7 +196,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("ContactId")
                         .IsUnique();
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Faculty", b =>
@@ -210,7 +213,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties", (string)null);
+                    b.ToTable("Faculties");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.FcmToken", b =>
@@ -226,7 +229,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("UserId", "Token");
 
-                    b.ToTable("FcmTokens", (string)null);
+                    b.ToTable("FcmTokens");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.HEmail", b =>
@@ -263,7 +266,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("InvoiceEmails", (string)null);
+                    b.ToTable("InvoiceEmails");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.HNotification", b =>
@@ -322,7 +325,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("HNotifications", (string)null);
+                    b.ToTable("HNotifications");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Invoice", b =>
@@ -374,7 +377,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("TransactionId");
 
-                    b.ToTable("Invoices", (string)null);
+                    b.ToTable("Invoices");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobInstance", b =>
@@ -496,7 +499,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OrderId", "Status"), new[] { "ScheduledDate" });
 
-                    b.ToTable("JobInstances", (string)null);
+                    b.ToTable("JobInstances");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.JobRequest", b =>
@@ -569,7 +572,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("JobRequests", (string)null);
+                    b.ToTable("JobRequests");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Order", b =>
@@ -634,7 +637,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.OrderSchedule", b =>
@@ -682,7 +685,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("DayOfWeek", "StartTime", "EndTime")
                         .HasDatabaseName("IX_OrderSchedules_DayOfWeek_Start_End");
 
-                    b.ToTable("OrderSchedules", (string)null);
+                    b.ToTable("OrderSchedules");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.OrderService", b =>
@@ -697,7 +700,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("OrderServices", (string)null);
+                    b.ToTable("OrderServices");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentMethod", b =>
@@ -753,7 +756,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PaymentMethods", (string)null);
+                    b.ToTable("PaymentMethods");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentProfile", b =>
@@ -795,7 +798,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PaymentProfiles", (string)null);
+                    b.ToTable("PaymentProfiles");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PaymentTransaction", b =>
@@ -879,7 +882,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.ToTable("PaymentTransactions", (string)null);
+                    b.ToTable("PaymentTransactions");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PricingChangeHistory", b =>
@@ -928,7 +931,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PricingChangeHistories", (string)null);
+                    b.ToTable("PricingChangeHistories");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PricingConfiguration", b =>
@@ -953,7 +956,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PricingConfigurations", (string)null);
+                    b.ToTable("PricingConfigurations");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PromoCode", b =>
@@ -998,7 +1001,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("PromoCodes", (string)null);
+                    b.ToTable("PromoCodes");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.PromoCodeUsage", b =>
@@ -1032,7 +1035,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("PromoCodeId");
 
-                    b.ToTable("PromoCodeUsages", (string)null);
+                    b.ToTable("PromoCodeUsages");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Review", b =>
@@ -1092,7 +1095,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ScheduleAssignment", b =>
@@ -1143,7 +1146,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("StudentId", "OrderScheduleId")
                         .HasDatabaseName("IX_ScheduleAssignments_Student_OrderSchedule");
 
-                    b.ToTable("ScheduleAssignments", (string)null);
+                    b.ToTable("ScheduleAssignments");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Senior", b =>
@@ -1188,7 +1191,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Seniors", (string)null);
+                    b.ToTable("Seniors");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Service", b =>
@@ -1213,7 +1216,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Services", (string)null);
+                    b.ToTable("Services");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ServiceCategory", b =>
@@ -1237,7 +1240,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServiceCategories", (string)null);
+                    b.ToTable("ServiceCategories");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.ServiceRegion", b =>
@@ -1267,7 +1270,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("CityId", "ServiceId")
                         .IsUnique();
 
-                    b.ToTable("ServiceRegions", (string)null);
+                    b.ToTable("ServiceRegions");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Student", b =>
@@ -1323,7 +1326,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("IX_Students_UserId");
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.StudentAvailabilitySlot", b =>
@@ -1345,7 +1348,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("StudentId", "DayOfWeek", "StartTime", "EndTime")
                         .HasDatabaseName("IX_AvailabilitySlots_Student_Day_Time");
 
-                    b.ToTable("StudentAvailabilitySlots", (string)null);
+                    b.ToTable("StudentAvailabilitySlots");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.StudentContract", b =>
@@ -1384,7 +1387,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentContracts", (string)null);
+                    b.ToTable("StudentContracts");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.StudentService", b =>
@@ -1405,7 +1408,7 @@ namespace Helpi.Infrastructure.Migrations
                     b.HasIndex("StudentId", "ServiceId")
                         .HasDatabaseName("IX_StudentServices_Student_Service");
 
-                    b.ToTable("StudentServices", (string)null);
+                    b.ToTable("StudentServices");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.SuspensionLog", b =>
@@ -1438,7 +1441,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SuspensionLogs", (string)null);
+                    b.ToTable("SuspensionLogs");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.User", b =>
@@ -1689,7 +1692,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PasswordResetCodes", (string)null);
+                    b.ToTable("PasswordResetCodes");
                 });
 
             modelBuilder.Entity("ReassignmentRecord", b =>
@@ -1774,7 +1777,7 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.HasIndex("RequestedByUserId");
 
-                    b.ToTable("ReassignmentRecords", (string)null);
+                    b.ToTable("ReassignmentRecords");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Admin", b =>

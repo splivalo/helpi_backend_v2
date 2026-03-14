@@ -165,6 +165,9 @@ public class MappingProfile : Profile
         CreateMap<PromoCode, PromoCodeDto>();
         CreateMap<PromoCodeCreateDto, PromoCode>();
 
+        // SuspensionLog Mappings
+        CreateMap<SuspensionLog, SuspensionLogDto>();
+
         // Invoice Mappings
         CreateMap<Invoice, InvoiceDto>();
         CreateMap<InvoiceUpdateDto, Invoice>();
