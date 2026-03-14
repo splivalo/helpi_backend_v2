@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/suspensions")]
 public class SuspensionsController : ControllerBase
