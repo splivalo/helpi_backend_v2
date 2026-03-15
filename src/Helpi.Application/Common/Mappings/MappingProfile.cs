@@ -108,6 +108,7 @@ public class MappingProfile : Profile
               .ForMember(dest => dest.Schedules, opt => opt.Ignore());
 
         CreateMap<Order, OrderDto>()
+             .ForMember(dest => dest.SeniorName, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.FullName : null))
              .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.OrderServices.Select(os => os.Service)))
             .ForMember(dest => dest.Schedules, opt => opt.MapFrom(src => src.Schedules));
 

@@ -1,6 +1,7 @@
 
 using Helpi.Application.DTOs.Order;
 using Helpi.Application.Services;
+using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,14 @@ public class OrdersController : ControllerBase
         private readonly OrdersService _ordersService;
 
         public OrdersController(OrdersService ordersService) => _ordersService = ordersService;
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<ActionResult<List<OrderDto>>> GetOrders([FromQuery] OrderStatus? status = null)
+        {
+                var orders = await _ordersService.GetOrdersAsync(status);
+                return Ok(orders);
+        }
 
         [HttpPost]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] OrderCreateDto orderCreateDto)

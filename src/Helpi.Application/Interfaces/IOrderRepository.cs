@@ -11,6 +11,7 @@ public interface IOrderRepository
     Task<Order?> LoadOrderWithIncludes(int orderId,
      OrderIncludeOptions options, bool asNoTracking = true);
 
+    Task<IEnumerable<Order>> GetAllAsync(OrderStatus? status = null);
     Task<IEnumerable<Order>> GetBySeniorAsync(int seniorId);
     Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status);
     Task<Order> AddNoSaveAsync(Order order);

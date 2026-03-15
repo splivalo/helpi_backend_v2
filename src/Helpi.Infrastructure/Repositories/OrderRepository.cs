@@ -15,6 +15,20 @@ public class OrderRepository : IOrderRepository
 
         public OrderRepository(AppDbContext context) => _context = context;
 
+        public async Task<IEnumerable<Order>> GetAllAsync(OrderStatus? status = null)
+        {
+                var query = _context.Orders
+                        .Include(o => o.Senior).ThenInclude(s => s.Contact)
+                        .Include(o => o.OrderServices).ThenInclude(os => os.Service)
+                        .Include(o => o.Schedules)
+                        .AsNoTracking();
+
+                if (status.HasValue)
+                        query = query.Where(o => o.Status == status.Value);
+
+                return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
+
         public async Task<Order?> GetByIdAsync(int id)
         {
                 return await _context.Orders

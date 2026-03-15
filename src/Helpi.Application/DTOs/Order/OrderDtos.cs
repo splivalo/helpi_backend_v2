@@ -9,6 +9,8 @@ public class OrderDto
     public int SeniorId { get; set; }
     public OrderStatus Status { get; set; }
 
+    public string? SeniorName { get; set; }
+
     public string? Notes { get; set; }
     public bool IsRecurring { get; set; }
     public int? PaymentMethodId { get; set; }

@@ -70,6 +70,12 @@ public class OrdersService
         }
 
 
+        public async Task<List<OrderDto>> GetOrdersAsync(OrderStatus? status = null)
+        {
+                var orders = await _orderRepository.GetAllAsync(status);
+                return _mapper.Map<List<OrderDto>>(orders);
+        }
+
         public async Task<List<OrderDto>> GetOrdersBySeniorAsync(int seniorId)
         {
                 var orders = await _orderRepository.GetBySeniorAsync(seniorId);
