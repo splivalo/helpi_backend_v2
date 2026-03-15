@@ -37,7 +37,15 @@ builder.Logging.AddConsole();
 // Core framework services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v2", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Helpi API",
+        Version = "v2",
+        Description = "Helpi v2 Backend API",
+    });
+});
 
 // Infrastructure & application layers
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -114,7 +122,10 @@ catch (Exception ex) when (app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v2/swagger.json", "Helpi API v2");
+    });
 }
 
 

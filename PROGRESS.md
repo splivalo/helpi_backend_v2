@@ -138,3 +138,10 @@
 - **AuthController:** `[HttpGet("check-email")]` — validates email param, returns existence status
 - **Purpose:** Flutter app checks email BEFORE user fills registration form (better UX)
 - **No auth required** — public endpoint for pre-registration validation
+
+### Swagger v2 ✅
+
+- **Changed:** Swagger doc from v1 to v2 in Program.cs
+- **SwaggerDoc:** `"v2"` with title "Helpi API", version "v2", description "Helpi v2 Backend API"
+- **SwaggerEndpoint:** `/swagger/v2/swagger.json`
+- **Build:** Verified — 0 errors
