@@ -48,47 +48,45 @@ public class AuthRepository : IAuthRepository
         Senior senior,
         ContactInfo? seniorContactInfo)
     {
-        // using var transaction = await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        await strategy.ExecuteAsync(async () =>
         {
-            // Add ContactInfo entities to the context
-            _context.Set<ContactInfo>().Add(customerContactInfo);
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            var isOrderingForAnother = senior.Relationship != Relationship.Self;
-
-            if (isOrderingForAnother)
+            try
             {
-                _context.Set<ContactInfo>().Add(seniorContactInfo!);
+                // Add ContactInfo entities to the context
+                _context.Set<ContactInfo>().Add(customerContactInfo);
+
+                var isOrderingForAnother = senior.Relationship != Relationship.Self;
+
+                if (isOrderingForAnother)
+                {
+                    _context.Set<ContactInfo>().Add(seniorContactInfo!);
+                }
+
+                // Save ContactInfo entities to generate their Ids
+                await _context.SaveChangesAsync();
+
+                // Set the relationships
+                customer.Contact = customerContactInfo;
+                senior.Contact = isOrderingForAnother ? seniorContactInfo! : customerContactInfo;
+                customer.Seniors.Add(senior);
+
+                // Add Customer and Senior to the context
+                _context.Set<Customer>().Add(customer);
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
-
-
-            // Save ContactInfo entities to generate their Ids
-            await _context.SaveChangesAsync();
-
-            // Set the relationships
-            customer.Contact = customerContactInfo;
-            senior.Contact = isOrderingForAnother ? seniorContactInfo! : customerContactInfo;
-            customer.Seniors.Add(senior);
-
-            // Add Customer and Senior to the context
-            _context.Set<Customer>().Add(customer);
-
-            await _unitOfWork.SaveChangesAsync();
-
-            // Save all changes
-            // await _context.SaveChangesAsync();
-
-            // // Commit the transaction
-            // await transaction.CommitAsync();
-
-
-        }
-        catch (Exception)
-        {
-            // await transaction.RollbackAsync();
-            throw;
-        }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     public async Task RegisterAdmin(Admin admin, ContactInfo contactInfo)

@@ -103,7 +103,7 @@ public class CustomerService
                                 return false;
                         }
 
-                        var originalName = $"Customer {customerId}";
+                        var originalName = customer.Contact?.FullName ?? $"Customer {customerId}";
 
                         // Step 2: Delete all associated seniors
                         _logger.LogInformation("🔄 Deleting {Count} seniors for customer {CustomerId}", customer.Seniors.Count, customerId);

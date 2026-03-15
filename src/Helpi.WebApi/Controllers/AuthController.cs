@@ -77,6 +77,17 @@ public class AuthController : ControllerBase
         });
     }
 
+    [HttpGet("check-email")]
+    public async Task<IActionResult> CheckEmail([FromQuery] string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { message = "Email is required" });
+        }
+        var exists = await _authService.CheckEmailExistsAsync(email);
+        return Ok(new { exists });
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {

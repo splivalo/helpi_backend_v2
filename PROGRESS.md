@@ -118,3 +118,23 @@
 - All 9 backend gap analysis items COMPLETE
 - Ready for frontend-backend integration
 - Awaiting user direction for next phase
+
+---
+
+## Fixes & Improvements
+
+### Delete Account Notification — Real Name ✅
+
+- **Problem:** Admin notification on user deletion showed generic "Student 133" / "Customer 42" instead of real name
+- **Fix:** `StudentsService.PermanentlyDeleteStudent()` — `originalUserName` now uses `student.Contact?.FullName`
+- **Fix:** `CustomerService.DeleteCustomerAsync()` — `originalName` now uses `customer.Contact?.FullName`
+- **Result:** Admin notification now shows e.g. "Student: Ivan Marković (ID: 133) je trajno izbrisan"
+- **TODO:** This must be visible in admin app notifications panel (frontend integration pending)
+
+### Email Availability Check Endpoint ✅
+
+- **New endpoint:** `GET /api/auth/check-email?email=xxx` — returns `{ "exists": true/false }`
+- **AuthService:** `CheckEmailExistsAsync(string email)` — uses `UserManager.FindByEmailAsync`
+- **AuthController:** `[HttpGet("check-email")]` — validates email param, returns existence status
+- **Purpose:** Flutter app checks email BEFORE user fills registration form (better UX)
+- **No auth required** — public endpoint for pre-registration validation

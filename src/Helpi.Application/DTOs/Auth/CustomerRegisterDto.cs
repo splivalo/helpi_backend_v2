@@ -17,6 +17,6 @@ namespace Helpi.Application.DTOs.Auth
         public ContactInfoCreateDto ContactInfo { get; set; } = new ContactInfoCreateDto();
 
         // Senior details
-        public ContactInfoCreateDto? SeniorContactInfo { get; set; } = new ContactInfoCreateDto();
+        public ContactInfoCreateDto? SeniorContactInfo { get; set; }
     }
 }

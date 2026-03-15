@@ -100,6 +100,12 @@ ILocalizationService loc
 
 
 
+    public async Task<bool> CheckEmailExistsAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        return user != null;
+    }
+
     public async Task<(bool Success, string Token, int UserId, UserType UserType, string firebaseToken, string Message)> Login(LoginDto dto)
     {
         // Find user by email
@@ -194,9 +200,10 @@ ILocalizationService loc
     {
 
 
+        User? user = null;
         try
         {
-            var user = await _CreateUser(customerRegistrationDto.ContactInfo.FullName, customerRegistrationDto.Email, customerRegistrationDto.UserType, customerRegistrationDto.Password);
+            user = await _CreateUser(customerRegistrationDto.ContactInfo.FullName, customerRegistrationDto.Email, customerRegistrationDto.UserType, customerRegistrationDto.Password);
 
             var customerContactInfoDto = customerRegistrationDto.ContactInfo;
 
@@ -277,7 +284,11 @@ ILocalizationService loc
         }
         catch (Exception ex)
         {
-
+            // Clean up orphaned user if creation succeeded but customer registration failed
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
             return (false, $"Registration failed: {ex.Message}");
         }
     }
@@ -473,7 +484,7 @@ ILocalizationService loc
 
         var city = new City
         {
-            Id = 1,
+            Id = 2,
             Name = "Zagreb",
             GooglePlaceId = "-",
             PostalCode = "10000",
