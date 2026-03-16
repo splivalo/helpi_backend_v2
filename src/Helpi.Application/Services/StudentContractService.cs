@@ -227,8 +227,8 @@ public class StudentContractService
         private (string folderName, string fileName) BuildFileMetadata(Student student, int contractNumber)
         {
                 var currentYear = DateTime.UtcNow.Year;
-                var folderName = $"{student.Contact.FullName}-{student.StudentNumber}";
-                var fileName = $"{contractNumber}-{student.StudentNumber}-{currentYear}.pdf";
+                var folderName = $"{student.Contact.FullName}-{student.UserId}";
+                var fileName = $"{contractNumber}-{student.UserId}-{currentYear}.pdf";
 
                 return (folderName, fileName);
         }

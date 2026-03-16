@@ -10,6 +10,9 @@ public class OrderDto
     public OrderStatus Status { get; set; }
 
     public string? SeniorName { get; set; }
+    public string? SeniorEmail { get; set; }
+    public string? SeniorPhone { get; set; }
+    public string? SeniorAddress { get; set; }
 
     public string? Notes { get; set; }
     public bool IsRecurring { get; set; }
@@ -17,6 +20,7 @@ public class OrderDto
     public RecurrencePattern? RecurrencePattern { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+    public DateTime CreatedAt { get; set; }
     public ICollection<ServiceDto> Services { get; set; } = new List<ServiceDto>();
     public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }

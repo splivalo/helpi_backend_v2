@@ -109,6 +109,9 @@ public class MappingProfile : Profile
 
         CreateMap<Order, OrderDto>()
              .ForMember(dest => dest.SeniorName, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.FullName : null))
+             .ForMember(dest => dest.SeniorEmail, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.Email : null))
+             .ForMember(dest => dest.SeniorPhone, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.Phone : null))
+             .ForMember(dest => dest.SeniorAddress, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.FullAddress : null))
              .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.OrderServices.Select(os => os.Service)))
             .ForMember(dest => dest.Schedules, opt => opt.MapFrom(src => src.Schedules));
 

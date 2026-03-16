@@ -227,6 +227,7 @@ public class StudentQueryBuilder
                 FullAddress = s.Contact.FullAddress,
                 GooglePlaceId = s.Contact.GooglePlaceId,
                 CityId = s.Contact.CityId,
+                CityName = s.Contact.CityName,
                 Country = s.Contact.Country,
                 PostalCode = s.Contact.PostalCode,
                 CreatedAt = s.Contact.CreatedAt,

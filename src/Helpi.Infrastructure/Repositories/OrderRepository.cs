@@ -32,7 +32,7 @@ public class OrderRepository : IOrderRepository
         public async Task<Order?> GetByIdAsync(int id)
         {
                 return await _context.Orders
-                .Include(o => o.Senior)
+                .Include(o => o.Senior).ThenInclude(s => s.Contact)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules)
                 .FirstOrDefaultAsync(o => o.Id == id);

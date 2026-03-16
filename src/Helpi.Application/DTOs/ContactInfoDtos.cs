@@ -17,6 +17,7 @@ public class ContactInfoDto
     public required string GooglePlaceId { get; set; } = null!;
     public required string FullAddress { get; set; } = null!;
     public required int CityId { get; set; }
+    public string CityName { get; set; } = "";
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public DateTime CreatedAt { get; set; }
