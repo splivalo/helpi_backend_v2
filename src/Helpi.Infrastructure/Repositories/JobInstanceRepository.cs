@@ -335,14 +335,16 @@ public class JobInstanceRepository : IJobInstanceRepository
 
         public async Task<decimal> GetTotalCompletedHoursForPeriodAsync(int studentId, DateTime startDate, DateTime endDate)
         {
-                return await _context.JobInstances
+                var jobs = await _context.JobInstances
                     .Include(ji => ji.ScheduleAssignment)
                     .Where(ji => ji.ScheduleAssignment.StudentId == studentId)
                     .Where(ji => ji.Status == JobInstanceStatus.Completed)
                     .Where(ji => !ji.NeedsSubstitute)
                     .Where(ji => ji.ScheduledDate >= DateOnly.FromDateTime(startDate) &&
                                 ji.ScheduledDate <= DateOnly.FromDateTime(endDate))
-                    .SumAsync(ji => ji.DurationHours);
+                    .ToListAsync();
+
+                return jobs.Sum(ji => ji.DurationHours);
         }
 
 }

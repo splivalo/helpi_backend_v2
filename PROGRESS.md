@@ -145,3 +145,38 @@
 - **SwaggerDoc:** `"v2"` with title "Helpi API", version "v2", description "Helpi v2 Backend API"
 - **SwaggerEndpoint:** `/swagger/v2/swagger.json`
 - **Build:** Verified — 0 errors
+
+### Student Dashboard DurationHours Fix ✅ (2026-03-18)
+
+- **Problem:** `GET /api/dashboard/student/{id}` returned 500 Internal Server Error
+- **Root cause:** `JobInstanceRepository.GetTotalCompletedHoursForPeriodAsync()` used `.SumAsync(ji => ji.DurationHours)` in LINQ, but `DurationHours` is a computed C# property (`EndTime - StartTime`), not a DB column — EF Core cannot translate it to SQL
+- **Fix:** Changed to `ToListAsync()` + in-memory `.Sum(ji => ji.DurationHours)` — filters still run server-side, only Sum computed in memory on already-filtered results
+- **File:** `Helpi.Infrastructure/Repositories/JobInstanceRepository.cs` line 338
+- **Build:** 0 errors, no new warnings
+
+---
+
+## Fresh Validation Report (2026-03-18)
+
+### Compile Status
+
+- `flutter analyze` helpi_app: **0 issues**
+- `flutter analyze` helpi_admin: **0 issues**
+- `dotnet build` backend: **0 errors**, 63 warnings (all pre-existing nullability)
+
+### Live API Endpoint Testing (all with admin JWT)
+
+- ✅ Auth login (admin@test.com)
+- ✅ Dashboard admin / senior
+- ✅ Students, Seniors, Orders, Cities, Faculties, PricingConfiguration
+- ✅ Sessions, Reviews, Availability, Student Contracts, Promo Codes
+- ✅ Service Categories, Suspensions, Admin Notes
+- ✅ Session cancel route exists (400 = valid route, needs body)
+- ✅ Promo validate/apply routes exist (400 = valid route, needs body)
+- ⚠️ Dashboard student — 500 (DurationHours bug, fixed above, needs backend restart)
+
+### Known Issues (not bugs — by design)
+
+- Seed users (students 101-107, seniors 201-206) have fake password hashes — cannot login. Admin (Id=13) has real hash. Students/seniors will be created via register endpoint for testing.
+- HNotifications table empty — backend doesn't auto-create notifications yet (feature, not bug)
+- Chat backend not implemented (placeholder screens)
