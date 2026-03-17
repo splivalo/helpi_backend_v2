@@ -17,10 +17,10 @@ public class AdminNoteCreateDto
 {
     [Required]
     public string EntityType { get; set; } = null!;
-    
+
     [Required]
     public int EntityId { get; set; }
-    
+
     [Required]
     [MinLength(1)]
     public string Text { get; set; } = null!;
