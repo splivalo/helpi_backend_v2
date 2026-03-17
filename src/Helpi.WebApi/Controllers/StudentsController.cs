@@ -95,6 +95,13 @@ public class StudentsController : ControllerBase
         [HttpPatch("{id}/verification")]
         public async Task<IActionResult> UpdateVerification(int id, [FromBody] StudentStatus status) { await _service.UpdateVerificationStatusAsync(id, status); return NoContent(); }
 
+        [HttpPut("{id}")]
+        public async Task<ActionResult<StudentDto>> Update(int id, StudentUpdateDto dto)
+        {
+                var student = await _service.UpdateStudentAsync(id, dto);
+                return Ok(student);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

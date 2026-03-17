@@ -89,6 +89,17 @@ public class StudentsService
                 await _repository.UpdateAsync(student);
         }
 
+        public async Task<StudentDto> UpdateStudentAsync(int id, StudentUpdateDto dto)
+        {
+                var student = await _repository.GetByIdAsync(id);
+                if (dto.StudentNumber != null) student.StudentNumber = dto.StudentNumber;
+                if (dto.FacultyId.HasValue) student.FacultyId = dto.FacultyId.Value;
+                if (dto.Status.HasValue) student.Status = dto.Status.Value;
+                if (dto.BackgroundCheckDate.HasValue) student.BackgroundCheckDate = dto.BackgroundCheckDate.Value;
+                await _repository.UpdateAsync(student);
+                return _mapper.Map<StudentDto>(student);
+        }
+
         public async Task<List<StudentDto>> FindEligibleStudentsForSchedule(int orderScheduleId, List<int>? notifiedStudentIds)
         {
                 var students = await _repository.FindEligibleStudentsForSchedule(

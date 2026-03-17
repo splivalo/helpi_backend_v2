@@ -41,6 +41,10 @@ public class StudentUpdateDto
 {
     public StudentStatus? Status { get; set; }
     public DateOnly? BackgroundCheckDate { get; set; }
+
+    [StringLength(20)]
+    public string? StudentNumber { get; set; }
+    public int? FacultyId { get; set; }
 }
 
 public class AvailabilityCriteria
