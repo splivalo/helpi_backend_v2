@@ -13,6 +13,9 @@ public class SeniorDto
     public JsonDocument? SpecialRequirements { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
 
+    // Orderer contact (Customer's contact) - populated when Relationship != Self
+    public ContactInfoDto? OrdererContact { get; set; }
+
     public DateTime? DeletedAt { get; set; }
 
     // Review aggregation

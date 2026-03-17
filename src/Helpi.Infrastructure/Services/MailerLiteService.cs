@@ -9,6 +9,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace Helpi.Infrastructure.Services;
 
+// TODO: PRODUCTION - Replace DUMMY MailerLite API key with real one
+// Current: dummy key that won't work
+// Need: API key from MailerLite dashboard
+// Email groups/segments should be set up in MailerLite for welcome emails and contract notifications
 public class MailerLiteService : IMailerLiteService
 {
     private readonly HttpClient _httpClient;

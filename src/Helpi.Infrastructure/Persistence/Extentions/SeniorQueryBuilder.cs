@@ -13,6 +13,8 @@ public class SeniorQueryBuilder
     {
         _query = context.Seniors.Where(s => s.DeletedAt == null)
             .Include(s => s.Contact)
+            .Include(s => s.Customer)
+                .ThenInclude(c => c.Contact)
             .AsNoTracking();
     }
 
@@ -82,7 +84,27 @@ public class SeniorQueryBuilder
                 Country = s.Contact.Country,
                 PostalCode = s.Contact.PostalCode,
                 CreatedAt = s.Contact.CreatedAt,
+                DateOfBirth = s.Contact.DateOfBirth,
             },
+            // Orderer contact - only populated when Relationship != Self
+            OrdererContact = s.Relationship != Relationship.Self && s.Customer != null && s.Customer.Contact != null
+                ? new ContactInfoDto
+                {
+                    Id = s.Customer.Contact.Id,
+                    FullName = s.Customer.Contact.FullName,
+                    Gender = s.Customer.Contact.Gender,
+                    Phone = s.Customer.Contact.Phone,
+                    Email = s.Customer.Contact.Email,
+                    FullAddress = s.Customer.Contact.FullAddress,
+                    GooglePlaceId = s.Customer.Contact.GooglePlaceId,
+                    CityId = s.Customer.Contact.CityId,
+                    CityName = s.Customer.Contact.CityName,
+                    Country = s.Customer.Contact.Country,
+                    PostalCode = s.Customer.Contact.PostalCode,
+                    CreatedAt = s.Customer.Contact.CreatedAt,
+                    DateOfBirth = s.Customer.Contact.DateOfBirth,
+                }
+                : null,
             Relationship = s.Relationship,
             SpecialRequirements = s.SpecialRequirements,
 

@@ -1,4 +1,5 @@
 
+using Helpi.Application.DTOs;
 using Helpi.Application.DTOs.Order;
 using Helpi.Application.Services;
 using Helpi.Domain.Enums;
@@ -96,6 +97,47 @@ public class OrdersController : ControllerBase
                         // _logger.LogError(ex, "Error cancelling order {OrderId}", id);
                         return StatusCode(500, new { message = "An error occurred while cancelling the order" });
                 }
+        }
+
+        /// <summary>
+        /// Check if order can be archived and get blocking item counts.
+        /// </summary>
+        [HttpGet("{id}/archive-check")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveCheckDto>> GetArchiveCheck(int id)
+        {
+                var check = await _ordersService.GetArchiveCheckAsync(id);
+                return Ok(check);
+        }
+
+        /// <summary>
+        /// Archive an order. If force=true, cancels all schedules and sessions first.
+        /// </summary>
+        [HttpPost("{id}/archive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> ArchiveOrder(int id, [FromBody] ArchiveRequestDto request)
+        {
+                var result = await _ordersService.ArchiveOrderAsync(id, request);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
+
+        /// <summary>
+        /// Unarchive an order (restore from archive).
+        /// </summary>
+        [HttpPost("{id}/unarchive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> UnarchiveOrder(int id)
+        {
+                var result = await _ordersService.UnarchiveOrderAsync(id);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
         }
 
 }

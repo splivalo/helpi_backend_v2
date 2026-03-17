@@ -17,6 +17,7 @@ namespace Helpi.Domain.Entities
         public string? Notes { get; set; }
         public int? PromoCodeId { get; set; }
         public DateTime? CancelledAt { get; set; }
+        public bool IsArchived { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -22,6 +22,7 @@ public class SeniorService
         private readonly INotificationService _notificationService;
         private readonly INotificationFactory _notificationFactory;
         private readonly IContactInfoRepository _contactInfoRepo;
+        private readonly IJobInstanceRepository _jobInstanceRepo;
 
         public SeniorService(
                 ISeniorRepository repository,
@@ -31,7 +32,8 @@ public class SeniorService
                 OrderCancellationHandler orderCancellationHandler,
                 INotificationService notificationService,
                 INotificationFactory notificationFactory,
-                IContactInfoRepository contactInfoRepo)
+                IContactInfoRepository contactInfoRepo,
+                IJobInstanceRepository jobInstanceRepo)
         {
                 _repository = repository;
                 _mapper = mapper;
@@ -41,6 +43,7 @@ public class SeniorService
                 _notificationService = notificationService;
                 _notificationFactory = notificationFactory;
                 _contactInfoRepo = contactInfoRepo;
+                _jobInstanceRepo = jobInstanceRepo;
         }
 
         public async Task<List<SeniorDto>> GetSeniorsByCustomerAsync(int customerId)
@@ -224,6 +227,132 @@ public class SeniorService
                                 _logger.LogError(ex, "Failed to notify student {StudentId}, continuing with deletion", assignment.StudentId);
                         }
                 }
+        }
+
+        #endregion
+
+        #region Archive Methods
+
+        /// <summary>
+        /// Checks if senior can be archived and returns blocking item counts.
+        /// </summary>
+        public async Task<ArchiveCheckDto> GetArchiveCheckAsync(int seniorId)
+        {
+                var orders = await _orderRepository.GetBySeniorAsync(seniorId);
+
+                // Count active orders (not cancelled, not completed)
+                var activeOrders = orders.Where(o =>
+                        o.Status != OrderStatus.Cancelled &&
+                        o.Status != OrderStatus.Completed).ToList();
+
+                var activeOrdersCount = activeOrders.Count;
+
+                // Count upcoming sessions
+                var upcomingSessions = await _jobInstanceRepo.GetJobInstancesAsync(
+                        assignmentId: null,
+                        prevAssignmentId: null,
+                        status: JobInstanceStatus.Upcoming,
+                        new SessionIncludeOptions());
+
+                var seniorUpcomingSessions = upcomingSessions.Where(j => j.SeniorId == seniorId).ToList();
+                var upcomingCount = seniorUpcomingSessions.Count;
+
+                var hasBlocking = activeOrdersCount > 0 || upcomingCount > 0;
+
+                return new ArchiveCheckDto
+                {
+                        CanArchiveDirectly = !hasBlocking,
+                        HasBlockingItems = hasBlocking,
+                        ActiveOrdersCount = activeOrdersCount,
+                        UpcomingSessionsCount = upcomingCount,
+                        Message = hasBlocking
+                                ? $"Senior ima {activeOrdersCount} aktivnih narudžbi i {upcomingCount} nadolazećih termina. Sve će biti otkazano."
+                                : "Senior nema aktivnih narudžbi."
+                };
+        }
+
+        /// <summary>
+        /// Archives a senior. If force=true, cancels all orders and sessions first.
+        /// </summary>
+        public async Task<ArchiveResultDto> ArchiveSeniorAsync(int seniorId, ArchiveRequestDto request)
+        {
+                _logger.LogInformation("📦 Archiving senior {SeniorId}, Force={Force}", seniorId, request.Force);
+
+                var senior = await _repository.GetByIdAsync(seniorId);
+                if (senior == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Senior not found" };
+                }
+
+                var check = await GetArchiveCheckAsync(seniorId);
+
+                if (check.HasBlockingItems && !request.Force)
+                {
+                        return new ArchiveResultDto
+                        {
+                                Success = false,
+                                Message = check.Message
+                        };
+                }
+
+                var cancelledOrdersCount = 0;
+                var cancelledSessionsCount = 0;
+
+                // If force, cancel all active orders
+                if (check.HasBlockingItems && request.Force)
+                {
+                        _logger.LogInformation("🔄 Force archiving - cancelling {Count} active orders", check.ActiveOrdersCount);
+
+                        var affectedAssignments = await CancelOrdersAndCollectAffectedStudentsAsync(seniorId);
+                        await NotifyAffectedStudentsAsync(affectedAssignments, seniorId);
+
+                        cancelledOrdersCount = check.ActiveOrdersCount;
+                        cancelledSessionsCount = check.UpcomingSessionsCount;
+                }
+
+                // Archive the senior (soft delete)
+                senior.DeletedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(senior);
+
+                _logger.LogInformation("✅ Senior {SeniorId} archived successfully", seniorId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Senior uspješno arhiviran",
+                        CancelledOrdersCount = cancelledOrdersCount,
+                        CancelledSessionsCount = cancelledSessionsCount
+                };
+        }
+
+        /// <summary>
+        /// Unarchives a senior by clearing the DeletedAt timestamp.
+        /// </summary>
+        public async Task<ArchiveResultDto> UnarchiveSeniorAsync(int seniorId)
+        {
+                _logger.LogInformation("📦 Unarchiving senior {SeniorId}", seniorId);
+
+                var senior = await _repository.GetByIdAsync(seniorId);
+                if (senior == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Senior not found" };
+                }
+
+                if (senior.DeletedAt == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Senior is not archived" };
+                }
+
+                senior.DeletedAt = null;
+                await _repository.UpdateAsync(senior);
+
+                _logger.LogInformation("✅ Senior {SeniorId} unarchived successfully", seniorId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Senior uspješno vraćen iz arhive"
+                };
         }
 
         #endregion

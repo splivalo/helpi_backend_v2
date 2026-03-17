@@ -108,16 +108,18 @@ VALUES
 -- 8. SENIORS
 -- ============================================
 -- Relationship: 0=Self, 1=Spouse, 2=Parent, 3=Relative, 4=Other
--- Senior 2 (Marija) ima orderera (Ana) - relationship=2 (Parent)
+-- Senior 2 (Marija) ima orderera (Customer 202) - relationship=2 (Parent)
+-- Senior 4 (Kata) ima orderera (Customer 204) - relationship=3 (Relative)
+-- Senior 6 (Ankica) ima orderera (Customer 206) - relationship=2 (Parent)
 
 INSERT INTO "Seniors" ("Id", "CustomerId", "ContactId", "Relationship", "CreatedAt", "TotalReviews", "TotalRatingSum", "AverageRating")
 VALUES
 (1, 201, 301, 0, '2026-01-15', 0, 0, 0),
 (2, 202, 302, 2, '2026-01-20', 0, 0, 0),
 (3, 203, 303, 0, '2026-02-01', 0, 0, 0),
-(4, 204, 304, 0, '2026-02-10', 0, 0, 0),
+(4, 204, 304, 3, '2026-02-10', 0, 0, 0),
 (5, 205, 305, 0, '2025-12-05', 0, 0, 0),
-(6, 206, 306, 0, '2026-02-20', 0, 0, 0);
+(6, 206, 306, 2, '2026-02-20', 0, 0, 0);
 
 -- ============================================
 -- 9. ORDERS (sve Pending - cekaju dodjelu)

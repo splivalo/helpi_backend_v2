@@ -113,4 +113,25 @@ public class SessionsController : ControllerBase
                         return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
                 }
         }
+
+        [HttpPost("{jobInstanceId}/reactivate")]
+        public async Task<ActionResult<SessionDto>> ReactivateJobInstance(
+           int jobInstanceId)
+        {
+                try
+                {
+                        var result = await _jobInstanceService.ReactivateJobInstance(
+                            jobInstanceId);
+
+                        if (result == null)
+                                return BadRequest(new { message = "No changes were made to the job instance." });
+
+                        return Ok(result);
+                }
+                catch (Exception ex)
+                {
+                        // Log exception
+                        return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+                }
+        }
 }

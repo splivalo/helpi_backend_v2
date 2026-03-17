@@ -89,6 +89,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Suspension
     public DbSet<SuspensionLog> SuspensionLogs { get; set; }
 
+    // Admin Notes
+    public DbSet<AdminNote> AdminNotes { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 

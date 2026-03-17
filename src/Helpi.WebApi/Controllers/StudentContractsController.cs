@@ -54,4 +54,30 @@ public class StudentContractsController : ControllerBase
                 return Ok(contracts);
         }
 
+        /// <summary>
+        /// Check if contract can be deleted and get blocking item counts.
+        /// </summary>
+        [HttpGet("{id}/delete-check")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveCheckDto>> GetDeleteCheck(int id)
+        {
+                var check = await _service.GetDeleteCheckAsync(id);
+                return Ok(check);
+        }
+
+        /// <summary>
+        /// Delete a contract with check. If force=true, reassigns all sessions first.
+        /// </summary>
+        [HttpDelete("{id}/with-check")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> DeleteWithCheck(int id, [FromBody] ArchiveRequestDto request)
+        {
+                var result = await _service.DeleteContractWithCheckAsync(id, request);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
+
 }

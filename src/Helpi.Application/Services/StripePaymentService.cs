@@ -13,6 +13,9 @@ using File = System.IO.File;
 
 namespace Helpi.Application.Services
 {
+    // TODO: PRODUCTION - Replace test API keys with live Stripe keys before going to production
+    // Current: sk_test_xxx (dummy) → Need: sk_live_xxx from Stripe Dashboard
+    // Webhook endpoint needs to be configured in Stripe Dashboard for production URL
     public class StripePaymentService : IStripePaymentService
     {
         private readonly IPaymentProfileRepository _paymentProfileRepository;

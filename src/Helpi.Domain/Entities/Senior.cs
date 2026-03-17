@@ -20,7 +20,7 @@ namespace Helpi.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? DeletedAt { get; set; }
-        // public Customer Customer { get; set; } = null!;
+        public Customer Customer { get; set; } = null!;
         public ContactInfo Contact { get; set; } = null!;
         public ICollection<Order> Orders { get; set; } = new List<Order>();
 

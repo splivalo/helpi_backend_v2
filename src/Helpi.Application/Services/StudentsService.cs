@@ -27,6 +27,8 @@ public class StudentsService
         private readonly IUserRepository _userRepository;
         private readonly INotificationService _notificationService;
         private readonly INotificationFactory _notificationFactory;
+        private readonly IScheduleAssignmentRepository _scheduleAssignmentRepo;
+        private readonly IJobInstanceRepository _jobInstanceRepo;
 
         public StudentsService(IStudentRepository repository,
          IMapper mapper,
@@ -39,7 +41,9 @@ public class StudentsService
         IFirebaseService firebaseService,
         IUserRepository userRepository,
         INotificationService notificationService,
-        INotificationFactory notificationFactory
+        INotificationFactory notificationFactory,
+        IScheduleAssignmentRepository scheduleAssignmentRepo,
+        IJobInstanceRepository jobInstanceRepo
          )
         {
                 _repository = repository;
@@ -54,6 +58,8 @@ public class StudentsService
                 _userRepository = userRepository;
                 _notificationService = notificationService;
                 _notificationFactory = notificationFactory;
+                _scheduleAssignmentRepo = scheduleAssignmentRepo;
+                _jobInstanceRepo = jobInstanceRepo;
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(StudentFilterDto? filter = null)
@@ -209,6 +215,120 @@ public class StudentsService
                         _logger.LogError(ex, "❌ Failed to permanently delete student {StudentId}", studentId);
                         return false;
                 }
+        }
+
+        /// <summary>
+        /// Checks if student can be archived and returns blocking item counts.
+        /// </summary>
+        public async Task<ArchiveCheckDto> GetArchiveCheckAsync(int studentId)
+        {
+                var activeAssignments = await _scheduleAssignmentRepo.GetActiveAssignmentsByStudentId(studentId);
+                var upcomingSessions = await _jobInstanceRepo.GetStudentUpComingJobInstances(studentId);
+
+                var activeCount = activeAssignments.Count;
+                var upcomingCount = upcomingSessions.Count();
+
+                var hasBlocking = activeCount > 0 || upcomingCount > 0;
+
+                return new ArchiveCheckDto
+                {
+                        CanArchiveDirectly = !hasBlocking,
+                        HasBlockingItems = hasBlocking,
+                        ActiveAssignmentsCount = activeCount,
+                        UpcomingSessionsCount = upcomingCount,
+                        Message = hasBlocking
+                                ? $"Student ima {activeCount} aktivnih dodjela i {upcomingCount} nadolazećih termina. Svi će biti otkazani."
+                                : "Student nema aktivnih dodjela."
+                };
+        }
+
+        /// <summary>
+        /// Archives a student. If force=true, terminates all assignments and cancels sessions first.
+        /// </summary>
+        public async Task<ArchiveResultDto> ArchiveStudentAsync(int studentId, ArchiveRequestDto request)
+        {
+                _logger.LogInformation("📦 Archiving student {StudentId}, Force={Force}", studentId, request.Force);
+
+                var student = await _repository.GetByIdAsync(studentId);
+                if (student == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Student not found" };
+                }
+
+                // Check for blocking items
+                var check = await GetArchiveCheckAsync(studentId);
+
+                if (check.HasBlockingItems && !request.Force)
+                {
+                        return new ArchiveResultDto
+                        {
+                                Success = false,
+                                Message = check.Message
+                        };
+                }
+
+                var terminatedCount = 0;
+                var cancelledCount = 0;
+
+                // If force, terminate all active assignments (this triggers reassignment)
+                if (check.HasBlockingItems && request.Force)
+                {
+                        _logger.LogInformation("🔄 Force archiving - terminating {Count} active assignments", check.ActiveAssignmentsCount);
+
+                        // Use existing reassignment service to handle job reassignments
+                        await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+
+                        terminatedCount = check.ActiveAssignmentsCount;
+                        cancelledCount = check.UpcomingSessionsCount;
+                }
+
+                // Archive the student
+                student.Status = StudentStatus.AccountDeactivated;
+                await _repository.UpdateAsync(student);
+
+                _logger.LogInformation("✅ Student {StudentId} archived successfully", studentId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Student uspješno arhiviran",
+                        TerminatedAssignmentsCount = terminatedCount,
+                        CancelledSessionsCount = cancelledCount
+                };
+        }
+
+        /// <summary>
+        /// Unarchives a student by setting status back to Active.
+        /// </summary>
+        public async Task<ArchiveResultDto> UnarchiveStudentAsync(int studentId)
+        {
+                _logger.LogInformation("📦 Unarchiving student {StudentId}", studentId);
+
+                var student = await _repository.GetByIdAsync(studentId);
+                if (student == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Student not found" };
+                }
+
+                if (student.Status != StudentStatus.AccountDeactivated)
+                {
+                        return new ArchiveResultDto
+                        {
+                                Success = false,
+                                Message = $"Student is not archived (status: {student.Status})"
+                        };
+                }
+
+                student.Status = StudentStatus.Active;
+                await _repository.UpdateAsync(student);
+
+                _logger.LogInformation("✅ Student {StudentId} unarchived successfully", studentId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Student uspješno vraćen iz arhive"
+                };
         }
 
 }

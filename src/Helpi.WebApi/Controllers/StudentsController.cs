@@ -122,4 +122,45 @@ public class StudentsController : ControllerBase
 
                 return StatusCode(500, new { message = "Failed to delete student" });
         }
+
+        /// <summary>
+        /// Check if student can be archived and get blocking item counts.
+        /// </summary>
+        [HttpGet("{id}/archive-check")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveCheckDto>> GetArchiveCheck(int id)
+        {
+                var check = await _service.GetArchiveCheckAsync(id);
+                return Ok(check);
+        }
+
+        /// <summary>
+        /// Archive a student. If force=true, terminates all assignments and cancels sessions.
+        /// </summary>
+        [HttpPost("{id}/archive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> ArchiveStudent(int id, [FromBody] ArchiveRequestDto request)
+        {
+                var result = await _service.ArchiveStudentAsync(id, request);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
+
+        /// <summary>
+        /// Unarchive a student.
+        /// </summary>
+        [HttpPost("{id}/unarchive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> UnarchiveStudent(int id)
+        {
+                var result = await _service.UnarchiveStudentAsync(id);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
 }

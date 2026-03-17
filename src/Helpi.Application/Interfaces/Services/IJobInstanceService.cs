@@ -29,5 +29,6 @@ public interface IJobInstanceService
             bool reassignStudent,
             int requestedByUserId);
     Task<SessionDto?> CancelJobInstance(int jobInstanceId);
+    Task<SessionDto?> ReactivateJobInstance(int jobInstanceId);
 
 }

@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260317075412_AddOrderIsArchived")]
+    partial class AddOrderIsArchived
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,41 +43,6 @@ namespace Helpi.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Admins");
-                });
-
-            modelBuilder.Entity("Helpi.Domain.Entities.AdminNote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EntityId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedById");
-
-                    b.ToTable("AdminNotes");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.City", b =>
@@ -1832,15 +1800,6 @@ namespace Helpi.Infrastructure.Migrations
                     b.Navigation("Contact");
                 });
 
-            modelBuilder.Entity("Helpi.Domain.Entities.AdminNote", b =>
-                {
-                    b.HasOne("Helpi.Domain.Entities.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById");
-
-                    b.Navigation("CreatedBy");
-                });
-
             modelBuilder.Entity("Helpi.Domain.Entities.ContactInfo", b =>
                 {
                     b.HasOne("Helpi.Domain.Entities.City", "City")
@@ -2201,15 +2160,13 @@ namespace Helpi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Helpi.Domain.Entities.Customer", "Customer")
+                    b.HasOne("Helpi.Domain.Entities.Customer", null)
                         .WithMany("Seniors")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Contact");
-
-                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("Helpi.Domain.Entities.Service", b =>

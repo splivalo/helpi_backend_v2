@@ -20,6 +20,8 @@ public class StudentContractService
         private readonly IMapper _mapper;
         private readonly StudentStatusService _studentStatusService;
         private readonly ILogger<StudentContractService> _logger;
+        private readonly IJobInstanceRepository _jobInstanceRepo;
+        private readonly IReassignmentService _reassignmentService;
 
         public StudentContractService(
             IStudentContractRepository repository,
@@ -28,7 +30,9 @@ public class StudentContractService
             IGoogleDriveService googleDriveService,
            StudentStatusService studentStatusService,
             IMapper mapper,
-            ILogger<StudentContractService> logger)
+            ILogger<StudentContractService> logger,
+            IJobInstanceRepository jobInstanceRepo,
+            IReassignmentService reassignmentService)
         {
                 _repository = repository;
                 _studentRepository = studentRepository;
@@ -37,6 +41,8 @@ public class StudentContractService
                 _studentStatusService = studentStatusService;
                 _mapper = mapper;
                 _logger = logger;
+                _jobInstanceRepo = jobInstanceRepo;
+                _reassignmentService = reassignmentService;
         }
 
         public async Task<List<StudentContractDto>> GetContractsByStudentAsync(int studentId) =>
@@ -274,4 +280,89 @@ public class StudentContractService
                 var contracts = await _repository.GetCompletedContractsForStudentAsync(studentId);
                 return _mapper.Map<List<CompletedStudentContractDto>>(contracts);
         }
+
+        #region Delete Check Methods
+
+        /// <summary>
+        /// Checks if contract can be deleted and returns blocking item counts.
+        /// </summary>
+        public async Task<ArchiveCheckDto> GetDeleteCheckAsync(int contractId)
+        {
+                var contract = await GetAndValidateContractAsync(contractId);
+
+                // Get all job instances linked to this contract
+                var jobInstances = await _jobInstanceRepo.GetJobInstancesAsync(
+                        assignmentId: null,
+                        prevAssignmentId: null,
+                        status: null,
+                        new SessionIncludeOptions());
+
+                var contractSessions = jobInstances
+                        .Where(j => j.ContractId == contractId && j.Status == JobInstanceStatus.Upcoming)
+                        .ToList();
+
+                var hasBlocking = contractSessions.Count > 0;
+
+                return new ArchiveCheckDto
+                {
+                        CanArchiveDirectly = !hasBlocking,
+                        HasBlockingItems = hasBlocking,
+                        UpcomingSessionsCount = contractSessions.Count,
+                        Message = hasBlocking
+                                ? $"Ugovor ima {contractSessions.Count} nadolazećih sesija. Sve će biti reassignirane."
+                                : "Ugovor nema aktivnih sesija."
+                };
+        }
+
+        /// <summary>
+        /// Deletes a contract. If force=true, reassigns all sessions first.
+        /// </summary>
+        public async Task<ArchiveResultDto> DeleteContractWithCheckAsync(int contractId, ArchiveRequestDto request)
+        {
+                _logger.LogInformation("🗑️ Deleting contract {ContractId}, Force={Force}", contractId, request.Force);
+
+                var contract = await GetAndValidateContractAsync(contractId);
+                var check = await GetDeleteCheckAsync(contractId);
+
+                if (check.HasBlockingItems && !request.Force)
+                {
+                        return new ArchiveResultDto
+                        {
+                                Success = false,
+                                Message = check.Message
+                        };
+                }
+
+                var cancelledCount = 0;
+
+                // If force, reassign all sessions
+                if (check.HasBlockingItems && request.Force)
+                {
+                        _logger.LogInformation("🔄 Force deleting - reassigning {Count} sessions", check.UpcomingSessionsCount);
+
+                        // Get student ID and trigger reassignment
+                        var studentId = contract.StudentId;
+                        var student = await _studentRepository.GetByIdAsync(studentId);
+                        if (student != null)
+                        {
+                                await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+                        }
+
+                        cancelledCount = check.UpcomingSessionsCount;
+                }
+
+                // Now delete the contract (original logic)
+                await DeleteContractAsync(contractId);
+
+                _logger.LogInformation("✅ Contract {ContractId} deleted successfully", contractId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Ugovor uspješno obrisan",
+                        CancelledSessionsCount = cancelledCount
+                };
+        }
+
+        #endregion
 }

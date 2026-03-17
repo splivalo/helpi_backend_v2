@@ -10,6 +10,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Helpi.Infrastructure.Services;
 
+// TODO: PRODUCTION - Replace DUMMY Firebase service account with real project credentials
+// Current: placeholder JSON that causes init to skip in Development mode
+// Need: Download actual service account JSON from Firebase Console → Project Settings → Service Accounts
+// FCM push notifications will NOT work until this is configured
 
 
 public class FirebaseService : IFirebaseService

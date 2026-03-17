@@ -7,6 +7,10 @@ using Helpi.Application.Interfaces;
 
 namespace Helpi.Infrastructure.Services
 {
+    // TODO: PRODUCTION - Replace DUMMY Mailgun credentials with verified domain
+    // Current: dummy API key and unverified domain
+    // Need: Real API key from Mailgun dashboard + verified sending domain
+    // Email templates should be reviewed before production
     public class MailgunService : IMailgunService
     {
 

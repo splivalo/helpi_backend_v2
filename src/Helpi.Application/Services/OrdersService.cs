@@ -324,6 +324,11 @@ public class OrdersService
                 if (updateDto.StartDate.HasValue) order.StartDate = updateDto.StartDate.Value;
                 if (updateDto.EndDate.HasValue) order.EndDate = updateDto.EndDate.Value;
                 if (updateDto.Status.HasValue) order.Status = updateDto.Status.Value;
+                // Handle PromoCodeId: 0 = remove, positive = set/change, null = no change
+                if (updateDto.PromoCodeId.HasValue)
+                {
+                        order.PromoCodeId = updateDto.PromoCodeId.Value == 0 ? null : updateDto.PromoCodeId.Value;
+                }
         }
 
         private async Task HandleServiceUpdates(Order order, OrderUpdateDto updateDto)
@@ -468,6 +473,162 @@ public class OrdersService
                 }
         }
 
+        #region Archive Methods
+
+        /// <summary>
+        /// Checks if order can be archived and returns blocking item counts.
+        /// </summary>
+        public async Task<ArchiveCheckDto> GetArchiveCheckAsync(int orderId)
+        {
+                var order = await _orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions
+                {
+                        Schedules = true,
+                        ScheduleAssignments = true,
+                        AssignmentsJobInstances = true
+                });
+
+                if (order == null)
+                {
+                        return new ArchiveCheckDto
+                        {
+                                CanArchiveDirectly = false,
+                                HasBlockingItems = false,
+                                Message = "Narudžba nije pronađena"
+                        };
+                }
+
+                // Order can be archived directly if it's already cancelled or completed
+                var isAlreadyTerminal = order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Completed;
+
+                if (isAlreadyTerminal)
+                {
+                        return new ArchiveCheckDto
+                        {
+                                CanArchiveDirectly = true,
+                                HasBlockingItems = false,
+                                Message = "Narudžba je već završena i može se arhivirati."
+                        };
+                }
+
+                // Count active schedules and upcoming sessions
+                var activeSchedules = order.Schedules.Where(s => !s.IsCancelled).ToList();
+                var upcomingSessions = order.Schedules
+                        .SelectMany(s => s.Assignments)
+                        .SelectMany(a => a.JobInstances)
+                        .Where(j => j.Status == JobInstanceStatus.Upcoming)
+                        .ToList();
+
+                return new ArchiveCheckDto
+                {
+                        CanArchiveDirectly = false,
+                        HasBlockingItems = true,
+                        ActiveAssignmentsCount = activeSchedules.Count,
+                        UpcomingSessionsCount = upcomingSessions.Count,
+                        Message = $"Narudžba ima {activeSchedules.Count} aktivnih termina i {upcomingSessions.Count} nadolazećih sesija. Sve će biti otkazano."
+                };
+        }
+
+        /// <summary>
+        /// Archives an order. If force=true, cancels all schedules and sessions first.
+        /// </summary>
+        public async Task<ArchiveResultDto> ArchiveOrderAsync(int orderId, ArchiveRequestDto request)
+        {
+                _logger.LogInformation("📦 Archiving order {OrderId}, Force={Force}", orderId, request.Force);
+
+                var order = await _orderRepository.LoadOrderWithIncludes(orderId, new OrderIncludeOptions
+                {
+                        Schedules = true,
+                        ScheduleAssignments = true,
+                        ScheduleAssignmentStudent = true,
+                        AssignmentsJobInstances = true,
+                        SchedulesJobRequests = true
+                }, asNoTracking: false);
+
+                if (order == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Order not found" };
+                }
+
+                var check = await GetArchiveCheckAsync(orderId);
+
+                // If already terminal, just archive
+                if (check.CanArchiveDirectly)
+                {
+                        order.IsArchived = true;
+                        await _orderRepository.UpdateAsync(order);
+
+                        return new ArchiveResultDto
+                        {
+                                Success = true,
+                                Message = "Narudžba uspješno arhivirana"
+                        };
+                }
+
+                // If not terminal and not force, return error
+                if (!request.Force)
+                {
+                        return new ArchiveResultDto
+                        {
+                                Success = false,
+                                Message = check.Message
+                        };
+                }
+
+                // Force: cancel the order first
+                _logger.LogInformation("🔄 Force archiving - cancelling order {OrderId}", orderId);
+
+                await _orderCancellationHandler.CancelOrderAsync(order);
+                order.IsArchived = true;
+                await _orderRepository.UpdateAsync(order);
+
+                // Notify affected students
+                var cancelledScheduleIds = order.Schedules.Where(s => s.IsCancelled).Select(s => s.Id).ToList();
+                await NotifyStudentsAboutOrderCancel(order, cancelledScheduleIds);
+
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("✅ Order {OrderId} archived successfully", orderId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Narudžba uspješno arhivirana",
+                        CancelledSessionsCount = check.UpcomingSessionsCount,
+                        TerminatedAssignmentsCount = check.ActiveAssignmentsCount
+                };
+        }
+
+        /// <summary>
+        /// Unarchives an order by clearing the IsArchived flag.
+        /// </summary>
+        public async Task<ArchiveResultDto> UnarchiveOrderAsync(int orderId)
+        {
+                _logger.LogInformation("📦 Unarchiving order {OrderId}", orderId);
+
+                var order = await _orderRepository.GetByIdAsync(orderId);
+                if (order == null)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Order not found" };
+                }
+
+                if (!order.IsArchived)
+                {
+                        return new ArchiveResultDto { Success = false, Message = "Order is not archived" };
+                }
+
+                order.IsArchived = false;
+                await _orderRepository.UpdateAsync(order);
+
+                _logger.LogInformation("✅ Order {OrderId} unarchived successfully", orderId);
+
+                return new ArchiveResultDto
+                {
+                        Success = true,
+                        Message = "Narudžba uspješno vraćena iz arhive"
+                };
+        }
+
+        #endregion
 
 }
 

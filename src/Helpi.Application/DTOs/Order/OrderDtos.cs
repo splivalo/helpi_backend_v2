@@ -50,6 +50,11 @@ public class OrderUpdateDto
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public OrderStatus? Status { get; set; }
+    /// <summary>
+    /// Set to 0 to remove promo code, or a positive int to set/change promo code.
+    /// Null means no change.
+    /// </summary>
+    public int? PromoCodeId { get; set; }
 
     public ICollection<OrderServiceCreateDto> ServicesToAdd { get; set; } = new List<OrderServiceCreateDto>();
     public ICollection<int> ServiceIdsToRemove { get; set; } = new List<int>();

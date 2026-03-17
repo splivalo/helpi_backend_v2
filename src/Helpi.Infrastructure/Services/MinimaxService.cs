@@ -11,6 +11,10 @@ using File = System.IO.File;
 
 namespace Helpi.Infrastructure.Services;
 
+// TODO: PRODUCTION - Replace DUMMY Minimax credentials with real ones
+// Current credentials are placeholder values that won't work
+// Need: clientId, clientSecret, username, password from MiniMax HR portal
+// Also verify organizationId matches the production company in MiniMax
 public class MinimaxService : IMinimaxService
 {
     private readonly IApiService _apiService;

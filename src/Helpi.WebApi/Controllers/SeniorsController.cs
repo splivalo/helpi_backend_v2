@@ -56,4 +56,45 @@ public class SeniorsController : ControllerBase
                 var s = await _service.CreateSeniorAsync(dto);
                 return CreatedAtAction(nameof(GetByCustomer), new { customerId = dto.CustomerId }, s);
         }
+
+        /// <summary>
+        /// Check if senior can be archived and get blocking item counts.
+        /// </summary>
+        [HttpGet("{id}/archive-check")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveCheckDto>> GetArchiveCheck(int id)
+        {
+                var check = await _service.GetArchiveCheckAsync(id);
+                return Ok(check);
+        }
+
+        /// <summary>
+        /// Archive a senior. If force=true, cancels all orders and sessions.
+        /// </summary>
+        [HttpPost("{id}/archive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> ArchiveSenior(int id, [FromBody] ArchiveRequestDto request)
+        {
+                var result = await _service.ArchiveSeniorAsync(id, request);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
+
+        /// <summary>
+        /// Unarchive a senior (restore from archive).
+        /// </summary>
+        [HttpPost("{id}/unarchive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ArchiveResultDto>> UnarchiveSenior(int id)
+        {
+                var result = await _service.UnarchiveSeniorAsync(id);
+                if (!result.Success)
+                {
+                        return BadRequest(result);
+                }
+                return Ok(result);
+        }
 }

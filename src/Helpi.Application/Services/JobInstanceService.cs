@@ -492,6 +492,37 @@ ICustomerRepository customerRepo
 
         }
 
+        public async Task<SessionDto?> ReactivateJobInstance(int jobInstanceId)
+        {
+                try
+                {
+                        var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
+
+                        if (job == null)
+                        {
+                                throw new ArgumentException($"Job instance {jobInstanceId} not found");
+                        }
+
+                        if (job.Status != JobInstanceStatus.Cancelled)
+                        {
+                                throw new ArgumentException($"Cannot reactivate job instance {jobInstanceId} with status {job.Status}");
+                        }
+
+                        job.Status = JobInstanceStatus.Upcoming;
+
+                        await _jobInstanceRepository.UpdateAsync(job);
+
+                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
+
+                        return _mapper.Map<SessionDto>(job);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError("❌ [failed] Reactivate JobInstance {jobInstanceId}. {error}", jobInstanceId, ex);
+                        return null;
+                }
+        }
+
 
         private async Task NotifyUsersJobInstanceCancelled(JobInstance jobInstance)
         {
