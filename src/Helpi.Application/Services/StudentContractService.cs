@@ -52,8 +52,8 @@ public class StudentContractService
         {
                 var student = await GetAndValidateStudentAsync(dto.StudentId);
 
-                // Generate contract number
-                var contractNumber = await _contractNumberService.GetNextContractNumberAsync();
+                // Generate contract number in HLP-YYYY-MM format (year-month of creation)
+                var contractNumber = FormatContractNumber();
 
                 // Build file metadata
                 var (folderName, fileName) = BuildFileMetadata(student, contractNumber);
@@ -66,17 +66,13 @@ public class StudentContractService
                     fileName
                 );
 
-                // var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                // var isValid = dto.ExpirationDate > today;
-                // var status = isValid ? ContractStatus.valid : ContractStatus.expired;
-
                 var contract = new StudentContract
                 {
                         StudentId = dto.StudentId,
                         CloudPath = cloudPath,
                         EffectiveDate = dto.EffectiveDate,
                         ExpirationDate = dto.ExpirationDate,
-                        ContractNumber = contractNumber.ToString()
+                        ContractNumber = contractNumber
                 };
 
                 await _repository.AddAsync(contract);
@@ -104,11 +100,8 @@ public class StudentContractService
                 // If there's a new contract file, upload it
                 if (dto.NewContractFile != null)
                 {
-
-                        var contractNumber = int.Parse(contract.ContractNumber);
-
                         // Build file metadata
-                        var (folderName, fileName) = BuildFileMetadata(student, contractNumber);
+                        var (folderName, fileName) = BuildFileMetadata(student, contract.ContractNumber);
 
 
                         // Delete old file and upload new one
@@ -230,11 +223,16 @@ public class StudentContractService
                 return contract;
         }
 
-        private (string folderName, string fileName) BuildFileMetadata(Student student, int contractNumber)
+        private static string FormatContractNumber()
         {
-                var currentYear = DateTime.UtcNow.Year;
+                var now = DateTime.UtcNow;
+                return $"HLP-{now.Year}-{now.Month:D2}";
+        }
+
+        private static (string folderName, string fileName) BuildFileMetadata(Student student, string contractNumber)
+        {
                 var folderName = $"{student.Contact.FullName}-{student.UserId}";
-                var fileName = $"{contractNumber}-{student.UserId}-{currentYear}.pdf";
+                var fileName = $"{contractNumber}.pdf";
 
                 return (folderName, fileName);
         }

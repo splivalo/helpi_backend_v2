@@ -24,7 +24,7 @@ namespace Helpi.Infrastructure.Seeds
                 return; // Database already seeded
             }
 
-            var first = new ContractNumberSequence(1, 1000);
+            var first = new ContractNumberSequence(1, 1);
 
             // Add cities to the database
             await _context.ContractNumberSequences.AddAsync(first);

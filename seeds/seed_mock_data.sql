@@ -177,7 +177,27 @@ VALUES
 (17, 11, 4, '11:00:00', '13:00:00', false, 0, true);
 
 -- ============================================
--- 11. RESET SEQUENCES
+-- 11. ORDER SERVICES (usluge na narudzbama)
+-- ============================================
+-- 6 servisa u sustavu (stari servisi obrisani):
+--   1=Društvo (Companionship), 4=Šetnja (Walking), 11=Kupovina (Shopping),
+--   21=Kućanstvo (House Help), 31=Pratnja (Escort), 41=Ostalo (Other)
+
+INSERT INTO "OrderServices" ("OrderId", "ServiceId") VALUES
+(1, 11),
+(2, 31), (2, 1),
+(3, 11),
+(4, 4),
+(5, 1),
+(6, 21),
+(7, 4),
+(8, 31),
+(9, 11), (9, 1),
+(10, 4), (10, 21),
+(11, 21);
+
+-- ============================================
+-- 12. RESET SEQUENCES
 -- ============================================
 
 SELECT setval('"AspNetUsers_Id_seq"', (SELECT MAX("Id") FROM "AspNetUsers"));
