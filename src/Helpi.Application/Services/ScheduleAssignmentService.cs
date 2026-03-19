@@ -18,6 +18,7 @@ public class ScheduleAssignmentService
         private readonly IReassignmentService _reassignmentService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ScheduleAssignmentService> _logger;
+        private readonly OrderStatusMaintenanceService _statusMaintenanceService;
 
         public ScheduleAssignmentService(
                 IScheduleAssignmentRepository repository,
@@ -25,7 +26,8 @@ public class ScheduleAssignmentService
                 IMapper mapper,
                 IReassignmentService reassignmentService,
                 IUnitOfWork unitOfWork,
-                ILogger<ScheduleAssignmentService> logger)
+                ILogger<ScheduleAssignmentService> logger,
+                OrderStatusMaintenanceService statusMaintenanceService)
         {
                 _repository = repository;
                 _orderScheduleRepository = orderScheduleRepository;
@@ -33,6 +35,7 @@ public class ScheduleAssignmentService
                 _reassignmentService = reassignmentService;
                 _unitOfWork = unitOfWork;
                 _logger = logger;
+                _statusMaintenanceService = statusMaintenanceService;
         }
 
         /// <summary>
@@ -107,6 +110,9 @@ public class ScheduleAssignmentService
 
                 _logger.LogInformation("Created assignment {AssignmentId}: Student {StudentId} → Schedule {ScheduleId}",
                         assignment.Id, dto.StudentId, dto.OrderScheduleId);
+
+                // Update order status (Pending → FullAssigned if all schedules now have assignments)
+                await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
         }
