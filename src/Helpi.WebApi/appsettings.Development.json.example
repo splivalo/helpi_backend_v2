@@ -1,0 +1,25 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "Minimax": {
+    "Settings": {
+      "OrganisationId": 0,
+      "PaymentMethodId": 0,
+      "PaymentMethodName": "Transactional Account",
+      "DocumentNumberingId": 0
+    }
+  },
+  "Stripe": {
+    "CredentialsJson": "../../credentials/dev/stripe.json"
+  },
+  "GoogleDrive": {
+    "BaseFolderId": "YOUR_GOOGLE_DRIVE_FOLDER_ID",
+    "CredentialsJson": "../../credentials/dev/helpi-google-service-account.json"
+  },
+  "GOOGLE_PLACES_API_KEY": "YOUR_GOOGLE_PLACES_API_KEY"
+}

@@ -197,7 +197,19 @@ INSERT INTO "OrderServices" ("OrderId", "ServiceId") VALUES
 (11, 21);
 
 -- ============================================
--- 12. RESET SEQUENCES
+-- 12. STUDENT SERVICES (koje usluge student nudi)
+-- ============================================
+-- Ana (102): Kupovina, Društvo, Šetnja
+-- Ivan (103): Kućanstvo, Pratnja, Ostalo
+-- Petra (104): Društvo, Šetnja, Kupovina, Pratnja
+
+INSERT INTO "StudentServices" ("StudentId", "ServiceId", "ExperienceYears") VALUES
+(102, 11, 1), (102, 1, 1), (102, 4, 1),
+(103, 21, 2), (103, 31, 1), (103, 41, 1),
+(104, 1, 1), (104, 4, 2), (104, 11, 1), (104, 31, 1);
+
+-- ============================================
+-- 13. RESET SEQUENCES
 -- ============================================
 
 SELECT setval('"AspNetUsers_Id_seq"', (SELECT MAX("Id") FROM "AspNetUsers"));
@@ -216,6 +228,7 @@ COMMIT;
 -- 6 seniora (Senior 1-6, Contact 301-306)
 -- 11 narudzbi (Order 1-11) - sve Pending
 -- 17 rasporeda (OrderSchedule 1-17)
+-- 10 student-servisa (Ana 3, Ivan 3, Petra 4)
 --
 -- Senior 2 (Marija) ima orderera (Ana) kroz Customer 202
 --

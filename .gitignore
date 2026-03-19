@@ -52,3 +52,6 @@ x86/
 
 
 credentials/
+
+# Sensitive config (API keys, secrets)
+**/appsettings.Development.json
