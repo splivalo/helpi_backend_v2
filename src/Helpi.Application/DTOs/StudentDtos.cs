@@ -17,11 +17,16 @@ public class StudentDto
     public decimal TotalRatingSum { get; set; } = 0.00m;
     public decimal AverageRating { get; set; } = 0.00m;
 
+    // From User table
+    public bool IsSuspended { get; set; }
+    public string? SuspensionReason { get; set; }
+
     public DateTime? DeletedAt { get; set; }
 
     public DateOnly? BackgroundCheckDate { get; set; }
     public ContactInfoDto Contact { get; set; } = null!;
     public FacultyDto? Faculty { get; set; }
+    public List<StudentAvailabilitySlotDto> AvailabilitySlots { get; set; } = new();
 }
 
 public class StudentCreateDto

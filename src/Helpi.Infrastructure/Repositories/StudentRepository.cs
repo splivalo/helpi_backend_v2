@@ -240,11 +240,17 @@ public class StudentRepository : IStudentRepository
             )
         );
 
-        query = query.Where(s =>
-            requiredServiceIds.All(rs =>
-                s.StudentServices.Any(ss => ss.ServiceId == rs)
-            )
-        );
+        // v2: students no longer choose services, so only filter
+        // when the order actually specifies required services AND
+        // students have service entries in the DB.
+        if (requiredServiceIds.Any())
+        {
+            query = query.Where(s =>
+                requiredServiceIds.All(rs =>
+                    s.StudentServices.Any(ss => ss.ServiceId == rs)
+                )
+            );
+        }
 
         // ✅ Unified conflict detection with 15-min travel buffer
         query = query.Where(s =>

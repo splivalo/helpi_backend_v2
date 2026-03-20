@@ -40,6 +40,8 @@ public class SuspensionService
     public async Task<UserSuspensionStatusDto> GetSuspensionStatusAsync(int userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User {userId} not found.");
         var logs = await _suspensionLogRepository.GetByUserIdAsync(userId);
 
         return new UserSuspensionStatusDto
@@ -56,6 +58,9 @@ public class SuspensionService
     {
         var user = await _userRepository.GetByIdAsync(userId);
 
+        if (user == null)
+            throw new KeyNotFoundException($"User {userId} not found.");
+
         if (user.IsSuspended)
             throw new InvalidOperationException("User is already suspended.");
 
@@ -65,19 +70,32 @@ public class SuspensionService
         _logger.LogInformation("🚫 Suspending user {UserId} (Type: {UserType}). Reason: {Reason}",
             userId, user.UserType, reason);
 
-        // Auto-cancel based on user type
+        // Auto-cancel based on user type — failures should not block the suspension itself
         if (user.UserType == UserType.Student)
         {
-            _logger.LogInformation("🔄 Auto-reassigning all jobs for suspended student {UserId}", userId);
-            await _reassignmentService.ReassignExpiredContractJobs(userId);
-            _logger.LogInformation("✅ Jobs reassigned for suspended student {UserId}", userId);
+            try
+            {
+                _logger.LogInformation("🔄 Auto-reassigning all jobs for suspended student {UserId}", userId);
+                await _reassignmentService.ReassignExpiredContractJobs(userId);
+                _logger.LogInformation("✅ Jobs reassigned for suspended student {UserId}", userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "⚠️ Failed to reassign jobs for student {UserId} during suspension — continuing with suspension", userId);
+            }
         }
         else if (user.UserType == UserType.Customer)
         {
-            // Customers can have seniors - cancel all orders for their seniors
-            _logger.LogInformation("🔄 Auto-cancelling all orders for suspended customer {UserId}", userId);
-            await CancelAllOrdersForCustomerAsync(userId);
-            _logger.LogInformation("✅ Orders cancelled for suspended customer {UserId}", userId);
+            try
+            {
+                _logger.LogInformation("🔄 Auto-cancelling all orders for suspended customer {UserId}", userId);
+                await CancelAllOrdersForCustomerAsync(userId);
+                _logger.LogInformation("✅ Orders cancelled for suspended customer {UserId}", userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "⚠️ Failed to cancel orders for customer {UserId} during suspension — continuing with suspension", userId);
+            }
         }
 
         user.IsSuspended = true;
@@ -138,6 +156,9 @@ public class SuspensionService
     public async Task<SuspensionLogDto> ActivateUserAsync(int userId, int adminId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user == null)
+            throw new KeyNotFoundException($"User {userId} not found.");
 
         if (!user.IsSuspended)
             throw new InvalidOperationException("User is not suspended.");

@@ -5,19 +5,25 @@
 -- partial availability overlaps, some unassignable orders.
 -- ============================================
 -- STUDENT STATUS MATRIX:
---   101 Luka  = Active (1)       — Mon/Wed/Fri 08-14, Services: 1,4
---   102 Ana   = Active (1)       — Tue/Thu 09-15, Sat 10-14, Services: 1,11,21
---   103 Ivan  = Active (1)       — Mon/Wed/Fri 10-17, Services: 4,31,41
+--   101 Luka  = Active (1)       — Mon/Wed/Fri 08-14 + Thu 13-17, Services: 1,4
+--   102 Ana   = Active (1)       — Mon 12-15, Tue/Thu 09-15, Sat 10-14, Services: 1,4,11,21
+--   103 Ivan  = Active (1)       — Mon/Wed/Fri 10-17 + Tue/Thu 12-17, Services: 4,31,41
 --   104 Petra = AboutToExpire(2) — Mon-Fri 08-18, Services: 1,4,11,31
 --   105 Marko = InActive (0)     — no availability, no services
 --   106 Maja  = Deactivated (4)  — no availability
 --   107 Dino  = Expired (3)      — Tue/Thu 09-13, Services: 21,41 (but expired!)
 --
 -- ORDER STATUS MATRIX:
---   1-5, 8-9 = Pending (7 orders)
+--   1-5, 8-9, 12-15 = Pending (11 orders)
 --   6-7      = FullAssigned (2 orders, with ScheduleAssignment rows)
 --   10       = Completed (1 order, with completed assignments)
 --   11       = Cancelled (1 order)
+--
+-- DIFFERENTTIMES TEST SCENARIOS (frontend _classifyStudent):
+--   Order 12 (Mon+Thu 09-12, walking): Petra=full, Luka=differentTimes(Thu 13-17≠09:00)
+--   Order 13 (Mon+Thu 11-13, walking): Petra=full, Luka=differentTimes(Thu), Ivan=differentTimes(Thu 12-17≠11:00)
+--   Order 14 (Tue+Sat 09-12, companion): Ana=differentTimes(Sat 10-14≠09:00), Petra=unavailable(no Sat)
+--   Order 15 (Mon+Tue+Thu, companion): Luka=differentTimes(Mon only green, Tue no slot, Thu wrong time→alt slots)
 -- ============================================
 
 BEGIN;
@@ -34,7 +40,7 @@ VALUES
 (103, 'ivan.simic@email.com', 'IVAN.SIMIC@EMAIL.COM', 'ivan.simic@email.com', 'IVAN.SIMIC@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP103', 'CONCUR103', '+385995556666', false, false, NULL, true, 0, 1, '2026-01-10', '2026-01-10', false),
 (104, 'petra.novak@email.com', 'PETRA.NOVAK@EMAIL.COM', 'petra.novak@email.com', 'PETRA.NOVAK@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP104', 'CONCUR104', '+385997778888', false, false, NULL, true, 0, 1, '2026-02-20', '2026-02-20', false),
 (105, 'marko.vukovic@email.com', 'MARKO.VUKOVIC@EMAIL.COM', 'marko.vukovic@email.com', 'MARKO.VUKOVIC@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP105', 'CONCUR105', '+385992223333', false, false, NULL, true, 0, 1, '2025-10-20', '2025-10-20', false),
-(106, 'maja.knezevic@email.com', 'MAJA.KNEZEVIC@EMAIL.COM', 'maja.knezevic@email.com', 'MAJA.KNEZEVIC@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP106', 'CONCUR106', '+385994445555', false, false, NULL, true, 0, 1, '2025-11-15', '2025-11-15', true),
+(106, 'maja.knezevic@email.com', 'MAJA.KNEZEVIC@EMAIL.COM', 'maja.knezevic@email.com', 'MAJA.KNEZEVIC@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP106', 'CONCUR106', '+385994445555', false, false, NULL, true, 0, 1, '2025-11-15', '2025-11-15', false),
 (107, 'dino.barisic@email.com', 'DINO.BARISIC@EMAIL.COM', 'dino.barisic@email.com', 'DINO.BARISIC@EMAIL.COM', true, 'AQAAAAIAAYagAAAAEFakeHashForTestingOnly1234567890abcdef', 'SECSTAMP107', 'CONCUR107', '+385996667777', false, false, NULL, true, 0, 1, '2026-01-05', '2026-01-05', false);
 
 -- ============================================
@@ -160,6 +166,14 @@ VALUES
 (10, 2, 3, true, 0, '2026-01-06', '2026-02-28', 'Setnja u Maksimiru - zavrseno.', '2025-12-20 14:00:00', '2026-02-28 18:00:00'),
 (11, 4, 4, true, 0, '2026-03-17', '2026-06-30', 'Pomoc s ciscenjem - otkazano.', '2026-03-04 08:30:00', '2026-03-10 09:00:00');
 
+-- differentTimes test orders (recurring, multiple schedules, partial student overlaps)
+INSERT INTO "Orders" ("Id", "SeniorId", "Status", "IsRecurring", "RecurrencePattern", "StartDate", "EndDate", "Notes", "CreatedAt", "UpdatedAt")
+VALUES
+(12, 5, 1, true, 0, '2026-03-23', '2026-06-30', 'Setnja ponedjeljkom i cetvrtkom ujutro.', '2026-03-10 10:00:00', '2026-03-10 10:00:00'),
+(13, 4, 1, true, 0, '2026-03-23', '2026-06-30', 'Setnja i druzenje pon+cet oko podneva.', '2026-03-10 11:00:00', '2026-03-10 11:00:00'),
+(14, 6, 1, true, 0, '2026-03-17', '2026-05-31', 'Druzenje utorkom i subotom ujutro.', '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
+(15, 3, 1, true, 0, '2026-04-06', '2026-06-30', 'Test differentTimes - pon+uto popodne.', NOW(), NOW());
+
 -- ============================================
 -- 10. ORDER SCHEDULES
 -- ============================================
@@ -169,7 +183,7 @@ VALUES
 -- Order 1: Thu 10-12, Sr 11 (shopping) → Ana(Thu 09-15 ✓, svc 11✓), Petra(Thu 08-18 ✓, svc 11✓)
 -- Order 2: Sun 09-12, Sr 31 (escort) → NOBODY has Sunday! Unassignable test case
 -- Order 3: Tue 14-17, Sr 11 (shopping) → Petra only (Ana Tue ends 15:00 < 17:00)
--- Order 4: Wed 10-12, Sr 4 (walking) → Luka(Wed ✓), Ivan(Wed ✓), Petra(Wed ✓) — 3 candidates
+-- Order 4: Wed 10-12, Sr 4 (walking) → Luka(Wed ✓) + Petra(Wed ✓). Ivan excluded by Order 7 conflict!
 -- Order 5: Fri 08-11, Sr 1 (companionship) → Luka(Fri 08-14 ✓), Petra(Fri 08-18 ✓). NOT Ivan(Fri 10-17, 08<10)
 
 INSERT INTO "OrderSchedules" ("Id", "OrderId", "DayOfWeek", "StartTime", "EndTime", "IsCancelled", "AutoScheduleAttemptCount", "AllowAutoScheduling")
@@ -184,7 +198,7 @@ VALUES
 -- Order 6 (FullAssigned): Thu+Sat, Sr 21 (house help) → Ana assigned (Thu 09-15 ✓, Sat 10-14 ✓, svc 21✓)
 -- Order 7 (FullAssigned): Wed+Fri 10-12, Sr 4 (walking) → Ivan assigned (Wed+Fri 10-17 ✓, svc 4✓)
 -- Order 8 (Pending): Tue 08:30-12:30, Sr 31 (escort) → Only Petra (Tue 08-18 ✓, svc 31✓; Ana Tue starts 09:00 > 08:30)
--- Order 9 (Pending): Mon+Thu 09-11, Sr 11+1 → Petra both; Ana Thu only (no Mon); Luka Mon only (no svc 11)
+-- Order 9 (Pending): Mon+Thu 09-11, Sr 11+1 → Only Petra (others lack svc 11 or Mon availability)
 -- Order 10 (Completed): Tue+Fri 10-12, Sr 4 (walking) → Petra was assigned (completed)
 -- Order 11 (Cancelled): Tue+Thu 11-13, Sr 41 (other) → Cancelled, no assignments
 
@@ -200,7 +214,25 @@ VALUES
 (13, 10, 2, '10:00:00', '12:00:00', false, 0, true),
 (14, 10, 5, '10:00:00', '12:00:00', false, 0, true),
 (15, 11, 2, '11:00:00', '13:00:00', true, 0, false),
-(16, 11, 4, '11:00:00', '13:00:00', true, 0, false);
+(16, 11, 4, '11:00:00', '13:00:00', true, 0, false),
+-- Order 12 (differentTimes test #1): Mon+Thu 09-12, walking
+-- Backend returns Luka+Petra (Mon ok). Frontend: Luka=differentTimes(Thu 13-17≠09:00), Petra=full
+(17, 12, 1, '09:00:00', '12:00:00', false, 0, true),
+(18, 12, 4, '09:00:00', '12:00:00', false, 0, true),
+-- Order 13 (differentTimes test #2): Mon+Thu 11-13, walking
+-- Backend returns Luka+Ivan+Petra (Mon ok). Frontend: Luka=diff(Thu), Ivan=diff(Thu 12-17≠11:00), Petra=full
+(19, 13, 1, '11:00:00', '13:00:00', false, 0, true),
+(20, 13, 4, '11:00:00', '13:00:00', false, 0, true),
+-- Order 14 (differentTimes test #3): Tue+Sat 09-12, companionship
+-- Backend returns Ana+Petra (Tue ok). Frontend: Ana=diff(Sat 10-14≠09:00), Petra=unavailable(no Sat)
+(21, 14, 2, '09:00:00', '12:00:00', false, 0, true),
+(22, 14, 6, '09:00:00', '12:00:00', false, 0, true),
+-- Order 15 (differentTimes test #4): Mon+Tue 12-14, Thu 10-12, companionship
+-- Luka: Mon 12-14=GREEN (has Mon 08-14), Tue 12-14=RED no alt (no Tue slot), Thu 10-12=RED WITH alt (has Thu 13-17→offers 13:00,14:00,15:00)
+-- Ana: Mon+Tue+Thu → full, Petra: Mon+Tue+Thu → full
+(23, 15, 1, '12:00:00', '14:00:00', false, 0, false),
+(24, 15, 2, '12:00:00', '14:00:00', false, 0, false),
+(25, 15, 4, '10:00:00', '12:00:00', false, 0, false);
 
 -- ============================================
 -- 11. ORDER SERVICES
@@ -218,43 +250,67 @@ INSERT INTO "OrderServices" ("OrderId", "ServiceId") VALUES
 (8, 31),
 (9, 11), (9, 1),
 (10, 4),
-(11, 41);
+(11, 41),
+(12, 21),
+(13, 1),
+(14, 11),
+(15, 1);
 
 -- ============================================
 -- 12. STUDENT SERVICES
 -- ============================================
 -- Luka (101): Društvo + Šetnja
--- Ana (102): Društvo + Kupovina + Kućanstvo
+-- Ana (102): Društvo + Šetnja + Kupovina + Kućanstvo
 -- Ivan (103): Šetnja + Pratnja + Ostalo
 -- Petra (104): Društvo + Šetnja + Kupovina + Pratnja (most versatile)
 -- Dino (107): Kućanstvo + Ostalo (expired, can't be assigned)
 
 INSERT INTO "StudentServices" ("StudentId", "ServiceId", "ExperienceYears") VALUES
 (101, 1, 2), (101, 4, 1),
-(102, 1, 1), (102, 11, 2), (102, 21, 1),
+(102, 1, 1), (102, 4, 1), (102, 11, 2), (102, 21, 1),
 (103, 4, 2), (103, 31, 1), (103, 41, 1),
 (104, 1, 1), (104, 4, 2), (104, 11, 1), (104, 31, 1),
 (107, 21, 1), (107, 41, 1);
 
 -- ============================================
+-- 12b. STUDENT CONTRACTS
+-- ============================================
+-- ContractNumber format: HLP-YYYY-MM
+-- Active students (101-103) have contracts valid for next 6 months
+-- Student 104 (AboutToExpire) has contract expiring in 3 days!
+-- Student 107 (Expired) has expired contract from last year
+
+INSERT INTO "StudentContracts" ("Id", "StudentId", "ContractNumber", "CloudPath", "EffectiveDate", "ExpirationDate", "UploadedAt")
+VALUES
+(1, 101, 'HLP-2025-11', '/contracts/hlp-2025-11-101-2025.pdf', '2025-11-01', '2026-11-01', '2025-11-01 10:00:00'),
+(2, 102, 'HLP-2025-12', '/contracts/hlp-2025-12-102-2025.pdf', '2025-12-15', '2026-12-15', '2025-12-15 10:00:00'),
+(3, 103, 'HLP-2026-01', '/contracts/hlp-2026-01-103-2026.pdf', '2026-01-10', '2027-01-10', '2026-01-10 10:00:00'),
+(4, 104, 'HLP-2026-02', '/contracts/hlp-2026-02-104-2026.pdf', '2026-02-20', '2026-03-22', '2026-02-20 10:00:00'),
+(5, 107, 'HLP-2025-06', '/contracts/hlp-2025-06-107-2025.pdf', '2025-06-01', '2025-12-01', '2025-06-01 10:00:00');
+
+-- ============================================
 -- 13. STUDENT AVAILABILITY SLOTS
 -- ============================================
 -- DayOfWeek: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
--- Luka (101): Mon/Wed/Fri 08-14  (morning person, limited days)
--- Ana (102): Tue/Thu 09-15, Sat 10-14  (no Mon/Wed/Fri!)
--- Ivan (103): Mon/Wed/Fri 10-17  (later start, same days as Luka but shifted)
--- Petra (104): Mon-Fri 08-18  (full availability, most flexible)
+-- Luka (101): Mon/Wed/Fri 08-14 + Thu 13-17  (morning except Thu afternoon!)
+-- Ana (102): Mon 12-15, Tue/Thu 09-15, Sat 10-14  (Mon only afternoon!)
+-- Ivan (103): Mon/Wed/Fri 10-17 + Tue/Thu 12-17  (Tue/Thu only afternoon!)
+-- Petra (104): Mon-Fri 08-18  (full availability, most flexible, NO weekend)
 -- Dino (107): Tue/Thu 09-13  (expired but slots remain)
 
 INSERT INTO "StudentAvailabilitySlots" ("StudentId", "DayOfWeek", "StartTime", "EndTime") VALUES
 (101, 1, '08:00:00', '14:00:00'),
 (101, 3, '08:00:00', '14:00:00'),
+(101, 4, '13:00:00', '17:00:00'),
 (101, 5, '08:00:00', '14:00:00'),
+(102, 1, '12:00:00', '15:00:00'),
 (102, 2, '09:00:00', '15:00:00'),
 (102, 4, '09:00:00', '15:00:00'),
 (102, 6, '10:00:00', '14:00:00'),
 (103, 1, '10:00:00', '17:00:00'),
+(103, 2, '12:00:00', '17:00:00'),
 (103, 3, '10:00:00', '17:00:00'),
+(103, 4, '12:00:00', '17:00:00'),
 (103, 5, '10:00:00', '17:00:00'),
 (104, 1, '08:00:00', '18:00:00'),
 (104, 2, '08:00:00', '18:00:00'),
@@ -288,7 +344,57 @@ VALUES
 (6, 14, 10, 104, 3, false, '2026-01-02 08:05:00', '2026-01-02 08:05:00', '2026-02-28 18:00:00');
 
 -- ============================================
--- 15. RESET SEQUENCES
+-- 15. JOB INSTANCES (sessions)
+-- ============================================
+-- JobInstanceStatus: 0=Upcoming, 1=InProgress, 2=Completed, 3=Cancelled, 4=Rescheduled
+-- PaymentStatus: 0=Pending
+
+-- Order 6 (Ana=102, Senior=2, Customer=202): Thu 09-12 + Sat 10-13, Ozujak 2026
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(1, 2, 202, 6, 6, 1, '2026-03-19', '09:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+(2, 2, 202, 6, 7, 2, '2026-03-21', '10:00:00','13:00:00', 0, false, false, 8.00, 30, 70, 0),
+(3, 2, 202, 6, 6, 1, '2026-03-26', '09:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+(4, 2, 202, 6, 7, 2, '2026-03-28', '10:00:00','13:00:00', 0, false, false, 8.00, 30, 70, 0),
+-- April
+(5, 2, 202, 6, 6, 1, '2026-04-02', '09:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+(6, 2, 202, 6, 7, 2, '2026-04-04', '10:00:00','13:00:00', 0, false, false, 8.00, 30, 70, 0);
+
+-- Order 7 (Ivan=103, Senior=3, Customer=203): Wed 10-12 + Fri 10-12, Ozujak 2026
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(7,  3, 203, 7, 8, 3, '2026-03-18', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(8,  3, 203, 7, 9, 4, '2026-03-20', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(9,  3, 203, 7, 8, 3, '2026-03-25', '10:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+(10, 3, 203, 7, 9, 4, '2026-03-27', '10:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+-- April
+(11, 3, 203, 7, 8, 3, '2026-04-01', '10:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0),
+(12, 3, 203, 7, 9, 4, '2026-04-03', '10:00:00','12:00:00', 0, false, false, 8.00, 30, 70, 0);
+
+-- Order 10 (Petra=104, Senior=2, Customer=202): Tue 10-12 + Fri 10-12, Sijecanj-Veljaca (Completed)
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+-- Sijecanj
+(13, 2, 202, 10, 13, 5, '2026-01-06', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(14, 2, 202, 10, 14, 6, '2026-01-09', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(15, 2, 202, 10, 13, 5, '2026-01-13', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(16, 2, 202, 10, 14, 6, '2026-01-16', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(17, 2, 202, 10, 13, 5, '2026-01-20', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(18, 2, 202, 10, 14, 6, '2026-01-23', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(19, 2, 202, 10, 13, 5, '2026-01-27', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(20, 2, 202, 10, 14, 6, '2026-01-30', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+-- Veljaca
+(21, 2, 202, 10, 13, 5, '2026-02-03', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(22, 2, 202, 10, 14, 6, '2026-02-06', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(23, 2, 202, 10, 13, 5, '2026-02-10', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(24, 2, 202, 10, 14, 6, '2026-02-13', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(25, 2, 202, 10, 13, 5, '2026-02-17', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(26, 2, 202, 10, 14, 6, '2026-02-20', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(27, 2, 202, 10, 13, 5, '2026-02-24', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
+(28, 2, 202, 10, 14, 6, '2026-02-27', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0);
+
+-- ============================================
+-- 16. RESET SEQUENCES
 -- ============================================
 
 SELECT setval('"AspNetUsers_Id_seq"', (SELECT MAX("Id") FROM "AspNetUsers"));
@@ -297,6 +403,8 @@ SELECT setval('"Seniors_Id_seq"', (SELECT MAX("Id") FROM "Seniors"));
 SELECT setval('"Orders_Id_seq"', (SELECT MAX("Id") FROM "Orders"));
 SELECT setval('"OrderSchedules_Id_seq"', (SELECT MAX("Id") FROM "OrderSchedules"));
 SELECT setval('"ScheduleAssignments_Id_seq"', (SELECT MAX("Id") FROM "ScheduleAssignments"));
+SELECT setval('"StudentContracts_Id_seq"', (SELECT MAX("Id") FROM "StudentContracts"));
+SELECT setval('"JobInstances_Id_seq"', (SELECT MAX("Id") FROM "JobInstances"));
 
 COMMIT;
 
@@ -307,27 +415,33 @@ COMMIT;
 --   Active: 101 Luka, 102 Ana, 103 Ivan
 --   AboutToExpire: 104 Petra
 --   InActive: 105 Marko (no contract)
---   Deactivated: 106 Maja (suspended)
+--   Deactivated: 106 Maja
 --   Expired: 107 Dino
 --
 -- 6 customera (User 201-206) → 6 seniora (Senior 1-6)
 --
--- 11 narudzbi:
---   Pending(1): Orders 1,2,3,4,5,8,9 (7 orders)
+-- 14 narudzbi:
+--   Pending(1): Orders 1,2,3,4,5,8,9,12,13,14 (10 orders)
 --   FullAssigned(2): Orders 6,7 (Ana→6, Ivan→7)
 --   Completed(3): Order 10 (Petra completed)
 --   Cancelled(4): Order 11
 --
--- 16 rasporeda (OrderSchedule 1-16)
+-- 24 rasporeda (OrderSchedule 1-24)
 -- 6 dodjela (ScheduleAssignment 1-6)
--- 14 student-servisa
--- 16 availability slotova
+-- 15 student-servisa
+-- 20 availability slotova
 --
--- TESTING SCENARIOS:
+-- FULL-MATCH SCENARIOS (all candidates = full):
 --   Order 1 (Thu 10-12, shopping) → Ana + Petra match
 --   Order 2 (Sun 09-12, escort)  → NOBODY matches! (Sunday test)
 --   Order 3 (Tue 14-17, shopping) → Only Petra (Ana ends 15:00 < 17:00)
---   Order 4 (Wed 10-12, walking) → Luka + Ivan + Petra (3 candidates!)
+--   Order 4 (Wed 10-12, walking) → Luka + Petra (Ivan excluded by Order 7 conflict!)
 --   Order 5 (Fri 08-11, companion) → Luka + Petra (Ivan starts 10:00 > 08:00)
 --   Order 8 (Tue 08:30-12:30, escort) → Only Petra (Ana starts 09:00 > 08:30)
---   Order 9 (Mon+Thu 09-11, shop+comp) → Petra both; Ana Thu only; Luka Mon only (no svc 11)
+--   Order 9 (Mon+Thu 09-11, shop+comp) → Only Petra (others lack services/availability)
+--
+-- DIFFERENTTIMES SCENARIOS (partial student overlaps — tests Preskoči/Promijeni/Zamjena):
+--   Order 12 (Mon+Thu 09-12, walking) → Petra=FULL, Luka=DIFFERENT(Thu 13-17 ≠ 09:00)
+--   Order 13 (Mon+Thu 11-13, walking) → Petra=FULL, Luka=DIFF(Thu), Ivan=DIFF(Thu 12-17 ≠ 11:00)
+--   Order 14 (Tue+Sat 09-12, companion) → Ana=DIFF(Sat 10-14 ≠ 09:00), Petra=UNAVAIL(no Sat)
+--   Order 15 (Mon+Tue+Thu, companion) → Ana+Petra=FULL, Luka=DIFF(Mon green, Tue red no alt, Thu red WITH alt 13/14/15)

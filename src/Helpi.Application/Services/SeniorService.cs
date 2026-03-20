@@ -23,6 +23,7 @@ public class SeniorService
         private readonly INotificationFactory _notificationFactory;
         private readonly IContactInfoRepository _contactInfoRepo;
         private readonly IJobInstanceRepository _jobInstanceRepo;
+        private readonly IUserRepository _userRepository;
 
         public SeniorService(
                 ISeniorRepository repository,
@@ -33,7 +34,8 @@ public class SeniorService
                 INotificationService notificationService,
                 INotificationFactory notificationFactory,
                 IContactInfoRepository contactInfoRepo,
-                IJobInstanceRepository jobInstanceRepo)
+                IJobInstanceRepository jobInstanceRepo,
+                IUserRepository userRepository)
         {
                 _repository = repository;
                 _mapper = mapper;
@@ -44,6 +46,7 @@ public class SeniorService
                 _notificationFactory = notificationFactory;
                 _contactInfoRepo = contactInfoRepo;
                 _jobInstanceRepo = jobInstanceRepo;
+                _userRepository = userRepository;
         }
 
         public async Task<List<SeniorDto>> GetSeniorsByCustomerAsync(int customerId)
@@ -72,7 +75,12 @@ public class SeniorService
         {
 
                 var senior = await _repository.GetByIdAsync(seniorId);
-                return _mapper.Map<SeniorDto>(senior);
+                var dto = _mapper.Map<SeniorDto>(senior);
+                // Senior.CustomerId == Customer.UserId == User.Id
+                var user = await _userRepository.GetByIdAsync(senior.CustomerId);
+                dto.IsSuspended = user.IsSuspended;
+                dto.SuspensionReason = user.SuspensionReason;
+                return dto;
         }
 
         public async Task<bool> DeleteSeniorAsync(int seniorId)

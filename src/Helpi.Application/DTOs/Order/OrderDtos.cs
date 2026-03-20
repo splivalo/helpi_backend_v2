@@ -21,6 +21,20 @@ public class OrderDto
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? AssignedStudentName { get; set; }
+    public int? AssignedStudentId { get; set; }
+    public string? AssignedStudentEmail { get; set; }
+    public string? AssignedStudentPhone { get; set; }
+    public string? AssignedStudentAddress { get; set; }
+    public string? AssignedStudentCity { get; set; }
+    public int? AssignedStudentFaculty { get; set; }
+    public string? AssignedStudentNumber { get; set; }
+    public DateOnly? AssignedStudentDateOfBirth { get; set; }
+    public int? AssignedStudentGender { get; set; }
+    public int? AssignedStudentStatus { get; set; }
+    public decimal? AssignedStudentAverageRating { get; set; }
+    public int? AssignedStudentTotalReviews { get; set; }
+    public int? AssignedStudentDaysToContractExpire { get; set; }
     public ICollection<ServiceDto> Services { get; set; } = new List<ServiceDto>();
     public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }

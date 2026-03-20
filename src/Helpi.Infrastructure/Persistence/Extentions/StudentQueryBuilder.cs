@@ -216,6 +216,19 @@ public class StudentQueryBuilder
             DeletedAt = s.DeletedAt,
             BackgroundCheckDate = s.BackgroundCheckDate,
             AverageRating = s.AverageRating,
+            TotalReviews = s.TotalReviews,
+            TotalRatingSum = s.TotalRatingSum,
+            DaysToContractExpire = s.DaysToContractExpire,
+
+            // From User table (subquery since navigation is not configured)
+            IsSuspended = _context.Users
+                .Where(u => u.Id == s.UserId)
+                .Select(u => u.IsSuspended)
+                .FirstOrDefault(),
+            SuspensionReason = _context.Users
+                .Where(u => u.Id == s.UserId)
+                .Select(u => u.SuspensionReason)
+                .FirstOrDefault(),
 
             Contact = new ContactInfoDto
             {
@@ -238,6 +251,14 @@ public class StudentQueryBuilder
                 Id = s.Faculty.Id,
                 Translations = s.Faculty.Translations
             },
+
+            AvailabilitySlots = s.AvailabilitySlots.Select(a => new StudentAvailabilitySlotDto
+            {
+                StudentId = a.StudentId,
+                DayOfWeek = a.DayOfWeek,
+                StartTime = a.StartTime,
+                EndTime = a.EndTime,
+            }).ToList(),
         }).ToListAsync();
     }
 

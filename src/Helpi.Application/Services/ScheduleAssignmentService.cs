@@ -14,6 +14,7 @@ public class ScheduleAssignmentService
 {
         private readonly IScheduleAssignmentRepository _repository;
         private readonly IOrderScheduleRepository _orderScheduleRepository;
+        private readonly IStudentRepository _studentRepository;
         private readonly IMapper _mapper;
         private readonly IReassignmentService _reassignmentService;
         private readonly IUnitOfWork _unitOfWork;
@@ -23,6 +24,7 @@ public class ScheduleAssignmentService
         public ScheduleAssignmentService(
                 IScheduleAssignmentRepository repository,
                 IOrderScheduleRepository orderScheduleRepository,
+                IStudentRepository studentRepository,
                 IMapper mapper,
                 IReassignmentService reassignmentService,
                 IUnitOfWork unitOfWork,
@@ -31,6 +33,7 @@ public class ScheduleAssignmentService
         {
                 _repository = repository;
                 _orderScheduleRepository = orderScheduleRepository;
+                _studentRepository = studentRepository;
                 _mapper = mapper;
                 _reassignmentService = reassignmentService;
                 _unitOfWork = unitOfWork;
@@ -46,6 +49,17 @@ public class ScheduleAssignmentService
         {
                 _logger.LogInformation("Admin direct assign: Student {StudentId} → Schedule {ScheduleId}",
                         dto.StudentId, dto.OrderScheduleId);
+
+                // Verify student is active (Active or ContractAboutToExpire)
+                var student = await _studentRepository.GetByIdAsync(dto.StudentId)
+                        ?? throw new DomainException($"Student {dto.StudentId} not found.");
+
+                if (student.Status != StudentStatus.Active && student.Status != StudentStatus.ContractAboutToExpire)
+                {
+                        throw new DomainException(
+                                $"Student {dto.StudentId} is not eligible for assignment. " +
+                                $"Current status: {student.Status}. Only Active or ContractAboutToExpire students can be assigned.");
+                }
 
                 // Load OrderSchedule to get DayOfWeek, StartTime, EndTime
                 var orderSchedule = await _orderScheduleRepository.GetByIdAsync(dto.OrderScheduleId)

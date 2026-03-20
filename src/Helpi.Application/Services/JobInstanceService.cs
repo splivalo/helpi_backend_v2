@@ -61,6 +61,11 @@ ICustomerRepository customerRepo
                 return _mapper.Map<List<SessionDto>>(await _jobInstanceRepository.GetByAssignmentAsync(assignmentId));
         }
 
+        public async Task<List<SessionDto>> GetJobInstancesByOrderAsync(int orderId)
+        {
+                return _mapper.Map<List<SessionDto>>(await _jobInstanceRepository.GetByOrderIdAsync(orderId));
+        }
+
         public async Task<List<SessionDto>> GetJobInstancesByStudentAsync(int studentId)
         {
                 var jobInstances = await _jobInstanceRepository.GetJobInstancesByStudentAsync(studentId);

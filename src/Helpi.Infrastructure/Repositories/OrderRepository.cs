@@ -20,7 +20,8 @@ public class OrderRepository : IOrderRepository
                 var query = _context.Orders
                         .Include(o => o.Senior).ThenInclude(s => s.Contact)
                         .Include(o => o.OrderServices).ThenInclude(os => os.Service)
-                        .Include(o => o.Schedules)
+                        .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
+                        .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
                         .AsNoTracking();
 
                 if (status.HasValue)
@@ -34,7 +35,8 @@ public class OrderRepository : IOrderRepository
                 return await _context.Orders
                 .Include(o => o.Senior).ThenInclude(s => s.Contact)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
-                .Include(o => o.Schedules)
+                .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
+                .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -46,7 +48,8 @@ public class OrderRepository : IOrderRepository
                 var orders = await _context.Orders
                 .Where(o => o.SeniorId == seniorId)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
-                .Include(o => o.Schedules)
+                .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
+                .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -56,7 +59,7 @@ public class OrderRepository : IOrderRepository
             => await _context.Orders
                 .Where(o => o.Status == status)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
-                .Include(o => o.Schedules)
+                .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
                 .ToListAsync();
 
         public async Task<Order> AddNoSaveAsync(Order order)

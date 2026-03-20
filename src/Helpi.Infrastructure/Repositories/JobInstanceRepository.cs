@@ -37,6 +37,15 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
+        public async Task<IEnumerable<JobInstance>> GetByOrderIdAsync(int orderId)
+            => await _context.JobInstances
+                .Where(j => j.NeedsSubstitute == false)
+                .Where(j => j.OrderId == orderId)
+                .Include(j => j.Senior).ThenInclude(s => s.Contact)
+                .Include(j => j.ScheduleAssignment).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .OrderBy(j => j.ScheduledDate).ThenBy(j => j.StartTime)
+                .AsNoTracking()
+                .ToListAsync();
 
         public async Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId)
         {

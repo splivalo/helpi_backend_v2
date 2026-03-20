@@ -22,6 +22,7 @@ namespace Helpi.Application.Services
         private readonly INotificationService _notificationService;
         private readonly INotificationFactory _notificationFactory;
         private readonly IStudentRepository _studentRepository;
+        private readonly IUserRepository _userRepository;
 
         public ReassignmentService(
             IReassignmentRecordRepository reassignmentRecordRepository,
@@ -34,7 +35,8 @@ namespace Helpi.Application.Services
             ILogger<ReassignmentService> logger,
             INotificationService notificationService,
 INotificationFactory notificationFactory,
-            IStudentRepository studentRepository
+            IStudentRepository studentRepository,
+            IUserRepository userRepository
             )
         {
             _reassignmentRecordRepository = reassignmentRecordRepository;
@@ -48,6 +50,7 @@ INotificationFactory notificationFactory,
             _notificationService = notificationService;
             _notificationFactory = notificationFactory;
             _studentRepository = studentRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<ReassignmentRecord> InitiateReassignment(
@@ -195,10 +198,8 @@ INotificationFactory notificationFactory,
                 await HandleOneDaySubstitution(reassignmentRecord);
             }
 
-            // Notify admin about the reassignment
-            await NotifyAdminAboutReassignmentStart(reassignmentRecord, order.SeniorId);
-
-            await NotifyStudentAboutReassignment(reassignmentRecord, order.SeniorId);
+            // v2: No auto-reassignment notifications — admin manually assigns replacement
+            // Legacy v1 notifications removed: NotifyAdminAboutReassignmentStart, NotifyStudentAboutReassignment
 
             return reassignmentRecord;
         }
@@ -267,11 +268,12 @@ INotificationFactory notificationFactory,
 
             foreach (var assignment in activeAssignments)
             {
+                var systemAdminId = await GetAdminId();
                 await InitiateReassignment(
                     ReassignmentType.CompleteTakeover,
                     ReassignmentTrigger.ContractExpiration,
                     "Student contract expired",
-                    1, // Admin || System user
+                    systemAdminId,
                     null,
                     assignment.Id);
             }
@@ -332,12 +334,17 @@ INotificationFactory notificationFactory,
 
             await MarkJobInstancesForCompleteTakeover(assignment.Id);
 
+            // Revert order status to Pending since it no longer has a full assignment
+            var order = await _orderRepository.GetByIdAsync(assignment.OrderId);
+            if (order != null && order.Status == OrderStatus.FullAssigned)
+            {
+                order.Status = OrderStatus.Pending;
+                order.UpdatedAt = DateTime.UtcNow;
+                await _orderRepository.UpdateAsync(order);
+                _logger.LogInformation("📋 Order {OrderId} status changed from FullAssigned to Pending (student assignment terminated)", order.Id);
+            }
 
-            //
-            await _matchingService.StartMatching(assignment.OrderId);
-            // await _completionStatusService.ProcessCompletionStatuses();
-            // 
-            //  TODO: goal is to reflect order not fully assigned
+            // v2: No auto-matching — admin manually assigns replacement
         }
 
         private async Task MarkJobInstancesForCompleteTakeover(int assignmentId)
@@ -384,8 +391,7 @@ INotificationFactory notificationFactory,
             await _reassignmentRecordRepository.UpdateAsync(reassignmentRecord);
 
 
-            // Use the matching service to find a replacement
-            await _jobInstanceMatchingService.StartJobInstanceMatchingAsync(jobInstance.Id, reassignmentRecord.Id);
+            // v2: No auto-matching for substitutions — admin manually assigns replacement
 
         }
 
@@ -586,7 +592,12 @@ INotificationFactory notificationFactory,
         }
 
 
-        private Task<int> GetAdminId() => Task.FromResult(1);
+        private async Task<int> GetAdminId()
+        {
+            var users = await _userRepository.GetAllAsync();
+            var admin = users.FirstOrDefault(u => u.UserType == UserType.Admin);
+            return admin?.Id ?? 1;
+        }
 
 
         #endregion

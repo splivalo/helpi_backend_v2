@@ -71,7 +71,11 @@ public class StudentsService
         public async Task<StudentDto> GetStudentByIdAsync(int id)
         {
                 var student = await _repository.GetByIdAsync(id);
-                return _mapper.Map<StudentDto>(student);
+                var dto = _mapper.Map<StudentDto>(student);
+                var user = await _userRepository.GetByIdAsync(id);
+                dto.IsSuspended = user.IsSuspended;
+                dto.SuspensionReason = user.SuspensionReason;
+                return dto;
         }
 
 

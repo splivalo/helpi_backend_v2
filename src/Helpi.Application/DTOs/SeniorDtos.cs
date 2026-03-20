@@ -18,6 +18,10 @@ public class SeniorDto
 
     public DateTime? DeletedAt { get; set; }
 
+    // From User table (via Customer)
+    public bool IsSuspended { get; set; }
+    public string? SuspensionReason { get; set; }
+
     // Review aggregation
     public int TotalReviews { get; set; }
     public int TotalRatingSum { get; set; }

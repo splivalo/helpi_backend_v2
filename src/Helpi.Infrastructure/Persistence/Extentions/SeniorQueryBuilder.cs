@@ -8,9 +8,11 @@ namespace Helpi.Infrastructure.Persistence.Extentions;
 public class SeniorQueryBuilder
 {
     private IQueryable<Senior> _query;
+    private readonly AppDbContext _context;
 
     public SeniorQueryBuilder(AppDbContext context)
     {
+        _context = context;
         _query = context.Seniors.Where(s => s.DeletedAt == null)
             .Include(s => s.Contact)
             .Include(s => s.Customer)
@@ -70,6 +72,17 @@ public class SeniorQueryBuilder
         {
             Id = s.Id,
             CustomerId = s.CustomerId,
+
+            // From User table (Customer.UserId == Senior.CustomerId)
+            IsSuspended = _context.Users
+                .Where(u => u.Id == s.CustomerId)
+                .Select(u => u.IsSuspended)
+                .FirstOrDefault(),
+            SuspensionReason = _context.Users
+                .Where(u => u.Id == s.CustomerId)
+                .Select(u => u.SuspensionReason)
+                .FirstOrDefault(),
+
             Contact = new ContactInfoDto
             {
                 Id = s.Contact.Id,

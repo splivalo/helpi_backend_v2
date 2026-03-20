@@ -24,6 +24,11 @@ public class SessionsController : ControllerBase
                 return
                  Ok(await _jobInstanceService.GetJobInstancesByAssignmentAsync(assignmentId));
         }
+        [HttpGet("order/{orderId}")]
+        public async Task<ActionResult<List<SessionDto>>> GetByOrder(int orderId)
+        {
+                return Ok(await _jobInstanceService.GetJobInstancesByOrderAsync(orderId));
+        }
         [HttpGet("student/{studentId}")]
         public async Task<ActionResult<List<SessionDto>>> GetJobInstancesByStudent(int studentId)
         {
