@@ -13,6 +13,8 @@ public class OrderDto
     public string? SeniorEmail { get; set; }
     public string? SeniorPhone { get; set; }
     public string? SeniorAddress { get; set; }
+    public decimal? SeniorLatitude { get; set; }
+    public decimal? SeniorLongitude { get; set; }
 
     public string? Notes { get; set; }
     public bool IsRecurring { get; set; }

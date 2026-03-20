@@ -112,6 +112,8 @@ public class MappingProfile : Profile
              .ForMember(dest => dest.SeniorEmail, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.Email : null))
              .ForMember(dest => dest.SeniorPhone, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.Phone : null))
              .ForMember(dest => dest.SeniorAddress, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? src.Senior.Contact.FullAddress : null))
+             .ForMember(dest => dest.SeniorLatitude, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? (decimal?)src.Senior.Contact.Latitude : null))
+             .ForMember(dest => dest.SeniorLongitude, opt => opt.MapFrom(src => src.Senior != null && src.Senior.Contact != null ? (decimal?)src.Senior.Contact.Longitude : null))
              .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.OrderServices.Select(os => os.Service)))
              .ForMember(dest => dest.Schedules, opt => opt.MapFrom(src => src.Schedules))
              .ForMember(dest => dest.AssignedStudentName, opt => opt.MapFrom(src =>
