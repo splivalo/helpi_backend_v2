@@ -2,6 +2,7 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
+using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
@@ -20,6 +21,9 @@ public class ScheduleAssignmentService
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ScheduleAssignmentService> _logger;
         private readonly OrderStatusMaintenanceService _statusMaintenanceService;
+        private readonly IHangfireRecurringJobService _recurringJobService;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
+        private readonly IJobInstanceRepository _jobInstanceRepository;
 
         public ScheduleAssignmentService(
                 IScheduleAssignmentRepository repository,
@@ -29,7 +33,10 @@ public class ScheduleAssignmentService
                 IReassignmentService reassignmentService,
                 IUnitOfWork unitOfWork,
                 ILogger<ScheduleAssignmentService> logger,
-                OrderStatusMaintenanceService statusMaintenanceService)
+                OrderStatusMaintenanceService statusMaintenanceService,
+                IHangfireRecurringJobService recurringJobService,
+                IPricingConfigurationRepository pricingConfigRepo,
+                IJobInstanceRepository jobInstanceRepository)
         {
                 _repository = repository;
                 _orderScheduleRepository = orderScheduleRepository;
@@ -39,6 +46,9 @@ public class ScheduleAssignmentService
                 _unitOfWork = unitOfWork;
                 _logger = logger;
                 _statusMaintenanceService = statusMaintenanceService;
+                _recurringJobService = recurringJobService;
+                _pricingConfigRepo = pricingConfigRepo;
+                _jobInstanceRepository = jobInstanceRepository;
         }
 
         /// <summary>
@@ -125,10 +135,40 @@ public class ScheduleAssignmentService
                 _logger.LogInformation("Created assignment {AssignmentId}: Student {StudentId} → Schedule {ScheduleId}",
                         assignment.Id, dto.StudentId, dto.OrderScheduleId);
 
+                // Generate JobInstances immediately so sessions appear in UI
+                await GenerateJobInstancesForAssignmentAsync(assignment, orderSchedule);
+
                 // Update order status (Pending → FullAssigned if all schedules now have assignments)
                 await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
+        }
+
+        /// <summary>
+        /// Generates the initial batch of JobInstances for a newly created assignment.
+        /// Same logic as Hangfire's GenerateInstancesForAssignment but triggered immediately.
+        /// </summary>
+        private async Task GenerateJobInstancesForAssignmentAsync(ScheduleAssignment assignment, OrderSchedule orderSchedule)
+        {
+                var pricingConfig = await _pricingConfigRepo.GetByIdAsync(1);
+                if (pricingConfig == null)
+                {
+                        _logger.LogWarning("⚠️ No pricing configuration found — skipping job instance generation");
+                        return;
+                }
+
+                // Build navigation properties needed by GenerateInstancesForAssignment
+                assignment.OrderSchedule = orderSchedule;
+                assignment.JobInstances = new List<JobInstance>();
+
+                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
+
+                if (jobInstances.Any())
+                {
+                        await _jobInstanceRepository.AddRangeAsync(jobInstances);
+                        _logger.LogInformation("✅ Generated {Count} job instances for assignment {AssignmentId}",
+                                jobInstances.Count, assignment.Id);
+                }
         }
 
         public async Task<List<ScheduleAssignmentDto>> GetAssignmentsByStudentAsync(int studentId)

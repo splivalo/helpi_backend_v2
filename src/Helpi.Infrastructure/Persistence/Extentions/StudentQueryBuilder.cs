@@ -244,6 +244,8 @@ public class StudentQueryBuilder
                 Country = s.Contact.Country,
                 PostalCode = s.Contact.PostalCode,
                 CreatedAt = s.Contact.CreatedAt,
+                Latitude = s.Contact.Latitude,
+                Longitude = s.Contact.Longitude,
             },
 
             Faculty = new FacultyDto

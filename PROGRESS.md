@@ -1,6 +1,8 @@
 # Helpi Backend v2 — Progress
 
-## Overall Status: 100% backend gaps resolved
+> Zadnja izmjena: 2026-03-21
+
+## Overall Status: 100% backend gaps resolved + ongoing improvements
 
 ---
 
@@ -42,7 +44,7 @@
 
 ---
 
-## Faza 3 — Extended Features 🔄
+## Faza 3 — Extended Features ✅
 
 ### Task 7: Bidirectional Reviews ✅
 
@@ -93,10 +95,35 @@
 - **Migration:** `20260313140442_AddPromoCodeSystem` — 2 new tables + FK on Orders
 - **Files created:** 7 new files | **Files modified:** 5 existing files
 
-### Task 8: Dashboard Per-Role ❌ Not Started
+---
 
-- Estimated: 4-5h
-- Currently same data for all roles
+## Faza 4 — Admin Assign & Distance Improvements ✅
+
+### Task 10: OrderDto Senior Lat/Lng ✅ (2026-03-18)
+
+- Added `SeniorLatitude`/`SeniorLongitude` to `OrderDto`
+- AutoMapper `ForMember` mappings from `Order.Senior.Contact.Latitude/Longitude`
+- Enables Haversine distance calculation in admin app
+- **Commit:** `80d418e`
+
+### Task 11: StudentQueryBuilder Lat/Lng Fix ✅ (2026-03-19)
+
+- `StudentQueryBuilder.ExecuteWithDetailsAsync()` was missing `Latitude`/`Longitude` in `ContactInfoDto` projection
+- Fixed: added `Latitude = s.Contact.Latitude, Longitude = s.Contact.Longitude`
+- Resolved 5331 km distance bug (was showing ~5331 km because lat/lng were 0)
+
+### Task 12: AdminDirectAssign — Instant JobInstance Generation ✅ (2026-03-20)
+
+- `AdminDirectAssignAsync()` now generates `JobInstance` records immediately on assignment
+- Added 3 new dependencies: `IHangfireRecurringJobService`, `IPricingConfigurationRepository`, `IJobInstanceRepository`
+- New private method `GenerateJobInstancesForAssignmentAsync()` — loads pricing config, builds navigation props, calls `GenerateInstancesForAssignment`, saves via `AddRangeAsync`
+- `OrderScheduleRepository.GetByIdAsync()` — added `.ThenInclude(o => o.Senior)` (needed for `order.Senior.CustomerId`)
+- **Tested:** Order 9 → assigned student → 21 sessions generated immediately, status Pending → FullAssigned
+
+### Task 13: StudentDashboard DurationHours Bug Fix ✅ (2026-03-18)
+
+- `DashboardService.GetStudentDashboard()` was referencing `DurationHours` which doesn't exist on `JobInstance`
+- Fixed to calculate from `EndTime - StartTime`
 
 ### Task 9: Session Terminology ❌ Not Started
 
