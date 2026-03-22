@@ -1,8 +1,8 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-03-21
+> Zadnja izmjena: 2026-03-22
 
-## Overall Status: 100% backend gaps resolved + ongoing improvements
+## Overall Status: 100% backend gaps resolved + suspension + holidays
 
 ---
 
@@ -125,10 +125,29 @@
 - `DashboardService.GetStudentDashboard()` was referencing `DurationHours` which doesn't exist on `JobInstance`
 - Fixed to calculate from `EndTime - StartTime`
 
-### Task 9: Session Terminology ❌ Not Started
+---
 
-- Estimated: 30 min
-- Alias JobInstance as "Session" in DTOs
+## Faza 5 — Suspension & Holidays ✅ (2026-03-22)
+
+### Task 14: Suspension Check Middleware ✅
+
+- `SuspensionCheckMiddleware.cs` — vraća 403 JSON za suspendirane korisnike
+- Preskače: `/api/auth/*`, `/api/suspensions/*`, Admin role
+- Registriran u `Program.cs` između Authentication i Authorization
+- **Commit:** `a652bff`
+
+### Task 15: Suspension Check in CreateOrder ✅
+
+- `OrdersService.CreateOrderAsync()` — provjera na vrhu: `Senior→Customer→User→IsSuspended`
+- Throw-a `ForbiddenException` ako je korisnik suspendiran
+- **Commit:** `a652bff`
+
+### Task 16: Croatian Holidays (Blagdani) ✅
+
+- `CroatianHolidays.cs` — 13 fiksnih praznika + Computus algoritam za Uskrsni ponedjeljak i Tijelovo
+- `HangfireRecurringJobService` koristi `isOvertimeDay = Sunday || CroatianHolidays.IsPublicHoliday(date)`
+- Label promijenjen: "Nedjeljna satnica" → "Povećana satnica"
+- **Commit:** `a652bff`
 
 ---
 
@@ -143,8 +162,17 @@
 ## Next Steps
 
 - All 9 backend gap analysis items COMPLETE
+- Suspension middleware + Croatian holidays COMPLETE
 - Ready for frontend-backend integration
-- Awaiting user direction for next phase
+- **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
+
+### Preostalo (iz ROADMAP.md):
+
+1. **Backend integracija** — Admin app Mock → REST API (GLAVNI zadatak)
+2. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
+3. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
+4. **Push notifikacije** — Firebase FCM za sve uloge
+5. **Per-user preferencije** — SharedPreferences s userId u admin appu
 
 ---
 
