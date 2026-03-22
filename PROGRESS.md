@@ -169,10 +169,11 @@
 ### Preostalo (iz ROADMAP.md):
 
 1. **Backend integracija** — Admin app Mock → REST API (GLAVNI zadatak)
-2. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
-3. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
-4. **Push notifikacije** — Firebase FCM za sve uloge
-5. **Per-user preferencije** — SharedPreferences s userId u admin appu
+2. **Chat/Poruke sustav** — NIŠTA ne postoji u backendu! Nema ChatRoom/ChatMessage entiteta, nema ChatController, nema ChatHub. Frontend (admin + app) ima mock UI. Detalji u `helpi_admin/docs/ROADMAP.md`
+3. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
+4. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
+5. **Push notifikacije** — Firebase FCM za sve uloge
+6. **Per-user preferencije** — SharedPreferences s userId u admin appu
 
 ---
 
