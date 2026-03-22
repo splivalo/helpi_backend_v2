@@ -171,6 +171,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // app.UseHttpsRedirection(); // Disabled on server—enable when HTTPS is ready
 
 app.UseAuthentication();
+app.UseMiddleware<SuspensionCheckMiddleware>();
 app.UseAuthorization();
 
 // Hangfire dashboard (background jobs)

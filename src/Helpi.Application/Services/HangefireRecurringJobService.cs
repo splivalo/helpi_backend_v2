@@ -148,8 +148,9 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
             foreach (var date in newDates)
             {
-                var isSunday = date.DayOfWeek == DayOfWeek.Sunday;
-                var hourlyRate = isSunday
+                var isOvertimeDay = date.DayOfWeek == DayOfWeek.Sunday
+                    || CroatianHolidays.IsPublicHoliday(date);
+                var hourlyRate = isOvertimeDay
                     ? pricingConfiguration.SundayHourlyRate
                     : pricingConfiguration.JobHourlyRate;
 
@@ -170,8 +171,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     Status = JobInstanceStatus.Upcoming
                 });
 
-                _logger.LogDebug("✅ Added job instance for {Date} (Assignment {AssignmentId}, Sunday={IsSunday}, Rate={Rate})",
-                    date, assignment.Id, isSunday, hourlyRate);
+                _logger.LogDebug("✅ Added job instance for {Date} (Assignment {AssignmentId}, Overtime={IsOvertime}, Rate={Rate})",
+                    date, assignment.Id, isOvertimeDay, hourlyRate);
             }
 
             return jobInstances;

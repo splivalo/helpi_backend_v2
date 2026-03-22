@@ -35,6 +35,9 @@ public class OrdersService
         private readonly INotificationFactory _notificationFactory;
 
         private readonly INotificationService _notificationService;
+        private readonly ISeniorRepository _seniorRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly IUserRepository _userRepository;
 
         public OrdersService(
             IOrderRepository orderRepository,
@@ -50,7 +53,10 @@ public class OrdersService
             OrderCancellationHandler orderCancellationHandler,
             ScheduleCancellationHandler scheduleCancellationHandler,
             INotificationFactory notificationFactory,
-            INotificationService notificationService
+            INotificationService notificationService,
+            ISeniorRepository seniorRepository,
+            ICustomerRepository customerRepository,
+            IUserRepository userRepository
         )
         {
                 _orderRepository = orderRepository;
@@ -67,6 +73,9 @@ public class OrdersService
                 _scheduleCancellationHandler = scheduleCancellationHandler;
                 _notificationFactory = notificationFactory;
                 _notificationService = notificationService;
+                _seniorRepository = seniorRepository;
+                _customerRepository = customerRepository;
+                _userRepository = userRepository;
         }
 
 
@@ -114,6 +123,19 @@ public class OrdersService
 
         public async Task<OrderDto> CreateOrderAsync(OrderCreateDto orderCreateDto)
         {
+                // Suspension check: prevent suspended users from creating orders
+                var senior = await _seniorRepository.GetByIdAsync(orderCreateDto.SeniorId);
+                if (senior == null)
+                        throw new DomainException("❌ Senior not found.");
+
+                var customer = await _customerRepository.GetByIdAsync(senior.CustomerId);
+                if (customer == null)
+                        throw new DomainException("❌ Customer not found.");
+
+                var user = await _userRepository.GetByIdAsync(customer.UserId);
+                if (user.IsSuspended)
+                        throw new DomainException("❌ Cannot create order — user account is suspended.");
+
                 try
                 {
                         orderCreateDto.StartDate = AdjustStartDateToNearestWeekday(
