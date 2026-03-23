@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-03-22
+> Zadnja izmjena: 2026-03-23
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications
 
 ---
 
@@ -167,6 +167,29 @@
 
 ---
 
+## Faza 6 — Admin Notifications ✅ (2026-03-23)
+
+### Task 17: Admin Notification Creation for 7 Business Events ✅
+
+- **Problem:** Backend had full notification infrastructure (HNotification entity, 31 NotificationTypes, HNotificationsController, SignalR NotificationHub, INotificationService) but NO business logic ever called `CreateAsync()` — notification table was always EMPTY
+- **New infrastructure:**
+  - `IUserRepository.GetAdminIdsAsync()` — efficient SQL query `WHERE UserType == Admin SELECT Id`
+  - `INotificationService.StoreAndNotifyAdminsAsync(adminIds, builder)` — loops admin IDs, creates per-admin notification via factory, stores to DB + sends via SignalR
+- **7 notification types wired:**
+  1. `newStudentAdded` — AuthService (student registration)
+  2. `newSeniorAdded` — AuthService (senior registration)
+  3. `orderCancelled` — OrdersService (order cancel)
+  4. `jobCancelled` — JobInstanceService (session cancel)
+  5. `contractExpired` — StudentStatusService (contract expiry)
+  6. `paymentSuccess` — PaymentService (successful charge)
+  7. `paymentFailed` — PaymentService (failed charge)
+- **Hardcoded adminId=1 replaced** — All 6 occurrences of `adminId = 1` replaced with `GetAdminIdsAsync()` for multi-admin support
+- **Files modified:** 9 (2 interfaces, 5 services, 1 repository, 1 notification service)
+- **Build:** 0 errors, 74 warnings (identical to baseline)
+- **Commit:** `69aec15`
+
+---
+
 ## Migrations Applied
 
 1. `20260313130245_AddSundayHourlyRate` — SundayHourlyRate column + pricing history columns
@@ -179,6 +202,7 @@
 
 - All 9 backend gap analysis items COMPLETE
 - Suspension middleware + Croatian holidays COMPLETE
+- Admin notifications (7 types) — COMPLETE, SignalR delivery works
 - Ready for frontend-backend integration
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
