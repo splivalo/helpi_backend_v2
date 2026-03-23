@@ -26,6 +26,7 @@ public class PaymentService : IPaymentService
     private readonly IHEmailRepository _hEmailRepository;
 
     private readonly ILocalizationService _loc;
+    private readonly IUserRepository _userRepository;
 
     public PaymentService(
         IPaymentTransactionRepository transactionRepository,
@@ -40,7 +41,8 @@ INotificationFactory notificationFactory,
  IMailgunService mailgunService,
 
 IHEmailRepository hEmailRepository,
-ILocalizationService loc
+ILocalizationService loc,
+IUserRepository userRepository
         )
     {
         _transactionRepository = transactionRepository;
@@ -55,6 +57,7 @@ ILocalizationService loc
         _mailgunService = mailgunService;
         _hEmailRepository = hEmailRepository;
         _loc = loc;
+        _userRepository = userRepository;
     }
 
 
@@ -209,17 +212,16 @@ ILocalizationService loc
     {
         try
         {
-            var adminId = 1;
-            // notify admin
-            var notification = _notificationFactory.CreatePaymentFailedNotification(
-                adminId,
-                jobInstance.SeniorId,
-                jobInstance.OrderId,
-                jobInstance.Id,
-                culture: "en"
-                );
-
-            await _notificationService.StoreAndNotifyAsync(notification);
+            var adminIds = await _userRepository.GetAdminIdsAsync();
+            // notify admins
+            await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                adminId => _notificationFactory.CreatePaymentFailedNotification(
+                    adminId,
+                    jobInstance.SeniorId,
+                    jobInstance.OrderId,
+                    jobInstance.Id,
+                    culture: "hr"
+                    ));
 
             var customer = await _customerRepo.GetByIdAsync(jobInstance.CustomerId);
             var customerCulture = customer.Contact.LanguageCode ?? "en";
@@ -353,6 +355,17 @@ ILocalizationService loc
              );
 
         await _notificationService.SendNotificationAsync(jobInstance.CustomerId, customerNotification);
+
+        // Notify admins about payment success
+        var adminIds = await _userRepository.GetAdminIdsAsync();
+        await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+            adminId => _notificationFactory.CreatePaymentSuccessNotification(
+                adminId,
+                jobInstance.SeniorId,
+                jobInstance.OrderId,
+                jobInstance.Id,
+                culture: "hr"
+            ));
     }
 
 }

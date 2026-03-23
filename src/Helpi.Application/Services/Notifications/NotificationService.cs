@@ -149,4 +149,20 @@ public class NotificationService : INotificationService
         }
     }
 
+    public async Task StoreAndNotifyAdminsAsync(List<int> adminIds, Func<int, HNotification> notificationBuilder)
+    {
+        foreach (var adminId in adminIds)
+        {
+            try
+            {
+                var notification = notificationBuilder(adminId);
+                await StoreAndNotifyAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to notify admin {AdminId}", adminId);
+            }
+        }
+    }
+
 }

@@ -4,6 +4,7 @@ using System;
 using System.Linq.Expressions;
 using Helpi.Application.Interfaces;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Enums;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,6 +63,14 @@ public class UserRepository : IUserRepository
                 await _context.SaveChangesAsync();
 
                 return originalUserName;
+        }
+
+        public async Task<List<int>> GetAdminIdsAsync()
+        {
+                return await _context.Users
+                        .Where(u => u.UserType == UserType.Admin)
+                        .Select(u => u.Id)
+                        .ToListAsync();
         }
 
 }

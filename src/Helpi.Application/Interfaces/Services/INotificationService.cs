@@ -17,4 +17,6 @@ public interface INotificationService
 
     Task<bool> StoreAndNotifyAsync(HNotification notification, bool viaSignalR = true, bool viaFcm = false);
 
+    Task StoreAndNotifyAdminsAsync(List<int> adminIds, Func<int, HNotification> notificationBuilder);
+
 }

@@ -21,4 +21,6 @@ public interface IUserRepository
     /// <returns>The original username/display name before anonymization</returns>
     Task<string> AnonymizeAndLogoutUserAsync(int userId);
 
+    Task<List<int>> GetAdminIdsAsync();
+
 }

@@ -28,6 +28,7 @@ public class StudentStatusService
 
     private readonly IMailgunService _mailgunService;
     private readonly ILocalizationService _loc;
+    private readonly IUserRepository _userRepository;
 
     public StudentStatusService(
         IStudentRepository studentRepo,
@@ -39,7 +40,8 @@ IEventMediator mediator,
         ILogger<OrderStatusMaintenanceService> logger,
               IContractEvaluationService contractEvaluator,
               IMailgunService mailgunService,
-ILocalizationService loc
+ILocalizationService loc,
+IUserRepository userRepository
     )
     {
         _studentRepo = studentRepo;
@@ -52,6 +54,7 @@ ILocalizationService loc
         _contractEvaluator = contractEvaluator;
         _mailgunService = mailgunService;
         _loc = loc;
+        _userRepository = userRepository;
     }
 
     public async Task ProcessStudentContracts()
@@ -207,7 +210,10 @@ ILocalizationService loc
                 // consider this moment the immediate expiration notice
                 var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
                 if (last != null)
+                {
                     await SendContractExpiredNotification(student, last);
+                    await NotifyAdminsContractExpired(student, last);
+                }
             }
             return;
         }
@@ -324,6 +330,22 @@ ILocalizationService loc
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Failed to send contract expired notification to student {StudentId}", student.UserId);
+        }
+    }
+
+    private async Task NotifyAdminsContractExpired(Student student, StudentContract? contract)
+    {
+        if (contract == null) return;
+        try
+        {
+            var adminIds = await _userRepository.GetAdminIdsAsync();
+            await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                adminId => _notificationFactory.StudentContractExpired(adminId, contract.Id,
+                    culture: "hr"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to notify admins about contract expiry for student {StudentId}", student.UserId);
         }
     }
 

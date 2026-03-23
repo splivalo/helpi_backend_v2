@@ -26,6 +26,7 @@ public class JobInstanceService : IJobInstanceService
 
         private readonly IHangfireService _hangfireService;
         private readonly ILogger<JobInstanceService> _logger;
+        private readonly IUserRepository _userRepository;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
@@ -38,7 +39,8 @@ INotificationFactory notificationFactory,
                   IScheduleAssignmentRepository assignmentRepository,
                    ILogger<JobInstanceService> logger,
 
-ICustomerRepository customerRepo
+ICustomerRepository customerRepo,
+IUserRepository userRepository
                 )
         {
                 _jobInstanceRepository = repository;
@@ -52,6 +54,7 @@ ICustomerRepository customerRepo
                 _assignmentRepository = assignmentRepository;
                 _logger = logger;
                 _customerRepo = customerRepo;
+                _userRepository = userRepository;
         }
 
 
@@ -485,6 +488,7 @@ ICustomerRepository customerRepo
                         await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
 
                         await NotifyUsersJobInstanceCancelled(job);
+                        await NotifyAdminsJobInstanceCancelled(job);
 
                         return _mapper.Map<SessionDto>(job);
                 }
@@ -577,6 +581,20 @@ ICustomerRepository customerRepo
                 }
 
 
+        }
+
+        private async Task NotifyAdminsJobInstanceCancelled(JobInstance jobInstance)
+        {
+                try
+                {
+                        var adminIds = await _userRepository.GetAdminIdsAsync();
+                        await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                                adminId => _notificationFactory.JobCancelledNotification(adminId, jobInstance, "hr"));
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to notify admins about job cancellation. JobInstanceId={JobInstanceId}", jobInstance.Id);
+                }
         }
 
 

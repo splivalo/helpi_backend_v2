@@ -38,6 +38,7 @@ public class AuthService
     private readonly IGooglePlaceService _googlePlaceService;
     private readonly INotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
+    private readonly IUserRepository _userRepository;
 
     private readonly ILocalizationService _loc;
 
@@ -59,6 +60,7 @@ public class AuthService
    IGooglePlaceService googlePlaceService,
    INotificationService notificationService,
 INotificationFactory notificationFactory,
+IUserRepository userRepository,
 IPasswordResetRepository passwordResetRepository,
 
 IMailgunService mailgunService,
@@ -75,6 +77,7 @@ ILocalizationService loc
         _googlePlaceService = googlePlaceService;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
+        _userRepository = userRepository;
         _passwordResetRepository = passwordResetRepository;
         _mailgunService = mailgunService;
 
@@ -277,8 +280,9 @@ ILocalizationService loc
 
             await _authRepository.RegisterCustomer(customer, customerContactInfo, senior, seniorContactInfo);
 
-            var notification = _notificationFactory.CreateNewSeniorNotification(1, senior.Id);
-            await _notificationService.StoreAndNotifyAsync(notification);
+            var adminIds = await _userRepository.GetAdminIdsAsync();
+            await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                adminId => _notificationFactory.CreateNewSeniorNotification(adminId, senior.Id));
 
             return (true, "Customer /Senior registered successfully");
         }
@@ -329,8 +333,9 @@ ILocalizationService loc
 
             await _authRepository.RegisterStudent(student, contactInfo);
 
-            var notification = _notificationFactory.CreateNewStudentNotification(1, student.UserId);
-            await _notificationService.StoreAndNotifyAsync(notification);
+            var adminIds = await _userRepository.GetAdminIdsAsync();
+            await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                adminId => _notificationFactory.CreateNewStudentNotification(adminId, student.UserId));
 
             return (true, "Student registered successfully");
 

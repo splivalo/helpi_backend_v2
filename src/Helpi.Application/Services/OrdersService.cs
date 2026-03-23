@@ -328,6 +328,7 @@ public class OrdersService
 
                         await NotifySeniorAboutOrderCancel(order);
                         await NotifyStudentsAboutOrderCancel(order, toBeCancelledScheduleIds);
+                        await NotifyAdminsAboutOrderCancel(order);
 
                         return true;
                 }
@@ -492,6 +493,20 @@ public class OrdersService
                                     "❌  Failed to send cancellation notification. AssignmentId={AssignmentId}",
                                     assignment.Id);
                         }
+                }
+        }
+
+        private async Task NotifyAdminsAboutOrderCancel(Order order)
+        {
+                try
+                {
+                        var adminIds = await _userRepository.GetAdminIdsAsync();
+                        await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                                adminId => _notificationFactory.AdminOrderCancelledNotification(adminId, order));
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to send order cancel notification to admins. OrderId={OrderId}", order.Id);
                 }
         }
 
