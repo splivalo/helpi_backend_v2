@@ -211,6 +211,7 @@ namespace Helpi.Domain.Enums
         SeniorDeleted,
         CustomerDeleted,
         AdminDeleted,
+        NewOrderAdded,
 
     }
 

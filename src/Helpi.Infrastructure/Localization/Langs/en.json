@@ -95,6 +95,10 @@
         "UserDeleted": {
             "Title": "User Deleted",
             "Body": "{0} (ID: {1}) has been permanently deleted"
+        },
+        "NewOrder": {
+            "Title": "New Order Created",
+            "Body": "A new order has been created"
         }
     },
     "Emails": {

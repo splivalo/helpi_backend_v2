@@ -179,6 +179,9 @@ public class OrdersService
                         // === 6. Post-Creation:  ===
                         await _matchingService.StartMatching(order.Id);
 
+                        // === 7. Notify admins about new order ===
+                        await NotifyAdminsAboutNewOrder(savedOrder);
+
                         return _mapper.Map<OrderDto>(savedOrder);
                 }
                 catch (Exception ex)
@@ -507,6 +510,20 @@ public class OrdersService
                 catch (Exception ex)
                 {
                         _logger.LogError(ex, "❌ Failed to send order cancel notification to admins. OrderId={OrderId}", order.Id);
+                }
+        }
+
+        private async Task NotifyAdminsAboutNewOrder(Order order)
+        {
+                try
+                {
+                        var adminIds = await _userRepository.GetAdminIdsAsync();
+                        await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                                adminId => _notificationFactory.AdminNewOrderNotification(adminId, order));
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to send new order notification to admins. OrderId={OrderId}", order.Id);
                 }
         }
 

@@ -462,4 +462,19 @@ public class NotificationFactory : INotificationFactory
         return notification;
     }
 
+    public HNotification AdminNewOrderNotification(int adminId, Order order)
+    {
+        return new HNotification
+        {
+            RecieverUserId = adminId,
+            TranslationKey = "Notifications.NewOrder",
+            Title = _loc.GetString("Notifications.NewOrder.Title"),
+            Body = _loc.GetString("Notifications.NewOrder.Body"),
+            Type = NotificationType.NewOrderAdded,
+            SeniorId = order.SeniorId,
+            OrderId = order.Id,
+            Payload = JsonSerializer.Serialize(new { orderId = order.Id, seniorId = order.SeniorId })
+        };
+    }
+
 }

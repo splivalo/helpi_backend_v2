@@ -95,6 +95,10 @@
         "UserDeleted": {
             "Title": "Korisnik izbrisan",
             "Body": "{0} (ID: {1}) je trajno izbrisan"
+        },
+        "NewOrder": {
+            "Title": "Nova narudžba kreirana",
+            "Body": "Kreirana je nova narudžba"
         }
     },
     "Emails": {

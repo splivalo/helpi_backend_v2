@@ -56,5 +56,6 @@ namespace Helpi.Application.Common.Interfaces
       string culture);
 
         HNotification UserDeletedNotification(int receiverUserId, int deletedUserId, string deletedUserName, NotificationType type);
+        HNotification AdminNewOrderNotification(int adminId, Order order);
     }
 }
