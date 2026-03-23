@@ -180,6 +180,7 @@ app.UseHangfireDashboard();
 // ------------------------------------------------------------
 // 5️⃣  ENDPOINTS
 // ------------------------------------------------------------
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 
