@@ -320,7 +320,7 @@
 
 ## Faza 7 Task Summary
 
-| # | Task | Status | Date |
-|---|------|--------|------|
-| 18 | Auto-generate JobInstances on contract upload | ✅ | 2026-03-23 |
-| 19 | Smooth transition protection (contract renewal) | ✅ | 2026-03-23 |
+| #   | Task                                            | Status | Date       |
+| --- | ----------------------------------------------- | ------ | ---------- |
+| 18  | Auto-generate JobInstances on contract upload   | ✅     | 2026-03-23 |
+| 19  | Smooth transition protection (contract renewal) | ✅     | 2026-03-23 |
