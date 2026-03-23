@@ -26,6 +26,12 @@ public class ReviewService
                 _mapper = mapper;
         }
 
+        public async Task<List<ReviewDto>> GetAllAsync()
+        {
+                var reviews = await _repository.GetAllAsync();
+                return _mapper.Map<List<ReviewDto>>(reviews.ToList());
+        }
+
         public async Task<List<ReviewDto>> GetPendingSeniorReviews(int seniorId)
         {
                 var pendingReviews = await _repository.GetPendingSeniorReviews(seniorId);

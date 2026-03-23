@@ -10,6 +10,7 @@ public interface IScheduleAssignmentRepository
     Task<ScheduleAssignment?> LoadAssignmentWithIncludes(int assignmentId, AssignmentIncludeOptions options);
     Task<IEnumerable<ScheduleAssignment>> GetByStudentAsync(int studentId);
     Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationAsync();
+    Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationForStudentAsync(int studentId);
     Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment);
     Task UpdateAsync(ScheduleAssignment assignment);
     Task DeleteAsync(ScheduleAssignment assignment);

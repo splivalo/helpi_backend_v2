@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger
 
 ---
 
@@ -203,6 +203,8 @@
 - All 9 backend gap analysis items COMPLETE
 - Suspension middleware + Croatian holidays COMPLETE
 - Admin notifications (7 types) — COMPLETE, SignalR delivery works
+- Contract renewal auto-trigger — COMPLETE (JobInstances generated on upload)
+- Smooth transition protection — COMPLETE (ReassignmentService won't expire students with next contract)
 - Ready for frontend-backend integration
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
@@ -250,6 +252,43 @@
 - **File:** `Helpi.Infrastructure/Repositories/JobInstanceRepository.cs` line 338
 - **Build:** 0 errors, no new warnings
 
+### GET /api/reviews Endpoint Fix ✅ (2026-03-23)
+
+- **Problem:** Admin app `GET /api/reviews` returned 405 Method Not Allowed — ReviewsController had NO root `[HttpGet]` endpoint
+- **Fix:** Added `GetAllAsync()` across 4 layers:
+  - `IReviewRepository.cs` — `Task<IEnumerable<Review>> GetAllAsync()`
+  - `ReviewRepository.cs` — filters `IsPending == false`, includes Student + Senior, orders by CreatedAt desc
+  - `ReviewService.cs` — `GetAllAsync()` maps to `List<ReviewDto>`
+  - `ReviewsController.cs` — `[HttpGet] GetAll()` endpoint
+- **Build:** 0 errors
+
+### Backend Binding for Android Emulator ✅ (2026-03-23)
+
+- **Problem:** `localhost:5142` only binds to 127.0.0.1 — Android emulator can't reach host via `10.0.2.2`
+- **Fix:** Changed `launchSettings.json` applicationUrl from `http://localhost:5142` to `http://0.0.0.0:5142`
+
+---
+
+## Faza 7 — Contract Renewal & Service Continuity ✅ (2026-03-23)
+
+### Task 18: Auto-generate JobInstances on Contract Upload ✅
+
+- **Problem:** When student uploads a new contract (e.g. month-to-month renewal), NO new JobInstances were generated — only admin manual assign or Hangfire recurring batch triggered generation
+- **Fix:** `StudentContractService.CreateContractAsync()` now calls `GenerateJobInstancesForStudentAssignmentsAsync()` after `ProcessStudentStatus()`
+- **New method:** `GenerateJobInstancesForStudentAssignmentsAsync(studentId)` — fetches all active recurring assignments for the student, generates instances using `IHangfireRecurringJobService.GenerateInstancesForAssignment()`, saves via `AddRangeAsync`
+- **3 new dependencies** added to StudentContractService: `IScheduleAssignmentRepository`, `IHangfireRecurringJobService`, `IPricingConfigurationRepository`
+- **New repository method:** `IScheduleAssignmentRepository.GetAssignmentsNeedingJobGenerationForStudentAsync(studentId)` — same logic as `GetAssignmentsNeedingJobGenerationAsync()` but filtered by student, includes OrderSchedule→Order→Senior + latest JobInstance
+- **Files modified:** 4 (StudentContractService.cs, IScheduleAssignmentRepository.cs, ScheduleAssignmentRepository.cs)
+- **Build:** 0 errors
+
+### Task 19: Smooth Transition Protection (Contract Renewal) ✅
+
+- **Problem:** When student's contract expires but a new one starts immediately (gap ≤ 1 day), `StudentStatusService.HandleTrulyExpired()` would still mark student as Expired and trigger `ReassignExpiredContractJobs()` — reassigning all sessions even though student has valid next contract
+- **Fix:** Added early return check in `HandleTrulyExpired()`: if `eval.NextContract != null && !eval.HasGap`, student stays Active and no reassignment occurs
+- **Leverages existing:** `ContractEvaluationService.Evaluate()` already computes `HasGap` (gap > 1 day between contracts)
+- **File modified:** StudentStatusService.cs
+- **Build:** 0 errors
+
 ---
 
 ## Fresh Validation Report (2026-03-18)
@@ -276,3 +315,12 @@
 - Seed users (students 101-107, seniors 201-206) have fake password hashes — cannot login. Admin (Id=13) has real hash. Students/seniors will be created via register endpoint for testing.
 - HNotifications table empty — backend doesn't auto-create notifications yet (feature, not bug)
 - Chat backend not implemented (placeholder screens)
+
+---
+
+## Faza 7 Task Summary
+
+| # | Task | Status | Date |
+|---|------|--------|------|
+| 18 | Auto-generate JobInstances on contract upload | ✅ | 2026-03-23 |
+| 19 | Smooth transition protection (contract renewal) | ✅ | 2026-03-23 |

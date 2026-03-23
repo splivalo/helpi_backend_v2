@@ -81,6 +81,53 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 
         }
 
+        public async Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationForStudentAsync(int studentId)
+        {
+                var liveOrderStatuses = new[] {
+                        OrderStatus.Pending,
+                        OrderStatus.FullAssigned
+                };
+
+                var assignments = await _context.ScheduleAssignments
+                    .Include(sa => sa.OrderSchedule)
+                        .ThenInclude(os => os.Order)
+                            .ThenInclude(o => o.Senior)
+                    .Where(sa => sa.StudentId == studentId &&
+                            sa.Status == AssignmentStatus.Accepted &&
+                            !sa.IsJobInstanceSub &&
+                            sa.OrderSchedule.Order.IsRecurring &&
+                            liveOrderStatuses.Contains(sa.OrderSchedule.Order.Status))
+                    .AsSplitQuery()
+                    .ToListAsync();
+
+                if (assignments.Any())
+                {
+                        var assignmentIds = assignments.Select(a => a.Id).ToHashSet();
+
+                        var latestJobInstances = await _context.JobInstances
+                            .Where(ji => ji.IsRescheduleVariant == false)
+                            .Where(ji => ji.ScheduleAssignmentId.HasValue)
+                            .Where(ji => assignmentIds.Contains(ji.ScheduleAssignmentId!.Value))
+                            .GroupBy(ji => ji.ScheduleAssignmentId)
+                            .Select(g => g.OrderByDescending(x => x.ScheduledDate).First())
+                            .ToDictionaryAsync(ji => ji.ScheduleAssignmentId!.Value);
+
+                        foreach (var assignment in assignments)
+                        {
+                                if (latestJobInstances.TryGetValue(assignment.Id, out var latestJob))
+                                {
+                                        assignment.JobInstances = new List<JobInstance> { latestJob };
+                                }
+                                else
+                                {
+                                        assignment.JobInstances = new List<JobInstance>();
+                                }
+                        }
+                }
+
+                return assignments;
+        }
+
         public async Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment)
         {
                 await _context.ScheduleAssignments.AddAsync(assignment);

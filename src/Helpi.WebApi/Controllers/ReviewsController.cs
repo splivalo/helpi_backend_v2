@@ -15,6 +15,13 @@ public class ReviewsController : ControllerBase
 
         public ReviewsController(ReviewService service) => _service = service;
 
+        [HttpGet]
+        public async Task<ActionResult<List<ReviewDto>>> GetAll()
+        {
+                var reviews = await _service.GetAllAsync();
+                return Ok(reviews);
+        }
+
         [HttpGet("student/{studentId}")]
         public async Task<ActionResult<List<ReviewDto>>> GetByStudent(int studentId)
         {

@@ -17,6 +17,14 @@ public class ReviewRepository : IReviewRepository
 
         public ReviewRepository(AppDbContext context) => _context = context;
 
+        public async Task<IEnumerable<Review>> GetAllAsync()
+            => await _context.Reviews
+                .Where(r => r.IsPending == false)
+                .Include(r => r.Student)
+                .Include(r => r.Senior)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
         public async Task<Review> GetByIdAsync(int id)
             => await _context.Reviews
                 .Include(r => r.Student)

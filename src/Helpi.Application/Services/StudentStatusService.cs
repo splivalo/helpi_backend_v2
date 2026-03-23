@@ -182,8 +182,18 @@ IUserRepository userRepository
 
     private async Task HandleTrulyExpired(Student student, ContractEvaluationResult eval)
     {
-        // eval.ActiveContract == null
-        // eval.NextContract == null || eval.HasGap == true
+        // If a next contract starts soon (no meaningful gap), keep student active — don't expire/reassign
+        if (eval.NextContract != null && !eval.HasGap)
+        {
+            _logger.LogInformation("Student {StudentId} has next contract starting soon — skipping expiry", student.UserId);
+            if (student.Status != StudentStatus.Active)
+            {
+                student.Status = StudentStatus.Active;
+                await _studentRepo.UpdateAsync(student);
+            }
+            return;
+        }
+
         var daysSinceExpiry = eval.DaysSinceExpiry ?? 0;
 
         _logger.LogInformation("Contract expired {DaysSinceExpiry} days ago for student {StudentId}",

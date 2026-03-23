@@ -22,6 +22,9 @@ public class StudentContractService
         private readonly ILogger<StudentContractService> _logger;
         private readonly IJobInstanceRepository _jobInstanceRepo;
         private readonly IReassignmentService _reassignmentService;
+        private readonly IScheduleAssignmentRepository _scheduleAssignmentRepository;
+        private readonly IHangfireRecurringJobService _recurringJobService;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         public StudentContractService(
             IStudentContractRepository repository,
@@ -32,7 +35,10 @@ public class StudentContractService
             IMapper mapper,
             ILogger<StudentContractService> logger,
             IJobInstanceRepository jobInstanceRepo,
-            IReassignmentService reassignmentService)
+            IReassignmentService reassignmentService,
+            IScheduleAssignmentRepository scheduleAssignmentRepository,
+            IHangfireRecurringJobService recurringJobService,
+            IPricingConfigurationRepository pricingConfigRepo)
         {
                 _repository = repository;
                 _studentRepository = studentRepository;
@@ -43,6 +49,9 @@ public class StudentContractService
                 _logger = logger;
                 _jobInstanceRepo = jobInstanceRepo;
                 _reassignmentService = reassignmentService;
+                _scheduleAssignmentRepository = scheduleAssignmentRepository;
+                _recurringJobService = recurringJobService;
+                _pricingConfigRepo = pricingConfigRepo;
         }
 
         public async Task<List<StudentContractDto>> GetContractsByStudentAsync(int studentId) =>
@@ -81,6 +90,9 @@ public class StudentContractService
                 student.Contracts.Add(contract);
 
                 await _studentStatusService.ProcessStudentStatus(student);
+
+                // Auto-generate JobInstances for active assignments covering the new contract period
+                await GenerateJobInstancesForStudentAssignmentsAsync(dto.StudentId);
 
                 return _mapper.Map<StudentContractDto>(contract);
         }
@@ -198,6 +210,33 @@ public class StudentContractService
         // }
 
 
+
+        private async Task GenerateJobInstancesForStudentAssignmentsAsync(int studentId)
+        {
+                var assignments = await _scheduleAssignmentRepository.GetAssignmentsNeedingJobGenerationForStudentAsync(studentId);
+                if (!assignments.Any()) return;
+
+                var pricingConfig = await _pricingConfigRepo.GetByIdAsync(1);
+                if (pricingConfig == null)
+                {
+                        _logger.LogWarning("No pricing configuration found — skipping job instance generation for student {StudentId}", studentId);
+                        return;
+                }
+
+                var allInstances = new List<JobInstance>();
+                foreach (var assignment in assignments)
+                {
+                        var instances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
+                        allInstances.AddRange(instances);
+                }
+
+                if (allInstances.Any())
+                {
+                        await _jobInstanceRepo.AddRangeAsync(allInstances);
+                        _logger.LogInformation("Generated {Count} job instances for student {StudentId} after contract upload",
+                                allInstances.Count, studentId);
+                }
+        }
 
         private async Task<Student> GetAndValidateStudentAsync(int studentId)
         {
