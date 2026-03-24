@@ -182,10 +182,8 @@ app.UseHangfireDashboard();
 // ------------------------------------------------------------
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
-
-
 app.UseWebSockets();
+app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 
 // ------------------------------------------------------------
 // 6️⃣  STARTUP TASKS (Seed data, subscribe events, schedule jobs)

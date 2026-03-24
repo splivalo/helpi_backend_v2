@@ -1,0 +1,3 @@
+UPDATE "Services" SET "Translations" = '{"en": {"Name": "Companionship", "Description": null}, "hr": {"Name": "Društvo", "Description": null}}' WHERE "Translations"::text LIKE '%Dru_tvo%';
+UPDATE "Services" SET "Translations" = '{"en": {"Name": "Walking", "Description": null}, "hr": {"Name": "Šetnja", "Description": null}}' WHERE "Translations"::text LIKE '%etnja%' AND "Translations"::text NOT LIKE '%Šetnja%';
+UPDATE "Services" SET "Translations" = '{"en": {"Name": "House Help", "Description": null}, "hr": {"Name": "Kućanstvo", "Description": null}}' WHERE "Translations"::text LIKE '%Ku_anstvo%';
