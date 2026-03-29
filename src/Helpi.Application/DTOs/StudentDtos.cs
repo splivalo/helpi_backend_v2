@@ -76,6 +76,10 @@ public class StudentFilterDto
     public decimal? MinAverageRating { get; set; }
     public bool? BackgroundCheckCompleted { get; set; }
     public bool? IncludeDeleted { get; set; } = false;
+
+    // When true + AvailabilityCriteria present, exclude students
+    // who have accepted schedule assignments conflicting with the criteria.
+    public bool ExcludeConflicts { get; set; } = false;
 }
 
 

@@ -29,7 +29,8 @@ public class StudentsController : ControllerBase
         [FromQuery] bool? hasAvailabilitySlots = null,
         [FromQuery] decimal? minAverageRating = null,
         [FromQuery] bool? backgroundCheckCompleted = null,
-        [FromQuery] bool includeDeleted = false)
+        [FromQuery] bool includeDeleted = false,
+        [FromQuery] bool excludeConflicts = false)
         {
                 var filter = new StudentFilterDto
                 {
@@ -43,7 +44,8 @@ public class StudentsController : ControllerBase
                         HasAvailabilitySlots = hasAvailabilitySlots,
                         MinAverageRating = minAverageRating,
                         BackgroundCheckCompleted = backgroundCheckCompleted,
-                        IncludeDeleted = includeDeleted
+                        IncludeDeleted = includeDeleted,
+                        ExcludeConflicts = excludeConflicts
                 };
 
                 var students = await _service.GetStudentsAsync(filter);

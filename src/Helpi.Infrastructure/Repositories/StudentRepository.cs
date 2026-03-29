@@ -88,6 +88,7 @@ public class StudentRepository : IStudentRepository
                    .FilterByStatus(filter.Status)
                    .FilterByFaculty(filter.FacultyId)
                    .FilterByAvailability(filter.AvailabilityCriteria, filter.MatchAllAvailability)
+                   .FilterByNoScheduleConflicts(filter.AvailabilityCriteria, filter.ExcludeConflicts)
                    .FilterByMinRating(filter.MinAverageRating)
                    .FilterByBackgroundCheck(filter.BackgroundCheckCompleted)
                    .IncludeDeleted(filter.IncludeDeleted ?? false);

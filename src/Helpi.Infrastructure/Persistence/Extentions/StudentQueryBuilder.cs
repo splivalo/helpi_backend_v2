@@ -135,6 +135,36 @@ public class StudentQueryBuilder
         return this;
     }
 
+    public StudentQueryBuilder FilterByNoScheduleConflicts(
+        List<AvailabilityCriteria>? availabilityCriteria, bool excludeConflicts)
+    {
+        if (!excludeConflicts || availabilityCriteria == null || !availabilityCriteria.Any())
+            return this;
+
+        const int travelBufferMinutes = 15;
+
+        foreach (var criteria in availabilityCriteria)
+        {
+            var dayByte = (byte)criteria.DayOfWeek;
+
+            if (!criteria.StartTime.HasValue || !criteria.EndTime.HasValue)
+                continue;
+
+            var bufferedStart = criteria.StartTime.Value.AddMinutes(-travelBufferMinutes);
+            var bufferedEnd = criteria.EndTime.Value.AddMinutes(travelBufferMinutes);
+
+            _query = _query.Where(s =>
+                !s.ScheduleAssignments
+                    .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                    .Any(sa =>
+                        sa.OrderSchedule.DayOfWeek == dayByte &&
+                        sa.OrderSchedule.StartTime < bufferedEnd &&
+                        sa.OrderSchedule.EndTime > bufferedStart));
+        }
+
+        return this;
+    }
+
     public StudentQueryBuilder FilterByHasAvailabilitySlots(bool? hasSlots)
     {
         if (hasSlots.HasValue)
