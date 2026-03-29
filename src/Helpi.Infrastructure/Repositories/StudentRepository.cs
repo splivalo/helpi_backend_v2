@@ -232,25 +232,20 @@ public class StudentRepository : IStudentRepository
             query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
         }
 
+        // Overlap filter: return students whose availability slot
+        // overlaps the requested time window on the target day.
+        // Frontend classifies full-coverage vs partial (differentTimes).
         query = query.Where(s =>
             s.AvailabilitySlots.Any(a =>
                 a.DayOfWeek == isoTargetDay &&
-                a.StartTime <= targetStart &&
-                a.EndTime >= targetEnd
+                a.StartTime < targetEnd &&
+                a.EndTime > targetStart
             )
         );
 
-        // v2: students no longer choose services, so only filter
-        // when the order actually specifies required services AND
-        // students have service entries in the DB.
-        if (requiredServiceIds.Any())
-        {
-            query = query.Where(s =>
-                requiredServiceIds.All(rs =>
-                    s.StudentServices.Any(ss => ss.ServiceId == rs)
-                )
-            );
-        }
+        // v2: students no longer choose services in their app,
+        // so service filter is removed from matching logic.
+        // Services (6 categories) are informational for senior only.
 
         // ✅ Unified conflict detection with 15-min travel buffer
         query = query.Where(s =>
