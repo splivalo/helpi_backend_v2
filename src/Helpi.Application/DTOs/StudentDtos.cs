@@ -27,6 +27,7 @@ public class StudentDto
     public ContactInfoDto Contact { get; set; } = null!;
     public FacultyDto? Faculty { get; set; }
     public List<StudentAvailabilitySlotDto> AvailabilitySlots { get; set; } = new();
+    public int PreviousJobsWithSenior { get; set; }
 }
 
 public class StudentCreateDto

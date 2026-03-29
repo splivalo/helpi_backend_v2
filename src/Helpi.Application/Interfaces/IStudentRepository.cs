@@ -47,4 +47,8 @@ public interface IStudentRepository
 int? preferedStudentId,
  List<int> excludeJobInstanceIds
    );
+
+    Task<Dictionary<int, int>> GetCompletedJobCountsForSenior(int seniorId, List<int> studentIds);
+    Task<int> GetSeniorIdForOrderSchedule(int orderScheduleId);
+    Task<int> GetSeniorIdForOrder(int orderId);
 }

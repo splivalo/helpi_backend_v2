@@ -225,6 +225,7 @@ public class StudentRepository : IStudentRepository
             .Include(s => s.Contact)
             .Include(s => s.StudentServices)
             .Include(s => s.AvailabilitySlots)
+            .Include(s => s.Faculty)
             .AsNoTracking()
             .AsQueryable();
 
@@ -332,6 +333,34 @@ public class StudentRepository : IStudentRepository
 
     private double DegreesToRadians(double deg) => deg * (Math.PI / 180);
 
+    public async Task<Dictionary<int, int>> GetCompletedJobCountsForSenior(int seniorId, List<int> studentIds)
+    {
+        if (studentIds.Count == 0) return new Dictionary<int, int>();
+
+        return await _context.ScheduleAssignments
+            .Where(sa => studentIds.Contains(sa.StudentId)
+                && sa.OrderSchedule.Order.SeniorId == seniorId
+                && sa.Status == AssignmentStatus.Accepted)
+            .SelectMany(sa => sa.JobInstances.Where(j => j.Status == JobInstanceStatus.Completed))
+            .GroupBy(j => j.ScheduleAssignment.StudentId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    public async Task<int> GetSeniorIdForOrderSchedule(int orderScheduleId)
+    {
+        return await _context.OrderSchedules
+            .Where(os => os.Id == orderScheduleId)
+            .Select(os => os.Order.SeniorId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<int> GetSeniorIdForOrder(int orderId)
+    {
+        return await _context.Orders
+            .Where(o => o.Id == orderId)
+            .Select(o => o.SeniorId)
+            .FirstOrDefaultAsync();
+    }
 
 
     public async Task<List<Student>> LoadStudentsWithIncludes(int? studentId, StudentIncludeOptions includes, List<StudentStatus>? withStatus = null,

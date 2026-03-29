@@ -109,7 +109,10 @@ public class StudentsService
                 var students = await _repository.FindEligibleStudentsForSchedule(
                         orderScheduleId,
                          notifiedStudentIds, preferedStudentId: null);
-                return _mapper.Map<List<StudentDto>>(students);
+                var dtos = _mapper.Map<List<StudentDto>>(students);
+                var seniorId = await _repository.GetSeniorIdForOrderSchedule(orderScheduleId);
+                await EnrichWithSeniorJobCounts(dtos, seniorId);
+                return dtos;
         }
 
         public async Task<List<StudentDto>> FindEligibleStudentsForInstance2(DateOnly date,
@@ -120,8 +123,21 @@ public class StudentsService
         {
                 var students = await _repository.FindEligibleStudentsForInstance2(
                         date, startTime, endTime, orderId, preferedStudentId: null, excludeJobInstanceIds: excludeJobInstanceIds);
+                var dtos = _mapper.Map<List<StudentDto>>(students);
+                var seniorId = await _repository.GetSeniorIdForOrder(orderId);
+                await EnrichWithSeniorJobCounts(dtos, seniorId);
+                return dtos;
+        }
 
-                return _mapper.Map<List<StudentDto>>(students);
+        private async Task EnrichWithSeniorJobCounts(List<StudentDto> dtos, int seniorId)
+        {
+                if (seniorId == 0 || dtos.Count == 0) return;
+                var studentIds = dtos.Select(d => d.UserId).ToList();
+                var counts = await _repository.GetCompletedJobCountsForSenior(seniorId, studentIds);
+                foreach (var dto in dtos)
+                {
+                        dto.PreviousJobsWithSenior = counts.TryGetValue(dto.UserId, out var count) ? count : 0;
+                }
         }
 
 
