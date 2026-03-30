@@ -161,11 +161,6 @@ public class MappingProfile : Profile
                      .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.CityName : null)
                      .FirstOrDefault()))
-             .ForMember(dest => dest.AssignedStudentNumber, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
-                     .Select(a => a.Student != null ? a.Student.StudentNumber : null)
-                     .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentStatus, opt => opt.MapFrom(src =>
                  src.Schedules.SelectMany(s => s.Assignments)
                      .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)

@@ -20,10 +20,6 @@ public class StudentRegisterDtoValidator : AbstractValidator<StudentRegisterDto>
             .Equal(UserType.Student)
             .WithMessage("UserType must be Student for student registration.");
 
-        RuleFor(x => x.StudentNumber)
-            .MaximumLength(20)
-            .When(x => !string.IsNullOrWhiteSpace(x.StudentNumber));
-
         RuleFor(x => x.FacultyId)
             .GreaterThan(0)
             .When(x => x.FacultyId.HasValue);

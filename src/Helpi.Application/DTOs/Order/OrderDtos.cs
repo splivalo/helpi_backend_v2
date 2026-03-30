@@ -30,7 +30,6 @@ public class OrderDto
     public string? AssignedStudentAddress { get; set; }
     public string? AssignedStudentCity { get; set; }
     public int? AssignedStudentFaculty { get; set; }
-    public string? AssignedStudentNumber { get; set; }
     public DateOnly? AssignedStudentDateOfBirth { get; set; }
     public int? AssignedStudentGender { get; set; }
     public int? AssignedStudentStatus { get; set; }

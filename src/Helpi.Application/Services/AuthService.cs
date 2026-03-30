@@ -327,7 +327,6 @@ ILocalizationService loc
             var student = new Student
             {
                 UserId = user.Id,
-                StudentNumber = registerDto.StudentNumber!,
                 FacultyId = registerDto.FacultyId.Value,
             };
 

@@ -12,8 +12,6 @@ public interface IStudentRepository
     Task<List<Student>> GetStudentsAsync(StudentFilterDto? filter = null);
 
     Task<List<StudentDto>> GetStudentsWithDetailsAsync(StudentFilterDto? filter = null);
-    Task<Student?> GetByStudentNumberAsync(string studentNumber);
-
     Task<Student> AddAsync(Student student);
     Task UpdateAsync(Student student);
     Task DeleteAsync(Student student);

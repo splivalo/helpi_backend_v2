@@ -7,7 +7,6 @@ namespace Helpi.Application.DTOs;
 public class StudentDto
 {
     public int UserId { get; set; }
-    public string StudentNumber { get; set; } = null!;
     public int FacultyId { get; set; }
     public DateTime DateRegistered { get; set; }
     public StudentStatus Status { get; set; }
@@ -33,10 +32,6 @@ public class StudentDto
 public class StudentCreateDto
 {
     [Required]
-    [StringLength(20)]
-    public string StudentNumber { get; set; } = null!;
-
-    [Required]
     public int FacultyId { get; set; }
 
     [Required]
@@ -47,9 +42,6 @@ public class StudentUpdateDto
 {
     public StudentStatus? Status { get; set; }
     public DateOnly? BackgroundCheckDate { get; set; }
-
-    [StringLength(20)]
-    public string? StudentNumber { get; set; }
     public int? FacultyId { get; set; }
 }
 

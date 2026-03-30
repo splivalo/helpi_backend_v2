@@ -35,12 +35,6 @@ public class StudentRepository : IStudentRepository
 
     }
 
-    public async Task<Student?> GetByStudentNumberAsync(string studentNumber)
-    {
-        return await _context.Students.Where(s => s.DeletedAt == null).SingleOrDefaultAsync(s => s.StudentNumber == studentNumber);
-
-    }
-
     public async Task<IEnumerable<Student>> GetByVerificationStatusAsync(StudentStatus status)
         => await _context.Students.Where(s => s.Status == status).ToListAsync();
 

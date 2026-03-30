@@ -10,7 +10,7 @@ namespace Helpi.Domain.Entities
         public int UserId { get; set; }
 
         [MaxLength(20)]
-        public string StudentNumber { get; set; } = null!;
+        public string? StudentNumber { get; set; }
         public int FacultyId { get; set; }
         public DateTime DateRegistered { get; set; } = DateTime.UtcNow;
         public int ContactId { get; set; }

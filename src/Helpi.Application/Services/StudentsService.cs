@@ -96,7 +96,6 @@ public class StudentsService
         public async Task<StudentDto> UpdateStudentAsync(int id, StudentUpdateDto dto)
         {
                 var student = await _repository.GetByIdAsync(id);
-                if (dto.StudentNumber != null) student.StudentNumber = dto.StudentNumber;
                 if (dto.FacultyId.HasValue) student.FacultyId = dto.FacultyId.Value;
                 if (dto.Status.HasValue) student.Status = dto.Status.Value;
                 if (dto.BackgroundCheckDate.HasValue) student.BackgroundCheckDate = dto.BackgroundCheckDate.Value;
@@ -207,10 +206,6 @@ public class StudentsService
                         // Step 6: Update student status and anonymize contact info
                         student.Status = StudentStatus.Deleted;
                         student.DeletedAt = DateTime.UtcNow;
-                        student.StudentNumber = "Deleted";
-
-
-
                         await _contactInfoRepo.AnonymizeContactAsync(student.Contact);
 
                         await _repository.UpdateAsync(student);

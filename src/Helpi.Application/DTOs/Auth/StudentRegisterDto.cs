@@ -8,7 +8,6 @@ namespace Helpi.Application.DTOs.Auth
         public string Password { get; set; } = string.Empty;
         public UserType UserType { get; set; }
 
-        public string? StudentNumber { get; set; }
         public int? FacultyId { get; set; }
 
         // ContactInfo

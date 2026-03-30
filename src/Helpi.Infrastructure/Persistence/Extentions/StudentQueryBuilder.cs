@@ -36,8 +36,7 @@ public class StudentQueryBuilder
         {
             var searchTerm = searchText.Trim().ToLower();
             _query = _query.Where(s =>
-                s.Contact.FullName.ToLower().Contains(searchTerm) ||
-                s.StudentNumber.ToLower().Contains(searchTerm));
+                s.Contact.FullName.ToLower().Contains(searchTerm));
         }
         return this;
     }
@@ -239,7 +238,6 @@ public class StudentQueryBuilder
         return await _query.Select(s => new StudentDto
         {
             UserId = s.UserId,
-            StudentNumber = s.StudentNumber,
             FacultyId = s.FacultyId,
             DateRegistered = s.DateRegistered,
             Status = s.Status,
