@@ -89,6 +89,7 @@ public class StudentAvailabilitySlotRepository : IStudentAvailabilitySlotReposit
                     .ToListAsync();
 
                 _context.StudentAvailabilitySlots.RemoveRange(availabilitySlots);
+                await _context.SaveChangesAsync();
         }
 
 

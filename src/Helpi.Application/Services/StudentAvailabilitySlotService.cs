@@ -142,9 +142,10 @@ IEventMediator mediator,
                 if (await _assignmentRepo.HasActiveAssignmentsForSlotsAsync(studentId, dtos))
                         throw new ActiveAssignmentException("Cannot modify slots with active assignments");
 
-
+                // Remove all existing slots for this student, then create new ones (upsert)
+                await _repository.RemoveAllByStudentIdAsync(studentId);
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
-                await _repository.UpdateRangeAsync(slots);
+                await _repository.AddRangeAsync(slots);
 
                 ReinitiateAllFailedMatches();
 
