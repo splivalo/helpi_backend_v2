@@ -38,6 +38,7 @@ public class OrdersService
         private readonly ISeniorRepository _seniorRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IPromoCodeRepository _promoCodeRepository;
 
         public OrdersService(
             IOrderRepository orderRepository,
@@ -56,7 +57,8 @@ public class OrdersService
             INotificationService notificationService,
             ISeniorRepository seniorRepository,
             ICustomerRepository customerRepository,
-            IUserRepository userRepository
+            IUserRepository userRepository,
+            IPromoCodeRepository promoCodeRepository
         )
         {
                 _orderRepository = orderRepository;
@@ -76,6 +78,7 @@ public class OrdersService
                 _seniorRepository = seniorRepository;
                 _customerRepository = customerRepository;
                 _userRepository = userRepository;
+                _promoCodeRepository = promoCodeRepository;
         }
 
 
@@ -232,6 +235,21 @@ public class OrdersService
                         }
                         else
                         {
+                                // Validate promo code before updating
+                                if (orderUpdateDto.PromoCodeId.HasValue && orderUpdateDto.PromoCodeId.Value != 0)
+                                {
+                                        var promoCode = await _promoCodeRepository.GetByIdAsync(orderUpdateDto.PromoCodeId.Value);
+                                        if (promoCode == null)
+                                                throw new DomainException($"Promo code with ID {orderUpdateDto.PromoCodeId.Value} not found");
+                                        if (!promoCode.IsActive)
+                                                throw new DomainException("This promo code is no longer active");
+                                        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                                        if (promoCode.ValidUntil.HasValue && today > promoCode.ValidUntil.Value)
+                                                throw new DomainException("This promo code has expired");
+                                        if (promoCode.MaxUses.HasValue && promoCode.CurrentUses >= promoCode.MaxUses.Value)
+                                                throw new DomainException("This promo code has reached its maximum number of uses");
+                                }
+
                                 // Update basic order properties
                                 UpdateOrderProperties(order, orderUpdateDto);
 
@@ -264,6 +282,10 @@ public class OrdersService
                         }
 
                         return _mapper.Map<OrderDto>(updatedOrder);
+                }
+                catch (DomainException)
+                {
+                        throw;
                 }
                 catch (Exception ex)
                 {
