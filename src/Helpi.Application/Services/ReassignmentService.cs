@@ -91,6 +91,7 @@ INotificationFactory notificationFactory,
                     new SessionIncludeOptions
                     {
                         Order = true,
+                        OrderSchedule = true,
                         Assignment = true,
                         AssignmentOrderSchedule = true,
                         PrevAssignment = true,
@@ -106,10 +107,22 @@ INotificationFactory notificationFactory,
                                                 jobInstance.ScheduleAssignment
                                                 : jobInstance.PrevAssignment;
 
-                orderSchedule = knownAssignment!.OrderSchedule;
-                order = jobInstance.Order;
-                originalStudentId = knownAssignment.StudentId;
-                currentAssignmentId = knownAssignment.Id;
+                if (knownAssignment != null)
+                {
+                    orderSchedule = knownAssignment.OrderSchedule;
+                    order = jobInstance.Order;
+                    originalStudentId = knownAssignment.StudentId;
+                    currentAssignmentId = knownAssignment.Id;
+                }
+                else
+                {
+                    // No assignment exists — session not yet assigned to a student
+                    order = jobInstance.Order;
+                    orderSchedule = jobInstance.OrderSchedule
+                        ?? await _orderScheduleRepository.GetByIdAsync(jobInstance.OrderScheduleId);
+                    originalStudentId = null;
+                    currentAssignmentId = 0;
+                }
             }
             else
             {
