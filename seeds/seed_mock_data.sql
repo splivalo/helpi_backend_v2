@@ -48,6 +48,16 @@ VALUES
 -- ============================================
 -- Gender: 0=Male, 1=Female
 
+-- Cities (required FK for ContactInfos)
+INSERT INTO "Cities" ("Id", "GooglePlaceId", "Name", "PostalCode", "IsServiced", "CreatedAt")
+VALUES
+(1, 'ChIJSx5MG-zaSRMRGkfexFjHAAQ', 'Split', '21000', true, '2025-01-01'),
+(2, 'ChIJ0YaYlvBKZUcRIDqSxsEpBDg', 'Zagreb', '10000', true, '2025-01-01'),
+(3, 'ChIJkUKS6XFbZUcR8MFjTIE3M3g', 'Rijeka', '51000', true, '2025-01-01'),
+(4, 'ChIJPc9dJ37MQBMRKqTBG87xLwQ', 'Osijek', '31000', true, '2025-01-01');
+
+SELECT setval('"Cities_Id_seq"', (SELECT MAX("Id") FROM "Cities"));
+
 INSERT INTO "ContactInfos" ("Id", "FullName", "DateOfBirth", "Phone", "LanguageCode", "Email", "Gender", "GooglePlaceId", "FullAddress", "Latitude", "Longitude", "CityId", "CityName", "State", "PostalCode", "Country", "CreatedAt")
 VALUES
 (101, 'Luka Peric', '2002-05-14', '+385991112222', 'hr', 'luka.peric@email.com', 0, 'ChIJplaceid1', 'Trg bana Jelacica 1, Zagreb', 45.8131, 15.9775, 2, 'Zagreb', 'Zagreb', '10000', 'Croatia', '2025-11-01'),

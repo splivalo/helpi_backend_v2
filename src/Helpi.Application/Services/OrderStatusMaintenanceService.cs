@@ -36,7 +36,7 @@ public class OrderStatusMaintenanceService
         _orderUpdater = orderUpdater;
     }
 
-    public async Task MaintainOrderStatuses(int orderId)
+    public async Task MaintainOrderStatuses(int orderId, bool skipJobInstanceUpdate = false)
     {
         try
         {
@@ -72,7 +72,10 @@ public class OrderStatusMaintenanceService
             // 4. OrderStatusUpdater      : Order state is derived from all schedules/assignments/jobs.
             _scheduleUpdater.Update(order);
             _assignmentUpdater.Update(order);
-            _jobUpdater.Update(order);
+            if (!skipJobInstanceUpdate)
+            {
+                _jobUpdater.Update(order);
+            }
             _orderUpdater.Update(order);
 
             // _orderRepository.DetachAllEntities();

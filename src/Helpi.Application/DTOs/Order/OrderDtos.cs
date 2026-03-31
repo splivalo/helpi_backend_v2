@@ -36,6 +36,8 @@ public class OrderDto
     public decimal? AssignedStudentAverageRating { get; set; }
     public int? AssignedStudentTotalReviews { get; set; }
     public int? AssignedStudentDaysToContractExpire { get; set; }
+    public int? PromoCodeId { get; set; }
+    public string? PromoCodeCode { get; set; }
     public ICollection<ServiceDto> Services { get; set; } = new List<ServiceDto>();
     public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }

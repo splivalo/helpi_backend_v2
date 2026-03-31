@@ -22,6 +22,7 @@ public class OrderRepository : IOrderRepository
                         .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                         .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
                         .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
+                        .Include(o => o.PromoCode)
                         .AsNoTracking();
 
                 if (status.HasValue)
@@ -37,6 +38,7 @@ public class OrderRepository : IOrderRepository
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
                 .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
+                .Include(o => o.PromoCode)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -50,6 +52,7 @@ public class OrderRepository : IOrderRepository
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
                 .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Faculty)
+                .Include(o => o.PromoCode)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -60,6 +63,7 @@ public class OrderRepository : IOrderRepository
                 .Where(o => o.Status == status)
                 .Include(o => o.OrderServices).ThenInclude(os => os.Service)
                 .Include(o => o.Schedules).ThenInclude(s => s.Assignments).ThenInclude(a => a.Student).ThenInclude(st => st.Contact)
+                .Include(o => o.PromoCode)
                 .ToListAsync();
 
         public async Task<Order> AddNoSaveAsync(Order order)

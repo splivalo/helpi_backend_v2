@@ -323,12 +323,23 @@ IUserRepository userRepository
                 // Determine if this is a reschedule, reassignment, or both
                 bool isReschedule = newDate.HasValue || newStartTime.HasValue || newEndTime.HasValue;
 
+                // Check if the student is actually changing
+                int? currentStudentId = originalInstance.ScheduleAssignment?.StudentId;
+                bool isStudentChanging = preferedStudentId.HasValue
+                    && preferedStudentId.Value != currentStudentId;
 
                 JobInstance? resultInstance = null;
 
-                if (isReschedule)
+                if (isReschedule && !isStudentChanging)
                 {
-                        //
+                        // Simple in-place date/time update — no need for new session
+                        resultInstance = await HandleSimpleReschedule(
+                            originalInstance,
+                            newDate, newStartTime, newEndTime);
+                }
+                else if (isReschedule && isStudentChanging)
+                {
+                        // Date/time change WITH student change — full reschedule flow
                         resultInstance = await HandleReschedule(
                             originalInstance,
                             newDate, newStartTime, newEndTime,
@@ -348,6 +359,54 @@ IUserRepository userRepository
 
                 return _mapper.Map<SessionDto>(resultInstance);
 
+        }
+
+        private async Task<JobInstance> HandleSimpleReschedule(
+            JobInstance originalInstance,
+            DateOnly? newDate,
+            TimeOnly? newStartTime,
+            TimeOnly? newEndTime)
+        {
+                DateOnly effectiveDate = newDate ?? originalInstance.ScheduledDate;
+                TimeOnly effectiveStartTime = newStartTime ?? originalInstance.StartTime;
+                TimeOnly effectiveEndTime = newEndTime ?? originalInstance.EndTime;
+
+                bool isChanged =
+                    effectiveDate != originalInstance.ScheduledDate ||
+                    effectiveStartTime != originalInstance.StartTime ||
+                    effectiveEndTime != originalInstance.EndTime;
+
+                if (!isChanged)
+                {
+                        throw new InvalidOperationException("No changes were made to the job instance.");
+                }
+
+                // Check for senior-side conflict: does this senior already
+                // have another active session overlapping the new date/time?
+                var sessionsOnDate = await _jobInstanceRepository.GetByDateAsync(effectiveDate);
+                var seniorConflict = sessionsOnDate.Any(j =>
+                    j.Id != originalInstance.Id
+                    && j.SeniorId == originalInstance.SeniorId
+                    && j.Status != JobInstanceStatus.Cancelled
+                    && j.Status != JobInstanceStatus.Rescheduled
+                    && j.StartTime < effectiveEndTime
+                    && j.EndTime > effectiveStartTime);
+
+                if (seniorConflict)
+                {
+                        throw new InvalidOperationException(
+                            $"Senior already has another session on {effectiveDate} that overlaps with {effectiveStartTime}-{effectiveEndTime}.");
+                }
+
+                originalInstance.ScheduledDate = effectiveDate;
+                originalInstance.StartTime = effectiveStartTime;
+                originalInstance.EndTime = effectiveEndTime;
+                originalInstance.IsRescheduleVariant = true;
+                originalInstance.RescheduledAt = DateTime.UtcNow;
+
+                await _jobInstanceRepository.UpdateAsync(originalInstance);
+
+                return originalInstance;
         }
 
         private async Task<JobInstance> HandleReschedule(
@@ -374,6 +433,22 @@ IUserRepository userRepository
                 if (!isChanged)
                 {
                         throw new InvalidOperationException("Reschedule must change at least one of Date, StartTime, or EndTime.");
+                }
+
+                // Check for senior-side conflict on the new date/time
+                var sessionsOnDate = await _jobInstanceRepository.GetByDateAsync(effectiveDate);
+                var seniorConflict = sessionsOnDate.Any(j =>
+                    j.Id != originalInstance.Id
+                    && j.SeniorId == originalInstance.SeniorId
+                    && j.Status != JobInstanceStatus.Cancelled
+                    && j.Status != JobInstanceStatus.Rescheduled
+                    && j.StartTime < effectiveEndTime
+                    && j.EndTime > effectiveStartTime);
+
+                if (seniorConflict)
+                {
+                        throw new InvalidOperationException(
+                            $"Senior already has another session on {effectiveDate} that overlaps with {effectiveStartTime}-{effectiveEndTime}.");
                 }
 
                 // Create a new instance with the updated times
@@ -512,16 +587,41 @@ IUserRepository userRepository
                                 throw new ArgumentException($"Job instance {jobInstanceId} not found");
                         }
 
-                        if (job.Status != JobInstanceStatus.Cancelled)
+                        if (job.Status == JobInstanceStatus.Cancelled)
+                        {
+                                // Simple reactivation: Cancelled → Upcoming
+                                job.Status = JobInstanceStatus.Upcoming;
+                        }
+                        else if (job.Status == JobInstanceStatus.Rescheduled)
+                        {
+                                // Revert reschedule: cancel the replacement session, restore original
+                                if (job.RescheduledToId.HasValue)
+                                {
+                                        var replacement = await _jobInstanceRepository.GetByIdAsync(job.RescheduledToId.Value);
+                                        if (replacement != null && replacement.Status == JobInstanceStatus.Upcoming)
+                                        {
+                                                replacement.Status = JobInstanceStatus.Cancelled;
+                                                replacement.NeedsSubstitute = true; // hide from normal queries
+                                                await _jobInstanceRepository.UpdateAsync(replacement);
+                                        }
+                                }
+
+                                job.Status = JobInstanceStatus.Upcoming;
+                                job.RescheduledToId = null;
+                                job.RescheduledAt = null;
+                                job.NeedsSubstitute = false;
+                        }
+                        else
                         {
                                 throw new ArgumentException($"Cannot reactivate job instance {jobInstanceId} with status {job.Status}");
                         }
 
-                        job.Status = JobInstanceStatus.Upcoming;
-
                         await _jobInstanceRepository.UpdateAsync(job);
 
-                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
+                        // Skip job instance auto-cancellation during reactivation:
+                        // The admin explicitly reactivated this session, so the past-date
+                        // auto-cancel logic in JobInstanceStatusUpdater must not override it.
+                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId, skipJobInstanceUpdate: true);
 
                         return _mapper.Map<SessionDto>(job);
                 }

@@ -211,8 +211,12 @@ INotificationFactory notificationFactory,
                 await HandleOneDaySubstitution(reassignmentRecord);
             }
 
-            // v2: No auto-reassignment notifications — admin manually assigns replacement
-            // Legacy v1 notifications removed: NotifyAdminAboutReassignmentStart, NotifyStudentAboutReassignment
+            // Auto-complete when admin provides a preferred student
+            if (preferedStudentId.HasValue)
+            {
+                _reassignmentRecordRepository.Detach(reassignmentRecord);
+                await CompleteReassignment(reassignmentRecord.Id, preferedStudentId.Value);
+            }
 
             return reassignmentRecord;
         }

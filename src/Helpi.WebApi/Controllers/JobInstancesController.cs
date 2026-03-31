@@ -5,6 +5,7 @@ using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Helpi.WebApi.Controllers;
 
@@ -72,6 +73,10 @@ public class SessionsController : ControllerBase
         {
                 try
                 {
+                        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        if (!int.TryParse(userIdString, out var requestedByUserId))
+                                return Unauthorized(new { message = "Invalid user token." });
+
                         var result = await _jobInstanceService.ManageJobInstance(
                             jobInstanceId,
                             request.NewDate,
@@ -80,7 +85,7 @@ public class SessionsController : ControllerBase
                             request.Reason,
                             request.PreferredStudentId,
                             request.ReassignStudent,
-                            request.RequestedByUserId);
+                            requestedByUserId);
 
                         if (result == null)
                                 return BadRequest(new { message = "No changes were made to the job instance." });
@@ -88,6 +93,10 @@ public class SessionsController : ControllerBase
                         return Ok(result);
                 }
                 catch (ArgumentException ex)
+                {
+                        return BadRequest(new { message = ex.Message });
+                }
+                catch (InvalidOperationException ex)
                 {
                         return BadRequest(new { message = ex.Message });
                 }

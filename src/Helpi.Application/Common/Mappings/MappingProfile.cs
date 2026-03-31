@@ -180,7 +180,8 @@ public class MappingProfile : Profile
                  src.Schedules.SelectMany(s => s.Assignments)
                      .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
                      .Select(a => a.Student != null ? a.Student.DaysToContractExpire : null)
-                     .FirstOrDefault()));
+                     .FirstOrDefault()))
+             .ForMember(dest => dest.PromoCodeCode, opt => opt.MapFrom(src => src.PromoCode != null ? src.PromoCode.Code : null));
 
 
 

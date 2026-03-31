@@ -292,8 +292,8 @@ public class StudentRepository : IStudentRepository
 
         var prioritized = students
                     .OrderByDescending(s => preferedStudentId.HasValue && s.UserId == preferedStudentId.Value)
-                    .OrderByDescending(s => s.AverageRating)
                     .ThenBy(s => senior != null ? CalculateDistance(s, senior) : double.MaxValue)
+                    .ThenByDescending(s => s.AverageRating)
                     .ToList();
 
         return prioritized;
