@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-03-23
+> Zadnja izmjena: 2026-04-01
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications
 
 ---
 
@@ -188,6 +188,15 @@
 - **Build:** 0 errors, 74 warnings (identical to baseline)
 - **Commit:** `69aec15`
 
+### Task 18: Reschedule & Reassignment Notifications ✅ (2026-04-01)
+
+- Added `NotificationFactory.JobRescheduledNotification()` with HR/EN localization keys
+- `JobInstanceService.HandleSimpleReschedule()` now stores+sends `JobRescheduled` to senior, assigned student, and admins
+- `JobInstanceService.HandleReschedule()` now stores+sends `JobRescheduled` to senior and admins after full reschedule flow starts
+- `NotificationFactory.ReassignmentStartNotification()` now localizes both `ReassignmentStarted` and `ReassignmentCompleted`
+- `ReassignmentService` now emits admin `ReassignmentStarted` when manual admin action is needed and `ReassignmentCompleted` when replacement is finalized
+- Verification: `Helpi.Application.csproj` build passed; full solution build was blocked only by local `Helpi.WebApi` DLL file lock
+
 ---
 
 ## Migrations Applied
@@ -204,6 +213,7 @@
 - Suspension middleware + Croatian holidays COMPLETE
 - Admin notifications (7 types) — COMPLETE, SignalR delivery works
 - Contract renewal auto-trigger — COMPLETE (JobInstances generated on upload)
+- Reschedule and reassignment notifications — COMPLETE
 - Smooth transition protection — COMPLETE (ReassignmentService won't expire students with next contract)
 - Ready for frontend-backend integration
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`

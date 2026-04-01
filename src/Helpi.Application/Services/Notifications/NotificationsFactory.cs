@@ -97,6 +97,10 @@ public class NotificationFactory : INotificationFactory
         int orderScheduleId = record.OrderScheduleId;
         int? jobInstanceId = record.ReassignJobInstanceId;
 
+        var notificationKey = type == NotificationType.ReassignmentCompleted
+            ? "Notifications.ReassignmentCompleted"
+            : "Notifications.ReassignmentStarted";
+
         var description = LocalizationUtils.GetEntityDescription(_loc,
                 orderId: orderId,
                 scheduleId: orderScheduleId,
@@ -106,9 +110,9 @@ public class NotificationFactory : INotificationFactory
         return new HNotification
         {
             RecieverUserId = recieverId,
-            TranslationKey = $"Notifications.ReassignmentStarted",
-            Title = _loc.GetString($"Notifications.ReassignmentStarted.Title", culture),
-            Body = _loc.GetString($"Notifications.ReassignmentStarted.Body", culture, description),
+            TranslationKey = notificationKey,
+            Title = _loc.GetString($"{notificationKey}.Title", culture),
+            Body = _loc.GetString($"{notificationKey}.Body", culture, description),
             Type = type,
             Payload = JsonSerializer.Serialize(new
             {
@@ -124,6 +128,44 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
+
+    public HNotification JobRescheduledNotification(
+        int receiverUserId,
+        JobInstance originalJobInstance,
+        JobInstance updatedJobInstance,
+        string culture)
+    {
+        return new HNotification
+        {
+            RecieverUserId = receiverUserId,
+            TranslationKey = "Notifications.JobRescheduled",
+            Title = _loc.GetString("Notifications.JobRescheduled.Title", culture),
+            Body = _loc.GetString(
+                "Notifications.JobRescheduled.Body",
+                culture,
+                originalJobInstance.ScheduledDate,
+                originalJobInstance.StartTime,
+                updatedJobInstance.ScheduledDate,
+                updatedJobInstance.StartTime),
+            Type = NotificationType.JobRescheduled,
+            SeniorId = updatedJobInstance.SeniorId,
+            OrderId = updatedJobInstance.OrderId,
+            OrderScheduleId = updatedJobInstance.OrderScheduleId,
+            JobInstanceId = updatedJobInstance.Id,
+            Payload = JsonSerializer.Serialize(new
+            {
+                originalJobInstanceId = originalJobInstance.Id,
+                updatedJobInstanceId = updatedJobInstance.Id,
+                previousDate = originalJobInstance.ScheduledDate,
+                previousStartTime = originalJobInstance.StartTime,
+                previousEndTime = originalJobInstance.EndTime,
+                newDate = updatedJobInstance.ScheduledDate,
+                newStartTime = updatedJobInstance.StartTime,
+                newEndTime = updatedJobInstance.EndTime,
+                studentId = updatedJobInstance.ScheduleAssignment?.StudentId
+            })
+        };
+    }
     public HNotification AdminOrderScheduleCancelledNotification(
    int adminId, OrderSchedule orderSchedule, int seniorId)
     {

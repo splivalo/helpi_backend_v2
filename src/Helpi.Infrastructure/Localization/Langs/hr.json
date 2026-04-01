@@ -36,6 +36,10 @@
             "Title": "Posao otkazan",
             "Body": "Posao na {0} je otkazan"
         },
+        "JobRescheduled": {
+            "Title": "Termin je promijenjen",
+            "Body": "Termin {0} u {1} prebačen je na {2} u {3}"
+        },
         "JobReminder": {
             "Title": "Podsjetnik za posao",
             "Body": "Vaš posao počinje u {0}"

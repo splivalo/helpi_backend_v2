@@ -217,6 +217,10 @@ INotificationFactory notificationFactory,
                 _reassignmentRecordRepository.Detach(reassignmentRecord);
                 await CompleteReassignment(reassignmentRecord.Id, preferedStudentId.Value);
             }
+            else
+            {
+                await NotifyAdminAboutReassignment(reassignmentRecord, order.SeniorId, NotificationType.ReassignmentStarted);
+            }
 
             return reassignmentRecord;
         }
@@ -252,7 +256,7 @@ INotificationFactory notificationFactory,
             }
 
             // Notify relevant parties
-            // await NotifyReassignmentCompletion(reassignmentRecord);
+            await NotifyAdminAboutReassignment(reassignmentRecord, reassignmentRecord.Order!.SeniorId, NotificationType.ReassignmentCompleted);
         }
 
 
@@ -519,7 +523,7 @@ INotificationFactory notificationFactory,
             };
         }
 
-        private async Task NotifyAdminAboutReassignmentStart(ReassignmentRecord reassignmentRecord, int seniorId)
+        private async Task NotifyAdminAboutReassignment(ReassignmentRecord reassignmentRecord, int seniorId, NotificationType type)
         {
             try
             {
@@ -528,7 +532,7 @@ INotificationFactory notificationFactory,
                                             recieverId: adminId,
                                             record: reassignmentRecord,
                                             seniorId: seniorId,
-                                            type: NotificationType.ReassignmentStarted
+                                            type: type
                                             );
 
                 if (notification == null) return;

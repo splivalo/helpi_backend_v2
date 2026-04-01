@@ -361,6 +361,60 @@ IUserRepository userRepository
 
         }
 
+        private async Task NotifyUsersJobInstanceRescheduled(
+            JobInstance originalJobInstance,
+            JobInstance updatedJobInstance,
+            bool notifyAssignedStudent)
+        {
+                try
+                {
+                        var seniorCulture = originalJobInstance.Senior.Contact.LanguageCode ?? "hr";
+                        var seniorNotification = _notificationFactory.JobRescheduledNotification(
+                            receiverUserId: originalJobInstance.Senior.CustomerId,
+                            originalJobInstance: originalJobInstance,
+                            updatedJobInstance: updatedJobInstance,
+                            culture: seniorCulture);
+                        await _notificationService.StoreAndNotifyAsync(seniorNotification);
+
+                        if (!notifyAssignedStudent || originalJobInstance.ScheduleAssignment?.Student == null)
+                        {
+                                return;
+                        }
+
+                        var student = originalJobInstance.ScheduleAssignment.Student;
+                        var studentCulture = student.Contact.LanguageCode ?? "hr";
+                        var studentNotification = _notificationFactory.JobRescheduledNotification(
+                            receiverUserId: student.UserId,
+                            originalJobInstance: originalJobInstance,
+                            updatedJobInstance: updatedJobInstance,
+                            culture: studentCulture);
+                        await _notificationService.StoreAndNotifyAsync(studentNotification);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to notify users about rescheduled job. OriginalJobInstanceId={JobInstanceId}", originalJobInstance.Id);
+                }
+        }
+
+        private async Task NotifyAdminsJobInstanceRescheduled(JobInstance originalJobInstance, JobInstance updatedJobInstance)
+        {
+                try
+                {
+                        var adminIds = await _userRepository.GetAdminIdsAsync();
+                        await _notificationService.StoreAndNotifyAdminsAsync(
+                                adminIds,
+                                adminId => _notificationFactory.JobRescheduledNotification(
+                                    receiverUserId: adminId,
+                                    originalJobInstance: originalJobInstance,
+                                    updatedJobInstance: updatedJobInstance,
+                                    culture: "hr"));
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex, "❌ Failed to notify admins about rescheduled job. OriginalJobInstanceId={JobInstanceId}", originalJobInstance.Id);
+                }
+        }
+
         private async Task<JobInstance> HandleSimpleReschedule(
             JobInstance originalInstance,
             DateOnly? newDate,
@@ -398,6 +452,19 @@ IUserRepository userRepository
                             $"Senior already has another session on {effectiveDate} that overlaps with {effectiveStartTime}-{effectiveEndTime}.");
                 }
 
+                var previousJobState = new JobInstance
+                {
+                        Id = originalInstance.Id,
+                        SeniorId = originalInstance.SeniorId,
+                        Senior = originalInstance.Senior,
+                        OrderId = originalInstance.OrderId,
+                        OrderScheduleId = originalInstance.OrderScheduleId,
+                        ScheduleAssignment = originalInstance.ScheduleAssignment,
+                        ScheduledDate = originalInstance.ScheduledDate,
+                        StartTime = originalInstance.StartTime,
+                        EndTime = originalInstance.EndTime,
+                };
+
                 originalInstance.ScheduledDate = effectiveDate;
                 originalInstance.StartTime = effectiveStartTime;
                 originalInstance.EndTime = effectiveEndTime;
@@ -405,6 +472,8 @@ IUserRepository userRepository
                 originalInstance.RescheduledAt = DateTime.UtcNow;
 
                 await _jobInstanceRepository.UpdateAsync(originalInstance);
+                await NotifyUsersJobInstanceRescheduled(previousJobState, originalInstance, notifyAssignedStudent: true);
+                await NotifyAdminsJobInstanceRescheduled(previousJobState, originalInstance);
 
                 return originalInstance;
         }
@@ -504,6 +573,9 @@ IUserRepository userRepository
                         null,
                         preferedStudentId
                     );
+
+                await NotifyUsersJobInstanceRescheduled(originalInstance, rescheduledInstance, notifyAssignedStudent: false);
+                await NotifyAdminsJobInstanceRescheduled(originalInstance, rescheduledInstance);
 
 
                 return rescheduledInstance;

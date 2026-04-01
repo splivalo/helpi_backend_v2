@@ -36,6 +36,10 @@
             "Title": "Job Cancelled",
             "Body": "Job on {0} cancelled"
         },
+        "JobRescheduled": {
+            "Title": "Session Rescheduled",
+            "Body": "Session on {0} at {1} moved to {2} at {3}"
+        },
         "JobReminder": {
             "Title": "Job Reminder",
             "Body": "Your job starts at {0}"

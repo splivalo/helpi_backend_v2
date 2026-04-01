@@ -36,6 +36,12 @@ namespace Helpi.Application.Common.Interfaces
            OrderSchedule schedule,
            ReassignmentRecord? reassignment = null);
 
+        HNotification JobRescheduledNotification(
+            int receiverUserId,
+            JobInstance originalJobInstance,
+            JobInstance updatedJobInstance,
+            string culture);
+
         HNotification JobCancelledNotification(int recieverId, JobInstance jobInstance, string culture);
         HNotification ScheduleAssignmentCancelledNotification(
         int recieverId, ScheduleAssignment scheduleAssignment, int seniorId, string culture);
