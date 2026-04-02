@@ -253,6 +253,7 @@
 - Reschedule and reassignment notifications — COMPLETE
 - Smooth transition protection — COMPLETE (ReassignmentService won't expire students with next contract)
 - Invoice retry system — COMPLETE (auto Hangfire hourly + admin manual endpoint)
+- Seed data realistic overhaul — COMPLETE (admin user, 4 completed + 5 active + 5 pending, 47 sessions)
 - Ready for frontend-backend integration
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 

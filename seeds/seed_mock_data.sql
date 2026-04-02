@@ -14,9 +14,9 @@
 --   107 Dino  = Expired (3)      — Tue/Thu 09-13, Services: 21,41 (but expired!)
 --
 -- ORDER STATUS MATRIX:
---   1-5, 8-9, 12-15 = Pending (11 orders)
---   6-7      = FullAssigned (2 orders, with ScheduleAssignment rows)
---   10       = Completed (1 order, with completed assignments)
+--   2, 12-15 = Pending (5 orders)
+--   5-9     = FullAssigned (5 orders, with ScheduleAssignment rows + JobInstances)
+--   1, 3, 4, 10 = Completed (4 orders, with completed assignments + JobInstances)
 --   11       = Cancelled (1 order)
 --
 -- DIFFERENTTIMES TEST SCENARIOS (frontend _classifyStudent):
@@ -27,6 +27,20 @@
 -- ============================================
 
 BEGIN;
+
+-- ============================================
+-- 0. ADMIN USER (info@helpi.social / H3lp!5y5t3m5)
+-- ============================================
+INSERT INTO "AspNetUsers" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd", "LockoutEnabled", "AccessFailedCount", "UserType", "CreatedAt", "UpdatedAt", "IsSuspended")
+VALUES
+(1, 'info@helpi.social', 'INFO@HELPI.SOCIAL', 'info@helpi.social', 'INFO@HELPI.SOCIAL', true, 'AQAAAAIAAYagAAAAELi1OW97jKFjzNAJPxkkJcDzVCiuq65wVchqFhNIPfSCQZ1wOdI60WBmmIFllcaWwA==', 'R3GOCBGRCUB4RY7QBXNC3WFLFLV534OD', 'b93bc3c5-7611-4ff3-a699-0c2f7ecdd074', '+385991234567', false, false, NULL, true, 0, 0, '2025-10-01', '2025-10-01', false);
+
+INSERT INTO "ContactInfos" ("Id", "FullName", "DateOfBirth", "Phone", "LanguageCode", "Email", "Gender", "GooglePlaceId", "FullAddress", "Latitude", "Longitude", "CityId", "CityName", "State", "PostalCode", "Country", "CreatedAt")
+VALUES
+(1, 'Helpi Admin', '1990-01-01', '+385991234567', 'hr', 'info@helpi.social', 0, 'ChIJplaceid00', 'Ilica 1, Zagreb', 45.8131, 15.9775, 2, 'Zagreb', 'Zagreb', '10000', 'Croatia', '2025-10-01');
+
+INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
+SELECT 1, "Id" FROM "AspNetRoles" WHERE "NormalizedName" = 'ADMIN';
 
 -- ============================================
 -- 1. USERS - STUDENTS (7 studenata)
@@ -48,13 +62,14 @@ VALUES
 -- ============================================
 -- Gender: 0=Male, 1=Female
 
--- Cities (required FK for ContactInfos)
+-- Cities (required FK for ContactInfos — skip if already seeded by backend)
 INSERT INTO "Cities" ("Id", "GooglePlaceId", "Name", "PostalCode", "IsServiced", "CreatedAt")
 VALUES
 (1, 'ChIJSx5MG-zaSRMRGkfexFjHAAQ', 'Split', '21000', true, '2025-01-01'),
 (2, 'ChIJ0YaYlvBKZUcRIDqSxsEpBDg', 'Zagreb', '10000', true, '2025-01-01'),
 (3, 'ChIJkUKS6XFbZUcR8MFjTIE3M3g', 'Rijeka', '51000', true, '2025-01-01'),
-(4, 'ChIJPc9dJ37MQBMRKqTBG87xLwQ', 'Osijek', '31000', true, '2025-01-01');
+(4, 'ChIJPc9dJ37MQBMRKqTBG87xLwQ', 'Osijek', '31000', true, '2025-01-01')
+ON CONFLICT ("Id") DO NOTHING;
 
 SELECT setval('"Cities_Id_seq"', (SELECT MAX("Id") FROM "Cities"));
 
@@ -160,29 +175,29 @@ VALUES
 -- Jednokratne narudzbe
 INSERT INTO "Orders" ("Id", "SeniorId", "Status", "IsRecurring", "RecurrencePattern", "StartDate", "EndDate", "Notes", "CreatedAt", "UpdatedAt")
 VALUES
-(1, 1, 1, false, NULL, '2026-03-20', '2026-03-20', 'Mlijeko i kruh iz Konzuma, lijekove iz ljekarne.', '2026-03-01 10:30:00', '2026-03-01 10:30:00'),
+(1, 1, 3, false, NULL, '2026-03-20', '2026-03-20', 'Mlijeko i kruh iz Konzuma, lijekove iz ljekarne.', '2026-03-01 10:30:00', '2026-03-20 14:00:00'),
 (2, 3, 1, false, NULL, '2026-03-22', '2026-03-22', 'Pratnja na kontrolu kod lijecnika.', '2026-03-03 11:00:00', '2026-03-03 11:00:00'),
-(3, 1, 1, false, NULL, '2026-03-25', '2026-03-25', 'Kupovina namirnica za cijeli tjedan.', '2026-03-05 09:00:00', '2026-03-05 09:00:00'),
-(4, 3, 1, false, NULL, '2026-04-01', '2026-04-01', 'Setnja u parku i druzenje.', '2026-03-05 10:00:00', '2026-03-05 10:00:00'),
-(5, 6, 1, false, NULL, '2026-04-10', '2026-04-10', 'Druzenje i razgovor uz kavu.', '2026-03-05 11:00:00', '2026-03-05 11:00:00');
+(3, 1, 3, false, NULL, '2026-03-25', '2026-03-25', 'Kupovina namirnica za cijeli tjedan.', '2026-03-05 09:00:00', '2026-03-25 18:00:00'),
+(4, 3, 3, false, NULL, '2026-04-01', '2026-04-01', 'Setnja u parku i druzenje.', '2026-03-05 10:00:00', '2026-04-01 13:00:00'),
+(5, 6, 2, false, NULL, '2026-04-10', '2026-04-10', 'Druzenje i razgovor uz kavu.', '2026-03-05 11:00:00', '2026-03-05 11:00:00');
 
 -- Ponavljajuce narudzbe
 INSERT INTO "Orders" ("Id", "SeniorId", "Status", "IsRecurring", "RecurrencePattern", "StartDate", "EndDate", "Notes", "CreatedAt", "UpdatedAt")
 VALUES
 (6, 2, 2, true, 0, '2026-03-17', '2026-06-30', 'Pomoc s ciscenjem i druzenje.', '2026-03-01 14:00:00', '2026-03-01 14:00:00'),
 (7, 3, 2, true, 0, '2026-03-18', '2026-06-30', 'Setnja i druzenje.', '2026-02-20 09:00:00', '2026-02-20 09:00:00'),
-(8, 4, 1, true, 0, '2026-03-17', '2026-04-30', 'Pratnja do lijecnika svaki utorak.', '2026-02-15 11:30:00', '2026-02-15 11:30:00'),
-(9, 1, 1, true, 0, '2026-03-17', '2026-05-31', 'Kupovina i druzenje ponedjeljkom i cetvrtkom.', '2026-02-25 10:00:00', '2026-02-25 10:00:00'),
-(10, 2, 3, true, 0, '2026-01-06', '2026-02-28', 'Setnja u Maksimiru - zavrseno.', '2025-12-20 14:00:00', '2026-02-28 18:00:00'),
-(11, 4, 4, true, 0, '2026-03-17', '2026-06-30', 'Pomoc s ciscenjem - otkazano.', '2026-03-04 08:30:00', '2026-03-10 09:00:00');
+(8, 4, 2, true, 0, '2026-03-17', '2026-04-30', 'Pratnja do lijecnika svaki utorak.', '2026-02-15 11:30:00', '2026-02-15 11:30:00'),
+(9, 1, 2, true, 0, '2026-03-17', '2026-05-31', 'Kupovina i druzenje ponedjeljkom i cetvrtkom.', '2026-02-25 10:00:00', '2026-02-25 10:00:00'),
+(10, 2, 3, true, 0, '2026-01-06', '2026-02-28', 'Setnja u Maksimiru utorkom i petkom.', '2025-12-20 14:00:00', '2026-02-28 18:00:00'),
+(11, 4, 4, true, 0, '2026-03-17', '2026-06-30', 'Pomoc s ciscenjem utorkom i cetvrtkom.', '2026-03-04 08:30:00', '2026-03-10 09:00:00');
 
 -- differentTimes test orders (recurring, multiple schedules, partial student overlaps)
 INSERT INTO "Orders" ("Id", "SeniorId", "Status", "IsRecurring", "RecurrencePattern", "StartDate", "EndDate", "Notes", "CreatedAt", "UpdatedAt")
 VALUES
-(12, 5, 1, true, 0, '2026-03-23', '2026-06-30', 'Setnja ponedjeljkom i cetvrtkom ujutro.', '2026-03-10 10:00:00', '2026-03-10 10:00:00'),
-(13, 4, 1, true, 0, '2026-03-23', '2026-06-30', 'Setnja i druzenje pon+cet oko podneva.', '2026-03-10 11:00:00', '2026-03-10 11:00:00'),
-(14, 6, 1, true, 0, '2026-03-17', '2026-05-31', 'Druzenje utorkom i subotom ujutro.', '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
-(15, 3, 1, true, 0, '2026-04-06', '2026-06-30', 'Test differentTimes - pon+uto popodne.', NOW(), NOW());
+(12, 5, 1, true, 0, '2026-03-23', '2026-06-30', 'Pomoc u kucanstvu ponedjeljkom i cetvrtkom ujutro.', '2026-03-10 10:00:00', '2026-03-10 10:00:00'),
+(13, 4, 1, true, 0, '2026-03-23', '2026-06-30', 'Druzenje i razgovor ponedjeljkom i cetvrtkom oko podneva.', '2026-03-10 11:00:00', '2026-03-10 11:00:00'),
+(14, 6, 1, true, 0, '2026-03-17', '2026-05-31', 'Kupovina utorkom i subotom ujutro.', '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
+(15, 3, 1, true, 0, '2026-04-06', '2026-06-30', 'Druzenje i razgovor ponedjeljkom i utorkom.', NOW(), NOW());
 
 -- ============================================
 -- 10. ORDER SCHEDULES
@@ -353,6 +368,37 @@ VALUES
 (5, 13, 10, 104, 3, false, '2026-01-02 08:00:00', '2026-01-02 08:00:00', '2026-02-28 18:00:00'),
 (6, 14, 10, 104, 3, false, '2026-01-02 08:05:00', '2026-01-02 08:05:00', '2026-02-28 18:00:00');
 
+-- Order 1 (Completed, one-time) → Ana (102) assigned + completed, Thu 10-12
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
+VALUES
+(7, 1, 1, 102, 3, false, '2026-03-10 10:00:00', '2026-03-10 10:00:00', '2026-03-20 12:00:00');
+
+-- Order 3 (Completed, one-time) → Petra (104) assigned + completed, Tue 14-17
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
+VALUES
+(8, 3, 3, 104, 3, false, '2026-03-12 09:00:00', '2026-03-12 09:00:00', '2026-03-25 17:00:00');
+
+-- Order 4 (Completed, one-time) → Luka (101) assigned + completed, Wed 10-12
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
+VALUES
+(9, 4, 4, 101, 3, false, '2026-03-12 10:00:00', '2026-03-12 10:00:00', '2026-04-01 12:00:00');
+
+-- Order 5 (FullAssigned, one-time) → Luka (101) assigned, Fri 08-11
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
+VALUES
+(10, 5, 5, 101, 0, false, '2026-03-15 08:00:00', '2026-03-15 08:00:00');
+
+-- Order 8 (FullAssigned, recurring) → Petra (104) assigned, Tue 08:30-12:30
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
+VALUES
+(11, 10, 8, 104, 0, false, '2026-03-10 11:00:00', '2026-03-10 11:00:00');
+
+-- Order 9 (FullAssigned, recurring) → Petra (104) assigned, Mon 09-11 + Thu 09-11
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
+VALUES
+(12, 11, 9, 104, 0, false, '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
+(13, 12, 9, 104, 0, false, '2026-03-10 12:05:00', '2026-03-10 12:05:00');
+
 -- ============================================
 -- 15. JOB INSTANCES (sessions)
 -- ============================================
@@ -403,6 +449,51 @@ VALUES
 (27, 2, 202, 10, 13, 5, '2026-02-24', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0),
 (28, 2, 202, 10, 14, 6, '2026-02-27', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0);
 
+-- Order 1 (Ana=102, Senior=1, Customer=201): one-time Thu 2026-03-20 10-12 (Completed)
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(29, 1, 201, 1, 1, 7, '2026-03-20', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0);
+
+-- Order 3 (Petra=104, Senior=1, Customer=201): one-time Tue 2026-03-25 14-17 (Completed)
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(30, 1, 201, 3, 3, 8, '2026-03-25', '14:00:00','17:00:00', 2, false, false, 8.00, 30, 70, 0);
+
+-- Order 4 (Luka=101, Senior=3, Customer=203): one-time Wed 2026-04-01 10-12 (Completed)
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(31, 3, 203, 4, 4, 9, '2026-04-01', '10:00:00','12:00:00', 2, false, false, 8.00, 30, 70, 0);
+
+-- Order 5 (Luka=101, Senior=6, Customer=206): one-time Fri 2026-04-10 08-11
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(32, 6, 206, 5, 5, 10, '2026-04-10', '08:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0);
+
+-- Order 8 (Petra=104, Senior=4, Customer=204): Tue 08:30-12:30, Ozujak-Travanj 2026
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+(33, 4, 204, 8, 10, 11, '2026-03-17', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(34, 4, 204, 8, 10, 11, '2026-03-24', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(35, 4, 204, 8, 10, 11, '2026-03-31', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(36, 4, 204, 8, 10, 11, '2026-04-07', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(37, 4, 204, 8, 10, 11, '2026-04-14', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(38, 4, 204, 8, 10, 11, '2026-04-21', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0),
+(39, 4, 204, 8, 10, 11, '2026-04-28', '08:30:00','12:30:00', 0, false, false, 8.00, 30, 70, 0);
+
+-- Order 9 (Petra=104, Senior=1, Customer=201): Mon 09-11 + Thu 09-11, Ozujak-Travanj 2026
+INSERT INTO "JobInstances" ("Id","SeniorId","CustomerId","OrderId","OrderScheduleId","ScheduleAssignmentId","ScheduledDate","StartTime","EndTime","Status","NeedsSubstitute","IsRescheduleVariant","HourlyRate","CompanyPercentage","ServiceProviderPercentage","PaymentStatus")
+VALUES
+-- Mon
+(40, 1, 201, 9, 11, 12, '2026-03-17', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(41, 1, 201, 9, 11, 12, '2026-03-24', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(42, 1, 201, 9, 11, 12, '2026-03-31', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(43, 1, 201, 9, 11, 12, '2026-04-06', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+-- Thu
+(44, 1, 201, 9, 12, 13, '2026-03-19', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(45, 1, 201, 9, 12, 13, '2026-03-26', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(46, 1, 201, 9, 12, 13, '2026-04-02', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0),
+(47, 1, 201, 9, 12, 13, '2026-04-09', '09:00:00','11:00:00', 0, false, false, 8.00, 30, 70, 0);
+
 -- ============================================
 -- 16. RESET SEQUENCES
 -- ============================================
@@ -431,13 +522,22 @@ COMMIT;
 -- 6 customera (User 201-206) → 6 seniora (Senior 1-6)
 --
 -- 14 narudzbi:
---   Pending(1): Orders 1,2,3,4,5,8,9,12,13,14 (10 orders)
---   FullAssigned(2): Orders 6,7 (Ana→6, Ivan→7)
---   Completed(3): Order 10 (Petra completed)
+--   Pending(1): Orders 2,12,13,14,15 (5 orders)
+--   FullAssigned(2): Orders 5,6,7,8,9 (5 orders)
+--   Completed(3): Orders 1,3,4,10 (4 orders — 3 jednokratne + 1 ponavljajuca)
 --   Cancelled(4): Order 11
 --
--- 24 rasporeda (OrderSchedule 1-24)
--- 6 dodjela (ScheduleAssignment 1-6)
+-- 25 rasporeda (OrderSchedule 1-25)
+-- 13 dodjela (ScheduleAssignment 1-13)
+-- 47 job instanci (JobInstance 1-47)
+--
+-- REALISTICNA DISTRIBUCIJA PO SENIORU:
+--   Ivka (Sr1):   1 aktivna (#9), 2 zavrsene (#1, #3)
+--   Marija (Sr2): 1 aktivna (#6), 1 zavrsena (#10)
+--   Josip (Sr3):  1 aktivna (#7), 1 zavrsena (#4), 1 u obradi (#2 ned.), 1 u obradi (#15)
+--   Kata (Sr4):   1 aktivna (#8), 1 u obradi (#13), 1 otkazana (#11)
+--   Franjo (Sr5): 1 u obradi (#12)
+--   Ankica (Sr6): 1 aktivna (#5), 1 u obradi (#14)
 -- 15 student-servisa
 -- 20 availability slotova
 --
