@@ -12,5 +12,6 @@ public interface IPaymentTransactionRepository
     Task UpdateAsync(PaymentTransaction transaction);
     Task DeleteAsync(PaymentTransaction transaction);
     Task<PaymentTransaction?> GetByPaymentIntentIdAsync(string paymentIntentId);
+    Task<IEnumerable<PaymentTransaction>> GetFailedInvoiceTransactionsAsync();
 
 }

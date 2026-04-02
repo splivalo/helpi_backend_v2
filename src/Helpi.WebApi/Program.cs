@@ -224,6 +224,7 @@ using (var scope = app.Services.CreateScope())
     jobInstanceJobs.GenerateFutureJobInstances();
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
+    jobInstanceJobs.RetryFailedInvoices();
 }
 
 // ------------------------------------------------------------

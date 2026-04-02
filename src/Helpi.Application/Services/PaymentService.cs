@@ -171,7 +171,7 @@ IUserRepository userRepository
             return;
         }
 
-        await HandlePaymentSuccess(jobInstance, paymentProfile!);
+        await HandlePaymentSuccess(jobInstance, paymentProfile!, transaction);
 
 
     }
@@ -258,7 +258,7 @@ IUserRepository userRepository
         }
     }
 
-    private async Task HandlePaymentSuccess(JobInstance jobInstance, PaymentProfile paymentProfile)
+    private async Task HandlePaymentSuccess(JobInstance jobInstance, PaymentProfile paymentProfile, PaymentTransaction transaction)
     {
         try
         {
@@ -270,9 +270,24 @@ IUserRepository userRepository
             if (customer == null)
             {
                 _logger.LogWarning("❌ [Failed] get customer in payment service Customer: {customerId}", jobInstance.CustomerId);
+                transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+                await _transactionRepository.UpdateAsync(transaction);
+                return;
             }
 
             var invoice = await _minimaxService.ProcessIssuedInvoice(jobInstance, customer!.Contact, paymentProfile!);
+
+            if (invoice == null)
+            {
+                _logger.LogWarning("❌ [Failed] Minimax invoice creation for transaction {TransactionId}", transaction.Id);
+                transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+                await _transactionRepository.UpdateAsync(transaction);
+                return;
+            }
+
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Created;
+            transaction.MinimaxInvoiceId = invoice.IssuedInvoiceId;
+            await _transactionRepository.UpdateAsync(transaction);
 
             var customerEmail = customer.Contact.Email;
             var culture = customer.Contact.LanguageCode;
@@ -283,8 +298,122 @@ IUserRepository userRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ [Failed] [HandlePaymentSuccess]");
+            _logger.LogError(ex, "❌ [Failed] [HandlePaymentSuccess] for transaction {TransactionId}", transaction.Id);
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+            await _transactionRepository.UpdateAsync(transaction);
+        }
+    }
 
+    /// <summary>
+    /// Retries Minimax invoice creation for a paid transaction where invoice failed.
+    /// Safe to call multiple times — checks for existing invoice before creating.
+    /// </summary>
+    public async Task<bool> RetryInvoiceAsync(int transactionId)
+    {
+        var transaction = await _transactionRepository.GetByIdAsync(transactionId);
+        if (transaction == null)
+        {
+            _logger.LogWarning("❌ Transaction {Id} not found for invoice retry", transactionId);
+            return false;
+        }
+
+        if (transaction.Status != PaymentStatus.Paid)
+        {
+            _logger.LogWarning("⚠️ Transaction {Id} status is {Status}, not Paid — skipping", transactionId, transaction.Status);
+            return false;
+        }
+
+        if (transaction.InvoiceCreationStatus == InvoiceCreationStatus.Created)
+        {
+            _logger.LogInformation("✅ Transaction {Id} already has invoice (MinimaxId={MinimaxId}) — skipping",
+                transactionId, transaction.MinimaxInvoiceId);
+            return true;
+        }
+
+        transaction.InvoiceRetryCount++;
+        await _transactionRepository.UpdateAsync(transaction);
+
+        var paymentProfile = await _paymentProfileRepo.GetStipePaymentByUserIdAsync(transaction.CustomerId);
+        if (paymentProfile == null)
+        {
+            _logger.LogWarning("❌ No PaymentProfile for customer {CustomerId}", transaction.CustomerId);
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+            await _transactionRepository.UpdateAsync(transaction);
+            return false;
+        }
+
+        var jobInstance = await _jobInstanceRepo.LoadJobInstanceWithIncludes(transaction.JobInstanceId, new SessionIncludeOptions
+        {
+            Order = true,
+            OrderPaymentMethod = true,
+            Assignment = true,
+            AssignmentStudent = true,
+        });
+
+        if (jobInstance == null)
+        {
+            _logger.LogWarning("❌ JobInstance {Id} not found for invoice retry", transaction.JobInstanceId);
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+            await _transactionRepository.UpdateAsync(transaction);
+            return false;
+        }
+
+        var customer = await _customerRepo.LoadCustomerWithIncludes(transaction.CustomerId, new CustomerIncludeOptions
+        {
+            Contact = true
+        });
+
+        if (customer == null)
+        {
+            _logger.LogWarning("❌ Customer {Id} not found for invoice retry", transaction.CustomerId);
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+            await _transactionRepository.UpdateAsync(transaction);
+            return false;
+        }
+
+        var invoice = await _minimaxService.ProcessIssuedInvoice(jobInstance, customer.Contact, paymentProfile);
+
+        if (invoice == null)
+        {
+            _logger.LogWarning("❌ Invoice retry failed for transaction {Id} (attempt {Count})", transactionId, transaction.InvoiceRetryCount);
+            transaction.InvoiceCreationStatus = InvoiceCreationStatus.Failed;
+            await _transactionRepository.UpdateAsync(transaction);
+            return false;
+        }
+
+        transaction.InvoiceCreationStatus = InvoiceCreationStatus.Created;
+        transaction.MinimaxInvoiceId = invoice.IssuedInvoiceId;
+        await _transactionRepository.UpdateAsync(transaction);
+
+        _logger.LogInformation("✅ Invoice retry succeeded for transaction {Id} — MinimaxId={MinimaxId}",
+            transactionId, invoice.IssuedInvoiceId);
+
+        var customerEmail = customer.Contact.Email;
+        var culture = customer.Contact.LanguageCode;
+        await EmailInvoiceToCustomer(invoice, customerEmail!, culture);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Called by Hangfire — retries all failed invoices.
+    /// </summary>
+    public async Task RetryFailedInvoicesAsync()
+    {
+        var failedTransactions = await _transactionRepository.GetFailedInvoiceTransactionsAsync();
+        var count = failedTransactions.Count();
+
+        if (count == 0)
+        {
+            _logger.LogInformation("✅ No failed invoices to retry.");
+            return;
+        }
+
+        _logger.LogInformation("🔁 Retrying {Count} failed invoice(s)...", count);
+
+        foreach (var transaction in failedTransactions)
+        {
+            await RetryInvoiceAsync(transaction.Id);
         }
     }
 

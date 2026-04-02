@@ -57,4 +57,15 @@ public class PaymentTransactionRepository : IPaymentTransactionRepository
                           .FirstOrDefaultAsync(pt => pt.ProcessPaymentId == paymentIntentId);
         }
 
+        public async Task<IEnumerable<PaymentTransaction>> GetFailedInvoiceTransactionsAsync()
+        {
+                return await _context.PaymentTransactions
+                    .Where(pt => pt.Status == PaymentStatus.Paid
+                              && pt.InvoiceCreationStatus == InvoiceCreationStatus.Failed
+                              && pt.InvoiceRetryCount < pt.MaxRetries)
+                    .Include(pt => pt.JobInstance)
+                    .Include(pt => pt.Customer)
+                    .ToListAsync();
+        }
+
 }

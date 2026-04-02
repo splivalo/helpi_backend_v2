@@ -20,7 +20,7 @@ public class DashboardController : ControllerBase
     [HttpGet("admin")]
     public async Task<ActionResult<List<DashboardTileData>>> GetAdminDashboard()
     {
-        return Ok(await _dashboardService.GetDashboardDataAsync());
+        return Ok(await _dashboardService.GetAdminDashboardAsync());
     }
 
     [HttpGet("student/{studentId}")]

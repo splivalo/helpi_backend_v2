@@ -28,6 +28,11 @@ namespace Helpi.Domain.Entities
 
         public string? ProcessPaymentId { get; set; } // stripe payment_intent_id
 
+        // Minimax invoice tracking
+        public InvoiceCreationStatus InvoiceCreationStatus { get; set; } = InvoiceCreationStatus.NotAttempted;
+        public int? MinimaxInvoiceId { get; set; }
+        public byte InvoiceRetryCount { get; set; } = 0;
+
         [MaxLength(255)]
         public string? GatewayId { get; set; }
 

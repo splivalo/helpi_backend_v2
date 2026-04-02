@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-01
+> Zadnja izmjena: 2026-04-02
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system
 
 ---
 
@@ -77,13 +77,19 @@
 
 ### Task 8: Dashboard Per-Role ✅
 
-- Admin: `GET /api/dashboard/admin` — existing 12 tiles, restricted to Admin role
+- Admin: `GET /api/dashboard/admin` — cleaned to 4 v2 KPI tiles only:
+  - `adminProcessingOrders`
+  - `adminActiveOrders`
+  - `adminTotalStudents`
+  - `adminTotalSeniors`
+- Dashboard tile `type` i `changeType` sada izlaze kao string enum nazivi, tako da frontend više nije vezan uz krhke numeričke enum vrijednosti
 - Student: `GET /api/dashboard/student/{studentId}` — 6 tiles:
   - `upcomingSessions`, `completedSessionsStudent`, `totalEarnings`, `myRating`, `contractDaysRemaining`, `workedHoursStudent`
 - Senior: `GET /api/dashboard/senior/{seniorId}` — 4 tiles:
   - `activeOrders`, `completedSessionsSenior`, `totalSpent`, `myRatingSenior`
 - Old `GET /api/dashboard` removed, replaced with role-specific endpoints
-- Added 11 new DashboardTileType enum values
+- Old placeholder/admin-v1 tile builders removed from `DashboardService`
+- Legacy admin `DashboardTileType` enum članovi uklonjeni nakon stabilizacije string contracta
 - Added ISeniorRepository dependency to DashboardService
 - Current month vs last month comparison with percentage change
 - **Files modified:** 4 files (enums.cs, DashboardController, IDashboardService, DashboardService)
@@ -204,6 +210,37 @@
 1. `20260313130245_AddSundayHourlyRate` — SundayHourlyRate column + pricing history columns
 2. `20260313133641_AddBidirectionalReviews` — ReviewType, Senior rating fields, one-to-many relationship
 3. `20260313140442_AddPromoCodeSystem` — PromoCodes + PromoCodeUsages tables, Order.PromoCodeId FK
+4. `20260402085244_AddInvoiceTrackingFields` — InvoiceCreationStatus, MinimaxInvoiceId, InvoiceRetryCount on PaymentTransactions
+
+---
+
+## Faza 7 — Invoice Retry System ✅ (2026-04-02)
+
+### Task 19: Invoice Creation Tracking ✅
+
+- **Problem:** Kad Stripe uspješno naplati, a Minimax API padne (server down), invoice se tiho izgubi — `HandlePaymentSuccess` progutava exception bez zapisa
+- **Novo enum:** `InvoiceCreationStatus { NotAttempted, Created, Failed }` u `enums.cs`
+- **Nova polja na `PaymentTransaction`:**
+  - `InvoiceCreationStatus` — prati je li Minimax invoice kreiran
+  - `MinimaxInvoiceId` — sprema Minimax invoice ID (zaštita od duplikata)
+  - `InvoiceRetryCount` — broji pokušaje (max 3)
+- **Fix `HandlePaymentSuccess`:** Sad zapisuje `Failed` status ako Minimax padne, umjesto da tiho proguta error
+- **Migration:** `20260402085244_AddInvoiceTrackingFields`
+
+### Task 20: Invoice Auto-Retry ✅
+
+- **`RetryInvoiceAsync(transactionId)`** — siguran retry: provjeri `Status == Paid` (ne ponavlja Stripe), provjeri `InvoiceCreationStatus == Created` (ne kreira dupli invoice)
+- **`RetryFailedInvoicesAsync()`** — Hangfire poziva, iterira sve `Paid + Failed + RetryCount < 3`
+- **Hangfire job:** `retry-failed-invoices` — trči svaki sat na :15
+- **Registered u `Program.cs`** i `IJobInstanceJobs` interface
+
+### Task 21: Admin Invoice Management Endpoint ✅
+
+- **Novi controller:** `AdminPaymentController` (`api/admin/payments`)
+- `POST /api/admin/payments/{id}/retry-invoice` — ručni retry za specifičnu transakciju
+- `GET /api/admin/payments/failed-invoices` — lista svih failed invoicea
+- Oba endpointa `[Authorize(Roles = "Admin")]`
+- **Files:** 10 modified/created across Domain, Application, Infrastructure, WebApi
 
 ---
 
@@ -215,6 +252,7 @@
 - Contract renewal auto-trigger — COMPLETE (JobInstances generated on upload)
 - Reschedule and reassignment notifications — COMPLETE
 - Smooth transition protection — COMPLETE (ReassignmentService won't expire students with next contract)
+- Invoice retry system — COMPLETE (auto Hangfire hourly + admin manual endpoint)
 - Ready for frontend-backend integration
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 

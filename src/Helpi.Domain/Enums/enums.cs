@@ -159,6 +159,16 @@ namespace Helpi.Domain.Enums
         Overdue
     }
 
+    /// <summary>
+    /// Tracks whether the Minimax invoice was successfully created for a paid transaction.
+    /// </summary>
+    public enum InvoiceCreationStatus
+    {
+        NotAttempted,
+        Created,
+        Failed
+    }
+
     public enum EmailStatus
     {
         Queued,
@@ -217,20 +227,6 @@ namespace Helpi.Domain.Enums
 
     public enum DashboardTileType
     {
-        // Admin tiles
-        uncoveredOrders,
-        expiredContracts,
-        newNotifications,
-        newMessages,
-        studentCount,
-        invalidContracts,
-        reviewCount,
-        averageReview,
-        userCount,
-        orderCount,
-        completedOrders,
-        workedHours,
-
         // Student tiles
         upcomingSessions,
         completedSessionsStudent,
@@ -244,7 +240,13 @@ namespace Helpi.Domain.Enums
         completedSessionsSenior,
         totalSpent,
         myRatingSenior,
-        activeOrders
+        activeOrders,
+
+        // Admin v2 tiles
+        adminProcessingOrders,
+        adminActiveOrders,
+        adminTotalStudents,
+        adminTotalSeniors
     }
 
     public enum ChangeType

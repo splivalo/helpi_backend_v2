@@ -32,4 +32,12 @@ public class JobInstanceJobs : IJobInstanceJobs
         Cron.Daily(1, 30));
     }
 
+    public void RetryFailedInvoices()
+    {
+        RecurringJob.AddOrUpdate<IPaymentService>(
+        "retry-failed-invoices",
+        s => s.RetryFailedInvoicesAsync(),
+        Cron.Hourly(15)); // Every hour at :15
+    }
+
 }
