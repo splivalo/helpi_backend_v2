@@ -63,5 +63,8 @@ namespace Helpi.Application.Common.Interfaces
 
         HNotification UserDeletedNotification(int receiverUserId, int deletedUserId, string deletedUserName, NotificationType type);
         HNotification AdminNewOrderNotification(int adminId, Order order);
+
+        HNotification AvailabilityChangedNotification(int adminId, string studentName, int orderId, string scheduleDescription);
+        HNotification OrderBackToProcessingNotification(int seniorUserId, int orderId, string culture);
     }
 }

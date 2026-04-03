@@ -294,7 +294,7 @@ public class OrdersService
                 }
         }
 
-        public async Task<bool> CancelOrderAsync(int orderId, OrderCancelDto cancelDto, bool isAdmin = false)
+        public async Task<bool> CancelOrderAsync(int orderId, OrderCancelDto cancelDto, bool isAdmin = false, string callerRole = "")
         {
                 try
                 {
@@ -316,7 +316,7 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
-                        // v2: Non-admin users cannot cancel if any upcoming session starts within 24h
+                        // v2: Role-based cancel cutoff — Senior=1h, Student=6h, Admin=anytime
                         if (!isAdmin)
                         {
                                 var now = DateTime.UtcNow;
@@ -329,9 +329,15 @@ public class OrdersService
                                         .OrderBy(dt => dt)
                                         .FirstOrDefault();
 
-                                if (nearestUpcoming != default && nearestUpcoming <= now.AddHours(24))
+                                var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
+                                var cutoffHours = isSenior ? 1 : 6;
+
+                                if (nearestUpcoming != default && nearestUpcoming <= now.AddHours(cutoffHours))
                                 {
-                                        throw new DomainException("Cannot cancel order — the next session starts within 24 hours");
+                                        var msg = isSenior
+                                                ? "Cannot cancel order — the next session starts within 1 hour"
+                                                : "Cannot cancel order — the next session starts within 6 hours";
+                                        throw new DomainException(msg);
                                 }
                         }
 

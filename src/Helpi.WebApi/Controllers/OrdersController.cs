@@ -84,7 +84,8 @@ public class OrdersController : ControllerBase
                 try
                 {
                         var isAdmin = User.IsInRole("Admin");
-                        var result = await _ordersService.CancelOrderAsync(id, cancelDto, isAdmin);
+                        var callerRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+                        var result = await _ordersService.CancelOrderAsync(id, cancelDto, isAdmin, callerRole);
                         return result ? Ok() : BadRequest();
                 }
                 catch (DomainException ex)

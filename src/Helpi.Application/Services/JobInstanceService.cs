@@ -8,6 +8,7 @@ using Helpi.Application.Interfaces.BackgroundJobs;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -609,7 +610,7 @@ IUserRepository userRepository
 
 
 
-        public async Task<SessionDto?> CancelJobInstance(int jobInstanceId)
+        public async Task<SessionDto?> CancelJobInstance(int jobInstanceId, bool isAdmin = false, string callerRole = "")
         {
                 try
                 {
@@ -625,6 +626,22 @@ IUserRepository userRepository
                                 throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
                         }
 
+                        // v2: Role-based cancel cutoff — Senior=1h, Student=6h, Admin=anytime
+                        if (!isAdmin)
+                        {
+                                var sessionStart = job.ScheduledDate.ToDateTime(job.StartTime);
+                                var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
+                                var cutoffHours = isSenior ? 1 : 6;
+
+                                if (sessionStart <= DateTime.UtcNow.AddHours(cutoffHours))
+                                {
+                                        var msg = isSenior
+                                                ? "Cannot cancel session — it starts within 1 hour"
+                                                : "Cannot cancel session — it starts within 6 hours";
+                                        throw new DomainException(msg);
+                                }
+                        }
+
                         job.Status = JobInstanceStatus.Cancelled;
 
                         await _jobInstanceRepository.UpdateAsync(job);
@@ -638,6 +655,10 @@ IUserRepository userRepository
                         await NotifyAdminsJobInstanceCancelled(job);
 
                         return _mapper.Map<SessionDto>(job);
+                }
+                catch (DomainException)
+                {
+                        throw;
                 }
                 catch (Exception ex)
                 {

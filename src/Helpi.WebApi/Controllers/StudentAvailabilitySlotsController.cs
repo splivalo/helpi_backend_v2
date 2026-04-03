@@ -73,6 +73,14 @@ public class StudentAvailabilitySlotsController : ControllerBase
                         var slots = await _service.UpdateSlotsAsync(dtos);
                         return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, slots);
                 }
+                catch (DomainException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "CANCEL_CUTOFF",
+                                Message = ex.Message,
+                        });
+                }
                 catch (ActiveAssignmentException ex)
                 {
                         return BadRequest(new
@@ -102,6 +110,14 @@ public class StudentAvailabilitySlotsController : ControllerBase
 
                         await _service.DeleteSlotsAsync(dtos);
                         return NoContent();
+                }
+                catch (DomainException ex)
+                {
+                        return BadRequest(new
+                        {
+                                Code = "CANCEL_CUTOFF",
+                                Message = ex.Message,
+                        });
                 }
                 catch (ActiveAssignmentException ex)
                 {

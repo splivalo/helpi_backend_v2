@@ -212,7 +212,8 @@ IUserRepository userRepository
         if (expiredButNotMarked)
         {
             student.Status = StudentStatus.Expired;
-            await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+            // v2: NO automatic reassignment — admin manually reassigns via UI
+            // Admin already gets contract-expired notification below
             await _studentRepo.UpdateAsync(student);
             // send initial expired notification (day 0)
             if (eval.DaysSinceExpiry == 0 || eval.DaysSinceExpiry == null)

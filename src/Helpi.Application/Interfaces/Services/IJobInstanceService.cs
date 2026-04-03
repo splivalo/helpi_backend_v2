@@ -29,7 +29,7 @@ public interface IJobInstanceService
             int? preferedStudentId,
             bool reassignStudent,
             int requestedByUserId);
-    Task<SessionDto?> CancelJobInstance(int jobInstanceId);
+    Task<SessionDto?> CancelJobInstance(int jobInstanceId, bool isAdmin = false, string callerRole = "");
     Task<SessionDto?> ReactivateJobInstance(int jobInstanceId);
 
 }

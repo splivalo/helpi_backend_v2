@@ -103,6 +103,14 @@
         "NewOrder": {
             "Title": "New Order Created",
             "Body": "A new order has been created"
+        },
+        "AvailabilityChanged": {
+            "Title": "Student Availability Changed",
+            "Body": "{0}"
+        },
+        "OrderBackToProcessing": {
+            "Title": "Order Processing",
+            "Body": "Your order is currently being processed. We will contact you shortly with more information."
         }
     },
     "Emails": {

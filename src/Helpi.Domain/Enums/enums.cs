@@ -114,7 +114,8 @@ namespace Helpi.Domain.Enums
         StudentContractExpired,
         SeniorCanceled,
         SystemTerminated,
-        AdminIntervention
+        AdminIntervention,
+        AvailabilityConflict
     }
 
     public enum JobInstanceStatus
@@ -222,6 +223,8 @@ namespace Helpi.Domain.Enums
         CustomerDeleted,
         AdminDeleted,
         NewOrderAdded,
+        AvailabilityChanged,       // 31 — admin: student changed availability affecting orders
+        OrderBackToProcessing,     // 32 — senior: order moved back to processing
 
     }
 

@@ -380,9 +380,10 @@ public class StudentContractService
                         // Get student ID and trigger reassignment
                         var studentId = contract.StudentId;
                         var student = await _studentRepository.GetByIdAsync(studentId);
+                        // v2: NO automatic reassignment — admin manually reassigns via UI
                         if (student != null)
                         {
-                                await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+                                _logger.LogInformation("ℹ️ Contract force-deleted for student {StudentId} — admin must manually reassign active orders", student.UserId);
                         }
 
                         cancelledCount = check.UpcomingSessionsCount;

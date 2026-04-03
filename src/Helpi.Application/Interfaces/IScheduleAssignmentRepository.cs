@@ -25,6 +25,8 @@ public interface IScheduleAssignmentRepository
 
     Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos);
 
+    Task<List<ScheduleAssignment>> GetConflictingAssignmentsAsync(int studentId, List<byte> removedDays);
+
     void Detach(ScheduleAssignment assignment);
 
 }

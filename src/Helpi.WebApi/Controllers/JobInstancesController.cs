@@ -113,13 +113,19 @@ public class SessionsController : ControllerBase
         {
                 try
                 {
+                        var isAdmin = User.IsInRole("Admin");
+                        var callerRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
                         var result = await _jobInstanceService.CancelJobInstance(
-                            jobInstanceId);
+                            jobInstanceId, isAdmin, callerRole);
 
                         if (result == null)
                                 return BadRequest(new { message = "No changes were made to the job instance." });
 
                         return Ok(result);
+                }
+                catch (Helpi.Domain.Exceptions.DomainException ex)
+                {
+                        return BadRequest(new { message = ex.Message });
                 }
                 catch (Exception ex)
                 {

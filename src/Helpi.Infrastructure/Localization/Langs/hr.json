@@ -103,6 +103,14 @@
         "NewOrder": {
             "Title": "Nova narudžba kreirana",
             "Body": "Kreirana je nova narudžba"
+        },
+        "AvailabilityChanged": {
+            "Title": "Promjena dostupnosti studenta",
+            "Body": "{0}"
+        },
+        "OrderBackToProcessing": {
+            "Title": "Narudžba u obradi",
+            "Body": "Vaša narudžba je trenutno u obradi. Javit ćemo vam se uskoro s više informacija."
         }
     },
     "Emails": {

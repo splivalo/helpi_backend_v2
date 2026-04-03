@@ -291,6 +291,22 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                                    sa.Status == AssignmentStatus.Accepted);
         }
 
+        public async Task<List<ScheduleAssignment>> GetConflictingAssignmentsAsync(int studentId, List<byte> removedDays)
+        {
+                if (removedDays == null || removedDays.Count == 0) return new List<ScheduleAssignment>();
+
+                return await _context.ScheduleAssignments
+                    .Include(sa => sa.OrderSchedule)
+                        .ThenInclude(os => os.Order)
+                            .ThenInclude(o => o.Senior)
+                                .ThenInclude(s => s.Contact)
+                    .Include(sa => sa.JobInstances)
+                    .Where(sa => sa.StudentId == studentId &&
+                                 removedDays.Contains(sa.OrderSchedule.DayOfWeek) &&
+                                 sa.Status == AssignmentStatus.Accepted)
+                    .ToListAsync();
+        }
+
         public void Detach(ScheduleAssignment assignment)
         {
                 _context.DetachEntity(assignment);

@@ -291,7 +291,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
             var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
 
 
-            var chargePaymentAt = startTime.AddMinutes(-35); // this has to happen before RemindStudent
+            var chargePaymentAt = startTime.AddMinutes(-30); // this has to happen before RemindStudent
             _logger.LogDebug("⏳ Scheduling Payment -> JobInstance #{Id}.",
                 instance.Id);
 

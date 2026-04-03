@@ -170,10 +170,8 @@ public class StudentsService
                 {
                         var student = await _repository.GetByIdAsync(studentId);
 
-                        // Step 1: Reassign all active jobs for this student
-                        _logger.LogInformation("🔄 Reassigning jobs for student {StudentId}", student.UserId);
-                        await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
-                        _logger.LogInformation("✅ Job reassignment completed for student {StudentId}", student.UserId);
+                        // v2: NO automatic reassignment — admin manually reassigns via UI
+                        _logger.LogInformation("ℹ️ Student {StudentId} permanently deleted — admin must manually reassign active orders", student.UserId);
 
                         // Step 2: Delete FCM tokens (non-blocking on failure)
                         try
@@ -301,8 +299,8 @@ public class StudentsService
                 {
                         _logger.LogInformation("🔄 Force archiving - terminating {Count} active assignments", check.ActiveAssignmentsCount);
 
-                        // Use existing reassignment service to handle job reassignments
-                        await _reassignmentService.ReassignExpiredContractJobs(student.UserId);
+                        // v2: NO automatic reassignment — admin manually reassigns via UI
+                        _logger.LogInformation("ℹ️ Student {StudentId} archived — admin must manually reassign active orders", studentId);
 
                         terminatedCount = check.ActiveAssignmentsCount;
                         cancelledCount = check.UpcomingSessionsCount;

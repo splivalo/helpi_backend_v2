@@ -519,4 +519,34 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
+    public HNotification AvailabilityChangedNotification(int adminId, string studentName, int orderId, string scheduleDescription)
+    {
+        var body = $"{studentName} promijenio/la dostupnost — utječe na Narudžbu #{orderId} ({scheduleDescription})";
+
+        return new HNotification
+        {
+            RecieverUserId = adminId,
+            TranslationKey = "Notifications.AvailabilityChanged",
+            Title = _loc.GetString("Notifications.AvailabilityChanged.Title"),
+            Body = _loc.GetString("Notifications.AvailabilityChanged.Body", null, body),
+            Type = NotificationType.AvailabilityChanged,
+            OrderId = orderId,
+            Payload = JsonSerializer.Serialize(new { studentName, orderId, scheduleDescription })
+        };
+    }
+
+    public HNotification OrderBackToProcessingNotification(int seniorUserId, int orderId, string culture)
+    {
+        return new HNotification
+        {
+            RecieverUserId = seniorUserId,
+            TranslationKey = "Notifications.OrderBackToProcessing",
+            Title = _loc.GetString("Notifications.OrderBackToProcessing.Title", culture),
+            Body = _loc.GetString("Notifications.OrderBackToProcessing.Body", culture),
+            Type = NotificationType.OrderBackToProcessing,
+            OrderId = orderId,
+            Payload = JsonSerializer.Serialize(new { orderId })
+        };
+    }
+
 }

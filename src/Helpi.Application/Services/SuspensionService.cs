@@ -73,16 +73,8 @@ public class SuspensionService
         // Auto-cancel based on user type — failures should not block the suspension itself
         if (user.UserType == UserType.Student)
         {
-            try
-            {
-                _logger.LogInformation("🔄 Auto-reassigning all jobs for suspended student {UserId}", userId);
-                await _reassignmentService.ReassignExpiredContractJobs(userId);
-                _logger.LogInformation("✅ Jobs reassigned for suspended student {UserId}", userId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "⚠️ Failed to reassign jobs for student {UserId} during suspension — continuing with suspension", userId);
-            }
+            // v2: NO automatic reassignment — admin manually reassigns via UI
+            _logger.LogInformation("ℹ️ Student {UserId} suspended — admin must manually reassign active orders", userId);
         }
         else if (user.UserType == UserType.Customer)
         {
