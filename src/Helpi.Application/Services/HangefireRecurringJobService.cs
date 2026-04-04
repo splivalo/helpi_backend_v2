@@ -153,6 +153,9 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 var hourlyRate = isOvertimeDay
                     ? pricingConfiguration.SundayHourlyRate
                     : pricingConfiguration.JobHourlyRate;
+                var studentHourlyRate = isOvertimeDay
+                    ? pricingConfiguration.StudentSundayHourlyRate
+                    : pricingConfiguration.StudentHourlyRate;
 
                 jobInstances.Add(new JobInstance
                 {
@@ -162,6 +165,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                     Notes = order.Notes,
                     OrderScheduleId = assignment.OrderScheduleId,
                     HourlyRate = hourlyRate,
+                    StudentHourlyRate = studentHourlyRate,
                     CompanyPercentage = pricingConfiguration.CompanyPercentage,
                     ServiceProviderPercentage = pricingConfiguration.ServiceProviderPercentage,
                     ScheduleAssignmentId = assignment.Id,

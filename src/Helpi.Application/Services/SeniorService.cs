@@ -75,11 +75,16 @@ public class SeniorService
         {
 
                 var senior = await _repository.GetByIdAsync(seniorId);
+                if (senior == null)
+                {
+                        throw new InvalidOperationException($"Senior {seniorId} not found.");
+                }
+
                 var dto = _mapper.Map<SeniorDto>(senior);
                 // Senior.CustomerId == Customer.UserId == User.Id
                 var user = await _userRepository.GetByIdAsync(senior.CustomerId);
-                dto.IsSuspended = user.IsSuspended;
-                dto.SuspensionReason = user.SuspensionReason;
+                dto.IsSuspended = user?.IsSuspended ?? false;
+                dto.SuspensionReason = user?.SuspensionReason;
                 return dto;
         }
 

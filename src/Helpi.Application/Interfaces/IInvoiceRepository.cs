@@ -5,7 +5,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IInvoiceRepository
 {
-    Task<Invoice> GetByIdAsync(int id);
+    Task<Invoice?> GetByIdAsync(int id);
     Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status);
     Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync();
     Task<Invoice> AddAsync(Invoice invoice);

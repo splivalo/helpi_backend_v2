@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin)
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup
 
 ---
 
@@ -264,6 +264,33 @@
 - **Removed obsolete validation** — CompanyPercentage + ServiceProviderPercentage = 100 rule removed (legacy fields)
 - **Migration:** `AddIntermediaryPercentageToPricingConfig`
 
+### Task 24: Dynamic Travel Buffer Reconciliation ✅
+
+- **AdminDirectAssignAsync** — više ne koristi hardkodirani `15`, nego čita `TravelBufferMinutes` iz `PricingConfiguration`
+- **New service:** `TravelBufferReconciliationService`
+- **Trigger point:** `PricingConfigurationService.UpdateConfigurationAsync()` nakon spremanja configa i history zapisa
+- **Behaviour:** Ako je novi buffer veći od starog, servis grupira buduće `Upcoming` sesije po studentu i danu te za kasniji konfliktni accepted assignment pokreće postojeći `ReassignAssignment(..., CompleteTakeover, ...)`
+- **Safety:** Reconciliation logira pojedinačne failove po assignmentu i ne ruši cijeli settings update
+- **Live verification:** potvrđen realni lokalni DB scenarij za studenta Luku Perića na 2026-04-10: slot 11:15-12:15 prolazi s bufferom 15, pada s bufferom 20
+
+### Task 25: Historical Student Payout Snapshot ✅
+
+- **New field:** `JobInstance.StudentHourlyRate`
+- **DTO contract:** `SessionDto` i `CompletedSessionDto` sada vraćaju `StudentHourlyRate`
+- **Generation path:** `HangfireRecurringJobService` snapshota student weekday/sunday rate pri stvaranju novih `JobInstance` zapisa
+- **Reschedule path:** `JobInstanceService` prenosi `StudentHourlyRate` pri cloneanju rescheduled sesije
+- **Reason:** promjena studentske satnice u settingsu više ne smije prepisivati stare isplate, analytics ili student summary obračune
+- **Migration:** `20260404103424_AddStudentHourlyRateSnapshotToJobInstances`
+- **Validation:** snapshot field migriran i runtime potvrđen kroz `GET /api/sessions`
+
+### Task 26: Backend Warning Cleanup to 0 ✅
+
+- **Repository contracts aligned:** `GetById` / `GetByEmail` / `GetByContactId` / `GetDefaultPaymentMethod` potpisi usklađeni su s realnim nullable ponašanjem umjesto da backend lažno obećava non-null rezultat
+- **Application services hardened:** `UserService`, `ContactInfoService`, `ReviewService`, `StudentsService`, `OrdersService` sada fail-fast prijavljuju missing entitete umjesto da se oslanjaju na implicitne null dereference
+- **Infrastructure cleanup:** uklonjeni preostali EF false-positive include warningi i Minimax required-string assignment warning
+- **Package/security debt:** AutoMapper upgrade i backend cleanup završeni bez regresije builda
+- **Validation:** `dotnet build src\helpi_backend.sln` sada prolazi s `0` warninga; `flutter analyze` za admin i dalje vraća `No issues found!`
+
 ---
 
 ## Migrations Applied
@@ -275,6 +302,7 @@
 5. `20260404085343_AddIntermediaryPercentageToPricingConfig`
 6. `20260404093048_AddStudentRatesToPricingConfig`
 7. `20260404093111_AddStudentRatesToPricingConfiguration`
+8. `20260404103424_AddStudentHourlyRateSnapshotToJobInstances`
 
 ---
 
@@ -289,6 +317,9 @@
 - Invoice retry system — COMPLETE (auto Hangfire hourly + admin manual endpoint)
 - Seed data realistic overhaul — COMPLETE (admin user, 4 completed + 5 active + 5 pending, 47 sessions)
 - Ready for frontend-backend integration
+- Travel buffer reconciliation — COMPLETE
+- Historical student payout snapshots — COMPLETE
+- Backend warning cleanup to 0 — COMPLETE
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
 ### Preostalo (iz ROADMAP.md):
@@ -326,6 +357,13 @@
 - **SwaggerDoc:** `"v2"` with title "Helpi API", version "v2", description "Helpi v2 Backend API"
 - **SwaggerEndpoint:** `/swagger/v2/swagger.json`
 - **Build:** Verified — 0 errors
+
+### PricingConfiguration Authorization Smoke Test ✅ (2026-04-04)
+
+- **Problem found during live API test:** običan authenticated customer mogao je čitati `GET /api/PricingConfiguration`
+- **Fix:** `PricingConfigurationController` promijenjen na `[Authorize(Roles = "Admin")]`
+- **Runtime verification:** Swagger v2 dokument učitan (`159` pathova), customer token vraća `403`, disposable admin token vraća `200` i ispravan pricing payload
+- **Regression check:** `GET /api/sessions` i dalje vraća `studentHourlyRate` u runtime JSON contractu
 
 ### Student Dashboard DurationHours Fix ✅ (2026-03-18)
 

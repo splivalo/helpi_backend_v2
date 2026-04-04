@@ -189,7 +189,7 @@ ILocalizationService loc
         }
 
 
-        _addSubscriberToMailerLite(name, email, userType);
+        await _addSubscriberToMailerLite(name, email, userType);
 
 
         return user;
@@ -445,16 +445,23 @@ ILocalizationService loc
     {
         if (userType == UserType.Student || userType == UserType.Customer)
         {
-            var group = userType == UserType.Student ? "Students" : "Customers";
-
-            var mailerLiteSubscriber = new MailerLiteSubscriberDto
+            try
             {
-                Email = email,
-                Name = name,
-                Group = group,
-            };
+                var group = userType == UserType.Student ? "Students" : "Customers";
 
-            await _mailerLiteService.AddSubscriberAsync(mailerLiteSubscriber);
+                var mailerLiteSubscriber = new MailerLiteSubscriberDto
+                {
+                    Email = email,
+                    Name = name,
+                    Group = group,
+                };
+
+                await _mailerLiteService.AddSubscriberAsync(mailerLiteSubscriber);
+            }
+            catch
+            {
+                // MailerLite failure must not block successful user registration in development.
+            }
         }
 
     }

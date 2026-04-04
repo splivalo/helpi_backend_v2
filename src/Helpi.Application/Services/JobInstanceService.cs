@@ -116,7 +116,7 @@ IPricingConfigurationRepository pricingConfigRepo
 
                 if (instance.PaymentStatus != PaymentStatus.Paid) return;
 
-                var culture = instance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
+                var culture = instance.ScheduleAssignment?.Student?.Contact?.LanguageCode ?? "en";
 
                 var notification = _notificationFactory.CreateStudentJobReminderNotification(instance, culture);
                 await _notificationService.SendNotificationAsync(notification.RecieverUserId, notification);
@@ -552,6 +552,7 @@ IPricingConfigurationRepository pricingConfigRepo
 
                         // Copy financial information
                         HourlyRate = originalInstance.HourlyRate,
+                        StudentHourlyRate = originalInstance.StudentHourlyRate,
                         CompanyPercentage = originalInstance.CompanyPercentage,
                         ServiceProviderPercentage = originalInstance.ServiceProviderPercentage
                 };

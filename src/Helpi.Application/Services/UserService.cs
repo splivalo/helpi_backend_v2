@@ -22,7 +22,8 @@ public class UserService
             _mapper.Map<List<UserDto>>(await _userRepository.GetAllAsync());
 
         public async Task<UserDto> GetUserByIdAsync(int id) =>
-            _mapper.Map<UserDto>(await _userRepository.GetByIdAsync(id));
+                        _mapper.Map<UserDto>(await _userRepository.GetByIdAsync(id)
+                                ?? throw new KeyNotFoundException($"User with ID {id} was not found."));
 
         public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
         {
@@ -33,11 +34,16 @@ public class UserService
 
         public async Task UpdateUserAsync(int id, UserUpdateDto dto)
         {
-                var user = await _userRepository.GetByIdAsync(id);
+                var user = await _userRepository.GetByIdAsync(id)
+                        ?? throw new KeyNotFoundException($"User with ID {id} was not found.");
                 _mapper.Map(dto, user);
                 await _userRepository.UpdateAsync(user);
         }
 
-        public async Task DeleteUserAsync(int id) =>
-            await _userRepository.DeleteAsync(await _userRepository.GetByIdAsync(id));
+        public async Task DeleteUserAsync(int id)
+        {
+                var user = await _userRepository.GetByIdAsync(id)
+                        ?? throw new KeyNotFoundException($"User with ID {id} was not found.");
+                await _userRepository.DeleteAsync(user);
+        }
 }

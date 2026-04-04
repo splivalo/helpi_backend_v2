@@ -25,11 +25,11 @@ public class ReviewRepository : IReviewRepository
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
-        public async Task<Review> GetByIdAsync(int id)
-            => await _context.Reviews
-                .Include(r => r.Student)
-                .Include(r => r.Senior)
-                .FirstOrDefaultAsync(r => r.Id == id);
+        public async Task<Review?> GetByIdAsync(int id)
+    => await _context.Reviews
+        .Include(r => r.Student)
+        .Include(r => r.Senior)
+        .FirstOrDefaultAsync(r => r.Id == id);
 
         public async Task<IEnumerable<Review>> GetByStudentAsync(int studentId)
             => await _context.Reviews

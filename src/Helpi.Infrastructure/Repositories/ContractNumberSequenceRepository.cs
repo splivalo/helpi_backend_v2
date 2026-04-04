@@ -16,7 +16,8 @@ namespace Infrastructure.Persistence.Repositories
 
         public async Task<ContractNumberSequence> GetSequenceAsync()
         {
-            return await _context.ContractNumberSequences.FirstOrDefaultAsync();
+            return await _context.ContractNumberSequences.FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Contract number sequence is not initialized.");
         }
 
         public async Task<int> GetAndIncrementNumberAsync()

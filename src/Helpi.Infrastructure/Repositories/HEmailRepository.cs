@@ -12,9 +12,9 @@ public class HEmailRepository : IHEmailRepository
 
         public HEmailRepository(AppDbContext context) => _context = context;
 
-        public async Task<HEmail> GetByIdAsync(int id)
-            => await _context.InvoiceEmails
-                .FirstOrDefaultAsync(ie => ie.Id == id);
+        public async Task<HEmail?> GetByIdAsync(int id)
+    => await _context.InvoiceEmails
+        .FirstOrDefaultAsync(ie => ie.Id == id);
 
         public async Task<IEnumerable<HEmail>> GetFailedEmailsAsync()
             => await _context.InvoiceEmails

@@ -335,7 +335,7 @@ public class StudentRepository : IStudentRepository
                 && sa.OrderSchedule.Order.SeniorId == seniorId
                 && sa.Status == AssignmentStatus.Accepted)
             .SelectMany(sa => sa.JobInstances.Where(j => j.Status == JobInstanceStatus.Completed))
-            .GroupBy(j => j.ScheduleAssignment.StudentId)
+            .GroupBy(j => j.ScheduleAssignment!.StudentId)
             .ToDictionaryAsync(g => g.Key, g => g.Count());
     }
 

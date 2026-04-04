@@ -72,7 +72,8 @@ public class StudentsService
         {
                 var student = await _repository.GetByIdAsync(id);
                 var dto = _mapper.Map<StudentDto>(student);
-                var user = await _userRepository.GetByIdAsync(id);
+                var user = await _userRepository.GetByIdAsync(id)
+                        ?? throw new KeyNotFoundException($"User with ID {id} was not found.");
                 dto.IsSuspended = user.IsSuspended;
                 dto.SuspensionReason = user.SuspensionReason;
                 return dto;
@@ -204,7 +205,10 @@ public class StudentsService
                         // Step 6: Update student status and anonymize contact info
                         student.Status = StudentStatus.Deleted;
                         student.DeletedAt = DateTime.UtcNow;
-                        await _contactInfoRepo.AnonymizeContactAsync(student.Contact);
+                        if (student.Contact != null)
+                        {
+                                await _contactInfoRepo.AnonymizeContactAsync(student.Contact);
+                        }
 
                         await _repository.UpdateAsync(student);
 

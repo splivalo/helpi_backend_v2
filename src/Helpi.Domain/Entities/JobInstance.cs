@@ -38,9 +38,11 @@ namespace Helpi.Domain.Entities
 
         // Money
         public decimal HourlyRate { get; set; }
+        public decimal StudentHourlyRate { get; set; }
 
         public decimal DurationHours => (decimal)(EndTime.ToTimeSpan() - StartTime.ToTimeSpan()).TotalHours;
         public decimal TotalAmount => DurationHours * HourlyRate;
+        public decimal StudentTotalAmount => DurationHours * StudentHourlyRate;
 
         // Profit split amounts (calculated from configuration)
         public decimal CompanyPercentage { get; set; }

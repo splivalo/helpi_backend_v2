@@ -75,8 +75,8 @@ public class ScheduleAssignmentService
                 var orderSchedule = await _orderScheduleRepository.GetByIdAsync(dto.OrderScheduleId)
                         ?? throw new DomainException($"OrderSchedule {dto.OrderScheduleId} not found.");
 
-                // Check for time conflicts with 15-min travel buffer
-                const int travelBufferMinutes = 15;
+                // Check for time conflicts with the current configured travel buffer.
+                var travelBufferMinutes = await GetTravelBufferMinutesAsync();
                 var bufferedStart = orderSchedule.StartTime.AddMinutes(-travelBufferMinutes);
                 var bufferedEnd = orderSchedule.EndTime.AddMinutes(travelBufferMinutes);
 
@@ -142,6 +142,12 @@ public class ScheduleAssignmentService
                 await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
+        }
+
+        private async Task<int> GetTravelBufferMinutesAsync()
+        {
+                var pricingConfig = await _pricingConfigRepo.GetByIdAsync(1);
+                return pricingConfig?.TravelBufferMinutes ?? 15;
         }
 
         /// <summary>

@@ -55,7 +55,7 @@ public class ServiceCategoriesController : ControllerBase
                 {
                         return BadRequest(new { message = ex.Message });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                         return StatusCode(500, new { message = "An error occurred while uploading the icon" });
                 }
@@ -72,7 +72,7 @@ public class ServiceCategoriesController : ControllerBase
 
                         return NoContent();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                         return StatusCode(500, new { message = "An error occurred while deleting the icon" });
                 }

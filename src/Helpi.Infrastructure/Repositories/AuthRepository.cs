@@ -120,9 +120,9 @@ public class AuthRepository : IAuthRepository
 
         // Include optional roles with their contacts
         query = query
-            .Include(u => u.Admin).ThenInclude(a => a.Contact)
-            .Include(u => u.Student).ThenInclude(s => s.Contact)
-            .Include(u => u.Customer).ThenInclude(c => c.Contact);
+            .Include(u => u.Admin!).ThenInclude(a => a.Contact)
+            .Include(u => u.Student!).ThenInclude(s => s.Contact)
+            .Include(u => u.Customer!).ThenInclude(c => c.Contact);
 
         return query.FirstOrDefaultAsync(u => u.Email == email);
     }

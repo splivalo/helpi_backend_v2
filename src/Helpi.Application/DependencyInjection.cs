@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<ServiceRegionService>();
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
+        services.AddScoped<TravelBufferReconciliationService>();
         services.AddScoped<IPromoCodeService, PromoCodeService>();
         services.AddScoped<SuspensionService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
@@ -82,7 +83,7 @@ public static class DependencyInjection
 
 
         // AutoMapper
-        services.AddAutoMapper(typeof(MappingProfile).Assembly);
+        services.AddAutoMapper(_ => { }, typeof(MappingProfile).Assembly);
 
         return services;
     }

@@ -5,7 +5,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IPaymentTransactionRepository
 {
-    Task<PaymentTransaction> GetByIdAsync(int id);
+    Task<PaymentTransaction?> GetByIdAsync(int id);
     Task<IEnumerable<PaymentTransaction>> GetPendingTransactionsAsync();
     Task<IEnumerable<PaymentTransaction>> GetFailedTransactionsAsync();
     Task<PaymentTransaction> AddAsync(PaymentTransaction transaction);

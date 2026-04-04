@@ -139,6 +139,9 @@ public class OrdersService
                         throw new DomainException("❌ Customer not found.");
 
                 var user = await _userRepository.GetByIdAsync(customer.UserId);
+                if (user == null)
+                        throw new DomainException("❌ User not found.");
+
                 if (user.IsSuspended)
                         throw new DomainException("❌ Cannot create order — user account is suspended.");
 
@@ -181,6 +184,10 @@ public class OrdersService
 
                         // === 5. Re-fetch Order with related data ===
                         var savedOrder = await _orderRepository.GetByIdAsync(order.Id);
+                        if (savedOrder == null)
+                        {
+                                throw new DomainException($"Saved order {order.Id} could not be reloaded.");
+                        }
 
                         // === 6. Post-Creation:  ===
                         await _matchingService.StartMatching(order.Id);

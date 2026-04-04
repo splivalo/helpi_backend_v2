@@ -29,9 +29,9 @@ public class CustomerRepository : ICustomerRepository
                 return customer;
         }
 
-        public async Task<Customer> GetByContactIdAsync(int contactId)
-            => await _context.Customers
-                .FirstOrDefaultAsync(c => c.ContactId == contactId && c.DeletedAt == null);
+        public async Task<Customer?> GetByContactIdAsync(int contactId)
+    => await _context.Customers
+        .FirstOrDefaultAsync(c => c.ContactId == contactId && c.DeletedAt == null);
 
         public async Task<IEnumerable<Customer>> GetCustomersByNotificationMethod(NotificationMethod method)
             => await _context.Customers

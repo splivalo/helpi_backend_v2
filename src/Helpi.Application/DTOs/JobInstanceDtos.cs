@@ -38,6 +38,7 @@ public class SessionDto
 
     // Money
     public decimal HourlyRate { get; set; }
+    public decimal StudentHourlyRate { get; set; }
 
     public decimal DurationHours => (decimal)(EndTime.ToTimeSpan() - StartTime.ToTimeSpan()).TotalHours;
     public decimal TotalAmount => DurationHours * HourlyRate;
@@ -87,6 +88,7 @@ public class CompletedSessionDto
 
     // Money
     public decimal HourlyRate { get; set; }
+    public decimal StudentHourlyRate { get; set; }
 
     public decimal DurationHours => (decimal)(EndTime.ToTimeSpan() - StartTime.ToTimeSpan()).TotalHours;
     public decimal TotalAmount => DurationHours * HourlyRate;

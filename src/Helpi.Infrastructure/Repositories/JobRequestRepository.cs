@@ -210,7 +210,7 @@ public class JobRequestRepository : IJobRequestRepository
                                 return await HandleRejection(jobRequest, "No reason");
                         }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                         throw;

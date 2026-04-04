@@ -112,13 +112,14 @@ var app = builder.Build();
 
 // Initialize Firebase
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-try
+var firebaseInitialized = FirebaseConfiguration.TryInitializeFirebase(
+    builder.Configuration,
+    logger,
+    app.Environment.IsDevelopment());
+
+if (!firebaseInitialized && app.Environment.IsDevelopment())
 {
-    FirebaseConfiguration.InitializeFirebase(builder.Configuration, logger);
-}
-catch (Exception ex) when (app.Environment.IsDevelopment())
-{
-    logger.LogWarning(ex, "⚠️ Firebase initialization skipped in Development — push notifications will not work");
+    logger.LogWarning("⚠️ Firebase is disabled in Development — push notifications and custom Firebase auth tokens will not work.");
 }
 
 // ------------------------------------------------------------

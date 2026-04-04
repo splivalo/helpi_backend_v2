@@ -4,7 +4,7 @@ namespace Helpi.Application.Interfaces;
 
 public interface IServiceRepository
 {
-    Task<Service> GetByIdAsync(int id);
+    Task<Service?> GetByIdAsync(int id);
     Task<IEnumerable<Service>> GetByCategoryAsync(int categoryId);
     Task<IEnumerable<Service>> SearchAsync(string searchTerm);
     Task<Service> AddAsync(Service service);

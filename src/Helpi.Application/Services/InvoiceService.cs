@@ -19,8 +19,7 @@ public class InvoiceService
 
         public async Task<List<InvoiceDto>> GetInvoicesByCustomerAsync(int customerId)
         {
-                //     _mapper.Map<List<InvoiceDto>>(await _repository.GetByCustomerAsync(customerId));
-                return null;
+                return new List<InvoiceDto>();
         }
 
         // public async Task<InvoiceDto> CreateInvoiceAsync(InvoiceCreateDto dto)

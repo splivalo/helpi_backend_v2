@@ -224,32 +224,38 @@ IUserRepository userRepository
                     ));
 
             var customer = await _customerRepo.GetByIdAsync(jobInstance.CustomerId);
-            var customerCulture = customer.Contact.LanguageCode ?? "en";
+            var customerCulture = customer?.Contact?.LanguageCode ?? "en";
 
             // notify customer
-            var customerNotification = _notificationFactory.CreatePaymentFailedNotification(
-               jobInstance.CustomerId,
-               jobInstance.SeniorId,
-               jobInstance.OrderId,
-               jobInstance.Id,
-               culture: customerCulture
-               );
+            if (customer != null)
+            {
+                var customerNotification = _notificationFactory.CreatePaymentFailedNotification(
+                   jobInstance.CustomerId,
+                   jobInstance.SeniorId,
+                   jobInstance.OrderId,
+                   jobInstance.Id,
+                   culture: customerCulture
+                   );
 
-            await _notificationService.SendNotificationAsync(jobInstance.CustomerId, customerNotification);
+                await _notificationService.SendNotificationAsync(jobInstance.CustomerId, customerNotification);
+            }
 
 
-            var studentCulture = jobInstance?.ScheduleAssignment?.Student.Contact.LanguageCode ?? "en";
+            var studentCulture = jobInstance.ScheduleAssignment?.Student?.Contact?.LanguageCode ?? "en";
 
             // notify student
-            var studentId = jobInstance.ScheduleAssignment.StudentId;
-            var studentNotification = _notificationFactory.JobCancelledNotification(
-                studentId,
-                jobInstance,
-                culture: studentCulture
+            var studentId = jobInstance.ScheduleAssignment?.StudentId;
+            if (studentId.HasValue)
+            {
+                var studentNotification = _notificationFactory.JobCancelledNotification(
+                    studentId.Value,
+                    jobInstance,
+                    culture: studentCulture
 
-                );
+                    );
 
-            await _notificationService.SendNotificationAsync(studentId, studentNotification);
+                await _notificationService.SendNotificationAsync(studentId.Value, studentNotification);
+            }
         }
         catch (Exception)
         {
@@ -290,9 +296,12 @@ IUserRepository userRepository
             await _transactionRepository.UpdateAsync(transaction);
 
             var customerEmail = customer.Contact.Email;
-            var culture = customer.Contact.LanguageCode;
+            var culture = customer.Contact.LanguageCode ?? "en";
 
-            await EmailInvoiceToCustomer(invoice!, customerEmail!, culture);
+            if (!string.IsNullOrWhiteSpace(customerEmail))
+            {
+                await EmailInvoiceToCustomer(invoice, customerEmail, culture);
+            }
 
             await PaymentSuccessNotifyCustomer(jobInstance, culture);
         }
@@ -389,8 +398,11 @@ IUserRepository userRepository
             transactionId, invoice.IssuedInvoiceId);
 
         var customerEmail = customer.Contact.Email;
-        var culture = customer.Contact.LanguageCode;
-        await EmailInvoiceToCustomer(invoice, customerEmail!, culture);
+        var culture = customer.Contact.LanguageCode ?? "en";
+        if (!string.IsNullOrWhiteSpace(customerEmail))
+        {
+            await EmailInvoiceToCustomer(invoice, customerEmail, culture);
+        }
 
         return true;
     }

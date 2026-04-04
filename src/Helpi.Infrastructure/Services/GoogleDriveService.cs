@@ -141,7 +141,7 @@ public class GoogleDriveService : IGoogleDriveService
             await driveService.Permissions.Create(permission, folder.Id).ExecuteAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;

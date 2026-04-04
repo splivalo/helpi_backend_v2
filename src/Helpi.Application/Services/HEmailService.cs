@@ -18,8 +18,7 @@ public class HEmailService
 
         public async Task<List<HEmailDto>> GetEmailsByInvoiceAsync(int invoiceId)
         {
-                //     _mapper.Map<List<InvoiceEmailDto>>(await _repository.GetByInvoiceAsync(invoiceId));
-                return null;
+                return new List<HEmailDto>();
         }
 
         //         public async Task<InvoiceEmailDto> CreateInvoiceEmailAsync(InvoiceEmailCreateDto dto)

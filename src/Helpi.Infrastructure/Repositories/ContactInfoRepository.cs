@@ -11,7 +11,7 @@ public class ContactInfoRepository : IContactInfoRepository
 
         public ContactInfoRepository(AppDbContext context) => _context = context;
 
-        public async Task<ContactInfo> GetByIdAsync(int id) => await _context.ContactInfos.FindAsync(id);
+        public async Task<ContactInfo?> GetByIdAsync(int id) => await _context.ContactInfos.FindAsync(id);
         public async Task<IEnumerable<ContactInfo>> SearchByFullNameAsync(string fullName)
             => await _context.ContactInfos
                 .Where(c => c.FullName.Contains(fullName))

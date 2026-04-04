@@ -135,7 +135,10 @@ public class MinimaxService : IMinimaxService
                     return null;
                 }
 
-                paymentProfile.MinimaxCustomerId = minimaxCustomerId;
+                if (minimaxCustomerId.HasValue)
+                {
+                    paymentProfile.MinimaxCustomerId = minimaxCustomerId.Value;
+                }
                 await _paymentProfileRepo.UpdateAsync(paymentProfile);
             }
 
@@ -608,12 +611,12 @@ public class MinimaxService : IMinimaxService
             DateDue = now,
             DateIssued = now,
             DateTransaction = now,
-            AddresseeName = contact.FullName,
-            AddresseeAddress = contact.FullAddress,
-            AddresseeCity = contact.CityName,
+            AddresseeName = contact.FullName ?? string.Empty,
+            AddresseeAddress = contact.FullAddress ?? string.Empty,
+            AddresseeCity = contact.CityName ?? string.Empty,
             AddresseePostalCode = contact.PostalCode ?? "",
             AddresseeCountry = Country_HR,
-            AddresseeCountryName = Country_HR.Id == 95 ? null : Country_HR.Name,
+            AddresseeCountryName = Country_HR.Name ?? string.Empty,
             Currency = Currency_EUR,
             Employee = new MinimaxEntityReference { Id = employee.EmployeeId },
             IssuedInvoiceRows = [
@@ -648,8 +651,9 @@ public class MinimaxService : IMinimaxService
 
             var items = await GetItems();
 
-            var item = items.First();
-            // 
+            var item = items.FirstOrDefault()
+                ?? throw new InvalidOperationException("No Minimax item is configured.");
+
             return new MinimaxItem
             {
                 ItemId = item.ItemId,
@@ -674,9 +678,8 @@ public class MinimaxService : IMinimaxService
         {
             var employees = await GetEmployees();
 
-            var employee = employees.Find(e => e.FirstName.ToLower() == "marko" && e.LastName.ToLower() == "strugar");
-
-            return employee!;
+            return employees.Find(e => e.FirstName.ToLower() == "marko" && e.LastName.ToLower() == "strugar")
+                ?? throw new InvalidOperationException("Configured Minimax cashier was not found.");
         }
         catch (Exception ex)
         {
@@ -742,12 +745,12 @@ public class MinimaxService : IMinimaxService
 
             var result = await _apiService.GetAsync(url, _cachedAccessToken);
 
-            return JsonConvert.DeserializeObject<List<MinimaxIssuedInvoice>>($"{result["Rows"]}") ?? null;
+            return JsonConvert.DeserializeObject<List<MinimaxIssuedInvoice>>($"{result["Rows"]}") ?? [];
         }
         catch (Exception)
         {
             _logger.LogInformation($"❌  Failed to GET all issued invoicea");
-            return null;
+            return [];
         }
     }
 

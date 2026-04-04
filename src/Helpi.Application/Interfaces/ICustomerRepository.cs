@@ -9,7 +9,7 @@ public interface ICustomerRepository
 {
     Task<Customer?> GetByIdAsync(int id);
     Task<Customer?> LoadCustomerWithIncludes(int customerId, CustomerIncludeOptions includes);
-    Task<Customer> GetByContactIdAsync(int contactId);
+    Task<Customer?> GetByContactIdAsync(int contactId);
     Task<IEnumerable<Customer>> GetCustomersByNotificationMethod(NotificationMethod method);
     Task<Customer> AddAsync(Customer customer);
     Task UpdateAsync(Customer customer);

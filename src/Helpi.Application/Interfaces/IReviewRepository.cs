@@ -7,7 +7,7 @@ namespace Helpi.Application.Interfaces;
 public interface IReviewRepository
 {
     Task<IEnumerable<Review>> GetAllAsync();
-    Task<Review> GetByIdAsync(int id);
+    Task<Review?> GetByIdAsync(int id);
     Task<IEnumerable<Review>> GetByStudentAsync(int studentId);
     Task<IEnumerable<Review>> GetBySeniorAsync(int seniorId);
     Task<IEnumerable<Review>> GetAboutSeniorAsync(int seniorId);

@@ -266,6 +266,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
               .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
 
             entity.Property(p => p.HourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.StudentHourlyRate).HasColumnType("decimal(18,2)");
             entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
             entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
 

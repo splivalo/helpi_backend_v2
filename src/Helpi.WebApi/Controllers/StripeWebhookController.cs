@@ -83,6 +83,11 @@ namespace Helpi.WebApi.Controllers
                         break;
                     case "charge.refunded":
                         var refund = stripeEvent.Data.Object as Charge;
+                        if (refund == null)
+                        {
+                            return BadRequest("Invalid refund payload");
+                        }
+
                         await _paymentService.HandlePaymentRefund(
                             refund.PaymentIntentId,
                             refund.Id,

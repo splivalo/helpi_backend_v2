@@ -14,12 +14,12 @@ public class PaymentTransactionRepository : IPaymentTransactionRepository
 
         public PaymentTransactionRepository(AppDbContext context) => _context = context;
 
-        public async Task<PaymentTransaction> GetByIdAsync(int id)
-            => await _context.PaymentTransactions
-                .Include(pt => pt.JobInstance)
-                .Include(pt => pt.Customer)
-                .Include(pt => pt.PaymentMethod)
-                .FirstOrDefaultAsync(pt => pt.Id == id);
+        public async Task<PaymentTransaction?> GetByIdAsync(int id)
+    => await _context.PaymentTransactions
+        .Include(pt => pt.JobInstance)
+        .Include(pt => pt.Customer)
+        .Include(pt => pt.PaymentMethod)
+        .FirstOrDefaultAsync(pt => pt.Id == id);
 
         public async Task<IEnumerable<PaymentTransaction>> GetPendingTransactionsAsync()
             => await _context.PaymentTransactions

@@ -10,14 +10,17 @@ public class PricingConfigurationService
 {
     private readonly IPricingConfigurationRepository _configRepo;
     private readonly IPricingChangeHistoryRepository _historyRepo;
+    private readonly TravelBufferReconciliationService _travelBufferReconciliationService;
 
     public PricingConfigurationService(
 
         IPricingConfigurationRepository configRepo,
-         IPricingChangeHistoryRepository historyRepo)
+         IPricingChangeHistoryRepository historyRepo,
+         TravelBufferReconciliationService travelBufferReconciliationService)
     {
         _configRepo = configRepo;
         _historyRepo = historyRepo;
+        _travelBufferReconciliationService = travelBufferReconciliationService;
     }
 
     public async Task<IEnumerable<PricingConfigurationDto>> GetAllConfigurationsAsync()
@@ -97,6 +100,7 @@ public class PricingConfigurationService
     {
         var existingConfig = await _configRepo.GetByIdAsync(configDto.Id);
         if (existingConfig == null) throw new Exception("Configuration not found.");
+        var previousTravelBufferMinutes = existingConfig.TravelBufferMinutes;
 
         var history = new PricingChangeHistory
         {
@@ -130,6 +134,10 @@ public class PricingConfigurationService
 
         await _configRepo.UpdateAsync(existingConfig);
         await _historyRepo.AddAsync(history);
+
+        await _travelBufferReconciliationService.ReconcileAsync(
+            previousTravelBufferMinutes,
+            existingConfig.TravelBufferMinutes);
     }
 
     public async Task DeleteConfigurationAsync(int id)

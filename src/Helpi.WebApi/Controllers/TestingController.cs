@@ -50,7 +50,7 @@ public class TestingController : ControllerBase
 
     private bool IsDev() => _env.IsDevelopment();
 
-    private IActionResult DevOnly()
+    private IActionResult? DevOnly()
     {
         if (!IsDev()) return Forbid();
         return null;
@@ -328,7 +328,9 @@ public class TestingController : ControllerBase
         var invoices = await _minimaxService.GetAllIssuedInvoicesAsync();
         var invoice = invoices.First();
 
-        var attachment = await _minimaxService.GenerateInvoicePdf((int)invoice!.IssuedInvoiceId!, invoice.RowVersion);
+        var attachment = await _minimaxService.GenerateInvoicePdf(
+            (int)invoice!.IssuedInvoiceId!,
+            invoice.RowVersion ?? string.Empty);
 
         var attachmentData = new Dictionary<string, string>
         {

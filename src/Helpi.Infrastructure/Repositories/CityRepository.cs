@@ -19,10 +19,10 @@ public class CityRepository : ICityRepository
                 return await _context.Cities.ToListAsync();
         }
 
-        public async Task<City> GetByIdAsync(int id) => await _context.Cities.FindAsync(id);
+        public async Task<City?> GetByIdAsync(int id) => await _context.Cities.FindAsync(id);
 
-        public async Task<City> GetByGooglePlaceIdAsync(string googlePlaceId)
-            => await _context.Cities.FirstOrDefaultAsync(c => c.GooglePlaceId == googlePlaceId);
+        public async Task<City?> GetByGooglePlaceIdAsync(string googlePlaceId)
+    => await _context.Cities.FirstOrDefaultAsync(c => c.GooglePlaceId == googlePlaceId);
 
         public async Task<IEnumerable<City>> GetCitiesWithinRadius(Point location, double radiusKm)
         {

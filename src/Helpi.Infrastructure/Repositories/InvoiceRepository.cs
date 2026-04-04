@@ -12,11 +12,11 @@ public class InvoiceRepository : IInvoiceRepository
 
         public InvoiceRepository(AppDbContext context) => _context = context;
 
-        public async Task<Invoice> GetByIdAsync(int id)
-            => await _context.Invoices
-                .Include(i => i.JobInstance)
-                .Include(i => i.Transaction)
-                .FirstOrDefaultAsync(i => i.Id == id);
+        public async Task<Invoice?> GetByIdAsync(int id)
+    => await _context.Invoices
+        .Include(i => i.JobInstance)
+        .Include(i => i.Transaction)
+        .FirstOrDefaultAsync(i => i.Id == id);
 
         public async Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status)
             => await _context.Invoices

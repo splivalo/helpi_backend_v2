@@ -52,7 +52,8 @@ public class ReviewService
 
         public async Task<ReviewDto> MakeReviewAsync(ReviewUpdateDto dto)
         {
-                var review = await _repository.GetByIdAsync(dto.ReviewId);
+                var review = await _repository.GetByIdAsync(dto.ReviewId)
+                        ?? throw new KeyNotFoundException($"Review with ID {dto.ReviewId} was not found.");
 
                 review.Rating = dto.Rating;
                 review.Comment = dto.Comment;

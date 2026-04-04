@@ -70,7 +70,7 @@ public class OrdersController : ControllerBase
                         // _logger.LogWarning(ex, "Domain error updating order {OrderId}", id);
                         return BadRequest(new { message = ex.Message });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                         // _logger.LogError(ex, "Error updating order {OrderId}", id);
                         return StatusCode(500, new { message = "An error occurred while updating the order" });
@@ -93,7 +93,7 @@ public class OrdersController : ControllerBase
                         // _logger.LogWarning(ex, "Domain error cancelling order {OrderId}", id);
                         return BadRequest(new { message = ex.Message });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                         // _logger.LogError(ex, "Error cancelling order {OrderId}", id);
                         return StatusCode(500, new { message = "An error occurred while cancelling the order" });

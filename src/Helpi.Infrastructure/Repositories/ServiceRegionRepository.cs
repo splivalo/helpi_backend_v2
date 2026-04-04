@@ -10,11 +10,11 @@ public class ServiceRegionRepository : IServiceRegionRepository
 
         public ServiceRegionRepository(AppDbContext context) => _context = context;
 
-        public async Task<ServiceRegion> GetByIdAsync(int id)
-            => await _context.ServiceRegions
-                .Include(sr => sr.City)
-                .Include(sr => sr.Service)
-                .FirstOrDefaultAsync(sr => sr.Id == id);
+        public async Task<ServiceRegion?> GetByIdAsync(int id)
+    => await _context.ServiceRegions
+        .Include(sr => sr.City)
+        .Include(sr => sr.Service)
+        .FirstOrDefaultAsync(sr => sr.Id == id);
 
         public async Task<IEnumerable<ServiceRegion>> GetByCityAsync(int cityId)
             => await _context.ServiceRegions

@@ -11,10 +11,10 @@ public class ServiceRepository : IServiceRepository
 
         public ServiceRepository(AppDbContext context) => _context = context;
 
-        public async Task<Service> GetByIdAsync(int id)
-            => await _context.Services
-                .Include(s => s.Category)
-                .FirstOrDefaultAsync(s => s.Id == id);
+        public async Task<Service?> GetByIdAsync(int id)
+    => await _context.Services
+        .Include(s => s.Category)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
         public async Task<IEnumerable<Service>> GetByCategoryAsync(int categoryId)
             => await _context.Services

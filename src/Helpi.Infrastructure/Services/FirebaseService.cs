@@ -19,6 +19,7 @@ namespace Helpi.Infrastructure.Services;
 public class FirebaseService : IFirebaseService
 {
     private readonly FirebaseMessaging? _firebaseMessaging;
+    private readonly FirebaseAuth? _firebaseAuth;
     private readonly ILogger<FirebaseService> _logger;
     private readonly FirestoreDb? _firestoreDb;
 
@@ -28,18 +29,24 @@ public class FirebaseService : IFirebaseService
         ILogger<FirebaseService> logger
     )
     {
-        _firebaseMessaging = FirebaseMessaging.DefaultInstance;
         _logger = logger;
+        _firebaseMessaging = TryGetFirebaseMessaging();
+        _firebaseAuth = TryGetFirebaseAuth();
 
         if (_firebaseMessaging == null)
         {
             _logger.LogWarning("⚠️ FirebaseMessaging not available — push notifications will be skipped.");
         }
 
+        if (_firebaseAuth == null)
+        {
+            _logger.LogWarning("⚠️ FirebaseAuth not available — custom token and logout operations will be skipped.");
+        }
+
         // Initialize Firestore using the already-initialized Firebase app
         try
         {
-            var projectId = FirebaseApp.DefaultInstance?.Options?.ProjectId;
+            var projectId = TryGetFirebaseApp()?.Options?.ProjectId;
             if (!string.IsNullOrEmpty(projectId))
             {
                 _firestoreDb = FirestoreDb.Create(projectId);
@@ -58,12 +65,13 @@ public class FirebaseService : IFirebaseService
 
     public async Task<string> GenerateCustomTokenAsync(string userId, Dictionary<string, object>? claims)
     {
-        if (FirebaseAuth.DefaultInstance == null)
+        if (_firebaseAuth == null)
         {
             _logger.LogWarning("⚠️ Firebase not initialized — returning empty token for user {UserId}", userId);
             return string.Empty;
         }
-        return await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userId, claims);
+
+        return await _firebaseAuth.CreateCustomTokenAsync(userId, claims);
     }
 
     public async Task AnonymizeAndLogoutUserAsync(int backendUserId)
@@ -74,8 +82,15 @@ public class FirebaseService : IFirebaseService
         // Step 1: Revoke Firebase refresh tokens (logs out all sessions)
         try
         {
-            await FirebaseAuth.DefaultInstance.RevokeRefreshTokensAsync(firebaseUid);
-            _logger.LogInformation("✅ Successfully revoked Firebase refresh tokens for user {UserId}", backendUserId);
+            if (_firebaseAuth == null)
+            {
+                _logger.LogWarning("⚠️ FirebaseAuth not initialized. Skipping token revocation for user {UserId}", backendUserId);
+            }
+            else
+            {
+                await _firebaseAuth.RevokeRefreshTokensAsync(firebaseUid);
+                _logger.LogInformation("✅ Successfully revoked Firebase refresh tokens for user {UserId}", backendUserId);
+            }
         }
         catch (Exception ex)
         {
@@ -108,6 +123,14 @@ public class FirebaseService : IFirebaseService
 
     public async Task<bool> SendPushNotificationAsync(List<FcmToken> deviceTokens, HNotificationDto notification)
     {
+        var firebaseMessaging = _firebaseMessaging;
+        if (firebaseMessaging == null)
+        {
+            _logger.LogWarning(
+                "⚠️ FirebaseMessaging not initialized. Skipping push notification dispatch for notification {NotificationId}",
+                notification.Id);
+            return false;
+        }
 
         var androidTokens = deviceTokens
          .Where(d => d.Platform == DevicePlatform.Android)
@@ -123,12 +146,12 @@ public class FirebaseService : IFirebaseService
 
         if (androidTokens.Count > 0)
         {
-            results.Add(await SendAndroidAsync(androidTokens, notification));
+            results.Add(await SendAndroidAsync(firebaseMessaging, androidTokens, notification));
         }
 
         if (iosTokens.Count > 0)
         {
-            results.Add(await SendIosAsync(iosTokens, notification));
+            results.Add(await SendIosAsync(firebaseMessaging, iosTokens, notification));
         }
 
         return results.Any(r => r.SuccessCount > 0);
@@ -136,6 +159,7 @@ public class FirebaseService : IFirebaseService
     }
 
     private async Task<BatchResponse> SendAndroidAsync(
+    FirebaseMessaging firebaseMessaging,
     List<string> tokens,
     HNotificationDto n)
     {
@@ -156,13 +180,14 @@ public class FirebaseService : IFirebaseService
             }
         };
 
-        var response = await _firebaseMessaging.SendEachForMulticastAsync(message);
+        var response = await firebaseMessaging.SendEachForMulticastAsync(message);
         LogFailedAttempts(response, n.RecieverUserId);
 
         return response;
     }
 
     private async Task<BatchResponse> SendIosAsync(
+    FirebaseMessaging firebaseMessaging,
     List<string> tokens,
     HNotificationDto n)
     {
@@ -201,7 +226,7 @@ public class FirebaseService : IFirebaseService
             }
         };
 
-        var response = await _firebaseMessaging.SendEachForMulticastAsync(message);
+        var response = await firebaseMessaging.SendEachForMulticastAsync(message);
         LogFailedAttempts(response, n.RecieverUserId);
 
         return response;
@@ -228,6 +253,45 @@ public class FirebaseService : IFirebaseService
         }
 
         return failCount;
+    }
+
+    private FirebaseApp? TryGetFirebaseApp()
+    {
+        try
+        {
+            return FirebaseApp.DefaultInstance;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ FirebaseApp not initialized.");
+            return null;
+        }
+    }
+
+    private FirebaseMessaging? TryGetFirebaseMessaging()
+    {
+        try
+        {
+            return FirebaseMessaging.DefaultInstance;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ FirebaseMessaging unavailable because Firebase is not initialized.");
+            return null;
+        }
+    }
+
+    private FirebaseAuth? TryGetFirebaseAuth()
+    {
+        try
+        {
+            return FirebaseAuth.DefaultInstance;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ FirebaseAuth unavailable because Firebase is not initialized.");
+            return null;
+        }
     }
 
 }

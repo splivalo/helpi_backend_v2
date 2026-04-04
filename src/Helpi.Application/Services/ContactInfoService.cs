@@ -26,7 +26,8 @@ public class ContactInfoService
         }
 
         public async Task<ContactInfoDto> GetContactInfoByIdAsync(int id) =>
-            _mapper.Map<ContactInfoDto>(await _repository.GetByIdAsync(id));
+                        _mapper.Map<ContactInfoDto>(await _repository.GetByIdAsync(id)
+                                ?? throw new KeyNotFoundException($"Contact info with ID {id} was not found."));
 
         public async Task<ContactInfoDto> CreateContactInfoAsync(ContactInfoCreateDto dto)
         {
@@ -37,7 +38,8 @@ public class ContactInfoService
 
         public async Task UpdateContactInfoAsync(int id, ContactInfoUpdateDto dto)
         {
-                var contactInfo = await _repository.GetByIdAsync(id);
+                var contactInfo = await _repository.GetByIdAsync(id)
+                        ?? throw new KeyNotFoundException($"Contact info with ID {id} was not found.");
                 dto.Id = contactInfo.Id;
                 dto.CityId = contactInfo.CityId;
                 dto.CityName = contactInfo.CityName;
@@ -72,9 +74,12 @@ public class ContactInfoService
                 await _repository.UpdateAsync(contactInfo);
         }
 
-
-        public async Task DeleteContactInfoAsync(int id) =>
-            await _repository.DeleteAsync(await _repository.GetByIdAsync(id));
+        public async Task DeleteContactInfoAsync(int id)
+        {
+                var contactInfo = await _repository.GetByIdAsync(id)
+                        ?? throw new KeyNotFoundException($"Contact info with ID {id} was not found.");
+                await _repository.DeleteAsync(contactInfo);
+        }
 
         public async Task<bool> UpdateLanguageAsync(int contactId, string languageCode)
         {
