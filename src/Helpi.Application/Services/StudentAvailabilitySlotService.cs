@@ -25,6 +25,7 @@ public class StudentAvailabilitySlotService
         private readonly INotificationFactory _notificationFactory;
         private readonly IOrderRepository _orderRepo;
         private readonly ILogger<StudentAvailabilitySlotService> _logger;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         public StudentAvailabilitySlotService(
                 IStudentAvailabilitySlotRepository repository,
@@ -36,7 +37,8 @@ public class StudentAvailabilitySlotService
                 IUserRepository userRepo,
                 INotificationService notificationService,
                 INotificationFactory notificationFactory,
-                IOrderRepository orderRepo
+                IOrderRepository orderRepo,
+                IPricingConfigurationRepository pricingConfigRepo
         )
         {
                 _repository = repository;
@@ -46,6 +48,7 @@ public class StudentAvailabilitySlotService
                 _notificationService = notificationService;
                 _notificationFactory = notificationFactory;
                 _orderRepo = orderRepo;
+                _pricingConfigRepo = pricingConfigRepo;
                 _mapper = mapper;
                 _mediator = mediator;
                 _logger = logger;
@@ -177,8 +180,10 @@ public class StudentAvailabilitySlotService
                 var conflicting = await _assignmentRepo.GetConflictingAssignmentsAsync(studentId, removedDays);
                 if (conflicting.Count == 0) return;
 
-                // v2: Block availability change if any affected session starts within 6 hours
-                var cutoff = DateTime.UtcNow.AddHours(6);
+                // v2: Block availability change if any affected session starts within cutoff hours
+                var config = await _pricingConfigRepo.GetByIdAsync(1);
+                var cutoffHours = config?.StudentCancelCutoffHours ?? 6;
+                var cutoff = DateTime.UtcNow.AddHours(cutoffHours);
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
                 foreach (var assignment in conflicting)
@@ -191,7 +196,7 @@ public class StudentAvailabilitySlotService
                         if (imminentSession)
                         {
                                 throw new DomainException(
-                                        "Cannot change availability — an affected session starts within 6 hours");
+                                        $"Cannot change availability — an affected session starts within {cutoffHours} hour(s)");
                         }
                 }
 

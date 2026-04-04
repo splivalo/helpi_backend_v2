@@ -101,7 +101,7 @@ public class ScheduleAssignmentService
                                 throw new DomainException(
                                         $"Student {dto.StudentId} has a schedule conflict on day {saSchedule.DayOfWeek} " +
                                         $"({saSchedule.StartTime}-{saSchedule.EndTime}). " +
-                                        $"15-minute travel buffer required between sessions.");
+                                        $"{travelBufferMinutes}-minute travel buffer required between sessions.");
                         }
                 }
 

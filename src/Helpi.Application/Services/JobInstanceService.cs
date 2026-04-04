@@ -28,6 +28,7 @@ public class JobInstanceService : IJobInstanceService
         private readonly IHangfireService _hangfireService;
         private readonly ILogger<JobInstanceService> _logger;
         private readonly IUserRepository _userRepository;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
@@ -41,7 +42,8 @@ INotificationFactory notificationFactory,
                    ILogger<JobInstanceService> logger,
 
 ICustomerRepository customerRepo,
-IUserRepository userRepository
+IUserRepository userRepository,
+IPricingConfigurationRepository pricingConfigRepo
                 )
         {
                 _jobInstanceRepository = repository;
@@ -56,6 +58,7 @@ IUserRepository userRepository
                 _logger = logger;
                 _customerRepo = customerRepo;
                 _userRepository = userRepository;
+                _pricingConfigRepo = pricingConfigRepo;
         }
 
 
@@ -626,19 +629,20 @@ IUserRepository userRepository
                                 throw new ArgumentException($"can not cancel Job instance {jobInstanceId} with status  {job.Status}");
                         }
 
-                        // v2: Role-based cancel cutoff — Senior=1h, Student=6h, Admin=anytime
+                        // v2: Role-based cancel cutoff — read from PricingConfiguration
                         if (!isAdmin)
                         {
+                                var config = await _pricingConfigRepo.GetByIdAsync(1);
                                 var sessionStart = job.ScheduledDate.ToDateTime(job.StartTime);
                                 var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
-                                var cutoffHours = isSenior ? 1 : 6;
+                                var cutoffHours = isSenior
+                                        ? (config?.SeniorCancelCutoffHours ?? 1)
+                                        : (config?.StudentCancelCutoffHours ?? 6);
 
                                 if (sessionStart <= DateTime.UtcNow.AddHours(cutoffHours))
                                 {
-                                        var msg = isSenior
-                                                ? "Cannot cancel session — it starts within 1 hour"
-                                                : "Cannot cancel session — it starts within 6 hours";
-                                        throw new DomainException(msg);
+                                        throw new DomainException(
+                                                $"Cannot cancel session — it starts within {cutoffHours} hour(s)");
                                 }
                         }
 
@@ -825,4 +829,32 @@ IUserRepository userRepository
 
 
         #endregion
+
+        /// <inheritdoc/>
+        public async Task StampCanCancelAsync(IEnumerable<SessionDto> sessions, string callerRole)
+        {
+                var config = await _pricingConfigRepo.GetByIdAsync(1);
+                var isAdmin = string.Equals(callerRole, "Admin", StringComparison.OrdinalIgnoreCase);
+                var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
+                var cutoffHours = isSenior
+                        ? (config?.SeniorCancelCutoffHours ?? 1)
+                        : (config?.StudentCancelCutoffHours ?? 6);
+                var now = DateTime.UtcNow;
+
+                foreach (var s in sessions)
+                {
+                        if (s.Status != Domain.Enums.JobInstanceStatus.Upcoming)
+                        {
+                                s.CanCancel = false;
+                                continue;
+                        }
+                        if (isAdmin)
+                        {
+                                s.CanCancel = true;
+                                continue;
+                        }
+                        var start = s.ScheduledDate.ToDateTime(s.StartTime);
+                        s.CanCancel = start > now.AddHours(cutoffHours);
+                }
+        }
 }

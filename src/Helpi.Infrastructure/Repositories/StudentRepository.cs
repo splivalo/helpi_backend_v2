@@ -206,10 +206,9 @@ public class StudentRepository : IStudentRepository
     {
         bool isDateRange = startDate != endDate;
 
-        // 15-min travel buffer: expand conflict window so students
-        // have time to travel between consecutive Helpi sessions.
-        // A job [10:00-12:00] blocks [09:45-12:15] for the student.
-        const int travelBufferMinutes = 15;
+        // Travel buffer from PricingConfiguration (DB settings)
+        var pricingCfg = await _context.PricingConfigurations.FirstOrDefaultAsync();
+        var travelBufferMinutes = pricingCfg?.TravelBufferMinutes ?? 15;
         var bufferedStart = targetStart.AddMinutes(-travelBufferMinutes);
         var bufferedEnd = targetEnd.AddMinutes(travelBufferMinutes);
 

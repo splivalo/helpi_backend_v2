@@ -32,4 +32,9 @@ public interface IJobInstanceService
     Task<SessionDto?> CancelJobInstance(int jobInstanceId, bool isAdmin = false, string callerRole = "");
     Task<SessionDto?> ReactivateJobInstance(int jobInstanceId);
 
+    /// <summary>
+    /// Stamp CanCancel on each SessionDto based on caller role and PricingConfiguration cutoffs.
+    /// </summary>
+    Task StampCanCancelAsync(IEnumerable<SessionDto> sessions, string callerRole);
+
 }

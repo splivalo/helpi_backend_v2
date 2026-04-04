@@ -18,40 +18,48 @@ public class SessionsController : ControllerBase
 
         public SessionsController(IJobInstanceService service) => _jobInstanceService = service;
 
+        private string CallerRole => User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
         [HttpGet("assignment/{assignmentId}")]
         public async Task<ActionResult<List<SessionDto>>> GetByAssignment(int assignmentId)
         {
-
-                return
-                 Ok(await _jobInstanceService.GetJobInstancesByAssignmentAsync(assignmentId));
+                var sessions = await _jobInstanceService.GetJobInstancesByAssignmentAsync(assignmentId);
+                await _jobInstanceService.StampCanCancelAsync(sessions, CallerRole);
+                return Ok(sessions);
         }
         [HttpGet("order/{orderId}")]
         public async Task<ActionResult<List<SessionDto>>> GetByOrder(int orderId)
         {
-                return Ok(await _jobInstanceService.GetJobInstancesByOrderAsync(orderId));
+                var sessions = await _jobInstanceService.GetJobInstancesByOrderAsync(orderId);
+                await _jobInstanceService.StampCanCancelAsync(sessions, CallerRole);
+                return Ok(sessions);
         }
         [HttpGet("student/{studentId}")]
         public async Task<ActionResult<List<SessionDto>>> GetJobInstancesByStudent(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetJobInstancesByStudentAsync(studentId);
+                await _jobInstanceService.StampCanCancelAsync(jobInstances, CallerRole);
                 return Ok(jobInstances);
         }
         [HttpGet("completed/senior/{seniorId}")]
         public async Task<ActionResult<List<SessionDto>>> GetSeniorCompletedJobInstances(int seniorId)
         {
                 var jobInstances = await _jobInstanceService.GetSeniorCompletedJobInstances(seniorId);
+                await _jobInstanceService.StampCanCancelAsync(jobInstances, CallerRole);
                 return Ok(jobInstances);
         }
         [HttpGet("completed/student/{studentId}")]
         public async Task<ActionResult<List<SessionDto>>> GetStudentCompletedJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetStudentCompletedJobInstances(studentId);
+                await _jobInstanceService.StampCanCancelAsync(jobInstances, CallerRole);
                 return Ok(jobInstances);
         }
         [HttpGet("upcoming/student/{studentId}")]
         public async Task<ActionResult<List<SessionDto>>> GetStudentUpComingJobInstances(int studentId)
         {
                 var jobInstances = await _jobInstanceService.GetStudentUpComingJobInstances(studentId);
+                await _jobInstanceService.StampCanCancelAsync(jobInstances, CallerRole);
                 return Ok(jobInstances);
         }
 
@@ -59,6 +67,7 @@ public class SessionsController : ControllerBase
         public async Task<ActionResult<List<SessionDto>>> GetJobInstances()
         {
                 var jobInstances = await _jobInstanceService.GetJobInstances();
+                await _jobInstanceService.StampCanCancelAsync(jobInstances, CallerRole);
                 return Ok(jobInstances);
         }
         // [HttpPost] public async Task<ActionResult<JobInstanceDto>> Create(JobInstanceCreateDto dto) => CreatedAtAction(nameof(GetByAssignment), new { assignmentId = dto.AssignmentId }, await _service.CreateJobInstanceAsync(dto));

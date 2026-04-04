@@ -20,7 +20,13 @@ public static class PricingConfigurationSeeder
                 JobHourlyRate = 14,
                 SundayHourlyRate = 21,
                 CompanyPercentage = 40,
-                ServiceProviderPercentage = 60
+                ServiceProviderPercentage = 60,
+                StudentCancelCutoffHours = 6,
+                SeniorCancelCutoffHours = 1,
+                TravelBufferMinutes = 15,
+                PaymentTimingMinutes = 30,
+                VatEnabled = false,
+                VatPercentage = 0
             });
 
             await db.SaveChangesAsync();

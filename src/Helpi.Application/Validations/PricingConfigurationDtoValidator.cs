@@ -22,6 +22,22 @@ public class PricingConfigurationDtoValidator : AbstractValidator<PricingConfigu
         RuleFor(x => x)
             .Must(HaveValidSplit)
             .WithMessage("CompanyPercentage + ServiceProviderPercentage must equal 100.");
+
+        RuleFor(x => x.StudentCancelCutoffHours)
+            .InclusiveBetween(1, 48).WithMessage("Student cancel cutoff must be between 1 and 48 hours.");
+
+        RuleFor(x => x.SeniorCancelCutoffHours)
+            .InclusiveBetween(1, 48).WithMessage("Senior cancel cutoff must be between 1 and 48 hours.");
+
+        RuleFor(x => x.TravelBufferMinutes)
+            .InclusiveBetween(0, 60).WithMessage("Travel buffer must be between 0 and 60 minutes.");
+
+        RuleFor(x => x.PaymentTimingMinutes)
+            .InclusiveBetween(5, 120).WithMessage("Payment timing must be between 5 and 120 minutes.");
+
+        RuleFor(x => x.VatPercentage)
+            .InclusiveBetween(0, 100).WithMessage("VAT percentage must be between 0 and 100.")
+            .When(x => x.VatEnabled);
     }
 
     private bool HaveValidSplit(PricingConfigurationDto dto)

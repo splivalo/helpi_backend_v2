@@ -204,6 +204,9 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
     {
         _logger.LogInformation("📅 Starting daily status update scheduling at {Time}.", DateTime.UtcNow);
 
+        var config = await _pricingConfig.GetByIdAsync(1);
+        var paymentTimingMinutes = config?.PaymentTimingMinutes ?? 30;
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var jobInstancesForToday = await _jobInstanceRepository.GetByDateAsync(today);
 
@@ -245,7 +248,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
             );
 
 
-            var remindAt = startTime.AddMinutes(-30);
+            var remindAt = startTime.AddMinutes(-paymentTimingMinutes);
             instance.HangFireRemindStudentJobId = _hangfireService.Schedule<IJobInstanceService>(
                 s => s.RemindStudentAsync(instance.Id),
                 remindAt
@@ -267,6 +270,9 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
     public async Task ScheduleDailyJobInstancePayments()
     {
         _logger.LogInformation("📅 Starting daily job payments scheduling at {Time}.", DateTime.UtcNow);
+
+        var config = await _pricingConfig.GetByIdAsync(1);
+        var paymentTimingMinutes = config?.PaymentTimingMinutes ?? 30;
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var jobInstancesForToday = await _jobInstanceRepository.GetByDateAsync(today);
@@ -291,7 +297,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
             var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
 
 
-            var chargePaymentAt = startTime.AddMinutes(-30); // this has to happen before RemindStudent
+            var chargePaymentAt = startTime.AddMinutes(-paymentTimingMinutes); // read from PricingConfiguration
             _logger.LogDebug("⏳ Scheduling Payment -> JobInstance #{Id}.",
                 instance.Id);
 

@@ -11,4 +11,5 @@ public interface ISignalRNotificationService
     Task SendUnreadCountUpdateAsync(int userId, int unreadCount);
     Task SendTypingIndicatorAsync(int userId, string message);
     Task BroadcastSystemNotificationAsync(HNotificationDto notification);
+    Task BroadcastSettingsChangedAsync();
 }

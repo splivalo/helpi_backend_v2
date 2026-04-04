@@ -45,4 +45,10 @@ public class SignalRNotificationService : ISignalRNotificationService
         await _hubContext.Clients.All
             .SendAsync("SystemNotification", notification);
     }
+
+    public async Task BroadcastSettingsChangedAsync()
+    {
+        await _hubContext.Clients.All
+            .SendAsync("SettingsChanged", new { timestamp = DateTime.UtcNow });
+    }
 }

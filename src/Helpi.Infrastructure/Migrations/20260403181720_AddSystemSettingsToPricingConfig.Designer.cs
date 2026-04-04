@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403181720_AddSystemSettingsToPricingConfig")]
+    partial class AddSystemSettingsToPricingConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1009,9 +1012,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("TravelBufferMinutes")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("VatEnabled")
-                        .HasColumnType("boolean");
 
                     b.Property<decimal>("VatPercentage")
                         .HasColumnType("decimal(5,2)");

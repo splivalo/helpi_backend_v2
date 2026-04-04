@@ -53,6 +53,12 @@ public class SessionDto
 
     public ScheduleAssignmentDto? ScheduleAssignment { get; set; } = null!;
 
+    /// <summary>
+    /// Computed per-role flag: can the current caller cancel this session?
+    /// Set by controller after mapping, NOT by AutoMapper.
+    /// </summary>
+    public bool CanCancel { get; set; }
+
 }
 
 public class SessionUpdateDto

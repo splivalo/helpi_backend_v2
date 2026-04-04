@@ -39,6 +39,7 @@ public class OrdersService
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPromoCodeRepository _promoCodeRepository;
+        private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         public OrdersService(
             IOrderRepository orderRepository,
@@ -58,7 +59,8 @@ public class OrdersService
             ISeniorRepository seniorRepository,
             ICustomerRepository customerRepository,
             IUserRepository userRepository,
-            IPromoCodeRepository promoCodeRepository
+            IPromoCodeRepository promoCodeRepository,
+            IPricingConfigurationRepository pricingConfigRepo
         )
         {
                 _orderRepository = orderRepository;
@@ -79,6 +81,7 @@ public class OrdersService
                 _customerRepository = customerRepository;
                 _userRepository = userRepository;
                 _promoCodeRepository = promoCodeRepository;
+                _pricingConfigRepo = pricingConfigRepo;
         }
 
 
@@ -316,9 +319,10 @@ public class OrdersService
                                 throw new DomainException($"Order {orderId} cannot be modified, has status {order.Status}");
                         }
 
-                        // v2: Role-based cancel cutoff — Senior=1h, Student=6h, Admin=anytime
+                        // v2: Role-based cancel cutoff — read from PricingConfiguration
                         if (!isAdmin)
                         {
+                                var config = await _pricingConfigRepo.GetByIdAsync(1);
                                 var now = DateTime.UtcNow;
                                 var nearestUpcoming = order.Schedules
                                         .SelectMany(s => s.Assignments)
@@ -330,14 +334,14 @@ public class OrdersService
                                         .FirstOrDefault();
 
                                 var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
-                                var cutoffHours = isSenior ? 1 : 6;
+                                var cutoffHours = isSenior
+                                        ? (config?.SeniorCancelCutoffHours ?? 1)
+                                        : (config?.StudentCancelCutoffHours ?? 6);
 
                                 if (nearestUpcoming != default && nearestUpcoming <= now.AddHours(cutoffHours))
                                 {
-                                        var msg = isSenior
-                                                ? "Cannot cancel order — the next session starts within 1 hour"
-                                                : "Cannot cancel order — the next session starts within 6 hours";
-                                        throw new DomainException(msg);
+                                        throw new DomainException(
+                                                $"Cannot cancel order — the next session starts within {cutoffHours} hour(s)");
                                 }
                         }
 
