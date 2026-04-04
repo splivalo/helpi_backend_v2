@@ -12,13 +12,17 @@
         "Unknown": "Nepoznat entitet"
     },
     "Notifications": {
+        "NewOrderAdded": {
+            "Title": "Nova narudžba",
+            "Body": "{0}, Narudžba #{1}"
+        },
         "NewStudent": {
             "Title": "Novi student dodan",
-            "Body": "Dodan je novi student"
+            "Body": "{0}"
         },
         "NewSenior": {
             "Title": "Nova starija osoba dodana",
-            "Body": "Dodan je novi korisnik"
+            "Body": "{0}"
         },
         "PaymentFailed": {
             "Title": "Plaćanje nije uspjelo",
@@ -33,8 +37,8 @@
             "Body": "Novi zahtjev za posao"
         },
         "JobCancelled": {
-            "Title": "Posao otkazan",
-            "Body": "Posao na {0} je otkazan"
+            "Title": "Termin otkazan",
+            "Body": "{0}, Narud\u017eba #{1}"
         },
         "JobRescheduled": {
             "Title": "Termin je promijenjen",
@@ -46,11 +50,11 @@
         },
         "OrderCancelled": {
             "Title": "Narudžba otkazana",
-            "Body": "{0}"
+            "Body": "{0}, Narud\u017eba #{1}"
         },
         "OrderScheduleCancelled": {
             "Title": "Raspored otkazan",
-            "Body": "{0}"
+            "Body": "{0}, Narud\u017eba #{1}"
         },
         "ScheduleAssignmentCancelled": {
             "Title": "Zadatak otkazan",
@@ -81,12 +85,12 @@
             "Body": "Kako je bilo vaše iskustvo?"
         },
         "ReassignmentStarted": {
-            "Title": "Ponovno dodjeljivanje započeto",
-            "Body": "{0}"
+            "Title": "Zamjena studenta pokrenuta",
+            "Body": "{0}, Narudžba #{1}"
         },
         "ReassignmentCompleted": {
-            "Title": "Ponovno dodjeljivanje završeno",
-            "Body": "{0}"
+            "Title": "Student promijenjen",
+            "Body": "{0}, Narudžba #{1}"
         },
         "NoEligibleStudents": {
             "Title": "Nema dostupnih studenata",

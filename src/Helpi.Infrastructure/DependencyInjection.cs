@@ -278,6 +278,8 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException("GoogleDrive:BaseFolderId configuration is missing");
 
             options.CredentialsJson = googleCredentialsJson; // now it's the actual JSON
+
+            options.NotificationsArchiveFolderId = configuration["GoogleDrive:NotificationsArchiveFolderId"] ?? "";
         });
 
 

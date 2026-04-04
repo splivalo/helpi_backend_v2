@@ -106,6 +106,18 @@ public class HNotificationService : IHNotificationService
         };
     }
 
+    public async Task<IEnumerable<HNotificationDto>> GetReadByUserIdAsync(int userId, string languageCode)
+    {
+        var notifications = await _repository.GetReadByUserIdAsync(userId);
+        var dtos = _mapper.Map<IEnumerable<HNotificationDto>>(notifications);
+        return TranslateNotifications(dtos, languageCode);
+    }
+
+    public async Task<int> DeleteReadByUserIdAsync(int userId)
+    {
+        return await _repository.DeleteReadByUserIdAsync(userId);
+    }
+
     private List<HNotificationDto> TranslateNotifications(IEnumerable<HNotificationDto> notifications, string languageCode)
     {
         var list = new List<HNotificationDto>();
@@ -114,8 +126,10 @@ public class HNotificationService : IHNotificationService
         {
             NotificationType.NoEligibleStudents,
             NotificationType.AllEligableStudentNotified,
-            NotificationType.OrderCancelled,
-            NotificationType.OrderScheduleCancelled,
+        };
+
+        var reassignmentList = new[]
+        {
             NotificationType.ReassignmentStarted,
             NotificationType.ReassignmentCompleted,
         };
@@ -129,15 +143,25 @@ public class HNotificationService : IHNotificationService
             NotificationType.AdminDeleted,
         };
 
+        // Types whose body uses Senior name + Order: "{0}, Narud\u017eba #{1}"
+        var seniorAndOrderList = new[]
+        {
+            NotificationType.JobCancelled,
+            NotificationType.OrderCancelled,
+            NotificationType.OrderScheduleCancelled,
+            NotificationType.NewOrderAdded,
+        };
+
         foreach (var dto in notifications)
         {
-            // Example keys:
-            // Notifications.PasswordReset.Title, 
-            // Notifications.PasswordReset.Body
-
             dto.Title = _localizer.GetString($"{dto.TranslationKey}.Title", languageCode);
 
-            if (descList.Contains(dto.Type))
+            if (dto.Type == NotificationType.NewStudentAdded)
+            {
+                var studentName = dto.Student?.Contact?.FullName ?? "?";
+                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, studentName);
+            }
+            else if (descList.Contains(dto.Type))
             {
                 try
                 {
@@ -153,16 +177,31 @@ public class HNotificationService : IHNotificationService
                 {
                 }
             }
+            else if (reassignmentList.Contains(dto.Type))
+            {
+                var seniorName = dto.Senior?.Contact?.FullName ?? "?";
+                var orderId = dto.OrderId ?? 0;
+                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName, orderId);
+            }
+            else if (seniorAndOrderList.Contains(dto.Type))
+            {
+                var seniorName = dto.Senior?.Contact?.FullName ?? "?";
+                var orderId = dto.OrderId ?? 0;
+                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName, orderId);
+            }
+            else if (dto.Type == NotificationType.NewSeniorAdded)
+            {
+                var seniorName = dto.Senior?.Contact?.FullName ?? "?";
+                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName);
+            }
             else if (userDeletedList.Contains(dto.Type))
             {
                 try
                 {
-                    // Parse Payload to get format args: { deletedUserId, deletedUserName, userType }
                     var payload = JsonSerializer.Deserialize<JsonElement>(dto.Payload ?? "{}");
                     var deletedUserName = payload.GetProperty("deletedUserName").GetString() ?? "";
                     var deletedUserId = payload.GetProperty("deletedUserId").GetInt32();
 
-                    // Get entity key based on type
                     var entityKey = dto.Type switch
                     {
                         NotificationType.StudentDeleted => "Entities.Student",

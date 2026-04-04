@@ -12,4 +12,14 @@ public interface IGoogleDriveService
     Task<string> CreateFolderAsync(string folderName);
 
     Task DeleteFileAsync(string fileIdentifier);
+
+    Task<string> UploadFileToFolderAsync(
+        string folderId,
+        byte[] fileData,
+        string fileName,
+        string mimeType);
+
+    Task<string?> FindFileInFolderAsync(string folderId, string fileName);
+    Task<byte[]> DownloadFileAsync(string fileId);
+    Task<string> UpdateFileAsync(string fileId, byte[] fileData, string mimeType);
 }

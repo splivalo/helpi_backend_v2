@@ -106,5 +106,21 @@ public class HNotificationRepository : IHNotificationRepository
             .AsNoTracking()
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<HNotification>> GetReadByUserIdAsync(int userId)
+    {
+        return await _context.HNotifications
+            .Where(n => n.RecieverUserId == userId && n.IsRead)
+            .OrderByDescending(n => n.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<int> DeleteReadByUserIdAsync(int userId)
+    {
+        return await _context.HNotifications
+            .Where(n => n.RecieverUserId == userId && n.IsRead)
+            .ExecuteDeleteAsync();
+    }
 }
 

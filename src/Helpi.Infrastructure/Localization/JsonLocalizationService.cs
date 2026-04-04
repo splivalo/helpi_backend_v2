@@ -59,12 +59,19 @@ namespace MyApp.Infrastructure.Localization
                 .Split('-').First(); // handle fr-FR etc.
 
             if (_resources.TryGetValue(lang, out var dict) && dict.TryGetValue(key, out var value))
-                return string.Format(value, args);
+                return FormatSafe(value, args);
 
             if (_resources.TryGetValue(_defaultCulture, out var fallback) && fallback.TryGetValue(key, out var fallbackValue))
-                return string.Format(fallbackValue, args);
+                return FormatSafe(fallbackValue, args);
 
             return $"[{key}]";
+        }
+
+        private static string FormatSafe(string template, object[] args)
+        {
+            if (args.Length == 0) return template;
+            try { return string.Format(template, args); }
+            catch (FormatException) { return template; }
         }
     }
 }

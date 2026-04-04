@@ -295,6 +295,7 @@ public class NotificationFactory : INotificationFactory
             Body = _loc.GetString("Notifications.JobCancelled.Body", culture, date),
             Type = NotificationType.JobCancelled,
             SeniorId = jobInstance.SeniorId,
+            OrderId = jobInstance.OrderId,
             Payload = JsonSerializer.Serialize(new
             {
                 jobInstanceId = jobInstance.Id,

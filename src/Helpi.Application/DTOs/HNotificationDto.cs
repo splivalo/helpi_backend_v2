@@ -51,3 +51,9 @@ public class PagedHNotificationDto
     public int PageSize { get; set; }
     public int TotalPages { get; set; }
 }
+
+public class ArchiveNotificationsResultDto
+{
+    public int ArchivedCount { get; set; }
+    public string DriveFileUrl { get; set; } = "";
+}

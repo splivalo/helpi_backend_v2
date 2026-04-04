@@ -12,13 +12,17 @@
         "Unknown": "Unknown Entity"
     },
     "Notifications": {
+        "NewOrderAdded": {
+            "Title": "New Order",
+            "Body": "{0}, Order #{1}"
+        },
         "NewStudent": {
             "Title": "New Student Added",
-            "Body": "A new student has been added"
+            "Body": "{0}"
         },
         "NewSenior": {
             "Title": "New Senior Added",
-            "Body": "A new senior has been added"
+            "Body": "{0}"
         },
         "PaymentFailed": {
             "Title": "Payment Failed",
@@ -33,8 +37,8 @@
             "Body": "New job request"
         },
         "JobCancelled": {
-            "Title": "Job Cancelled",
-            "Body": "Job on {0} cancelled"
+            "Title": "Session Cancelled",
+            "Body": "{0}, Order #{1}"
         },
         "JobRescheduled": {
             "Title": "Session Rescheduled",
@@ -46,11 +50,11 @@
         },
         "OrderCancelled": {
             "Title": "Order Cancelled",
-            "Body": "{0}"
+            "Body": "{0}, Order #{1}"
         },
         "OrderScheduleCancelled": {
             "Title": "Schedule Cancelled",
-            "Body": "{0}"
+            "Body": "{0}, Order #{1}"
         },
         "ScheduleAssignmentCancelled": {
             "Title": "Assignment Cancelled",
@@ -81,12 +85,12 @@
             "Body": "How was your expirence?"
         },
         "ReassignmentStarted": {
-            "Title": "Reassignment Started",
-            "Body": "{0}"
+            "Title": "Student Swap Started",
+            "Body": "{0}, Order #{1}"
         },
         "ReassignmentCompleted": {
-            "Title": "Reassignment Completed",
-            "Body": "{0}"
+            "Title": "Student Changed",
+            "Body": "{0}, Order #{1}"
         },
         "NoEligibleStudents": {
             "Title": "No Eligible Students",

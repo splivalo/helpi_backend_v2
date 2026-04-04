@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-04
+> Zadnja izmjena: 2026-04-05
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -10,7 +10,7 @@
 | helpi_administrator     | docs/PROGRESS.md                 | Admin app status (98% frontend done)             |
 | helpi_administrator     | docs/ARCHITECTURE.md             | Admin tech stack, folder structure, UI standardi |
 | helpi_administrator     | docs/PROJECT_HISTORY.md          | Kronologija odluka (Feb→Mart 2026)               |
-| **helpi_backend_v2**    | **docs/PROGRESS.md (ovaj fajl)** | Backend task tracking (16 taskova ✅)            |
+| **helpi_backend_v2**    | **docs/PROGRESS.md (ovaj fajl)** | Backend task tracking (29 taskova ✅)            |
 | helpi_backend_v2        | README.md                        | DB schema, use case flows, 19 LINQ queries       |
 | helpi_backend_v2        | seeds/README.md                  | Test data, login credentials, promo codes        |
 | helpi_apps              | README.md                        | App tech stack, Riverpod/SignalR info            |
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV)
 
 ---
 
@@ -293,6 +293,48 @@
 
 ---
 
+## Faza 9 — Notification Content Overhaul & Archive ✅ (2026-04-05)
+
+### Task 27: FormatSafe Localization Fix ✅
+
+- **Problem:** `JsonLocalizationService.GetString` crashao jer `String.Format` dobio `{0}` placeholder bez argumenata → 500 error na notification endpoint
+- **Fix:** Dodan `FormatSafe(template, args)` helper — vraća template unchanged kad args prazni, wrappa `String.Format` u try/catch
+- **File:** `JsonLocalizationService.cs`
+
+### Task 28: TranslateNotifications Refactor ✅
+
+- **Problem:** Monolitni if-else u `TranslateNotifications` s generičkim body formatom za sve tipove notifikacija
+- **Refaktoriran** u specijalizirane grane:
+  - `seniorAndOrderList` (JobCancelled, OrderCancelled, OrderScheduleCancelled, NewOrderAdded) → body `"{seniorName}, Narudžba #{orderId}"`
+  - `reassignmentList` (ReassignmentStarted, ReassignmentCompleted) → isti format
+  - `descList` (NoEligibleStudents, AllEligibleStudentNotified) → GetEntityDescription za body
+  - `userDeletedList` → parse Payload JSON za deletedUserName/deletedUserId
+  - `NewStudentAdded` / `NewSeniorAdded` → pravo ime iz dto.Student/Senior.Contact.FullName
+- **NewOrderAdded dodano** — Novi lokalizacijski ključ u hr.json ("Nova narudžba") i en.json ("New Order")
+- **NotificationsFactory fix** — `JobCancelledNotification` sad uključuje `OrderId = jobInstance.OrderId`
+- **Files:** HNotificationService.cs, NotificationsFactory.cs, hr.json, en.json
+
+### Task 29: Single Master CSV Archive ✅
+
+- **Problem:** Svaki archive poziv kreirao novi fajl na Google Drive → proliferacija fajlova
+- **Refaktoriran** `HNotificationsController.Archive`:
+  - `FindFileInFolderAsync(folderId, "notifications-archive.csv")` → traži postojeći fajl
+  - Ako postoji: `DownloadFileAsync` → strip BOM → append novi redovi → `UpdateFileAsync` (isti file ID)
+  - Ako ne postoji: create novi fajl s headerom
+  - CSV format: `Datum,Naslov,Poruka` (uklonjen Type stupac)
+- **3 nove metode na IGoogleDriveService / GoogleDriveService:**
+  - `FindFileInFolderAsync(folderId, fileName)` → vraća fileId ili null
+  - `DownloadFileAsync(fileId)` → vraća byte[]
+  - `UpdateFileAsync(fileId, data, mimeType)` → vraća webViewLink
+- **DependencyInjection.cs** — Dodano mapiranje `NotificationsArchiveFolderId` iz konfiguracije (bilo propušteno)
+- **HNotificationRepository** — Dodano `GetReadNotificationsByUserIdAsync(userId)` za dohvat pročitanih
+- **HNotificationDto** — Dodan `SeniorName` property za CSV export
+- **Files:** 13 files across Application + Infrastructure + WebApi
+- **Testirano:** Prvi poziv kreira fajl, drugi poziv appendira na isti file ID
+- **Build:** 0 errors, 0 new warnings
+
+---
+
 ## Migrations Applied
 
 1. `20260313130245_AddSundayHourlyRate`
@@ -320,6 +362,8 @@
 - Travel buffer reconciliation — COMPLETE
 - Historical student payout snapshots — COMPLETE
 - Backend warning cleanup to 0 — COMPLETE
+- **Notification content overhaul** — COMPLETE (FormatSafe, TranslateNotifications refactor, NewOrderAdded)
+- **Google Drive archive (single master CSV)** — COMPLETE (find/download/append/update flow, 3 new GoogleDriveService methods)
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
 ### Preostalo (iz ROADMAP.md):

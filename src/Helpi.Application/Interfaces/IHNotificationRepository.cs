@@ -14,4 +14,6 @@ public interface IHNotificationRepository
     Task<bool> MarkAllAsReadAsync(int userId);
     Task<int> GetUnreadCountAsync(int userId);
     Task<IEnumerable<HNotification>> GetPagedAsync(int userId, int page, int pageSize);
+    Task<IEnumerable<HNotification>> GetReadByUserIdAsync(int userId);
+    Task<int> DeleteReadByUserIdAsync(int userId);
 }

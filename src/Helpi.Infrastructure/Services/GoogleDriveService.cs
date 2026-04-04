@@ -208,6 +208,42 @@ public class GoogleDriveService : IGoogleDriveService
     }
 
 
+    public async Task<string> UploadFileToFolderAsync(
+        string folderId,
+        byte[] fileData,
+        string fileName,
+        string mimeType)
+    {
+        try
+        {
+            using var driveService = await CreateDriveServiceAsync();
+
+            var fileMetadata = new Google.Apis.Drive.v3.Data.File()
+            {
+                Name = fileName,
+                Parents = new List<string> { folderId },
+                MimeType = mimeType
+            };
+
+            var request = driveService.Files.Create(
+                fileMetadata,
+                new MemoryStream(fileData),
+                mimeType);
+            request.Fields = "id, webViewLink";
+
+            var result = await request.UploadAsync();
+            if (result.Status != Google.Apis.Upload.UploadStatus.Completed)
+                throw new GoogleDriveException($"File upload failed: {result.Exception?.Message}");
+
+            return request.ResponseBody.WebViewLink;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google Drive upload to folder {FolderId} failed", folderId);
+            throw new GoogleDriveException("Failed to upload file to Google Drive", ex);
+        }
+    }
+
     public async Task DeleteFileAsync(string fileIdentifier)
     {
         try
@@ -243,6 +279,57 @@ public class GoogleDriveService : IGoogleDriveService
         }
     }
 
+    public async Task<string?> FindFileInFolderAsync(string folderId, string fileName)
+    {
+        try
+        {
+            using var driveService = await CreateDriveServiceAsync();
+            var listRequest = driveService.Files.List();
+            listRequest.Q = $"name='{fileName}' and '{folderId}' in parents and trashed=false";
+            listRequest.Fields = "files(id)";
+            var result = await listRequest.ExecuteAsync();
+            return result.Files.Count > 0 ? result.Files[0].Id : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to find file {FileName} in folder {FolderId}", fileName, folderId);
+            return null;
+        }
+    }
+
+    public async Task<byte[]> DownloadFileAsync(string fileId)
+    {
+        using var driveService = await CreateDriveServiceAsync();
+        var request = driveService.Files.Get(fileId);
+        using var stream = new MemoryStream();
+        await request.DownloadAsync(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<string> UpdateFileAsync(string fileId, byte[] fileData, string mimeType)
+    {
+        try
+        {
+            using var driveService = await CreateDriveServiceAsync();
+            var fileMetadata = new Google.Apis.Drive.v3.Data.File();
+            var request = driveService.Files.Update(
+                fileMetadata,
+                fileId,
+                new MemoryStream(fileData),
+                mimeType);
+            request.Fields = "id, webViewLink";
+            var result = await request.UploadAsync();
+            if (result.Status != Google.Apis.Upload.UploadStatus.Completed)
+                throw new GoogleDriveException($"File update failed: {result.Exception?.Message}");
+            return request.ResponseBody.WebViewLink;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update file {FileId} on Google Drive", fileId);
+            throw new GoogleDriveException("Failed to update file on Google Drive", ex);
+        }
+    }
+
 }
 
 public class GoogleDriveSettings
@@ -250,6 +337,7 @@ public class GoogleDriveSettings
     public string ApplicationName { get; set; } = null!;
     public string BaseFolderId { get; set; } = null!;
     public string CredentialsJson { get; set; } = null!;
+    public string NotificationsArchiveFolderId { get; set; } = "";
 }
 
 public class GoogleDriveException : Exception
