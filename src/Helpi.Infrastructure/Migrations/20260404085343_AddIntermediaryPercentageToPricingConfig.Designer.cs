@@ -6,6 +6,7 @@ using Helpi.Domain.ValueObjects;
 using Helpi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,9 +15,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Helpi.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260404085343_AddIntermediaryPercentageToPricingConfig")]
+    partial class AddIntermediaryPercentageToPricingConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1006,12 +1009,6 @@ namespace Helpi.Infrastructure.Migrations
 
                     b.Property<int>("StudentCancelCutoffHours")
                         .HasColumnType("integer");
-
-                    b.Property<decimal>("StudentHourlyRate")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("StudentSundayHourlyRate")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("SundayHourlyRate")
                         .HasColumnType("decimal(18,2)");

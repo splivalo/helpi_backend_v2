@@ -28,12 +28,15 @@ public class PricingConfigurationService
             Id = c.Id,
             JobHourlyRate = c.JobHourlyRate,
             SundayHourlyRate = c.SundayHourlyRate,
+            StudentHourlyRate = c.StudentHourlyRate,
+            StudentSundayHourlyRate = c.StudentSundayHourlyRate,
             CompanyPercentage = c.CompanyPercentage,
             ServiceProviderPercentage = c.ServiceProviderPercentage,
             StudentCancelCutoffHours = c.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = c.SeniorCancelCutoffHours,
             TravelBufferMinutes = c.TravelBufferMinutes,
             PaymentTimingMinutes = c.PaymentTimingMinutes,
+            IntermediaryPercentage = c.IntermediaryPercentage,
             VatEnabled = c.VatEnabled,
             VatPercentage = c.VatPercentage
         });
@@ -49,12 +52,15 @@ public class PricingConfigurationService
             Id = config.Id,
             JobHourlyRate = config.JobHourlyRate,
             SundayHourlyRate = config.SundayHourlyRate,
+            StudentHourlyRate = config.StudentHourlyRate,
+            StudentSundayHourlyRate = config.StudentSundayHourlyRate,
             CompanyPercentage = config.CompanyPercentage,
             ServiceProviderPercentage = config.ServiceProviderPercentage,
             StudentCancelCutoffHours = config.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = config.SeniorCancelCutoffHours,
             TravelBufferMinutes = config.TravelBufferMinutes,
             PaymentTimingMinutes = config.PaymentTimingMinutes,
+            IntermediaryPercentage = config.IntermediaryPercentage,
             VatEnabled = config.VatEnabled,
             VatPercentage = config.VatPercentage
         };
@@ -71,12 +77,15 @@ public class PricingConfigurationService
         {
             JobHourlyRate = configDto.JobHourlyRate,
             SundayHourlyRate = configDto.SundayHourlyRate,
+            StudentHourlyRate = configDto.StudentHourlyRate,
+            StudentSundayHourlyRate = configDto.StudentSundayHourlyRate,
             CompanyPercentage = configDto.CompanyPercentage,
             ServiceProviderPercentage = configDto.ServiceProviderPercentage,
             StudentCancelCutoffHours = configDto.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = configDto.SeniorCancelCutoffHours,
             TravelBufferMinutes = configDto.TravelBufferMinutes,
             PaymentTimingMinutes = configDto.PaymentTimingMinutes,
+            IntermediaryPercentage = configDto.IntermediaryPercentage,
             VatEnabled = configDto.VatEnabled,
             VatPercentage = configDto.VatPercentage
         };
@@ -107,12 +116,15 @@ public class PricingConfigurationService
 
         existingConfig.JobHourlyRate = configDto.JobHourlyRate;
         existingConfig.SundayHourlyRate = configDto.SundayHourlyRate;
+        existingConfig.StudentHourlyRate = configDto.StudentHourlyRate;
+        existingConfig.StudentSundayHourlyRate = configDto.StudentSundayHourlyRate;
         existingConfig.CompanyPercentage = configDto.CompanyPercentage;
         existingConfig.ServiceProviderPercentage = configDto.ServiceProviderPercentage;
         existingConfig.StudentCancelCutoffHours = configDto.StudentCancelCutoffHours;
         existingConfig.SeniorCancelCutoffHours = configDto.SeniorCancelCutoffHours;
         existingConfig.TravelBufferMinutes = configDto.TravelBufferMinutes;
         existingConfig.PaymentTimingMinutes = configDto.PaymentTimingMinutes;
+        existingConfig.IntermediaryPercentage = configDto.IntermediaryPercentage;
         existingConfig.VatEnabled = configDto.VatEnabled;
         existingConfig.VatPercentage = configDto.VatPercentage;
 

@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-02
+> Zadnja izmjena: 2026-04-04
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin)
 
 ---
 
@@ -241,6 +241,40 @@
 - `GET /api/admin/payments/failed-invoices` — lista svih failed invoicea
 - Oba endpointa `[Authorize(Roles = "Admin")]`
 - **Files:** 10 modified/created across Domain, Application, Infrastructure, WebApi
+
+---
+
+## Faza 8 — Dynamic Pricing (Student Rates) ✅ (2026-04-04)
+
+### Task 22: StudentHourlyRate + StudentSundayHourlyRate ✅
+
+- **PricingConfiguration entity** — Dodani `StudentHourlyRate` (default 7.40m), `StudentSundayHourlyRate` (default 11.10m)
+- **DTO** — Oba polja dodana u `PricingConfigurationDto`
+- **Validator** — `RuleFor(x => x.StudentHourlyRate).GreaterThan(0)` + isto za Sunday
+- **Service** — Mapiranje u sva 4 metoda (GetAll, GetById, Add, Update) u `PricingConfigurationService`
+- **AppDbContext** — `decimal(18,2)` column types za oba polja
+- **Seeder** — Default 7.40m / 11.10m
+- **Migracije:** `AddStudentRatesToPricingConfig`, `AddStudentRatesToPricingConfiguration`
+- **Build:** 0 errors, ~73 warnings (baseline)
+
+### Task 23: IntermediaryPercentage (Marža posrednika) ✅
+
+- **PricingConfiguration entity** — Dodano `IntermediaryPercentage` (default 18m, raspon 0-100)
+- **DTO + Validator** — `.GreaterThanOrEqualTo(0).LessThanOrEqualTo(100)`
+- **Removed obsolete validation** — CompanyPercentage + ServiceProviderPercentage = 100 rule removed (legacy fields)
+- **Migration:** `AddIntermediaryPercentageToPricingConfig`
+
+---
+
+## Migrations Applied
+
+1. `20260313130245_AddSundayHourlyRate`
+2. `20260313133641_AddBidirectionalReviews`
+3. `20260313140442_AddPromoCodeSystem`
+4. `20260402085244_AddInvoiceTrackingFields`
+5. `20260404085343_AddIntermediaryPercentageToPricingConfig`
+6. `20260404093048_AddStudentRatesToPricingConfig`
+7. `20260404093111_AddStudentRatesToPricingConfiguration`
 
 ---
 

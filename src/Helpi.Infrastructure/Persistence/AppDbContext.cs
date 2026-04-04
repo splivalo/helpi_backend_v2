@@ -283,9 +283,12 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         {
             entity.Property(p => p.JobHourlyRate).HasColumnType("decimal(18,2)");
             entity.Property(p => p.SundayHourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.StudentHourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(p => p.StudentSundayHourlyRate).HasColumnType("decimal(18,2)");
             entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
             entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
             entity.Property(p => p.VatPercentage).HasColumnType("decimal(5,2)");
+            entity.Property(p => p.IntermediaryPercentage).HasColumnType("decimal(5,2)");
         });
 
         modelBuilder.Entity<PromoCode>(entity =>

@@ -11,6 +11,8 @@ public class PricingConfiguration
     // ── Pricing ──
     public decimal JobHourlyRate { get; set; }
     public decimal SundayHourlyRate { get; set; }
+    public decimal StudentHourlyRate { get; set; } = 7.40m;
+    public decimal StudentSundayHourlyRate { get; set; } = 11.10m;
     public decimal CompanyPercentage { get; set; }
     public decimal ServiceProviderPercentage { get; set; }
 
@@ -21,6 +23,7 @@ public class PricingConfiguration
     // ── Operational ──
     public int TravelBufferMinutes { get; set; } = 15;
     public int PaymentTimingMinutes { get; set; } = 30;
+    public decimal IntermediaryPercentage { get; set; } = 18;
 
     // ── Tax ──
     public bool VatEnabled { get; set; } = false;

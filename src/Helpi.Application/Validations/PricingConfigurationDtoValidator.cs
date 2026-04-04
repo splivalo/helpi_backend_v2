@@ -13,15 +13,14 @@ public class PricingConfigurationDtoValidator : AbstractValidator<PricingConfigu
         RuleFor(x => x.SundayHourlyRate)
             .GreaterThan(0).WithMessage("Sunday hourly rate must be greater than zero.");
 
-        RuleFor(x => x.CompanyPercentage)
-            .InclusiveBetween(0, 100).WithMessage("Company percentage must be between 0 and 100.");
+        RuleFor(x => x.StudentHourlyRate)
+            .GreaterThan(0).WithMessage("Student hourly rate must be greater than zero.");
 
-        RuleFor(x => x.ServiceProviderPercentage)
-            .InclusiveBetween(0, 100).WithMessage("Service provider percentage must be between 0 and 100.");
+        RuleFor(x => x.StudentSundayHourlyRate)
+            .GreaterThan(0).WithMessage("Student Sunday hourly rate must be greater than zero.");
 
-        RuleFor(x => x)
-            .Must(HaveValidSplit)
-            .WithMessage("CompanyPercentage + ServiceProviderPercentage must equal 100.");
+        RuleFor(x => x.IntermediaryPercentage)
+            .InclusiveBetween(0, 100).WithMessage("Intermediary percentage must be between 0 and 100.");
 
         RuleFor(x => x.StudentCancelCutoffHours)
             .InclusiveBetween(1, 48).WithMessage("Student cancel cutoff must be between 1 and 48 hours.");
@@ -38,10 +37,5 @@ public class PricingConfigurationDtoValidator : AbstractValidator<PricingConfigu
         RuleFor(x => x.VatPercentage)
             .InclusiveBetween(0, 100).WithMessage("VAT percentage must be between 0 and 100.")
             .When(x => x.VatEnabled);
-    }
-
-    private bool HaveValidSplit(PricingConfigurationDto dto)
-    {
-        return dto.CompanyPercentage + dto.ServiceProviderPercentage == 100;
     }
 }
