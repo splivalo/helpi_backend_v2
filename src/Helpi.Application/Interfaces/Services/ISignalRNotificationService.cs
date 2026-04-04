@@ -12,4 +12,5 @@ public interface ISignalRNotificationService
     Task SendTypingIndicatorAsync(int userId, string message);
     Task BroadcastSystemNotificationAsync(HNotificationDto notification);
     Task BroadcastSettingsChangedAsync();
+    Task BroadcastEntityChangedAsync(string entityType);
 }

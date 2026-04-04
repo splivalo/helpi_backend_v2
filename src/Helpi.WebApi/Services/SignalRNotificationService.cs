@@ -51,4 +51,10 @@ public class SignalRNotificationService : ISignalRNotificationService
         await _hubContext.Clients.All
             .SendAsync("SettingsChanged", new { timestamp = DateTime.UtcNow });
     }
+
+    public async Task BroadcastEntityChangedAsync(string entityType)
+    {
+        await _hubContext.Clients.All
+            .SendAsync("EntityChanged", new { entityType, timestamp = DateTime.UtcNow });
+    }
 }

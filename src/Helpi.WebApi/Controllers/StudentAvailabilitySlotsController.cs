@@ -70,7 +70,8 @@ public class StudentAvailabilitySlotsController : ControllerBase
                                 return BadRequest("No slots provided.");
                         }
 
-                        var slots = await _service.UpdateSlotsAsync(dtos);
+                        var isAdmin = User.IsInRole("Admin");
+                        var slots = await _service.UpdateSlotsAsync(dtos, isAdmin);
                         return CreatedAtAction(nameof(GetByStudent), new { studentId = dtos.First().StudentId }, slots);
                 }
                 catch (DomainException ex)

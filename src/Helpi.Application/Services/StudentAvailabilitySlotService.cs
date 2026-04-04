@@ -122,7 +122,7 @@ public class StudentAvailabilitySlotService
                 await HandleAvailabilityConflicts(studentId, new List<byte> { dayOfWeek });
         }
 
-        public async Task<List<StudentAvailabilitySlotDto>> UpdateSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos)
+        public async Task<List<StudentAvailabilitySlotDto>> UpdateSlotsAsync(List<StudentAvailabilitySlotCreateDto> dtos, bool isAdmin = false)
         {
                 if (dtos == null || dtos.Count == 0)
                         throw new ArgumentException("No slots provided.");
@@ -145,7 +145,7 @@ public class StudentAvailabilitySlotService
                 // Process conflicts for removed days
                 if (removedDays.Count > 0)
                 {
-                        await HandleAvailabilityConflicts(studentId, removedDays);
+                        await HandleAvailabilityConflicts(studentId, removedDays, isAdmin);
                 }
 
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
@@ -175,28 +175,32 @@ public class StudentAvailabilitySlotService
         /// 3. Set affected orders back to Pending (Processing)
         /// 4. Notify admin + senior
         /// </summary>
-        private async Task HandleAvailabilityConflicts(int studentId, List<byte> removedDays)
+        private async Task HandleAvailabilityConflicts(int studentId, List<byte> removedDays, bool isAdmin = false)
         {
                 var conflicting = await _assignmentRepo.GetConflictingAssignmentsAsync(studentId, removedDays);
                 if (conflicting.Count == 0) return;
 
                 // v2: Block availability change if any affected session starts within cutoff hours
-                var config = await _pricingConfigRepo.GetByIdAsync(1);
-                var cutoffHours = config?.StudentCancelCutoffHours ?? 6;
-                var cutoff = DateTime.UtcNow.AddHours(cutoffHours);
+                // Admin bypass — admins can change availability immediately
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-                foreach (var assignment in conflicting)
+                if (!isAdmin)
                 {
-                        var imminentSession = assignment.JobInstances
-                                .Where(ji => ji.Status == JobInstanceStatus.Upcoming)
-                                .Any(ji => ji.ScheduledDate.ToDateTime(ji.StartTime) <= cutoff
-                                        && ji.ScheduledDate.ToDateTime(ji.StartTime) > DateTime.UtcNow);
+                        var config = await _pricingConfigRepo.GetByIdAsync(1);
+                        var cutoffHours = config?.StudentCancelCutoffHours ?? 6;
+                        var cutoff = DateTime.UtcNow.AddHours(cutoffHours);
 
-                        if (imminentSession)
+                        foreach (var assignment in conflicting)
                         {
-                                throw new DomainException(
-                                        $"Cannot change availability — an affected session starts within {cutoffHours} hour(s)");
+                                var imminentSession = assignment.JobInstances
+                                        .Where(ji => ji.Status == JobInstanceStatus.Upcoming)
+                                        .Any(ji => ji.ScheduledDate.ToDateTime(ji.StartTime) <= cutoff
+                                                && ji.ScheduledDate.ToDateTime(ji.StartTime) > DateTime.UtcNow);
+
+                                if (imminentSession)
+                                {
+                                        throw new DomainException(
+                                                $"Cannot change availability — an affected session starts within {cutoffHours} hour(s)");
+                                }
                         }
                 }
 

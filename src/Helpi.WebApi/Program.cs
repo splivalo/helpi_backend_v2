@@ -9,6 +9,7 @@ using Helpi.Domain.Events;
 using Helpi.Infrastructure.BackgroundJobs.Jobs;
 using Helpi.Infrastructure.Configuration;
 using Helpi.Infrastructure.Seeds;
+using Helpi.WebApi.Filters;
 using Helpi.WebApi.Hubs;
 using Helpi.WebApi.Middleware;
 using Helpi.WebAPI.Services;
@@ -35,7 +36,10 @@ builder.Logging.AddConsole();
 // ------------------------------------------------------------
 
 // Core framework services
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<EntityChangedBroadcastFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler =
