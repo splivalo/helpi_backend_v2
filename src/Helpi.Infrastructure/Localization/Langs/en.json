@@ -85,7 +85,7 @@
         },
         "NewOrder": {
             "Title": "New Order Created",
-            "Body": "A new order has been created"
+            "Body": "{0}, Order #{1}"
         },
         "AvailabilityChanged": {
             "Title": "Student Availability Changed",
