@@ -1,13 +1,10 @@
 {
     "Entities": {
         "Order": "Order #{0}",
-        "Job": "Job #{0}",
+        "Session": "Session #{0}",
         "Schedule": "Schedule #{0}",
-        "Assignment": "Assignment #{0}",
-        "Reassignment": "Reassignment #{0}",
         "Student": "Student: {0}",
         "Senior": "Senior: {0}",
-        "Customer": "Customer: {0}",
         "Admin": "Admin: {0}",
         "Unknown": "Unknown Entity"
     },
@@ -32,10 +29,6 @@
             "Title": "Payment Successful",
             "Body": "Invoice emailed"
         },
-        "JobRequest": {
-            "Title": "Job Request",
-            "Body": "New job request"
-        },
         "JobCancelled": {
             "Title": "Session Cancelled",
             "Body": "{0}, Order #{1}"
@@ -45,8 +38,8 @@
             "Body": "Session on {0} at {1} moved to {2} at {3}"
         },
         "JobReminder": {
-            "Title": "Job Reminder",
-            "Body": "Your job starts at {0}"
+            "Title": "Session Reminder",
+            "Body": "Your session starts at {0}"
         },
         "OrderCancelled": {
             "Title": "Order Cancelled",
@@ -57,19 +50,19 @@
             "Body": "{0}, Order #{1}"
         },
         "ScheduleAssignmentCancelled": {
-            "Title": "Assignment Cancelled",
-            "Body": "{0}"
+            "Title": "Session Cancelled",
+            "Body": "{0}, Order #{1}"
         },
         "ContractAdded": {
-            "Title": "Contract added",
+            "Title": "Contract Added",
             "Body": "Contract added"
         },
         "ContractUpdated": {
-            "Title": "Contract updated",
+            "Title": "Contract Updated",
             "Body": "Contract updated"
         },
         "ContractDeleted": {
-            "Title": "Contract deleted",
+            "Title": "Contract Deleted",
             "Body": "Contract deleted"
         },
         "ContractAboutToExpire": {
@@ -82,26 +75,12 @@
         },
         "ReviewRequest": {
             "Title": "Review",
-            "Body": "How was your expirence?"
-        },
-        "ReassignmentStarted": {
-            "Title": "Student Swap Started",
-            "Body": "{0}, Order #{1}"
-        },
-        "ReassignmentCompleted": {
-            "Title": "Student Changed",
-            "Body": "{0}, Order #{1}"
-        },
-        "NoEligibleStudents": {
-            "Title": "No Eligible Students",
-            "Body": "{0}"
-        },
-        "AllEligibleStudentsNotified": {
-            "Title": "All Eligible Students Notified",
-            "Body": "{0}"
+            "Body": "How was your experience?"
         },
         "UserDeleted": {
             "Title": "User Deleted",
+            "StudentTitle": "Student Deleted",
+            "SeniorTitle": "Senior Deleted",
             "Body": "{0} (ID: {1}) has been permanently deleted"
         },
         "NewOrder": {
@@ -111,10 +90,6 @@
         "AvailabilityChanged": {
             "Title": "Student Availability Changed",
             "Body": "{0}"
-        },
-        "OrderBackToProcessing": {
-            "Title": "Order Processing",
-            "Body": "Your order is currently being processed. We will contact you shortly with more information."
         }
     },
     "Emails": {

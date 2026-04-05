@@ -18,7 +18,6 @@ public class ReassignmentRecord
     public string Reason { get; set; } = string.Empty;
 
     // Status tracking
-    public bool AllowAutoScheduling { get; set; } = true;
     public ReassignmentStatus Status { get; set; } = ReassignmentStatus.Requested;
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; set; }
@@ -27,12 +26,6 @@ public class ReassignmentRecord
     public int RequestedByUserId { get; set; } = 0; // Could be system (0), admin, or student
     public int? OriginalStudentId { get; set; }
     public int? NewStudentId { get; set; }
-
-    // Attempt tracking
-    public int AttemptCount { get; set; } = 0;
-    public int MaxAttempts { get; set; } = 300000; // ??
-    public DateTime? LastAttemptAt { get; set; }
-
 
     //  preferred student tracking
     public int? PreferredStudentId { get; set; }

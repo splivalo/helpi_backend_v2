@@ -87,10 +87,8 @@ public static class DependencyInjection
         services.AddScoped<IFirebaseService, FirebaseService>();
         //--
         services.AddScoped<IHangfireService, HangfireService>();
-        services.AddSingleton<IMatchingBackgroundJobs, MatchingBackgroundJobs>();
         services.AddSingleton<IJobInstanceJobs, JobInstanceJobs>();
         services.AddSingleton<StudentBackgroundJobs>();
-        services.AddTransient<JobRunner>();
         //--
         services.AddScoped<OrderStatusMaintenanceService>();
 

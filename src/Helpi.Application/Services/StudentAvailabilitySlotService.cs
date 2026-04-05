@@ -7,7 +7,6 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
-using Helpi.Domain.Events;
 using Helpi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +16,6 @@ public class StudentAvailabilitySlotService
 {
         private readonly IStudentAvailabilitySlotRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IEventMediator _mediator;
         private readonly IScheduleAssignmentRepository _assignmentRepo;
         private readonly IStudentRepository _studentRepo;
         private readonly IUserRepository _userRepo;
@@ -29,7 +27,6 @@ public class StudentAvailabilitySlotService
 
         public StudentAvailabilitySlotService(
                 IStudentAvailabilitySlotRepository repository,
-                IEventMediator mediator,
                 IMapper mapper,
                 ILogger<StudentAvailabilitySlotService> logger,
                 IScheduleAssignmentRepository assignmentRepo,
@@ -50,7 +47,6 @@ public class StudentAvailabilitySlotService
                 _orderRepo = orderRepo;
                 _pricingConfigRepo = pricingConfigRepo;
                 _mapper = mapper;
-                _mediator = mediator;
                 _logger = logger;
         }
 
@@ -76,8 +72,6 @@ public class StudentAvailabilitySlotService
                 var slot = _mapper.Map<StudentAvailabilitySlot>(dto);
                 await _repository.AddAsync(slot);
 
-                ReinitiateAllFailedMatches();
-
                 return _mapper.Map<StudentAvailabilitySlotDto>(slot);
         }
 
@@ -85,8 +79,6 @@ public class StudentAvailabilitySlotService
         {
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.AddRangeAsync(slots);
-
-                ReinitiateAllFailedMatches();
 
                 return slots.Select(_mapper.Map<StudentAvailabilitySlotDto>).ToList();
         }
@@ -102,8 +94,6 @@ public class StudentAvailabilitySlotService
                 slot.EndTime = dto.EndTime;
 
                 await _repository.UpdateAsync(slot);
-
-                ReinitiateAllFailedMatches();
 
                 return _mapper.Map<StudentAvailabilitySlotDto>(slot);
         }
@@ -139,8 +129,6 @@ public class StudentAvailabilitySlotService
                 await _repository.RemoveAllByStudentIdAsync(studentId);
                 var slots = dtos.Select(_mapper.Map<StudentAvailabilitySlot>).ToList();
                 await _repository.AddRangeAsync(slots);
-
-                ReinitiateAllFailedMatches();
 
                 // Process conflicts for removed days
                 if (removedDays.Count > 0)
@@ -247,8 +235,9 @@ public class StudentAvailabilitySlotService
                         affectedOrderIds.Add(order.Id);
 
                         // 4. Admin notification per affected schedule
-                        var dayName = System.Globalization.CultureInfo.GetCultureInfo("hr-HR")
-                                .DateTimeFormat.GetDayName((DayOfWeek)(schedule.DayOfWeek % 7));
+                        var abbr = System.Globalization.CultureInfo.GetCultureInfo("hr-HR")
+                                .DateTimeFormat.GetAbbreviatedDayName((DayOfWeek)(schedule.DayOfWeek % 7));
+                        var dayName = char.ToUpper(abbr[0]) + abbr[1..];
                         var scheduleDesc = $"{dayName} {schedule.StartTime:HH:mm}-{schedule.EndTime:HH:mm}";
 
                         await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
@@ -279,21 +268,6 @@ public class StudentAvailabilitySlotService
                                 senior.CustomerId, orderId, culture);
                         await _notificationService.SendNotificationAsync(senior.CustomerId, seniorNotification);
                 }
-        }
-
-        private void ReinitiateAllFailedMatches()
-        {
-                _ = Task.Run(async () =>
-                {
-                        try
-                        {
-                                await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
-                        }
-                        catch (Exception ex)
-                        {
-                                _logger.LogError(ex, "❌ Failed to reinitiate failed matches");
-                        }
-                });
         }
 
 }

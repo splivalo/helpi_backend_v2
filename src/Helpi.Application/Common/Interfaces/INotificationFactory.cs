@@ -10,31 +10,15 @@ namespace Helpi.Application.Common.Interfaces
         HNotification CreatePaymentFailedNotification(int receiverUserId, int seniorId, int orderId, int jobInstanceId, string culture);
         HNotification CreatePaymentSuccessNotification(int receiverUserId, int seniorId, int orderId, int jobInstanceId, string culture);
 
+        HNotification StudentContractAboutToExpire(int studentId, int contractId, string culture);
+
         HNotification CreateStudentJobReminderNotification(JobInstance jobInstance, string culture);
-        HNotification? ReassignmentStartNotification(
-                int recieverId,
-                ReassignmentRecord record,
-                int seniorId,
-                NotificationType type,
-                string culture = "hr");
 
         HNotification AdminOrderScheduleCancelledNotification(
        int adminId, OrderSchedule orderSchedule, int seniorId);
 
         HNotification AdminOrderCancelledNotification(
             int adminId, Order order);
-
-        HNotification NoEligibleStudentsNotification(
-    int recieverUserId,
-    Order order,
-   OrderSchedule schedule,
-   ReassignmentRecord? reassignment = null);
-
-        HNotification AllEligibleStudentsNotified(
-            int recieverUserId,
-            Order order,
-           OrderSchedule schedule,
-           ReassignmentRecord? reassignment = null);
 
         HNotification JobRescheduledNotification(
             int receiverUserId,
@@ -48,18 +32,11 @@ namespace Helpi.Application.Common.Interfaces
 
         HNotification SeniorOrderCancelledNotification(
                  int receiverUserId, Order order, string culture);
-        HNotification StudentContractAboutToExpire(int studentId, int contractId, string culture);
         HNotification StudentContractAdded(int studentId, int contractId, string culture);
         HNotification StudentContractUpdated(int studentId, int contractId, string culture);
         HNotification StudentContractDeleted(int studentId, int contractId, string culture);
-        HNotification StudentContractExpired(int studentId, int contractId, string culture);
 
         HNotification ReviewRequestNotification(int recieverId, Review review, JobInstance jobInstance, string culture);
-
-        HNotification JobRequestNotification(int recieverId,
-    OrderSchedule orderSchedule,
-     ReassignmentRecord? reassignmentRecord,
-      string culture);
 
         HNotification UserDeletedNotification(int receiverUserId, int deletedUserId, string deletedUserName, NotificationType type);
         HNotification AdminNewOrderNotification(int adminId, Order order);

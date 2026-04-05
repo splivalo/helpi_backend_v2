@@ -16,8 +16,6 @@ namespace Helpi.Application.Interfaces.Services
             );
 
         Task CompleteReassignment(int reassignmentRecordId, int newStudentId);
-        Task RecordReassignmentAttempt(int reassignmentRecordId, bool success = false);
-        Task ReassignExpiredContractJobs(int studentId);
         Task ReassignJobInstance(int jobInstanceId, ReassignmentType reassignmentType, string reason);
         Task ReassignAssignment(int assignmentId, ReassignmentType reassignmentType, string reason);
     }

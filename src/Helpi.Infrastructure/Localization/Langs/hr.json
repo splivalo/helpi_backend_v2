@@ -1,14 +1,11 @@
 {
     "Entities": {
         "Order": "Narudžba #{0}",
-        "Job": "Posao #{0}",
+        "Session": "Termin #{0}",
         "Schedule": "Raspored #{0}",
-        "Assignment": "Zadatak #{0}",
-        "Reassignment": "Ponovno dodjeljivanje #{0}",
         "Student": "Student: {0}",
-        "Senior": "Starija osoba: {0}",
-        "Customer": "Kupac: {0}",
-        "Admin": "Administrator: {0}",
+        "Senior": "Senior: {0}",
+        "Admin": "Admin: {0}",
         "Unknown": "Nepoznat entitet"
     },
     "Notifications": {
@@ -21,7 +18,7 @@
             "Body": "{0}"
         },
         "NewSenior": {
-            "Title": "Nova starija osoba dodana",
+            "Title": "Novi senior dodan",
             "Body": "{0}"
         },
         "PaymentFailed": {
@@ -32,33 +29,29 @@
             "Title": "Plaćanje uspješno",
             "Body": "Račun je poslan e-poštom"
         },
-        "JobRequest": {
-            "Title": "Zahtjev za posao",
-            "Body": "Novi zahtjev za posao"
-        },
         "JobCancelled": {
             "Title": "Termin otkazan",
-            "Body": "{0}, Narud\u017eba #{1}"
+            "Body": "{0}, Narudžba #{1}"
         },
         "JobRescheduled": {
-            "Title": "Termin je promijenjen",
+            "Title": "Termin promijenjen",
             "Body": "Termin {0} u {1} prebačen je na {2} u {3}"
         },
         "JobReminder": {
-            "Title": "Podsjetnik za posao",
-            "Body": "Vaš posao počinje u {0}"
+            "Title": "Podsjetnik za termin",
+            "Body": "Vaš termin počinje u {0}"
         },
         "OrderCancelled": {
             "Title": "Narudžba otkazana",
-            "Body": "{0}, Narud\u017eba #{1}"
+            "Body": "{0}, Narudžba #{1}"
         },
         "OrderScheduleCancelled": {
             "Title": "Raspored otkazan",
-            "Body": "{0}, Narud\u017eba #{1}"
+            "Body": "{0}, Narudžba #{1}"
         },
         "ScheduleAssignmentCancelled": {
-            "Title": "Zadatak otkazan",
-            "Body": "{0}"
+            "Title": "Termin otkazan",
+            "Body": "{0}, Narudžba #{1}"
         },
         "ContractAdded": {
             "Title": "Ugovor dodan",
@@ -84,24 +77,10 @@
             "Title": "Recenzija",
             "Body": "Kako je bilo vaše iskustvo?"
         },
-        "ReassignmentStarted": {
-            "Title": "Zamjena studenta pokrenuta",
-            "Body": "{0}, Narudžba #{1}"
-        },
-        "ReassignmentCompleted": {
-            "Title": "Student promijenjen",
-            "Body": "{0}, Narudžba #{1}"
-        },
-        "NoEligibleStudents": {
-            "Title": "Nema dostupnih studenata",
-            "Body": "{0}"
-        },
-        "AllEligibleStudentsNotified": {
-            "Title": "Svi dostupni studenti su obaviješteni",
-            "Body": "{0}"
-        },
         "UserDeleted": {
             "Title": "Korisnik izbrisan",
+            "StudentTitle": "Student izbrisan",
+            "SeniorTitle": "Senior izbrisan",
             "Body": "{0} (ID: {1}) je trajno izbrisan"
         },
         "NewOrder": {
@@ -111,10 +90,6 @@
         "AvailabilityChanged": {
             "Title": "Promjena dostupnosti studenta",
             "Body": "{0}"
-        },
-        "OrderBackToProcessing": {
-            "Title": "Narudžba u obradi",
-            "Body": "Vaša narudžba je trenutno u obradi. Javit ćemo vam se uskoro s više informacija."
         }
     },
     "Emails": {

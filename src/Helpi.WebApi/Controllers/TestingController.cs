@@ -6,7 +6,6 @@ using Helpi.Application.Interfaces.Services;
 using Helpi.Application.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
-using Helpi.Domain.Events;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.WebApi.Controllers;
@@ -23,7 +22,6 @@ public class TestingController : ControllerBase
     private readonly IMinimaxService _minimaxService;
     private readonly IMailgunService _mailgunService;
     private readonly ILogger<TestingController> _logger;
-    private readonly IEventMediator _mediator;
 
     public TestingController(
         IWebHostEnvironment env,
@@ -33,7 +31,6 @@ public class TestingController : ControllerBase
         OrdersService ordersService,
         IMinimaxService minimaxService,
         ILogger<TestingController> logger,
-        IEventMediator mediator,
         IMailgunService mailgunService
     )
     {
@@ -44,7 +41,6 @@ public class TestingController : ControllerBase
         _ordersService = ordersService;
         _minimaxService = minimaxService;
         _logger = logger;
-        _mediator = mediator;
         _mailgunService = mailgunService;
     }
 
@@ -70,24 +66,6 @@ public class TestingController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Failed to request review");
-            return StatusCode(500);
-        }
-    }
-
-    [HttpGet("ReinitiateAllFailedMatches")]
-    public async Task<IActionResult> ReinitiateAllFailedMatches()
-    {
-        var forbidden = DevOnly();
-        if (forbidden != null) return forbidden;
-
-        try
-        {
-            await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to reinitiate failed matches");
             return StatusCode(500);
         }
     }

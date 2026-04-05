@@ -22,7 +22,7 @@ namespace Helpi.Application.Utilities
             if (jobInstanceId.HasValue)
             {
                 // Use a localized template like "Job #{0}"
-                jobStr = "| " + localizer.GetString("Entities.Job", culture, jobInstanceId.Value);
+                jobStr = "| " + localizer.GetString("Entities.Session", culture, jobInstanceId.Value);
             }
 
             return $"{orderStr} | {scheduleStr} {jobStr}";

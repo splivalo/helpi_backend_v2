@@ -86,48 +86,6 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
-    public HNotification? ReassignmentStartNotification(
-      int recieverId,
-      ReassignmentRecord record,
-      int seniorId,
-      NotificationType type,
-      string culture = "en")
-    {
-        int orderId = record.OrderId;
-        int orderScheduleId = record.OrderScheduleId;
-        int? jobInstanceId = record.ReassignJobInstanceId;
-
-        var notificationKey = type == NotificationType.ReassignmentCompleted
-            ? "Notifications.ReassignmentCompleted"
-            : "Notifications.ReassignmentStarted";
-
-        var description = LocalizationUtils.GetEntityDescription(_loc,
-                orderId: orderId,
-                scheduleId: orderScheduleId,
-                jobInstanceId: jobInstanceId,
-                "en");
-
-        return new HNotification
-        {
-            RecieverUserId = recieverId,
-            TranslationKey = notificationKey,
-            Title = _loc.GetString($"{notificationKey}.Title", culture),
-            Body = _loc.GetString($"{notificationKey}.Body", culture, description),
-            Type = type,
-            Payload = JsonSerializer.Serialize(new
-            {
-                record.ReassignmentType,
-                EntityType = record.ReassignJobInstanceId.HasValue ? "JobInstance" : "Assignment",
-                EntityId = record.ReassignJobInstanceId ?? record.ReassignAssignmentId,
-                ReassignmentRecordId = record.Id
-            }),
-            SeniorId = seniorId,
-            OrderId = orderId,
-            OrderScheduleId = orderScheduleId,
-            JobInstanceId = jobInstanceId
-        };
-    }
-
 
     public HNotification JobRescheduledNotification(
         int receiverUserId,
@@ -206,81 +164,6 @@ public class NotificationFactory : INotificationFactory
         };
     }
 
-    public HNotification NoEligibleStudentsNotification(
-        int recieverUserId,
-        Order order,
-       OrderSchedule schedule,
-       ReassignmentRecord? reassignment = null)
-    {
-
-        int orderId = order.Id;
-        int orderScheduleId = schedule.Id;
-        int? jobInstanceId = reassignment?.ReassignJobInstanceId;
-
-        var description = LocalizationUtils.GetEntityDescription(_loc,
-                orderId: orderId,
-                scheduleId: orderScheduleId,
-                jobInstanceId: jobInstanceId,
-                "en");
-
-        return new HNotification
-        {
-            RecieverUserId = recieverUserId,
-            TranslationKey = "Notifications.NoEligibleStudents",
-            Title = _loc.GetString("Notifications.NoEligibleStudents.Title"),
-            Body = _loc.GetString("Notifications.NoEligibleStudents.Body", null, description),
-            Type = NotificationType.NoEligibleStudents,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-            }),
-            SeniorId = order.SeniorId,
-            OrderId = orderId,
-            OrderScheduleId = orderScheduleId,
-            JobInstanceId = jobInstanceId
-        };
-    }
-    public HNotification AllEligibleStudentsNotified(
-        int recieverUserId,
-        Order order,
-       OrderSchedule schedule,
-       ReassignmentRecord? reassignment = null)
-    {
-
-        int orderId = order.Id;
-        int orderScheduleId = schedule.Id;
-        int? jobInstanceId = reassignment?.ReassignJobInstanceId;
-
-        var description = LocalizationUtils.GetEntityDescription(_loc,
-                orderId: orderId,
-                scheduleId: orderScheduleId,
-                jobInstanceId: jobInstanceId,
-                "en");
-
-        return new HNotification
-        {
-            RecieverUserId = recieverUserId,
-            TranslationKey = "Notifications.AllEligibleStudentsNotified",
-            Title = _loc.GetString("Notifications.AllEligibleStudentsNotified.Title"),
-            Body = _loc.GetString("Notifications.AllEligibleStudentsNotified.Body", null, description),
-            Type = NotificationType.AllEligableStudentNotified,
-            Payload = JsonSerializer.Serialize(new
-            {
-                Order = order.Id,
-                Schedule = schedule.Id,
-                ReassignmentRecordId = reassignment?.Id,
-            }),
-            SeniorId = order.SeniorId,
-            OrderId = orderId,
-            OrderScheduleId = orderScheduleId,
-            JobInstanceId = jobInstanceId
-        };
-    }
-
-
-
     public HNotification JobCancelledNotification(
     int recieverId,
     JobInstance jobInstance, string culture)
@@ -336,22 +219,6 @@ public class NotificationFactory : INotificationFactory
             })
         };
     }
-
-
-
-    public HNotification StudentContractAboutToExpire(int studentId, int contractId, string culture)
-    {
-        return new HNotification
-        {
-            RecieverUserId = studentId,
-            TranslationKey = "Notifications.ContractAboutToExpire",
-            Title = _loc.GetString("Notifications.ContractAboutToExpire.Title", culture),
-            Body = _loc.GetString("Notifications.ContractAboutToExpire.Body", culture),
-            Type = NotificationType.ContractAboutToExpire,
-            StudentId = studentId,
-            Payload = JsonSerializer.Serialize(new { studentId, contractId })
-        };
-    }
     public HNotification StudentContractAdded(int studentId, int contractId, string culture)
     {
         return new HNotification
@@ -391,16 +258,15 @@ public class NotificationFactory : INotificationFactory
             Payload = JsonSerializer.Serialize(new { studentId, contractId })
         };
     }
-
-    public HNotification StudentContractExpired(int studentId, int contractId, string culture)
+    public HNotification StudentContractAboutToExpire(int studentId, int contractId, string culture)
     {
         return new HNotification
         {
             RecieverUserId = studentId,
-            TranslationKey = "Notifications.ContractExpired",
-            Title = _loc.GetString("Notifications.ContractExpired.Title", culture),
-            Body = _loc.GetString("Notifications.ContractExpired.Body", culture),
-            Type = NotificationType.ContractExpired,
+            TranslationKey = "Notifications.ContractAboutToExpire",
+            Title = _loc.GetString("Notifications.ContractAboutToExpire.Title", culture),
+            Body = _loc.GetString("Notifications.ContractAboutToExpire.Body", culture),
+            Type = NotificationType.ContractAboutToExpire,
             StudentId = studentId,
             Payload = JsonSerializer.Serialize(new { studentId, contractId })
         };
@@ -426,28 +292,6 @@ public class NotificationFactory : INotificationFactory
             })
         };
     }
-    public HNotification JobRequestNotification(int recieverId,
-    OrderSchedule orderSchedule,
-     ReassignmentRecord? reassignmentRecord,
-      string culture)
-    {
-        return new HNotification
-        {
-            RecieverUserId = recieverId,
-            TranslationKey = "Notifications.JobRequest",
-            Title = _loc.GetString("Notifications.JobRequest.Title", culture),
-            Body = _loc.GetString("Notifications.JobRequest.Body", culture),
-            Type = NotificationType.JobRequest,
-            Payload = JsonSerializer.Serialize(new
-            {
-                OrderSchedule = orderSchedule.Id,
-                IsReassignment = reassignmentRecord != null,
-                ReassignmentType = reassignmentRecord?.ReassignmentType.ToString(),
-                ReassignmentRecordId = reassignmentRecord?.Id
-            })
-        };
-    }
-
     public HNotification SeniorOrderCancelledNotification(int receiverUserId, Order order, string culture)
     {
 
@@ -475,7 +319,7 @@ public class NotificationFactory : INotificationFactory
         {
             NotificationType.StudentDeleted => "Entities.Student",
             NotificationType.SeniorDeleted => "Entities.Senior",
-            NotificationType.CustomerDeleted => "Entities.Customer",
+            NotificationType.CustomerDeleted => "Entities.Senior",
             NotificationType.AdminDeleted => "Entities.Admin",
             _ => "Entities.Unknown"
         };
@@ -522,7 +366,7 @@ public class NotificationFactory : INotificationFactory
 
     public HNotification AvailabilityChangedNotification(int adminId, string studentName, int orderId, string scheduleDescription)
     {
-        var body = $"{studentName} promijenio/la dostupnost — utječe na Narudžbu #{orderId} ({scheduleDescription})";
+        var body = $"{studentName}, Pogođena narudžba #{orderId} ({scheduleDescription})";
 
         return new HNotification
         {

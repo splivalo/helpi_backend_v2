@@ -122,18 +122,6 @@ public class HNotificationService : IHNotificationService
     {
         var list = new List<HNotificationDto>();
 
-        var descList = new[]
-        {
-            NotificationType.NoEligibleStudents,
-            NotificationType.AllEligableStudentNotified,
-        };
-
-        var reassignmentList = new[]
-        {
-            NotificationType.ReassignmentStarted,
-            NotificationType.ReassignmentCompleted,
-        };
-
         // User deleted types - need to parse Payload for format args
         var userDeletedList = new[]
         {
@@ -143,13 +131,21 @@ public class HNotificationService : IHNotificationService
             NotificationType.AdminDeleted,
         };
 
-        // Types whose body uses Senior name + Order: "{0}, Narud\u017eba #{1}"
+        // Types whose body uses Senior name + Order: "{0}, Narudžba #{1}"
         var seniorAndOrderList = new[]
         {
             NotificationType.JobCancelled,
             NotificationType.OrderCancelled,
             NotificationType.OrderScheduleCancelled,
+            NotificationType.ScheduleAssignmentCancelled,
             NotificationType.NewOrderAdded,
+        };
+
+        // Types whose body is fully formatted in the factory — only translate Title
+        var keepOriginalBodyList = new[]
+        {
+            NotificationType.JobRescheduled,
+            NotificationType.AvailabilityChanged,
         };
 
         foreach (var dto in notifications)
@@ -160,28 +156,6 @@ public class HNotificationService : IHNotificationService
             {
                 var studentName = dto.Student?.Contact?.FullName ?? "?";
                 dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, studentName);
-            }
-            else if (descList.Contains(dto.Type))
-            {
-                try
-                {
-                    var description = LocalizationUtils.GetEntityDescription(_localizer,
-                            orderId: (int)dto.OrderId!,
-                            scheduleId: (int)dto.OrderScheduleId!,
-                            jobInstanceId: dto.JobInstanceId,
-                            languageCode);
-
-                    dto.Body = description;
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else if (reassignmentList.Contains(dto.Type))
-            {
-                var seniorName = dto.Senior?.Contact?.FullName ?? "?";
-                var orderId = dto.OrderId ?? 0;
-                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName, orderId);
             }
             else if (seniorAndOrderList.Contains(dto.Type))
             {
@@ -202,22 +176,25 @@ public class HNotificationService : IHNotificationService
                     var deletedUserName = payload.GetProperty("deletedUserName").GetString() ?? "";
                     var deletedUserId = payload.GetProperty("deletedUserId").GetInt32();
 
-                    var entityKey = dto.Type switch
+                    // Differentiated title per type
+                    var titleKey = dto.Type switch
                     {
-                        NotificationType.StudentDeleted => "Entities.Student",
-                        NotificationType.SeniorDeleted => "Entities.Senior",
-                        NotificationType.CustomerDeleted => "Entities.Customer",
-                        NotificationType.AdminDeleted => "Entities.Admin",
-                        _ => "Entities.Unknown"
+                        NotificationType.StudentDeleted => "Notifications.UserDeleted.StudentTitle",
+                        NotificationType.SeniorDeleted => "Notifications.UserDeleted.SeniorTitle",
+                        _ => $"{dto.TranslationKey}.Title"
                     };
+                    dto.Title = _localizer.GetString(titleKey, languageCode);
 
-                    var entityDescription = _localizer.GetString(entityKey, languageCode, deletedUserName);
-                    dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, entityDescription, deletedUserId);
+                    dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, deletedUserName, deletedUserId);
                 }
                 catch (Exception)
                 {
                     // Keep original body on parse error
                 }
+            }
+            else if (keepOriginalBodyList.Contains(dto.Type))
+            {
+                // Body already formatted by factory — keep it as-is
             }
             else
             {

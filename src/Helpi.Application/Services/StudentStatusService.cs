@@ -22,7 +22,6 @@ public class StudentStatusService
     private readonly ILogger<OrderStatusMaintenanceService> _logger;
 
     private readonly IReassignmentService _reassignmentService;
-    private readonly IEventMediator _mediator;
 
     private readonly IContractEvaluationService _contractEvaluator;
 
@@ -36,7 +35,6 @@ public class StudentStatusService
       INotificationService notificationService,
 INotificationFactory notificationFactory,
      IReassignmentService reassignmentService,
-IEventMediator mediator,
         ILogger<OrderStatusMaintenanceService> logger,
               IContractEvaluationService contractEvaluator,
               IMailgunService mailgunService,
@@ -50,7 +48,6 @@ IUserRepository userRepository
         _notificationFactory = notificationFactory;
         _logger = logger;
         _reassignmentService = reassignmentService;
-        _mediator = mediator;
         _contractEvaluator = contractEvaluator;
         _mailgunService = mailgunService;
         _loc = loc;
@@ -151,8 +148,6 @@ IUserRepository userRepository
                 culture: student.Contact.LanguageCode ?? "en");
 
             await _notificationService.SendNotificationAsync(student.UserId, notification);
-
-            await _mediator.Publish(new ReinitiateAllFailedMatchesEvent());
         }
     }
 
@@ -218,13 +213,8 @@ IUserRepository userRepository
             // send initial expired notification (day 0)
             if (eval.DaysSinceExpiry == 0 || eval.DaysSinceExpiry == null)
             {
-                // consider this moment the immediate expiration notice
-                var last = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
-                if (last != null)
-                {
-                    await SendContractExpiredNotification(student, last);
-                    await NotifyAdminsContractExpired(student, last);
-                }
+                // Log expiration - admin sees expired status in UI, no notification spam needed
+                _logger.LogInformation("Student {StudentId} contract expired", student.UserId);
             }
             return;
         }
@@ -271,24 +261,22 @@ IUserRepository userRepository
 
     private async Task HandleContractRenewalReminder(Student student, StudentContract contract)
     {
-        _logger.LogInformation("🔔 Sending contract renewal reminder notification to student {StudentId}", student.UserId);
+        _logger.LogInformation("🔔 Student {StudentId} contract about to expire, updating status", student.UserId);
+
+        student.Status = StudentStatus.ContractAboutToExpire;
+        await _studentRepo.UpdateAsync(student);
 
         try
         {
-            student.Status = StudentStatus.ContractAboutToExpire;
-            await _studentRepo.UpdateAsync(student);
-
             var notification = _notificationFactory.StudentContractAboutToExpire(student.UserId,
                 contract.Id,
                 culture: student.Contact.LanguageCode ?? "en");
 
             await _notificationService.SendNotificationAsync(student.UserId, notification);
-
-            _logger.LogInformation("✅ Contract renewal reminder notification sent to student {StudentId}", student.UserId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to send contract renewal reminder notification to student {StudentId}", student.UserId);
+            _logger.LogError(ex, "❌ Failed to send contract renewal reminder to student {StudentId}", student.UserId);
         }
     }
 
@@ -320,43 +308,6 @@ IUserRepository userRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Failed to send final warning email to student {StudentId}", student.UserId);
-        }
-    }
-
-    private async Task SendContractExpiredNotification(Student student, StudentContract contract)
-    {
-        _logger.LogInformation("🔔 Sending contract expired notification to student {StudentId}", student.UserId);
-
-        try
-        {
-
-            var notification = _notificationFactory.StudentContractExpired(student.UserId,
-                contract.Id,
-                culture: student.Contact.LanguageCode ?? "en");
-
-            await _notificationService.SendNotificationAsync(student.UserId, notification);
-
-            _logger.LogInformation("✅ Contract expired notification sent to {StudentId}", student.UserId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to send contract expired notification to student {StudentId}", student.UserId);
-        }
-    }
-
-    private async Task NotifyAdminsContractExpired(Student student, StudentContract? contract)
-    {
-        if (contract == null) return;
-        try
-        {
-            var adminIds = await _userRepository.GetAdminIdsAsync();
-            await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
-                adminId => _notificationFactory.StudentContractExpired(adminId, contract.Id,
-                    culture: "hr"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to notify admins about contract expiry for student {StudentId}", student.UserId);
         }
     }
 

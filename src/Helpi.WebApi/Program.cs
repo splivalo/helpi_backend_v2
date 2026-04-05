@@ -194,13 +194,6 @@ app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 // 6️⃣  STARTUP TASKS (Seed data, subscribe events, schedule jobs)
 // ------------------------------------------------------------
 
-// Domain event subscriptions
-using (var scope = app.Services.CreateScope())
-{
-    var mediator = scope.ServiceProvider.GetRequiredService<IEventMediator>();
-    mediator?.Subscribe<ReinitiateAllFailedMatchesEvent, FailedMatchReinitiationService>();
-}
-
 // Seed essential data
 using (var scope = app.Services.CreateScope())
 {

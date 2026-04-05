@@ -31,7 +31,6 @@ public static class DependencyInjection
         services.AddScoped<FcmTokensService>();
         services.AddScoped<IHangfireRecurringJobService, HangfireRecurringJobService>();
         services.AddScoped<IRecurrenceDateGenerator, RecurrenceDateGenerator>();
-        services.AddScoped<IMatchingService, MatchingService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<UserService>();
         services.AddScoped<ContactInfoService>();
@@ -64,11 +63,6 @@ public static class DependencyInjection
         services.AddScoped<IPromoCodeService, PromoCodeService>();
         services.AddScoped<SuspensionService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
-        services.AddScoped<IJobInstanceMatchingService, JobInstanceMatchingService>();
-        services.AddScoped<IFailedMatchReinitiationService, FailedMatchReinitiationService>();
-
-        services.AddScoped<IDomainEventHandler<ReinitiateAllFailedMatchesEvent>>(sp =>
-            (IDomainEventHandler<ReinitiateAllFailedMatchesEvent>)sp.GetRequiredService<IFailedMatchReinitiationService>());
 
         ///===
         services.AddScoped<OrderStatusMaintenanceService>();

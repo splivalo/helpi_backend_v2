@@ -20,7 +20,6 @@ public class OrdersService
         private readonly IOrderServiceRepository _orderServiceRepository;
         private readonly IMapper _mapper;
 
-        private readonly IMatchingService _matchingService;
         private readonly IJobRequestRepository _jobRequestRepository;
         private readonly IJobInstanceRepository _jobInstanceRepository;
 
@@ -47,7 +46,6 @@ public class OrdersService
             IOrderServiceRepository orderServiceRepository,
             IUnitOfWork unitOfWork,
             IMapper mapper,
-            IMatchingService matchingService,
             IJobRequestRepository jobRequestRepository,
             IJobInstanceRepository jobInstanceRepository,
             ILogger<OrdersService> logger,
@@ -68,7 +66,6 @@ public class OrdersService
                 _orderServiceRepository = orderServiceRepository;
                 _unitOfWork = unitOfWork;
                 _mapper = mapper;
-                _matchingService = matchingService;
                 _jobRequestRepository = jobRequestRepository;
                 _jobInstanceRepository = jobInstanceRepository;
                 _logger = logger;
@@ -189,10 +186,7 @@ public class OrdersService
                                 throw new DomainException($"Saved order {order.Id} could not be reloaded.");
                         }
 
-                        // === 6. Post-Creation:  ===
-                        await _matchingService.StartMatching(order.Id);
-
-                        // === 7. Notify admins about new order ===
+                        // === 6. Notify admins about new order ===
                         await NotifyAdminsAboutNewOrder(savedOrder);
 
                         return _mapper.Map<OrderDto>(savedOrder);
@@ -278,8 +272,6 @@ public class OrdersService
 
                         // Run maintenance 
                         await _statusMaintenanceService.MaintainOrderStatuses(orderId);
-
-                        await _matchingService.StartMatching(order.Id);
 
                         // Refetch to get updated relationships
                         var updatedOrder = await GetLoadedOrderById(orderId);
