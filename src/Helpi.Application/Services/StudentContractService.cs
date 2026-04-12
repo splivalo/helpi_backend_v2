@@ -276,12 +276,6 @@ public class StudentContractService
                 return (folderName, fileName);
         }
 
-        // private async Task<string> GetContractCloudPathAsync(string folderName, string fileName)
-        // {
-        //         _googleDriveService.
-        //         return $"{folderName}/{fileName}"; // todo
-        // }
-
         private async Task<string> ReplaceContractFileAsync(string oldCloudPath, IFormFile newFile, string folderName, string fileName)
         {
                 try

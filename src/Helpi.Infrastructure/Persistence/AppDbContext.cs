@@ -71,7 +71,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<ScheduleAssignment> ScheduleAssignments { get; set; }
     public DbSet<ReassignmentRecord> ReassignmentRecords { get; set; }
     public DbSet<JobInstance> JobInstances { get; set; }
-    // public DbSet<ScheduleAssignmentReplacement> ScheduleAssignmentReplacements { get; set; }
 
     // Feedback & Billing
     public DbSet<Review> Reviews { get; set; }
@@ -229,16 +228,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
         modelBuilder.Entity<StudentService>()
             .HasKey(ss => new { ss.StudentId, ss.ServiceId });
-
-        // modelBuilder.Entity<ScheduleAssignmentReplacement>()
-        //     .HasOne(sar => sar.OriginalAssignment)
-        //     .WithMany()
-        //     .OnDelete(DeleteBehavior.Restrict);
-
-        // modelBuilder.Entity<ScheduleAssignmentReplacement>()
-        //     .HasOne(sar => sar.NewAssignment)
-        //     .WithMany()
-        //     .OnDelete(DeleteBehavior.Restrict);
 
         // Configure spatial index for Cities
         modelBuilder.Entity<City>(entity =>

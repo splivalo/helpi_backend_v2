@@ -90,10 +90,7 @@ public static class DependencyInjection
         services.AddSingleton<IJobInstanceJobs, JobInstanceJobs>();
         services.AddSingleton<StudentBackgroundJobs>();
         //--
-        services.AddScoped<OrderStatusMaintenanceService>();
-
-
-        services.AddScoped<IReassignmentService, ReassignmentService>();
+        // OrderStatusMaintenanceService + ReassignmentService registered in Application DI
         services.AddScoped<IStudentStatisticsService, StudentStatisticsService>();
         services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 
@@ -121,7 +118,7 @@ public static class DependencyInjection
         services.AddScoped<IScheduleAssignmentRepository, ScheduleAssignmentRepository>();
         services.AddScoped<IJobInstanceRepository, JobInstanceRepository>();
         services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
-        // services.AddScoped<IScheduleAssignmentReplacementRepository, ScheduleAssignmentReplacementRepository>();
+
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IHEmailRepository, HEmailRepository>();
