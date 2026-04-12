@@ -7,6 +7,7 @@ namespace Helpi.Domain.Entities
     {
         public int Id { get; set; }
         public int SeniorId { get; set; }
+        public int OrderNumber { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public bool IsRecurring { get; set; }
         public int? PaymentMethodId { get; set; }

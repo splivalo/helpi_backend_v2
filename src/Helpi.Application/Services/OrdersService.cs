@@ -154,6 +154,12 @@ public class OrdersService
 
                         // === 1. Create Order ===
                         var order = _mapper.Map<Order>(orderCreateDto);
+
+                        // Assign per-senior sequential order number
+                        var existingCount = await _orderRepository.CountAsync(
+                            o => o.SeniorId == orderCreateDto.SeniorId);
+                        order.OrderNumber = existingCount + 1;
+
                         order = await _orderRepository.AddNoSaveAsync(order);
 
                         // === 2. Add Services ===
