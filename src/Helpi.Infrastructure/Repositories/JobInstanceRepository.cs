@@ -25,6 +25,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 return await _context.JobInstances
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                 .SingleAsync(ji => ji.Id == id);
         }
 
@@ -34,6 +35,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Where(ji => ji.ScheduleAssignmentId == assignmentId)
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
@@ -43,6 +45,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Where(j => j.OrderId == orderId)
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                 .OrderBy(j => j.ScheduledDate).ThenBy(j => j.StartTime)
                 .AsNoTracking()
                 .ToListAsync();
@@ -54,6 +57,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                      .Where(j => j.ScheduleAssignment != null && j.ScheduleAssignment.StudentId == studentId)
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
                      .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                     .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                      .AsNoTracking()
                      .OrderByDescending(j => j.ScheduledDate)
                      .ToListAsync();
@@ -65,6 +69,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                     .AsNoTracking()
                     .Include(j => j.Senior).ThenInclude(s => s.Contact)
                                         .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                    .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                     .OrderByDescending(j => j.ScheduledDate)
                     .ToListAsync();
 
@@ -78,6 +83,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .AsNoTracking()
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 

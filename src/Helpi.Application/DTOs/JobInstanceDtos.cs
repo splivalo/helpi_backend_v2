@@ -55,6 +55,11 @@ public class SessionDto
     public ScheduleAssignmentDto? ScheduleAssignment { get; set; } = null!;
 
     /// <summary>
+    /// Services inherited from the parent Order (via OrderServices join).
+    /// </summary>
+    public List<ServiceDto> Services { get; set; } = new();
+
+    /// <summary>
     /// Computed per-role flag: can the current caller cancel this session?
     /// Set by controller after mapping, NOT by AutoMapper.
     /// </summary>

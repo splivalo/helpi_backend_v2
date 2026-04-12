@@ -217,7 +217,11 @@ public class MappingProfile : Profile
         CreateMap<ScheduleAssignmentUpdateDto, ScheduleAssignment>();
 
         // JobInstance Mappings
-        CreateMap<JobInstance, SessionDto>();
+        CreateMap<JobInstance, SessionDto>()
+            .ForMember(dest => dest.Services,
+                opt => opt.MapFrom(src => src.Order != null
+                    ? src.Order.OrderServices.Select(os => os.Service).ToList()
+                    : new List<Service>()));
         CreateMap<SessionUpdateDto, JobInstance>();
 
         // PaymentTransaction Mappings
