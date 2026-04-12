@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<IPromoCodeService, PromoCodeService>();
         services.AddScoped<SuspensionService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
+        services.AddScoped<ChatService>();
 
         ///===
         services.AddScoped<OrderStatusMaintenanceService>();

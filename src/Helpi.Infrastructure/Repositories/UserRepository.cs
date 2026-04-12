@@ -18,6 +18,14 @@ public class UserRepository : IUserRepository
         }
 
         public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
+
+        public async Task<User?> GetByIdWithContactAsync(int id) => await _context.Users
+                .Include(u => u.Student)
+                    .ThenInclude(s => s!.Contact)
+                .Include(u => u.Customer)
+                    .ThenInclude(c => c!.Contact)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
         public async Task<User?> GetByEmailAsync(string email) => await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         public async Task<IEnumerable<User>> GetAllAsync() => await _context.Users.ToListAsync();
         public async Task<User> AddAsync(User user)

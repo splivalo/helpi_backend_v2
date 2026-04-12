@@ -284,6 +284,10 @@ public class MappingProfile : Profile
 
         // Map JobInstance → CompletedSessionDto
         CreateMap<JobInstance, CompletedSessionDto>();
+
+        // Chat Mappings
+        CreateMap<ChatRoom, ChatRoomDto>();
+        CreateMap<ChatMessage, ChatMessageDto>();
     }
 
 

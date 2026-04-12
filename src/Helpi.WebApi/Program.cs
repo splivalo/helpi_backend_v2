@@ -189,6 +189,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 app.UseWebSockets();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
+app.MapHub<ChatHub>("/hubs/chat").RequireAuthorization();
 
 // ------------------------------------------------------------
 // 6️⃣  STARTUP TASKS (Seed data, subscribe events, schedule jobs)

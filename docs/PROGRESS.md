@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-05
+> Zadnja izmjena: 2026-04-12
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV)
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV) + **Chat system (real-time + REST)**
 
 ---
 
@@ -345,6 +345,32 @@
 6. `20260404093048_AddStudentRatesToPricingConfig`
 7. `20260404093111_AddStudentRatesToPricingConfiguration`
 8. `20260404103424_AddStudentHourlyRateSnapshotToJobInstances`
+9. `20260412_AddChatSystem` — ChatRooms + ChatMessages tables
+
+---
+
+## Faza 10 — Chat System ✅ (2026-04-12)
+
+### Task 30: Chat Entities + Migration ✅
+
+- **ChatRoom entity** — Id, Participant1Id, Participant1Name, Participant2Id, Participant2Name, LastMessageContent, LastMessageAt, UnreadCount1, UnreadCount2, CreatedAt
+- **ChatMessage entity** — Id, RoomId, SenderId, SenderName, Content, SentAt, IsRead
+- **Migration** applied to PostgreSQL
+- **DbContext** — ChatRooms, ChatMessages DbSets configured
+
+### Task 31: ChatService + ChatRepository ✅
+
+- **ChatRepository** — CRUD, GetUserRooms, GetRoomMessages (paged), IncrementUnread, ResetUnread
+- **ChatService** — GetUserRoomsAsync (auto-creates admin room), GetOrCreateRoomAsync (welcome message), SendMessageAsync, MarkRoomAsReadAsync, GetUnreadCountAsync
+- **GetUserDisplayNameAsync** — Admin shows as "Helpi", other users resolved via `GetByIdWithContactAsync` (eager includes Student.Contact + Customer.Contact)
+- **Auto-room creation** — When user fetches rooms and has no admin room, one is created with welcome message
+
+### Task 32: ChatController + ChatHub ✅
+
+- **ChatController** (`api/chat`) — GET /rooms, POST /rooms, GET /rooms/{id}/messages, POST /rooms/{id}/messages, PUT /rooms/{id}/read, GET /unread-count
+- **ChatHub** (`/hubs/chat`) — SignalR hub, JoinRoom/LeaveRoom groups
+- **NotificationHub broadcast** — ChatController.SendMessage also broadcasts `ReceiveChatMessage` via NotificationHub to `user_{otherUserId}` group (both apps connect to NotificationHub, not ChatHub)
+- **GetByIdWithContactAsync** — Added to IUserRepository/UserRepository for proper name resolution
 
 ---
 
@@ -364,16 +390,16 @@
 - Backend warning cleanup to 0 — COMPLETE
 - **Notification content overhaul** — COMPLETE (FormatSafe, TranslateNotifications refactor, NewOrderAdded)
 - **Google Drive archive (single master CSV)** — COMPLETE (find/download/append/update flow, 3 new GoogleDriveService methods)
+- **Chat system** — COMPLETE (ChatRoom, ChatMessage, ChatService, ChatController, ChatHub, NotificationHub broadcast, auto-room, welcome message, GetByIdWithContactAsync)
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
 ### Preostalo (iz ROADMAP.md):
 
-1. **Backend integracija** — Admin app Mock → REST API (GLAVNI zadatak)
-2. **Chat/Poruke sustav** — NIŠTA ne postoji u backendu! Nema ChatRoom/ChatMessage entiteta, nema ChatController, nema ChatHub. Frontend (admin + app) ima mock UI. Detalji u `helpi_admin/docs/ROADMAP.md`
-3. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
-4. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
-5. **Push notifikacije** — Firebase FCM za sve uloge
-6. **Per-user preferencije** — SharedPreferences s userId u admin appu
+1. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
+2. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
+3. **Push notifikacije** — Firebase FCM za sve uloge
+4. **Per-user preferencije** — SharedPreferences s userId u admin appu
+5. **Sponzor sustav** — SponsorConfiguration entity + admin UI + app badge (branding)
 
 ---
 

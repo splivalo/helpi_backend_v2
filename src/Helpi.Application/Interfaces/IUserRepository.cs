@@ -6,6 +6,7 @@ namespace Helpi.Application.Interfaces;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id);
+    Task<User?> GetByIdWithContactAsync(int id);
     Task<User?> GetByEmailAsync(string email);
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> AddAsync(User user);

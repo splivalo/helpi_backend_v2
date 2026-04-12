@@ -91,6 +91,10 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Admin Notes
     public DbSet<AdminNote> AdminNotes { get; set; }
 
+    // Chat
+    public DbSet<ChatRoom> ChatRooms { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 

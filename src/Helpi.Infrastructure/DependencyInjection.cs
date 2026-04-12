@@ -127,6 +127,7 @@ public static class DependencyInjection
         services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<ISuspensionLogRepository, SuspensionLogRepository>();
+        services.AddScoped<IChatRepository, ChatRepository>();
         services.AddScoped<AdminService>();
         /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):
         //         var repositoryTypes = Assembly.GetAssembly(typeof(AppDbContext))!
@@ -199,7 +200,8 @@ public static class DependencyInjection
 
                         // If the request is for our hub...
                         var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/hubs/notifications") || path.StartsWithSegments("/hubs/chat")))
                         {
                             // Read the token from the query string
                             context.Token = accessToken;
