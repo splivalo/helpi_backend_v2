@@ -111,5 +111,11 @@ public class ReviewRepository : IReviewRepository
                 .Where(r => r.IsPending == false)
                 .ToListAsync();
 
+        public async Task<List<Review>> GetPendingByJobInstanceAsync(int jobInstanceId)
+        {
+                return await _context.Reviews
+                      .Where(r => r.JobInstanceId == jobInstanceId && r.IsPending)
+                      .ToListAsync();
+        }
 
 }

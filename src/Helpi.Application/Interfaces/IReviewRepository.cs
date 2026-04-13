@@ -19,5 +19,6 @@ public interface IReviewRepository
     Task<double?> AverageAsync(Expression<Func<Review, bool>> predicate, Expression<Func<Review, double>> selector);
     Task<List<Review>> GetPendingSeniorReviews(int seniorId);
     Task<List<Review>> GetPendingStudentReviews(int studentId);
+    Task<List<Review>> GetPendingByJobInstanceAsync(int jobInstanceId);
 
 }

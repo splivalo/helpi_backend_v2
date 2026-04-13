@@ -210,7 +210,45 @@ IPricingConfigurationRepository pricingConfigRepo
                         // Post-completion processing
                         await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
 
-                        // Schedule review request
+                        // Create pending reviews IMMEDIATELY so users can review right away
+                        var studentId = instance.ScheduleAssignment!.StudentId;
+                        var seniorReview = new Review
+                        {
+                                Type = ReviewType.SeniorToStudent,
+                                SeniorId = instance.SeniorId,
+                                SeniorFullName = instance.Senior.Contact.FullName,
+                                StudentId = studentId,
+                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                                JobInstanceId = jobInstanceId,
+                                Rating = 0,
+                                Comment = null,
+                                RetryCount = 0,
+                                MaxRetry = 2,
+                                NextRetryAt = DateTime.UtcNow,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                        };
+                        await _reviewRepo.AddAsync(seniorReview);
+
+                        var studentReview = new Review
+                        {
+                                Type = ReviewType.StudentToSenior,
+                                SeniorId = instance.SeniorId,
+                                SeniorFullName = instance.Senior.Contact.FullName,
+                                StudentId = studentId,
+                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                                JobInstanceId = jobInstanceId,
+                                Rating = 0,
+                                Comment = null,
+                                RetryCount = 0,
+                                MaxRetry = 2,
+                                NextRetryAt = DateTime.UtcNow,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                        };
+                        await _reviewRepo.AddAsync(studentReview);
+
+                        // Schedule push notification reminder (10 min later)
                         var reviewRequestTime = DateTime.UtcNow.AddMinutes(10);
                         _hangfireService.Schedule<IJobInstanceService>(
                             s => s.RequestJobReviewAsync(instance.Id),
@@ -240,49 +278,22 @@ IPricingConfigurationRepository pricingConfigRepo
                 var customerCulture = customer?.Contact.LanguageCode ?? "en";
                 var studentId = instance.ScheduleAssignment!.StudentId;
 
-                // 1. Senior → Student review (same as v1)
-                var seniorReview = new Review
+                // Only send push notification reminders for still-pending reviews
+                var pendingReviews = await _reviewRepo.GetPendingByJobInstanceAsync(jobInstanceId);
+
+                var seniorPending = pendingReviews.FirstOrDefault(r => r.Type == ReviewType.SeniorToStudent && r.IsPending);
+                if (seniorPending != null)
                 {
-                        Type = ReviewType.SeniorToStudent,
-                        SeniorId = instance.SeniorId,
-                        SeniorFullName = instance.Senior.Contact.FullName,
-                        StudentId = studentId,
-                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
-                        JobInstanceId = jobInstanceId,
-                        Rating = 0,
-                        Comment = null,
-                        RetryCount = 0,
-                        MaxRetry = 2,
-                        NextRetryAt = DateTime.UtcNow,
-                        IsPending = true,
-                        CreatedAt = DateTime.UtcNow,
-                };
-                await _reviewRepo.AddAsync(seniorReview);
+                        var seniorNotification = _notificationFactory.ReviewRequestNotification(customerId, seniorPending, instance, customerCulture);
+                        await _notificationService.SendNotificationAsync(customerId, seniorNotification);
+                }
 
-                var seniorNotification = _notificationFactory.ReviewRequestNotification(customerId, seniorReview, instance, customerCulture);
-                await _notificationService.SendNotificationAsync(customerId, seniorNotification);
-
-                // 2. Student → Senior review (NEW in v2)
-                var studentReview = new Review
+                var studentPending = pendingReviews.FirstOrDefault(r => r.Type == ReviewType.StudentToSenior && r.IsPending);
+                if (studentPending != null)
                 {
-                        Type = ReviewType.StudentToSenior,
-                        SeniorId = instance.SeniorId,
-                        SeniorFullName = instance.Senior.Contact.FullName,
-                        StudentId = studentId,
-                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
-                        JobInstanceId = jobInstanceId,
-                        Rating = 0,
-                        Comment = null,
-                        RetryCount = 0,
-                        MaxRetry = 2,
-                        NextRetryAt = DateTime.UtcNow,
-                        IsPending = true,
-                        CreatedAt = DateTime.UtcNow,
-                };
-                await _reviewRepo.AddAsync(studentReview);
-
-                var studentNotification = _notificationFactory.ReviewRequestNotification(studentId, studentReview, instance, "hr");
-                await _notificationService.SendNotificationAsync(studentId, studentNotification);
+                        var studentNotification = _notificationFactory.ReviewRequestNotification(studentId, studentPending, instance, "hr");
+                        await _notificationService.SendNotificationAsync(studentId, studentNotification);
+                }
         }
 
 
