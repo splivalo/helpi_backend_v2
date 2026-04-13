@@ -34,6 +34,7 @@ public class ReviewRepository : IReviewRepository
         public async Task<IEnumerable<Review>> GetByStudentAsync(int studentId)
             => await _context.Reviews
                 .Where(r => r.StudentId == studentId)
+                .Where(r => r.Type == ReviewType.SeniorToStudent)
                 .Where(r => r.IsPending == false)
                 .ToListAsync();
 
