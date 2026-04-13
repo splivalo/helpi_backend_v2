@@ -221,7 +221,12 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Services,
                 opt => opt.MapFrom(src => src.Order != null
                     ? src.Order.OrderServices.Select(os => os.Service).ToList()
-                    : new List<Service>()));
+                    : new List<Service>()))
+            .ForMember(dest => dest.Review,
+                opt => opt.MapFrom(src => src.Reviews
+                    .Where(r => !r.IsPending)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefault()));
         CreateMap<SessionUpdateDto, JobInstance>();
 
         // PaymentTransaction Mappings

@@ -26,6 +26,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(j => j.Reviews)
                 .SingleAsync(ji => ji.Id == id);
         }
 
@@ -36,6 +37,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(j => j.Reviews)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
@@ -46,6 +48,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(j => j.Reviews)
                 .OrderBy(j => j.ScheduledDate).ThenBy(j => j.StartTime)
                 .AsNoTracking()
                 .ToListAsync();
@@ -58,6 +61,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
                      .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                      .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                     .Include(j => j.Reviews)
                      .AsNoTracking()
                      .OrderByDescending(j => j.ScheduledDate)
                      .ToListAsync();
@@ -70,6 +74,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                     .Include(j => j.Senior).ThenInclude(s => s.Contact)
                                         .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                     .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                    .Include(j => j.Reviews)
                     .OrderByDescending(j => j.ScheduledDate)
                     .ToListAsync();
 
@@ -84,6 +89,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                 .Include(j => j.Senior).ThenInclude(s => s.Contact)
                                 .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                 .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)
+                .Include(j => j.Reviews)
                 .OrderByDescending(j => j.ScheduledDate)
                 .ToListAsync();
 
@@ -125,6 +131,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .Where(j => j.SeniorId == seniorId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
                            .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .Include(j => j.Reviews)
                            .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
@@ -136,6 +143,7 @@ public class JobInstanceRepository : IJobInstanceRepository
                            .Where(j => j.ScheduleAssignment != null && j.ScheduleAssignment.StudentId == studentId && j.Status == JobInstanceStatus.Completed)
                            .Include(j => j.Senior).ThenInclude(s => s.Contact)
                            .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
+                           .Include(j => j.Reviews)
                            .OrderByDescending(j => j.ScheduledDate)
                            .ToListAsync();
         }
