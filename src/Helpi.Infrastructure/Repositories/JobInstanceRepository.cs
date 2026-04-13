@@ -156,7 +156,11 @@ public class JobInstanceRepository : IJobInstanceRepository
 
                 var instance = await GetByIdAsync(jobInstanceId);
                 if (instance?.Status != JobInstanceStatus.Upcoming) return null;
-                if (instance?.PaymentStatus != PaymentStatus.Paid) return null;
+                // TODO(stripe-integration): Uncomment PaymentStatus check when Stripe is fully integrated.
+                // Without Stripe credentials, ProcessPaymentAsync cannot charge → PaymentStatus stays Pending
+                // → this blocks the entire InProgress→Completed flow. Re-enable after Stripe go-live.
+                // See also: helpi_app/lib/core/constants/pricing.dart for matching TODO.
+                // if (instance?.PaymentStatus != PaymentStatus.Paid) return null;
 
                 instance.Status = JobInstanceStatus.InProgress;
                 await _context.SaveChangesAsync();
