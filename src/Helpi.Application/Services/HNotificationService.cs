@@ -160,8 +160,18 @@ public class HNotificationService : IHNotificationService
             else if (seniorAndOrderList.Contains(dto.Type))
             {
                 var seniorName = dto.Senior?.Contact?.FullName ?? "?";
-                var orderId = dto.OrderId ?? 0;
-                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName, orderId);
+                var orderNumber = dto.OrderId ?? 0; // fallback to global ID
+                if (!string.IsNullOrEmpty(dto.Payload))
+                {
+                    try
+                    {
+                        var payload = JsonSerializer.Deserialize<JsonElement>(dto.Payload);
+                        if (payload.TryGetProperty("orderNumber", out var onProp) && onProp.TryGetInt32(out var on))
+                            orderNumber = on;
+                    }
+                    catch { /* fallback to OrderId */ }
+                }
+                dto.Body = _localizer.GetString($"{dto.TranslationKey}.Body", languageCode, seniorName, orderNumber);
             }
             else if (dto.Type == NotificationType.NewSeniorAdded)
             {

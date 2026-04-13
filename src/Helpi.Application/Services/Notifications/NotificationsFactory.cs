@@ -157,9 +157,11 @@ public class NotificationFactory : INotificationFactory
             Body = _loc.GetString("Notifications.OrderCancelled.Body", null),
             Type = NotificationType.OrderCancelled,
             SeniorId = order.SeniorId,
+            OrderId = order.Id,
             Payload = JsonSerializer.Serialize(new
             {
-                order = order.Id
+                order = order.Id,
+                orderNumber = order.OrderNumber
             })
         };
     }
@@ -295,7 +297,7 @@ public class NotificationFactory : INotificationFactory
     public HNotification SeniorOrderCancelledNotification(int receiverUserId, Order order, string culture)
     {
 
-        var desc = _loc.GetString("Entities.Order", culture, order.Id);
+        var desc = _loc.GetString("Entities.Order", culture, order.OrderNumber);
 
         return new HNotification
         {
@@ -305,9 +307,11 @@ public class NotificationFactory : INotificationFactory
             Body = desc,
             Type = NotificationType.OrderCancelled,
             SeniorId = order.SeniorId,
+            OrderId = order.Id,
             Payload = JsonSerializer.Serialize(new
             {
-                order = order.Id
+                order = order.Id,
+                orderNumber = order.OrderNumber
             })
         };
     }
@@ -360,7 +364,7 @@ public class NotificationFactory : INotificationFactory
             Type = NotificationType.NewOrderAdded,
             SeniorId = order.SeniorId,
             OrderId = order.Id,
-            Payload = JsonSerializer.Serialize(new { orderId = order.Id, seniorId = order.SeniorId })
+            Payload = JsonSerializer.Serialize(new { orderId = order.Id, seniorId = order.SeniorId, orderNumber = order.OrderNumber })
         };
     }
 
