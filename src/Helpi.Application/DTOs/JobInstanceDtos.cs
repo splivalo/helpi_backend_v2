@@ -55,9 +55,14 @@ public class SessionDto
     public ScheduleAssignmentDto? ScheduleAssignment { get; set; } = null!;
 
     /// <summary>
-    /// The submitted (non-pending) review for this session, if any.
+    /// Senior's review of the student (SeniorToStudent), if submitted.
     /// </summary>
-    public ReviewDto? Review { get; set; }
+    public ReviewDto? SeniorReview { get; set; }
+
+    /// <summary>
+    /// Student's review of the senior (StudentToSenior), if submitted.
+    /// </summary>
+    public ReviewDto? StudentReview { get; set; }
 
     /// <summary>
     /// Services inherited from the parent Order (via OrderServices join).

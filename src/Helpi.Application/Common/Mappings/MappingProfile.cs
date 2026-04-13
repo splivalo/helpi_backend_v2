@@ -222,9 +222,14 @@ public class MappingProfile : Profile
                 opt => opt.MapFrom(src => src.Order != null
                     ? src.Order.OrderServices.Select(os => os.Service).ToList()
                     : new List<Service>()))
-            .ForMember(dest => dest.Review,
+            .ForMember(dest => dest.SeniorReview,
                 opt => opt.MapFrom(src => src.Reviews
-                    .Where(r => !r.IsPending)
+                    .Where(r => !r.IsPending && r.Type == ReviewType.SeniorToStudent)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefault()))
+            .ForMember(dest => dest.StudentReview,
+                opt => opt.MapFrom(src => src.Reviews
+                    .Where(r => !r.IsPending && r.Type == ReviewType.StudentToSenior)
                     .OrderByDescending(r => r.CreatedAt)
                     .FirstOrDefault()));
         CreateMap<SessionUpdateDto, JobInstance>();
