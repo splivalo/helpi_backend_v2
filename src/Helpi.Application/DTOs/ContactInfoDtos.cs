@@ -31,6 +31,8 @@ public class ContactInfoDto
 
 
     public string Country { get; set; } = "Croatia";
+
+    public string? ProfileImageUrl { get; set; }
 }
 
 public class ContactInfoCreateDto

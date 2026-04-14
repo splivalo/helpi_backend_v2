@@ -274,6 +274,7 @@ public class StudentQueryBuilder
                 CreatedAt = s.Contact.CreatedAt,
                 Latitude = s.Contact.Latitude,
                 Longitude = s.Contact.Longitude,
+                ProfileImageUrl = s.Contact.ProfileImageUrl,
             },
 
             Faculty = new FacultyDto

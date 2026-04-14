@@ -4,6 +4,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Helpi.Application.Services;
@@ -131,5 +132,70 @@ public class ContactInfoService
                 await _repository.UpdateAsync(contact);
 
                 return true;
+        }
+
+        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+                ".jpg", ".jpeg", ".png", ".webp"
+        };
+
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
+
+        public async Task<string> UploadProfileImageAsync(int contactId, IFormFile file, string webRootPath)
+        {
+                var contact = await _repository.GetByIdAsync(contactId)
+                        ?? throw new KeyNotFoundException($"Contact info with ID {contactId} was not found.");
+
+                if (file.Length == 0)
+                        throw new ArgumentException("File is empty.");
+
+                if (file.Length > MaxFileSizeBytes)
+                        throw new ArgumentException("File size exceeds 5 MB limit.");
+
+                var ext = Path.GetExtension(file.FileName);
+                if (!AllowedExtensions.Contains(ext))
+                        throw new ArgumentException($"File type '{ext}' is not allowed. Use jpg, jpeg, png, or webp.");
+
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(contact.ProfileImageUrl))
+                {
+                        var oldPath = Path.Combine(webRootPath, contact.ProfileImageUrl.TrimStart('/'));
+                        if (File.Exists(oldPath))
+                                File.Delete(oldPath);
+                }
+
+                var uploadsDir = Path.Combine(webRootPath, "uploads", "profile-images");
+                Directory.CreateDirectory(uploadsDir);
+
+                var fileName = $"{contactId}_{Guid.NewGuid():N}{ext}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+
+                await using var stream = new FileStream(filePath, FileMode.Create);
+                await file.CopyToAsync(stream);
+
+                var relativeUrl = $"/uploads/profile-images/{fileName}";
+                contact.ProfileImageUrl = relativeUrl;
+                await _repository.UpdateAsync(contact);
+
+                _logger.LogInformation("Profile image uploaded for ContactInfo {ContactId}: {Url}", contactId, relativeUrl);
+                return relativeUrl;
+        }
+
+        public async Task DeleteProfileImageAsync(int contactId, string webRootPath)
+        {
+                var contact = await _repository.GetByIdAsync(contactId)
+                        ?? throw new KeyNotFoundException($"Contact info with ID {contactId} was not found.");
+
+                if (string.IsNullOrEmpty(contact.ProfileImageUrl))
+                        return;
+
+                var filePath = Path.Combine(webRootPath, contact.ProfileImageUrl.TrimStart('/'));
+                if (File.Exists(filePath))
+                        File.Delete(filePath);
+
+                contact.ProfileImageUrl = null;
+                await _repository.UpdateAsync(contact);
+
+                _logger.LogInformation("Profile image deleted for ContactInfo {ContactId}", contactId);
         }
 }

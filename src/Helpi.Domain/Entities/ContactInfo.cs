@@ -37,6 +37,9 @@ namespace Helpi.Domain.Entities
 
         public string Country { get; set; } = "Croatia";
 
+        [MaxLength(500)]
+        public string? ProfileImageUrl { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? DeletedAt { get; set; }

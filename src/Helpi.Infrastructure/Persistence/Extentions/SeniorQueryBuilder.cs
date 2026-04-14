@@ -98,6 +98,7 @@ public class SeniorQueryBuilder
                 PostalCode = s.Contact.PostalCode,
                 CreatedAt = s.Contact.CreatedAt,
                 DateOfBirth = s.Contact.DateOfBirth,
+                ProfileImageUrl = s.Contact.ProfileImageUrl,
             },
             // Orderer contact - only populated when Relationship != Self
             OrdererContact = s.Relationship != Relationship.Self && s.Customer != null && s.Customer.Contact != null
@@ -116,6 +117,7 @@ public class SeniorQueryBuilder
                     PostalCode = s.Customer.Contact.PostalCode,
                     CreatedAt = s.Customer.Contact.CreatedAt,
                     DateOfBirth = s.Customer.Contact.DateOfBirth,
+                    ProfileImageUrl = s.Customer.Contact.ProfileImageUrl,
                 }
                 : null,
             Relationship = s.Relationship,
