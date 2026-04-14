@@ -24,6 +24,7 @@ public class SeniorService
         private readonly IContactInfoRepository _contactInfoRepo;
         private readonly IJobInstanceRepository _jobInstanceRepo;
         private readonly IUserRepository _userRepository;
+        private readonly ICustomerRepository _customerRepo;
 
         public SeniorService(
                 ISeniorRepository repository,
@@ -35,7 +36,8 @@ public class SeniorService
                 INotificationFactory notificationFactory,
                 IContactInfoRepository contactInfoRepo,
                 IJobInstanceRepository jobInstanceRepo,
-                IUserRepository userRepository)
+                IUserRepository userRepository,
+                ICustomerRepository customerRepo)
         {
                 _repository = repository;
                 _mapper = mapper;
@@ -47,6 +49,7 @@ public class SeniorService
                 _contactInfoRepo = contactInfoRepo;
                 _jobInstanceRepo = jobInstanceRepo;
                 _userRepository = userRepository;
+                _customerRepo = customerRepo;
         }
 
         public async Task<List<SeniorDto>> GetSeniorsByCustomerAsync(int customerId)
@@ -54,6 +57,73 @@ public class SeniorService
                 var seniors = await _repository.GetByCustomerIdAsync(customerId);
 
                 return _mapper.Map<List<SeniorDto>>(seniors);
+        }
+
+        public async Task<SeniorDto> UpdateSeniorAsync(int seniorId, SeniorUpdateDto dto)
+        {
+                var senior = await _repository.GetByIdAsync(seniorId)
+                        ?? throw new KeyNotFoundException($"Senior {seniorId} not found.");
+
+                var oldRelationship = senior.Relationship;
+                var newRelationship = dto.Relationship ?? oldRelationship;
+
+                // Self → non-Self: split contacts (create a NEW contact for the senior,
+                // keep the original on the Customer side as orderer)
+                if (oldRelationship == Relationship.Self && newRelationship != Relationship.Self)
+                {
+                        var original = await _contactInfoRepo.GetByIdAsync(senior.ContactId)
+                                ?? throw new InvalidOperationException("Original contact not found.");
+
+                        var newContact = new ContactInfo
+                        {
+                                FullName = original.FullName,
+                                DateOfBirth = original.DateOfBirth,
+                                Phone = original.Phone,
+                                Email = original.Email,
+                                LanguageCode = original.LanguageCode,
+                                Gender = original.Gender,
+                                GooglePlaceId = original.GooglePlaceId,
+                                FullAddress = original.FullAddress,
+                                CityId = original.CityId,
+                                CityName = original.CityName,
+                                Latitude = original.Latitude,
+                                Longitude = original.Longitude,
+                                PostalCode = original.PostalCode,
+                                Country = original.Country,
+                                State = original.State,
+                        };
+                        var created = await _contactInfoRepo.AddAsync(newContact);
+                        senior.ContactId = created.Id;
+                }
+                // Non-Self → Self: merge (delete the senior's separate contact, point to Customer's)
+                else if (oldRelationship != Relationship.Self && newRelationship == Relationship.Self)
+                {
+                        var customer = await _customerRepo.GetByIdAsync(senior.CustomerId)
+                                ?? throw new InvalidOperationException("Customer not found for senior.");
+                        var oldContactId = senior.ContactId;
+
+                        // Point senior to customer's contact
+                        senior.ContactId = customer.ContactId;
+
+                        // Clean up the now-orphaned contact
+                        if (oldContactId != customer.ContactId)
+                        {
+                                var orphan = await _contactInfoRepo.GetByIdAsync(oldContactId);
+                                if (orphan != null) await _contactInfoRepo.DeleteAsync(orphan);
+                        }
+                }
+
+                senior.Relationship = newRelationship;
+
+                if (dto.SpecialRequirements != null)
+                        senior.SpecialRequirements = dto.SpecialRequirements;
+
+                await _repository.UpdateAsync(senior);
+
+                _logger.LogInformation("Senior {SeniorId} updated (Relationship: {Old} → {New})",
+                        seniorId, oldRelationship, newRelationship);
+
+                return await GetBySeniorByIdAsync(seniorId);
         }
 
         public async Task<SeniorDto> CreateSeniorAsync(SeniorCreateDto dto)
@@ -85,6 +155,21 @@ public class SeniorService
                 var user = await _userRepository.GetByIdAsync(senior.CustomerId);
                 dto.IsSuspended = user?.IsSuspended ?? false;
                 dto.SuspensionReason = user?.SuspensionReason;
+
+                // Populate orderer contact when Relationship != Self
+                if (senior.Relationship != Relationship.Self)
+                {
+                        var customer = await _customerRepo.GetByIdAsync(senior.CustomerId);
+                        if (customer != null)
+                        {
+                                var ordererContact = await _contactInfoRepo.GetByIdAsync(customer.ContactId);
+                                if (ordererContact != null)
+                                {
+                                        dto.OrdererContact = _mapper.Map<ContactInfoDto>(ordererContact);
+                                }
+                        }
+                }
+
                 return dto;
         }
 

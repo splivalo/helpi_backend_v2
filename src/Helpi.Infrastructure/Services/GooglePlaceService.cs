@@ -59,6 +59,26 @@ public class GooglePlaceService : IGooglePlaceService
 
     }
 
+    public async Task<List<PlaceAutocompleteResult>> AutocompleteAsync(string input)
+    {
+        var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json" +
+                  $"?input={Uri.EscapeDataString(input)}&components=country:hr&key={_apiKey}";
+
+        var raw = await _apiService.GetRawAsync(url, "");
+        var response = JsonConvert.DeserializeObject<GoogleAutocompleteResponse>(raw);
+
+        if (response?.Predictions == null)
+            return new List<PlaceAutocompleteResult>();
+
+        return response.Predictions.Select(p => new PlaceAutocompleteResult
+        {
+            PlaceId = p.PlaceId,
+            Description = p.Description,
+            MainText = p.StructuredFormatting?.MainText ?? "",
+            SecondaryText = p.StructuredFormatting?.SecondaryText ?? "",
+        }).ToList();
+    }
+
     private string? ExtractCityName(List<GoogleAddressComponent>? components)
     {
         if (components == null) return null;

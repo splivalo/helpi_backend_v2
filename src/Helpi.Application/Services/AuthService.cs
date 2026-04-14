@@ -490,6 +490,33 @@ ILocalizationService loc
         return tokenResponseDto;
     }
 
+    /// <summary>
+    /// Admin-only: force-set a user's password without knowing the old one.
+    /// </summary>
+    public async Task<(bool Success, string Message)> AdminResetPasswordAsync(int userId, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+            return (false, "User not found.");
+
+        // Remove existing password, then set the new one
+        var removeResult = await _userManager.RemovePasswordAsync(user);
+        if (!removeResult.Succeeded)
+        {
+            var errors = string.Join("; ", removeResult.Errors.Select(e => e.Description));
+            return (false, $"Failed to remove old password: {errors}");
+        }
+
+        var addResult = await _userManager.AddPasswordAsync(user, newPassword);
+        if (!addResult.Succeeded)
+        {
+            var errors = string.Join("; ", addResult.Errors.Select(e => e.Description));
+            return (false, $"Password validation failed: {errors}");
+        }
+
+        return (true, "Password reset successfully.");
+    }
+
     private async Task<City> GetCity(string googlePlaceId)
     {
 

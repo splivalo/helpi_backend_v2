@@ -1,4 +1,5 @@
 using Helpi.Application.DTOs.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Helpi.Application.Services;
 using System.Security.Claims;
@@ -148,6 +149,19 @@ public class AuthController : ControllerBase
             success,
             message
         });
+    }
+
+    /// <summary>
+    /// Admin-only: force-reset a user's password.
+    /// </summary>
+    [HttpPost("admin-reset-password")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminResetPassword([FromBody] AdminResetPasswordDto dto)
+    {
+        var (success, message) = await _authService.AdminResetPasswordAsync(dto.UserId, dto.NewPassword);
+        if (!success)
+            return BadRequest(new { success, message });
+        return Ok(new { success, message });
     }
 
 

@@ -57,6 +57,14 @@ public class SeniorsController : ControllerBase
                 return CreatedAtAction(nameof(GetByCustomer), new { customerId = dto.CustomerId }, s);
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<SeniorDto>> Update(int id, SeniorUpdateDto dto)
+        {
+                var updated = await _service.UpdateSeniorAsync(id, dto);
+                return Ok(updated);
+        }
+
         /// <summary>
         /// Check if senior can be archived and get blocking item counts.
         /// </summary>

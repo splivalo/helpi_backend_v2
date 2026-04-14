@@ -43,3 +43,43 @@ public class GoogleFindPlaceCandidate
     [JsonProperty("place_id")]
     public string PlaceId { get; set; } = "";
 }
+
+// Autocomplete
+public class GoogleAutocompleteResponse
+{
+    [JsonProperty("predictions")]
+    public List<GoogleAutocompletePrediction> Predictions { get; set; } = new();
+
+    [JsonProperty("status")]
+    public string? Status { get; set; }
+}
+
+public class GoogleAutocompletePrediction
+{
+    [JsonProperty("place_id")]
+    public string PlaceId { get; set; } = "";
+
+    [JsonProperty("description")]
+    public string Description { get; set; } = "";
+
+    [JsonProperty("structured_formatting")]
+    public GoogleStructuredFormatting? StructuredFormatting { get; set; }
+}
+
+public class GoogleStructuredFormatting
+{
+    [JsonProperty("main_text")]
+    public string MainText { get; set; } = "";
+
+    [JsonProperty("secondary_text")]
+    public string SecondaryText { get; set; } = "";
+}
+
+/// Simplified result returned to clients.
+public class PlaceAutocompleteResult
+{
+    public string PlaceId { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string MainText { get; set; } = "";
+    public string SecondaryText { get; set; } = "";
+}
