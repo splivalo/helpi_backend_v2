@@ -467,6 +467,15 @@
 - **Frontend integration:** helpi_app calls this as 3rd fallback step in `_resolvePendingReviewId` (local cache → re-fetch → ensureCompleted → re-fetch)
 - **Build:** 0 errors
 
+### Travel Buffer Conflict Detection — Dual Check Fix ✅ (2026-04-15)
+
+- **Problem:** Available students endpoint (`FindEligibleStudentsCore`) only checked **JobInstances** for time conflicts. If Hangfire hadn't generated JobInstances for a future date, students with conflicting recurring schedules still appeared as available. Then `AdminDirectAssignAsync` (which checks **OrderSchedule patterns**) would reject the assignment → confusing UX (student shown as available but assign fails).
+- **Second bug:** Both `FindEligibleStudentsCore` and `AdminDirectAssignAsync` checked `ScheduleAssignment.Status == Accepted` but NEVER checked **Order status**. When an order was Cancelled/Completed, its assignments stayed `Accepted` → phantom conflicts blocking valid assignments.
+- **Fix 1 (StudentRepository.cs):** Added second `.Where()` filter in `FindEligibleStudentsCore` — checks `OrderSchedule.DayOfWeek + StartTime/EndTime` with travel buffer, filtered by `Order.Status != Completed && != Cancelled`
+- **Fix 2 (ScheduleAssignmentRepository.cs):** `GetActiveAssignmentsByStudentId()` now includes `OrderSchedule → Order` and filters `Order.Status != Completed && != Cancelled`
+- **Result:** Available students list now matches what `AdminDirectAssignAsync` allows — no more false negatives or false positives
+- **Build:** 0 errors
+
 ### Backend Binding for Android Emulator ✅ (2026-03-23)
 
 - **Problem:** `localhost:5142` only binds to 127.0.0.1 — Android emulator can't reach host via `10.0.2.2`

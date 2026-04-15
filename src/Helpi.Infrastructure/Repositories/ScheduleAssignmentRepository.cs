@@ -266,7 +266,12 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
         public async Task<List<ScheduleAssignment>> GetActiveAssignmentsByStudentId(int studentId)
         {
                 return await _context.ScheduleAssignments
-                                .Where(a => a.StudentId == studentId && a.Status == AssignmentStatus.Accepted)
+                                .Include(a => a.OrderSchedule)
+                                    .ThenInclude(os => os.Order)
+                                .Where(a => a.StudentId == studentId
+                                    && a.Status == AssignmentStatus.Accepted
+                                    && a.OrderSchedule.Order.Status != OrderStatus.Completed
+                                    && a.OrderSchedule.Order.Status != OrderStatus.Cancelled)
                                 .ToListAsync();
         }
 

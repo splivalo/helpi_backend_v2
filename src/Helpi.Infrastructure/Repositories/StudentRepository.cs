@@ -242,7 +242,7 @@ public class StudentRepository : IStudentRepository
         // so service filter is removed from matching logic.
         // Services (6 categories) are informational for senior only.
 
-        // ✅ Unified conflict detection with 15-min travel buffer
+        // ✅ Conflict detection 1: Check generated JobInstances with travel buffer
         query = query.Where(s =>
             !s.ScheduleAssignments
                 .Where(sa => sa.Status == AssignmentStatus.Accepted)
@@ -261,6 +261,21 @@ public class StudentRepository : IStudentRepository
                     && j.Status != JobInstanceStatus.Completed
                     && j.Status != JobInstanceStatus.Cancelled
                     && j.Status != JobInstanceStatus.Rescheduled
+                )
+        );
+
+        // ✅ Conflict detection 2: Check recurring OrderSchedule patterns
+        // Catches conflicts even when JobInstances haven't been generated yet
+        // Only consider assignments whose parent Order is still active (Pending/FullAssigned)
+        query = query.Where(s =>
+            !s.ScheduleAssignments
+                .Where(sa => sa.Status == AssignmentStatus.Accepted
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Completed
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled)
+                .Any(sa =>
+                    sa.OrderSchedule.DayOfWeek == isoTargetDay
+                    && sa.OrderSchedule.StartTime < bufferedEnd
+                    && sa.OrderSchedule.EndTime > bufferedStart
                 )
         );
 
