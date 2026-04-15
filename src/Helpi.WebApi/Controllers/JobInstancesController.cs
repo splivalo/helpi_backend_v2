@@ -163,4 +163,26 @@ public class SessionsController : ControllerBase
                         return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
                 }
         }
+
+        /// <summary>
+        /// Ensure a session is completed (idempotent). Used when frontend detects
+        /// session time has passed but Hangfire hasn't completed it yet.
+        /// Creates pending reviews if they don't exist.
+        /// </summary>
+        [HttpPost("{jobInstanceId}/ensure-completed")]
+        public async Task<IActionResult> EnsureCompleted(int jobInstanceId)
+        {
+                try
+                {
+                        var success = await _jobInstanceService.EnsureCompletedAsync(jobInstanceId);
+                        if (!success)
+                                return BadRequest(new { message = "Session cannot be completed yet." });
+
+                        return Ok(new { message = "Session completed and reviews created." });
+                }
+                catch (Exception ex)
+                {
+                        return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+                }
+        }
 }

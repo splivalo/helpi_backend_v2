@@ -262,7 +262,145 @@ IPricingConfigurationRepository pricingConfigRepo
                 }
         }
 
+        /// <summary>
+        /// Idempotent completion — ensures a session is marked completed and pending
+        /// reviews exist.  Called by the frontend when the user wants to review but
+        /// Hangfire hasn't processed the session yet.
+        /// </summary>
+        public async Task<bool> EnsureCompletedAsync(int jobInstanceId)
+        {
+                var instance = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
+                if (instance == null)
+                        return false;
 
+                // Already completed — make sure pending reviews exist, re-create if missing
+                if (instance.Status == JobInstanceStatus.Completed)
+                {
+                        var existing = await _reviewRepo.GetPendingByJobInstanceAsync(jobInstanceId);
+                        if (existing.Count > 0)
+                                return true;
+
+                        // No pending reviews — re-create them if assignment exists
+                        if (instance.ScheduleAssignmentId == null || instance.ScheduleAssignment?.Student == null)
+                                return false;
+
+                        var reStudentId = instance.ScheduleAssignment!.StudentId;
+
+                        var reSeniorReview = new Review
+                        {
+                                Type = ReviewType.SeniorToStudent,
+                                SeniorId = instance.SeniorId,
+                                SeniorFullName = instance.Senior.Contact.FullName,
+                                StudentId = reStudentId,
+                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                                JobInstanceId = jobInstanceId,
+                                Rating = 0,
+                                Comment = null,
+                                RetryCount = 0,
+                                MaxRetry = 2,
+                                NextRetryAt = DateTime.UtcNow,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                        };
+                        await _reviewRepo.AddAsync(reSeniorReview);
+
+                        var reStudentReview = new Review
+                        {
+                                Type = ReviewType.StudentToSenior,
+                                SeniorId = instance.SeniorId,
+                                SeniorFullName = instance.Senior.Contact.FullName,
+                                StudentId = reStudentId,
+                                StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                                JobInstanceId = jobInstanceId,
+                                Rating = 0,
+                                Comment = null,
+                                RetryCount = 0,
+                                MaxRetry = 2,
+                                NextRetryAt = DateTime.UtcNow,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                        };
+                        await _reviewRepo.AddAsync(reStudentReview);
+
+                        return true;
+                }
+
+                // Only allow if time has actually passed
+                var now = DateTime.UtcNow;
+                var endUtc = instance.ScheduledDate.ToDateTime(instance.EndTime, DateTimeKind.Utc);
+                if (now < endUtc)
+                        return false;
+
+                // Must have an assignment
+                if (instance.ScheduleAssignmentId == null)
+                        return false;
+
+                // Status must be Upcoming or InProgress (not Cancelled/Rescheduled)
+                if (instance.Status != JobInstanceStatus.Upcoming &&
+                    instance.Status != JobInstanceStatus.InProgress)
+                        return false;
+
+                var assignment = await _assignmentRepository.LoadAssignmentWithIncludes(
+                    instance.ScheduleAssignmentId.Value,
+                    new AssignmentIncludeOptions
+                    {
+                            IncludeStudent = true,
+                            IncludeStudentContracts = true
+                    });
+
+                if (assignment == null)
+                        return false;
+
+                var studentActiveContract = assignment.Student.ActiveContract;
+                if (studentActiveContract != null)
+                        instance.ContractId = studentActiveContract.Id;
+
+                instance.Status = JobInstanceStatus.Completed;
+                await _jobInstanceRepository.UpdateAsync(instance);
+
+                await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
+
+                // Create pending reviews (same logic as UpdateToCompletedAsync)
+                var studentId = instance.ScheduleAssignment!.StudentId;
+
+                var seniorReview = new Review
+                {
+                        Type = ReviewType.SeniorToStudent,
+                        SeniorId = instance.SeniorId,
+                        SeniorFullName = instance.Senior.Contact.FullName,
+                        StudentId = studentId,
+                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                        JobInstanceId = jobInstanceId,
+                        Rating = 0,
+                        Comment = null,
+                        RetryCount = 0,
+                        MaxRetry = 2,
+                        NextRetryAt = DateTime.UtcNow,
+                        IsPending = true,
+                        CreatedAt = DateTime.UtcNow,
+                };
+                await _reviewRepo.AddAsync(seniorReview);
+
+                var studentReview = new Review
+                {
+                        Type = ReviewType.StudentToSenior,
+                        SeniorId = instance.SeniorId,
+                        SeniorFullName = instance.Senior.Contact.FullName,
+                        StudentId = studentId,
+                        StudentFullName = instance.ScheduleAssignment.Student.Contact.FullName,
+                        JobInstanceId = jobInstanceId,
+                        Rating = 0,
+                        Comment = null,
+                        RetryCount = 0,
+                        MaxRetry = 2,
+                        NextRetryAt = DateTime.UtcNow,
+                        IsPending = true,
+                        CreatedAt = DateTime.UtcNow,
+                };
+                await _reviewRepo.AddAsync(studentReview);
+
+                return true;
+        }
 
 
         public async Task RequestJobReviewAsync(int jobInstanceId)

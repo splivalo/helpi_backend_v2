@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-12
+> Zadnja izmjena: 2026-04-15
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -451,6 +451,20 @@
   - `ReviewRepository.cs` — filters `IsPending == false`, includes Student + Senior, orders by CreatedAt desc
   - `ReviewService.cs` — `GetAllAsync()` maps to `List<ReviewDto>`
   - `ReviewsController.cs` — `[HttpGet] GetAll()` endpoint
+- **Build:** 0 errors
+
+### EnsureCompletedAsync — Bulletproof Review Flow ✅ (2026-04-15)
+
+- **Problem:** Hangfire auto-completion sometimes hasn't run when user opens session — review button shows "not ready" because session is still InProgress/Upcoming even though time has passed
+- **New endpoint:** `POST /api/sessions/{id}/ensure-completed` — idempotent, safe to call repeatedly
+- **Logic (JobInstanceService.EnsureCompletedAsync):**
+  1. If session already Completed but reviews MISSING → re-creates 2 pending reviews (SeniorToStudent + StudentToSenior)
+  2. If session Upcoming/InProgress and `now > endUtc` → marks Completed, creates 2 pending reviews
+  3. Guards: rejects Cancelled/Rescheduled, rejects if time hasn't passed yet, requires assignment
+- **Variable naming:** Uses `re` prefix (reStudentId, reSeniorReview, reStudentReview) for the re-creation branch to avoid scope conflicts
+- **Interface:** `IJobInstanceService.EnsureCompletedAsync(int jobInstanceId)` — returns `Task<bool>`
+- **Controller:** `JobInstancesController` — `[HttpPost("{jobInstanceId}/ensure-completed")]`
+- **Frontend integration:** helpi_app calls this as 3rd fallback step in `_resolvePendingReviewId` (local cache → re-fetch → ensureCompleted → re-fetch)
 - **Build:** 0 errors
 
 ### Backend Binding for Android Emulator ✅ (2026-03-23)
