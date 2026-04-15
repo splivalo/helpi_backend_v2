@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<PricingChangeHistoryService>();
         services.AddScoped<TravelBufferReconciliationService>();
         services.AddScoped<IPromoCodeService, PromoCodeService>();
+        services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<SuspensionService>();
         services.AddScoped<IReassignmentService, ReassignmentService>();
         services.AddScoped<ChatService>();

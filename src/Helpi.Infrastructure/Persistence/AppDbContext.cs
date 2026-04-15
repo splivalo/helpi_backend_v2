@@ -95,6 +95,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<ChatRoom> ChatRooms { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
 
+    // Sponsors
+    public DbSet<Sponsor> Sponsors { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 
@@ -295,6 +298,15 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<PromoCodeUsage>(entity =>
         {
             entity.Property(u => u.DiscountApplied).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<Sponsor>(entity =>
+        {
+            entity.Property(s => s.Name).HasMaxLength(200);
+            entity.Property(s => s.LogoUrl).HasMaxLength(2000);
+            entity.Property(s => s.DarkLogoUrl).HasMaxLength(2000);
+            entity.Property(s => s.LinkUrl).HasMaxLength(2000);
+            entity.Property(s => s.Label).HasColumnType("jsonb");
         });
 
 
