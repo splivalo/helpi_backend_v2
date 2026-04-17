@@ -95,6 +95,11 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<ChatRoom> ChatRooms { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
 
+    // Coupons
+    public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<CouponAssignment> CouponAssignments { get; set; }
+    public DbSet<CouponUsage> CouponUsages { get; set; }
+
     // Sponsors
     public DbSet<Sponsor> Sponsors { get; set; }
 
@@ -307,6 +312,57 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.Property(s => s.DarkLogoUrl).HasMaxLength(2000);
             entity.Property(s => s.LinkUrl).HasMaxLength(2000);
             entity.Property(s => s.Label).HasColumnType("jsonb");
+        });
+
+        // Coupon system
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.HasIndex(c => c.Code).IsUnique();
+            entity.Property(c => c.Code).HasMaxLength(50);
+            entity.Property(c => c.Name).HasMaxLength(200);
+            entity.Property(c => c.Description).HasMaxLength(500);
+            entity.Property(c => c.Value).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(c => c.City)
+                .WithMany()
+                .HasForeignKey(c => c.CityId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CouponAssignment>(entity =>
+        {
+            entity.Property(a => a.RemainingValue).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(a => a.Coupon)
+                .WithMany(c => c.Assignments)
+                .HasForeignKey(a => a.CouponId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.Senior)
+                .WithMany()
+                .HasForeignKey(a => a.SeniorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.AssignedByAdmin)
+                .WithMany()
+                .HasForeignKey(a => a.AssignedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CouponUsage>(entity =>
+        {
+            entity.Property(u => u.CoveredAmount).HasColumnType("decimal(18,2)");
+            entity.Property(u => u.CoveredHours).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(u => u.CouponAssignment)
+                .WithMany(a => a.Usages)
+                .HasForeignKey(u => u.CouponAssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(u => u.JobInstance)
+                .WithMany()
+                .HasForeignKey(u => u.JobInstanceId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
 

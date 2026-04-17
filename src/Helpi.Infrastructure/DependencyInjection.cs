@@ -125,6 +125,7 @@ public static class DependencyInjection
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IServiceRegionRepository, ServiceRegionRepository>();
         services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<ISuspensionLogRepository, SuspensionLogRepository>();

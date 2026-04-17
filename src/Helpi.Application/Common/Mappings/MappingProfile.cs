@@ -247,6 +247,10 @@ public class MappingProfile : Profile
         CreateMap<PromoCode, PromoCodeDto>();
         CreateMap<PromoCodeCreateDto, PromoCode>();
 
+        // Coupon Mappings
+        CreateMap<Coupon, CouponDto>();
+        CreateMap<CouponCreateDto, Coupon>();
+
         // Sponsor Mappings
         CreateMap<Sponsor, SponsorDto>();
         CreateMap<SponsorCreateDto, Sponsor>();

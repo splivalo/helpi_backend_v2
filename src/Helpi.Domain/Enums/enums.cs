@@ -290,4 +290,13 @@ namespace Helpi.Domain.Enums
         Activated = 1
     }
 
+    public enum CouponType
+    {
+        MonthlyHours = 0,
+        WeeklyHours = 1,
+        OneTimeHours = 2,
+        Percentage = 3,
+        FixedPerSession = 4
+    }
+
 }
