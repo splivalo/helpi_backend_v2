@@ -21,4 +21,8 @@ public interface ICouponService
     // Coverage calculation (for PaymentService integration)
     Task<CouponCoverageResultDto> CalculateCoverageAsync(int seniorId, decimal sessionHours, decimal totalAmount, decimal hourlyRate, int? cityId);
     Task RecordUsageAsync(int seniorId, int jobInstanceId, CouponCoverageResultDto coverage);
+
+    // Order-level coupon validation & application (replaces PromoCode system)
+    Task<CouponValidationResultDto> ValidateCodeForOrderAsync(string code, int seniorId, decimal orderTotal);
+    Task<CouponValidationResultDto> ApplyToOrderAsync(string code, int orderId, int seniorId, decimal orderTotal);
 }

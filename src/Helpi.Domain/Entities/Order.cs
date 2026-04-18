@@ -16,7 +16,7 @@ namespace Helpi.Domain.Entities
         public DateOnly EndDate { get; set; }
 
         public string? Notes { get; set; }
-        public int? PromoCodeId { get; set; }
+        public int? CouponId { get; set; }
         public DateTime? CancelledAt { get; set; }
         public bool IsArchived { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -26,7 +26,7 @@ namespace Helpi.Domain.Entities
 
         public Senior Senior { get; set; } = null!;
         public PaymentMethod PaymentMethod { get; set; } = null!;
-        public PromoCode? PromoCode { get; set; }
+        public Coupon? Coupon { get; set; }
 
 
         public ICollection<OrderService> OrderServices { get; set; } = new List<OrderService>();

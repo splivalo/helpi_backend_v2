@@ -15,6 +15,7 @@ public interface ICouponRepository
     // Assignments
     Task<CouponAssignment?> GetAssignmentByIdAsync(int id);
     Task<CouponAssignment?> GetActiveAssignmentAsync(int couponId, int seniorId);
+    Task<CouponAssignment?> GetAnyAssignmentAsync(int couponId, int seniorId);
     Task<List<CouponAssignment>> GetActiveAssignmentsForSeniorAsync(int seniorId);
     Task<CouponAssignment> AddAssignmentAsync(CouponAssignment assignment);
     Task UpdateAssignmentAsync(CouponAssignment assignment);

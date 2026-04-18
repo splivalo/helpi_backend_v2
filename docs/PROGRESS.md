@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-15
+> Zadnja izmjena: 2026-04-18
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV) + **Chat system (real-time + REST)**
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV) + **Chat system (real-time + REST)** + **PromoCode→Coupon unification** + **CouponType simplification (3 hour-based types only)**
 
 ---
 
@@ -518,10 +518,10 @@
 - ✅ Auth login (admin@test.com)
 - ✅ Dashboard admin / senior
 - ✅ Students, Seniors, Orders, Cities, Faculties, PricingConfiguration
-- ✅ Sessions, Reviews, Availability, Student Contracts, Promo Codes
+- ✅ Sessions, Reviews, Availability, Student Contracts, Coupons
 - ✅ Service Categories, Suspensions, Admin Notes
 - ✅ Session cancel route exists (400 = valid route, needs body)
-- ✅ Promo validate/apply routes exist (400 = valid route, needs body)
+- ✅ Coupon validate/apply routes exist (PromoCode system removed, unified into Coupons)
 - ⚠️ Dashboard student — 500 (DurationHours bug, fixed above, needs backend restart)
 
 ### Known Issues (not bugs — by design)
@@ -538,3 +538,28 @@
 | --- | ----------------------------------------------- | ------ | ---------- |
 | 18  | Auto-generate JobInstances on contract upload   | ✅     | 2026-03-23 |
 | 19  | Smooth transition protection (contract renewal) | ✅     | 2026-03-23 |
+
+---
+
+## Faza 8 — PromoCode→Coupon Unification ✅ (2026-04-18)
+
+### Problem
+
+Dva odvojena sustava popusta: PromoCode (%, fiksni, per-order) i Coupon (sat-based s balanceom, per-assignment). Redundantno.
+
+### Rješenje
+
+- Obrisano 8 PromoCode fajlova (entity, DTO, service, repo, controller, interfaces)
+- `Order.PromoCodeId` → `Order.CouponId` (FK na Coupons tablicu)
+- Novi endpointi: `POST /api/coupons/validate`, `POST /api/coupons/apply`
+- DB migracija: `20260418073312_RemovePromoCodeSystem`
+- `dotnet build` = 0 errors, 0 warnings
+
+### CouponType simplifikacija (2026-04-18)
+
+- Uklonjeni `Percentage(3)` i `FixedPerSession(4)` iz `CouponType` enuma
+- Ostaju samo 3 sat-based tipa: `MonthlyHours(0)`, `WeeklyHours(1)`, `OneTimeHours(2)`
+- Uklonjena validacija za percentage > 100 u `CreateAsync`/`UpdateAsync`
+- Uklonjena kalkulacija za percentage/fixedBased u `CalculateCoverageAsync`
+- Uklonjen switch za Percentage/FixedPerSession u `ValidateCodeForOrderAsync`
+- `dotnet build` = 0 errors, 0 warnings

@@ -116,5 +116,26 @@ public class CouponsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("validate")]
+    public async Task<ActionResult<CouponValidationResultDto>> Validate(
+        [FromQuery] string code,
+        [FromQuery] int seniorId,
+        [FromQuery] decimal orderTotal)
+    {
+        var result = await _couponService.ValidateCodeForOrderAsync(code, seniorId, orderTotal);
+        return Ok(result);
+    }
+
+    [HttpPost("apply")]
+    public async Task<ActionResult<CouponValidationResultDto>> Apply(
+        [FromQuery] string code,
+        [FromQuery] int orderId,
+        [FromQuery] int seniorId,
+        [FromQuery] decimal orderTotal)
+    {
+        var result = await _couponService.ApplyToOrderAsync(code, orderId, seniorId, orderTotal);
+        return Ok(result);
+    }
+
     #endregion
 }

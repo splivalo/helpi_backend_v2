@@ -125,6 +125,15 @@ public class CouponCoverageDetailDto
     public decimal? CoveredHours { get; set; }
 }
 
+public class CouponValidationResultDto
+{
+    public bool IsValid { get; set; }
+    public string? ErrorMessage { get; set; }
+    public CouponDto? Coupon { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal? AvailableHours { get; set; }
+}
+
 public class CouponUsageDto
 {
     public int Id { get; set; }

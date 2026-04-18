@@ -63,6 +63,10 @@ public class CouponRepository : ICouponRepository
         => await _context.CouponAssignments
             .FirstOrDefaultAsync(a => a.CouponId == couponId && a.SeniorId == seniorId && a.IsActive);
 
+    public async Task<CouponAssignment?> GetAnyAssignmentAsync(int couponId, int seniorId)
+        => await _context.CouponAssignments
+            .FirstOrDefaultAsync(a => a.CouponId == couponId && a.SeniorId == seniorId);
+
     public async Task<List<CouponAssignment>> GetActiveAssignmentsForSeniorAsync(int seniorId)
         => await _context.CouponAssignments
             .Include(a => a.Coupon)

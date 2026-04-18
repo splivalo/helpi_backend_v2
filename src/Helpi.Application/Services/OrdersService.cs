@@ -37,7 +37,7 @@ public class OrdersService
         private readonly ISeniorRepository _seniorRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
-        private readonly IPromoCodeRepository _promoCodeRepository;
+        private readonly ICouponRepository _couponRepository;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         public OrdersService(
@@ -57,7 +57,7 @@ public class OrdersService
             ISeniorRepository seniorRepository,
             ICustomerRepository customerRepository,
             IUserRepository userRepository,
-            IPromoCodeRepository promoCodeRepository,
+            ICouponRepository couponRepository,
             IPricingConfigurationRepository pricingConfigRepo
         )
         {
@@ -77,7 +77,7 @@ public class OrdersService
                 _seniorRepository = seniorRepository;
                 _customerRepository = customerRepository;
                 _userRepository = userRepository;
-                _promoCodeRepository = promoCodeRepository;
+                _couponRepository = couponRepository;
                 _pricingConfigRepo = pricingConfigRepo;
         }
 
@@ -245,19 +245,17 @@ public class OrdersService
                         }
                         else
                         {
-                                // Validate promo code before updating
-                                if (orderUpdateDto.PromoCodeId.HasValue && orderUpdateDto.PromoCodeId.Value != 0)
+                                // Validate coupon before updating
+                                if (orderUpdateDto.CouponId.HasValue && orderUpdateDto.CouponId.Value != 0)
                                 {
-                                        var promoCode = await _promoCodeRepository.GetByIdAsync(orderUpdateDto.PromoCodeId.Value);
-                                        if (promoCode == null)
-                                                throw new DomainException($"Promo code with ID {orderUpdateDto.PromoCodeId.Value} not found");
-                                        if (!promoCode.IsActive)
-                                                throw new DomainException("This promo code is no longer active");
+                                        var coupon = await _couponRepository.GetByIdAsync(orderUpdateDto.CouponId.Value);
+                                        if (coupon == null)
+                                                throw new DomainException($"Coupon with ID {orderUpdateDto.CouponId.Value} not found");
+                                        if (!coupon.IsActive)
+                                                throw new DomainException("This coupon is no longer active");
                                         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                                        if (promoCode.ValidUntil.HasValue && today > promoCode.ValidUntil.Value)
-                                                throw new DomainException("This promo code has expired");
-                                        if (promoCode.MaxUses.HasValue && promoCode.CurrentUses >= promoCode.MaxUses.Value)
-                                                throw new DomainException("This promo code has reached its maximum number of uses");
+                                        if (today > coupon.ValidUntil)
+                                                throw new DomainException("This coupon has expired");
                                 }
 
                                 // Update basic order properties
@@ -387,10 +385,10 @@ public class OrdersService
                 if (updateDto.StartDate.HasValue) order.StartDate = updateDto.StartDate.Value;
                 if (updateDto.EndDate.HasValue) order.EndDate = updateDto.EndDate.Value;
                 if (updateDto.Status.HasValue) order.Status = updateDto.Status.Value;
-                // Handle PromoCodeId: 0 = remove, positive = set/change, null = no change
-                if (updateDto.PromoCodeId.HasValue)
+                // Handle CouponId: 0 = remove, positive = set/change, null = no change
+                if (updateDto.CouponId.HasValue)
                 {
-                        order.PromoCodeId = updateDto.PromoCodeId.Value == 0 ? null : updateDto.PromoCodeId.Value;
+                        order.CouponId = updateDto.CouponId.Value == 0 ? null : updateDto.CouponId.Value;
                 }
         }
 

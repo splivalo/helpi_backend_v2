@@ -181,7 +181,7 @@ public class MappingProfile : Profile
                      .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
                      .Select(a => a.Student != null ? a.Student.DaysToContractExpire : null)
                      .FirstOrDefault()))
-             .ForMember(dest => dest.PromoCodeCode, opt => opt.MapFrom(src => src.PromoCode != null ? src.PromoCode.Code : null));
+             .ForMember(dest => dest.CouponCode, opt => opt.MapFrom(src => src.Coupon != null ? src.Coupon.Code : null));
 
 
 
@@ -242,10 +242,6 @@ public class MappingProfile : Profile
         CreateMap<Review, ReviewDto>();
         // CreateMap<MakeReviewUpdateDto, Review>();
         CreateMap<ReviewUpdateDto, Review>();
-
-        // PromoCode Mappings
-        CreateMap<PromoCode, PromoCodeDto>();
-        CreateMap<PromoCodeCreateDto, PromoCode>();
 
         // Coupon Mappings
         CreateMap<Coupon, CouponDto>();

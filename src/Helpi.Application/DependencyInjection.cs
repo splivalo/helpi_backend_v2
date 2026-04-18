@@ -59,7 +59,6 @@ public static class DependencyInjection
         services.AddScoped<PricingConfigurationService>();
         services.AddScoped<PricingChangeHistoryService>();
         services.AddScoped<TravelBufferReconciliationService>();
-        services.AddScoped<IPromoCodeService, PromoCodeService>();
         services.AddScoped<ICouponService, CouponService>();
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<SuspensionService>();

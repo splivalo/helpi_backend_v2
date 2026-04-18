@@ -37,8 +37,8 @@ public class OrderDto
     public decimal? AssignedStudentAverageRating { get; set; }
     public int? AssignedStudentTotalReviews { get; set; }
     public int? AssignedStudentDaysToContractExpire { get; set; }
-    public int? PromoCodeId { get; set; }
-    public string? PromoCodeCode { get; set; }
+    public int? CouponId { get; set; }
+    public string? CouponCode { get; set; }
     public ICollection<ServiceDto> Services { get; set; } = new List<ServiceDto>();
     public ICollection<OrderScheduleDto> Schedules { get; set; } = new List<OrderScheduleDto>();
 }
@@ -69,10 +69,10 @@ public class OrderUpdateDto
     public DateOnly? EndDate { get; set; }
     public OrderStatus? Status { get; set; }
     /// <summary>
-    /// Set to 0 to remove promo code, or a positive int to set/change promo code.
+    /// Set to 0 to remove coupon, or a positive int to set/change coupon.
     /// Null means no change.
     /// </summary>
-    public int? PromoCodeId { get; set; }
+    public int? CouponId { get; set; }
 
     public ICollection<OrderServiceCreateDto> ServicesToAdd { get; set; } = new List<OrderServiceCreateDto>();
     public ICollection<int> ServiceIdsToRemove { get; set; } = new List<int>();

@@ -77,10 +77,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<HEmail> InvoiceEmails { get; set; }
 
-    // Promo Codes
-    public DbSet<PromoCode> PromoCodes { get; set; }
-    public DbSet<PromoCodeUsage> PromoCodeUsages { get; set; }
-
     // Geographic Data
     public DbSet<City> Cities { get; set; }
     public DbSet<ServiceRegion> ServiceRegions { get; set; }
@@ -293,18 +289,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.Property(p => p.IntermediaryPercentage).HasColumnType("decimal(5,2)");
         });
 
-        modelBuilder.Entity<PromoCode>(entity =>
-        {
-            entity.HasIndex(p => p.Code).IsUnique();
-            entity.Property(p => p.Code).HasMaxLength(50);
-            entity.Property(p => p.DiscountValue).HasColumnType("decimal(18,2)");
-        });
-
-        modelBuilder.Entity<PromoCodeUsage>(entity =>
-        {
-            entity.Property(u => u.DiscountApplied).HasColumnType("decimal(18,2)");
-        });
-
+        // Sponsor system
         modelBuilder.Entity<Sponsor>(entity =>
         {
             entity.Property(s => s.Name).HasMaxLength(200);

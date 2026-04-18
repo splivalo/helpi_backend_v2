@@ -278,12 +278,6 @@ namespace Helpi.Domain.Enums
         StudentToSenior = 1
     }
 
-    public enum PromoCodeType
-    {
-        Percentage = 0,
-        FixedAmount = 1
-    }
-
     public enum SuspensionAction
     {
         Suspended = 0,
@@ -294,9 +288,7 @@ namespace Helpi.Domain.Enums
     {
         MonthlyHours = 0,
         WeeklyHours = 1,
-        OneTimeHours = 2,
-        Percentage = 3,
-        FixedPerSession = 4
+        OneTimeHours = 2
     }
 
 }

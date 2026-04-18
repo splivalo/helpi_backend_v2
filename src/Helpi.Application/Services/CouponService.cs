@@ -10,11 +10,13 @@ namespace Helpi.Application.Services;
 public class CouponService : ICouponService
 {
     private readonly ICouponRepository _repo;
+    private readonly IOrderRepository _orderRepo;
     private readonly IMapper _mapper;
 
-    public CouponService(ICouponRepository repo, IMapper mapper)
+    public CouponService(ICouponRepository repo, IOrderRepository orderRepo, IMapper mapper)
     {
         _repo = repo;
+        _orderRepo = orderRepo;
         _mapper = mapper;
     }
 
@@ -51,9 +53,6 @@ public class CouponService : ICouponService
         if (existing != null)
             throw new ArgumentException($"Coupon code '{dto.Code}' already exists.");
 
-        if (dto.Type == CouponType.Percentage && dto.Value > 100)
-            throw new ArgumentException("Percentage discount cannot exceed 100%.");
-
         if (dto.ValidUntil < dto.ValidFrom)
             throw new ArgumentException("ValidUntil must be after ValidFrom.");
 
@@ -84,8 +83,6 @@ public class CouponService : ICouponService
         if (dto.Description != null) entity.Description = dto.Description;
         if (dto.Value.HasValue)
         {
-            if (entity.Type == CouponType.Percentage && dto.Value.Value > 100)
-                throw new ArgumentException("Percentage discount cannot exceed 100%.");
             entity.Value = dto.Value.Value;
         }
         if (dto.IsCombainable.HasValue) entity.IsCombainable = dto.IsCombainable.Value;
@@ -161,9 +158,22 @@ public class CouponService : ICouponService
         if (validationError != null)
             return new CouponRedeemResultDto { IsValid = false, ErrorCode = validationError, ErrorMessage = validationError };
 
-        var existingAssignment = await _repo.GetActiveAssignmentAsync(coupon.Id, seniorId);
-        if (existingAssignment != null)
+        var activeAssignment = await _repo.GetActiveAssignmentAsync(coupon.Id, seniorId);
+        if (activeAssignment != null)
             return new CouponRedeemResultDto { IsValid = false, ErrorCode = "coupon_already_active", ErrorMessage = "You already have this coupon active." };
+
+        // Check for deactivated assignment → reactivate it (keeps remaining hours)
+        var inactiveAssignment = await _repo.GetAnyAssignmentAsync(coupon.Id, seniorId);
+        if (inactiveAssignment != null)
+        {
+            // Hour-based coupons: reject if hours are depleted
+            if (inactiveAssignment.RemainingValue.HasValue && inactiveAssignment.RemainingValue.Value <= 0)
+                return new CouponRedeemResultDto { IsValid = false, ErrorCode = "coupon_hours_depleted", ErrorMessage = "This coupon has no remaining hours." };
+
+            inactiveAssignment.IsActive = true;
+            await _repo.UpdateAssignmentAsync(inactiveAssignment);
+            return new CouponRedeemResultDto { IsValid = true, Assignment = MapAssignmentDto(inactiveAssignment, coupon) };
+        }
 
         // Exclusive check for senior self-redeem
         if (!coupon.IsCombainable)
@@ -276,21 +286,15 @@ public class CouponService : ICouponService
             applicableAssignments = validAssignments;
         }
 
-        // Apply in priority order: hour-based → percentage → fixed
+        // Apply hour-based coupons
         var hourBased = applicableAssignments
             .Where(a => IsHourBased(a.Coupon.Type))
-            .ToList();
-        var percentageBased = applicableAssignments
-            .Where(a => a.Coupon.Type == CouponType.Percentage)
-            .ToList();
-        var fixedBased = applicableAssignments
-            .Where(a => a.Coupon.Type == CouponType.FixedPerSession)
             .ToList();
 
         decimal remainingAmount = totalAmount;
         decimal remainingHours = sessionHours;
 
-        // 1. Hour-based coupons
+        // Hour-based coupons
         foreach (var (assignment, coupon) in hourBased)
         {
             if (remainingHours <= 0) break;
@@ -313,42 +317,6 @@ public class CouponService : ICouponService
 
             remainingAmount -= coveredAmount;
             remainingHours -= coveredHours;
-        }
-
-        // 2. Percentage coupons
-        foreach (var (assignment, coupon) in percentageBased)
-        {
-            if (remainingAmount <= 0) break;
-
-            var coveredAmount = Math.Round(remainingAmount * (coupon.Value / 100), 2);
-
-            result.UsedCoupons.Add(new CouponCoverageDetailDto
-            {
-                CouponAssignmentId = assignment.Id,
-                CouponName = coupon.Name,
-                CouponType = coupon.Type,
-                CoveredAmount = coveredAmount
-            });
-
-            remainingAmount -= coveredAmount;
-        }
-
-        // 3. Fixed per session coupons
-        foreach (var (assignment, coupon) in fixedBased)
-        {
-            if (remainingAmount <= 0) break;
-
-            var coveredAmount = Math.Min(coupon.Value, remainingAmount);
-
-            result.UsedCoupons.Add(new CouponCoverageDetailDto
-            {
-                CouponAssignmentId = assignment.Id,
-                CouponName = coupon.Name,
-                CouponType = coupon.Type,
-                CoveredAmount = coveredAmount
-            });
-
-            remainingAmount -= coveredAmount;
         }
 
         result.CoveredAmount = totalAmount - remainingAmount;
@@ -383,6 +351,86 @@ public class CouponService : ICouponService
                 await _repo.UpdateAssignmentAsync(assignment);
             }
         }
+    }
+
+    #endregion
+
+    #region Order-level Validation & Application
+
+    public async Task<CouponValidationResultDto> ValidateCodeForOrderAsync(string code, int seniorId, decimal orderTotal)
+    {
+        var coupon = await _repo.GetByCodeAsync(code.ToUpperInvariant());
+        if (coupon == null)
+            return new CouponValidationResultDto { IsValid = false, ErrorMessage = "Coupon code not found." };
+
+        var validationError = ValidateCouponForRedeem(coupon);
+        if (validationError != null)
+            return new CouponValidationResultDto { IsValid = false, ErrorMessage = validationError };
+
+        var dto = _mapper.Map<CouponDto>(coupon);
+        dto.AssignmentCount = await _repo.GetAssignmentCountAsync(coupon.Id);
+        dto.CityName = coupon.City?.Name;
+
+        // Calculate discount based on type
+        decimal discountAmount = 0;
+        decimal? availableHours = null;
+
+        switch (coupon.Type)
+        {
+            case CouponType.MonthlyHours:
+            case CouponType.WeeklyHours:
+            case CouponType.OneTimeHours:
+                // For hour-based coupons, check assignment for remaining hours
+                var assignment = await _repo.GetActiveAssignmentAsync(coupon.Id, seniorId);
+                if (assignment != null)
+                    availableHours = await GetAvailableHoursAsync(assignment, coupon);
+                else
+                    availableHours = coupon.Value; // Full value if not yet assigned
+                break;
+        }
+
+        return new CouponValidationResultDto
+        {
+            IsValid = true,
+            Coupon = dto,
+            DiscountAmount = discountAmount,
+            AvailableHours = availableHours
+        };
+    }
+
+    public async Task<CouponValidationResultDto> ApplyToOrderAsync(string code, int orderId, int seniorId, decimal orderTotal)
+    {
+        var validation = await ValidateCodeForOrderAsync(code, seniorId, orderTotal);
+        if (!validation.IsValid)
+            return validation;
+
+        var coupon = await _repo.GetByCodeAsync(code.ToUpperInvariant());
+        if (coupon == null)
+            return new CouponValidationResultDto { IsValid = false, ErrorMessage = "Coupon code not found." };
+
+        // Auto-assign to senior if not already assigned
+        var existingAssignment = await _repo.GetActiveAssignmentAsync(coupon.Id, seniorId);
+        if (existingAssignment == null)
+        {
+            try
+            {
+                await AssignToSeniorAsync(coupon.Id, seniorId, null);
+            }
+            catch (ArgumentException ex)
+            {
+                return new CouponValidationResultDto { IsValid = false, ErrorMessage = ex.Message };
+            }
+        }
+
+        // Link coupon to order
+        var order = await _orderRepo.GetByIdAsync(orderId);
+        if (order == null)
+            return new CouponValidationResultDto { IsValid = false, ErrorMessage = $"Order with ID {orderId} not found." };
+
+        order.CouponId = coupon.Id;
+        await _orderRepo.UpdateAsync(order);
+
+        return validation;
     }
 
     #endregion
