@@ -404,17 +404,20 @@
 ## 2026-04-20 — Session date range filter + OrderStatusUpdater revision
 
 ### Session date range filter
+
 - `GET /api/sessions/order/{orderId}?from=&to=` — opcionalni date range filter
 - Implementirano kroz sve slojeve: `IJobInstanceRepository` → `JobInstanceRepository` → `IJobInstanceService` → `JobInstanceService` → `SessionsController`
 - Frontend šalje `from`/`to` za tekući mjesec kad prikazuje order detail; backend filtrira samo sesije u tom periodu
 
 ### OrderStatusUpdater revision
+
 - `OrderStatusUpdater.cs` — potpuno revidirana logika automatskog zaključivanja statusa narudžbi:
   - Ako postoje sesije ali nijedna nije Upcoming: ako bar 1 je Completed → order = **Completed**
   - Ako su SVE sesije Cancelled AND `IsRecurring=false` (one-time) → order = **Cancelled**
   - Ako su SVE sesije Cancelled AND `IsRecurring=true` → order ostaje **Active** (novi termini mogu doći produžetkom ugovora)
   - Recurring order bez Upcoming sesija "pada kroz" na assignment-based logiku (postojeća putanja)
 - **Fix:** Jednokratne narudžbe s otkazanim terminima sada ispravno prelaze u Cancelled status automatski
+
 4. **Per-user preferencije** — SharedPreferences s userId u admin appu
 5. **Sponzor sustav** — SponsorConfiguration entity + admin UI + app badge (branding)
 
