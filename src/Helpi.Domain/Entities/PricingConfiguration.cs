@@ -16,9 +16,14 @@ public class PricingConfiguration
     public decimal CompanyPercentage { get; set; }
     public decimal ServiceProviderPercentage { get; set; }
 
-    // ── Cancel cutoffs (hours before session) ──
+    // ── Student cancel rules ──
+    public bool StudentCancelEnabled { get; set; } = true;
     public int StudentCancelCutoffHours { get; set; } = 6;
     public int SeniorCancelCutoffHours { get; set; } = 1;
+
+    // ── Student availability change rules ──
+    public bool AvailabilityChangeEnabled { get; set; } = true;
+    public int AvailabilityChangeCutoffHours { get; set; } = 24;
 
     // ── Operational ──
     public int TravelBufferMinutes { get; set; } = 15;

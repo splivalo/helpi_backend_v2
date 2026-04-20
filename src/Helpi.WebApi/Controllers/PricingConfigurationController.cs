@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Helpi.API.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PricingConfigurationController : ControllerBase
@@ -38,6 +38,7 @@ public class PricingConfigurationController : ControllerBase
         return Ok(config);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> Create(PricingConfigurationDto dto)
     {
@@ -45,6 +46,7 @@ public class PricingConfigurationController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(PricingConfigurationDto configDto, int changedBy, string reason = "")
     {

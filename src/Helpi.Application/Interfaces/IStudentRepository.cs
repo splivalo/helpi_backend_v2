@@ -8,6 +8,7 @@ namespace Helpi.Application.Interfaces;
 public interface IStudentRepository
 {
     Task<Student> GetByIdAsync(int id);
+    Task<Student?> GetByUserIdAsync(int userId);
 
     Task<List<Student>> GetStudentsAsync(StudentFilterDto? filter = null);
 

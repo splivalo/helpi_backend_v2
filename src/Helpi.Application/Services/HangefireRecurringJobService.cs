@@ -13,6 +13,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
     private readonly IPricingConfigurationRepository _pricingConfig;
     private readonly IRecurrenceDateGenerator _dateGenerator;
     private readonly ILogger<HangfireRecurringJobService> _logger;
+    private readonly IStudentContractRepository _contractRepository;
 
     private readonly IHangfireService _hangfireService;
 
@@ -22,7 +23,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         IPricingConfigurationRepository pricingConfig,
         IRecurrenceDateGenerator dateGenerator,
         ILogger<HangfireRecurringJobService> logger,
-        IHangfireService hangfireService
+        IHangfireService hangfireService,
+        IStudentContractRepository contractRepository
     )
     {
         _jobInstanceRepository = jobInstanceRepository;
@@ -31,6 +33,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         _dateGenerator = dateGenerator;
         _logger = logger;
         _hangfireService = hangfireService;
+        _contractRepository = contractRepository;
     }
 
     public async Task GenerateFutureJobInstances()
@@ -58,11 +61,22 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
 
             try
             {
+                // Look up active contract for the assigned student
+                DateOnly? contractEnd = null;
+                var contracts = await _contractRepository.GetByStudentIdAsync(assignment.StudentId);
+                var activeContract = contracts
+                    .Where(c => c.Status == Helpi.Domain.Enums.ContractStatus.Active)
+                    .OrderByDescending(c => c.ExpirationDate)
+                    .FirstOrDefault();
+                if (activeContract != null)
+                    contractEnd = activeContract.ExpirationDate;
+
                 var instances = GenerateInstancesForAssignment(
                     assignment,
                      pricingConfig,
                  horizonMonths,
-                 generationThresholdDays
+                 generationThresholdDays,
+                 contractEnd
                 );
 
                 jobInstances.AddRange(instances);
@@ -89,8 +103,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         ScheduleAssignment assignment,
          PricingConfiguration pricingConfiguration,
         int horizonMonths = 3,
-        int generationThresholdDays = 14
-
+        int generationThresholdDays = 14,
+        DateOnly? contractEndDate = null
         )
     {
         try
@@ -134,7 +148,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
                 order.EndDate,
                 order.RecurrencePattern,
                 dayOfWeek,
-                horizonMonths
+                horizonMonths,
+                contractEndDate
             );
 
             var dateList = string.Join(", ", newDates.Select(d => d.ToString("yyyy-MM-dd")));

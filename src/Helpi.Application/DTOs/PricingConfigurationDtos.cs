@@ -12,9 +12,14 @@ public class PricingConfigurationDto
     public decimal CompanyPercentage { get; set; }
     public decimal ServiceProviderPercentage { get; set; }
 
-    // Cancel cutoffs (hours)
+    // Student cancel rules
+    public bool StudentCancelEnabled { get; set; }
     public int StudentCancelCutoffHours { get; set; }
     public int SeniorCancelCutoffHours { get; set; }
+
+    // Student availability change rules
+    public bool AvailabilityChangeEnabled { get; set; }
+    public int AvailabilityChangeCutoffHours { get; set; }
 
     // Operational
     public int TravelBufferMinutes { get; set; }

@@ -24,6 +24,11 @@ public class ScheduleAssignmentService
         private readonly IHangfireRecurringJobService _recurringJobService;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
         private readonly IJobInstanceRepository _jobInstanceRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ISignalRNotificationService _signalR;
+        private readonly INotificationService _notificationService;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IStudentContractRepository _contractRepository;
 
         public ScheduleAssignmentService(
                 IScheduleAssignmentRepository repository,
@@ -36,7 +41,12 @@ public class ScheduleAssignmentService
                 OrderStatusMaintenanceService statusMaintenanceService,
                 IHangfireRecurringJobService recurringJobService,
                 IPricingConfigurationRepository pricingConfigRepo,
-                IJobInstanceRepository jobInstanceRepository)
+                IJobInstanceRepository jobInstanceRepository,
+                IUserRepository userRepository,
+                ISignalRNotificationService signalR,
+                INotificationService notificationService,
+                IOrderRepository orderRepository,
+                IStudentContractRepository contractRepository)
         {
                 _repository = repository;
                 _orderScheduleRepository = orderScheduleRepository;
@@ -49,6 +59,11 @@ public class ScheduleAssignmentService
                 _recurringJobService = recurringJobService;
                 _pricingConfigRepo = pricingConfigRepo;
                 _jobInstanceRepository = jobInstanceRepository;
+                _userRepository = userRepository;
+                _signalR = signalR;
+                _notificationService = notificationService;
+                _orderRepository = orderRepository;
+                _contractRepository = contractRepository;
         }
 
         /// <summary>
@@ -105,43 +120,151 @@ public class ScheduleAssignmentService
                         }
                 }
 
-                // Terminate existing active assignment if any
+                // Terminate existing active/pending assignment if any
                 var existing = await _repository.GetAssignmentForOrderScheduleAsync(dto.OrderScheduleId);
-                if (existing != null && existing.Status == AssignmentStatus.Accepted)
+                if (existing != null && (existing.Status == AssignmentStatus.Accepted
+                        || existing.Status == AssignmentStatus.PendingAcceptance))
                 {
+                        var previousStudentId = existing.StudentId;
                         existing.Status = AssignmentStatus.Terminated;
                         existing.TerminationReason = TerminationReason.AdminIntervention;
                         existing.TerminatedAt = DateTime.UtcNow;
                         await _repository.UpdateAsync(existing);
 
+                        // Cancel existing JobInstances for the old assignment
+                        var oldJobs = await _jobInstanceRepository.GetByAssignmentAsync(existing.Id);
+                        foreach (var ji in oldJobs)
+                        {
+                                if (ji.Status == JobInstanceStatus.Upcoming)
+                                {
+                                        ji.Status = JobInstanceStatus.Cancelled;
+                                        await _jobInstanceRepository.UpdateAsync(ji);
+                                }
+                        }
+
                         _logger.LogInformation("Terminated previous assignment {AssignmentId} for schedule {ScheduleId}",
                                 existing.Id, dto.OrderScheduleId);
                 }
 
-                // Create new assignment directly as Accepted
+                // Create new assignment as PendingAcceptance — student must accept
                 var assignment = new ScheduleAssignment
                 {
                         OrderScheduleId = dto.OrderScheduleId,
+                        OrderId = orderSchedule.OrderId,
                         StudentId = dto.StudentId,
-                        Status = AssignmentStatus.Accepted,
+                        Status = AssignmentStatus.PendingAcceptance,
                         AssignedAt = DateTime.UtcNow,
-                        AcceptedAt = DateTime.UtcNow,
                         PrevAssignmentId = existing?.Id
                 };
 
                 await _repository.AddAsync(assignment);
                 await _unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Created assignment {AssignmentId}: Student {StudentId} → Schedule {ScheduleId}",
+                _logger.LogInformation("Created assignment {AssignmentId}: Student {StudentId} → Schedule {ScheduleId} (PendingAcceptance)",
                         assignment.Id, dto.StudentId, dto.OrderScheduleId);
 
-                // Generate JobInstances immediately so sessions appear in UI
+                // Notify AFTER SaveChanges so the old student's pending query returns empty
+                if (existing != null && existing.TerminationReason == TerminationReason.AdminIntervention)
+                {
+                        var previousStudentId = existing.StudentId;
+                        if (previousStudentId != dto.StudentId)
+                        {
+                                var prevStudent = await _studentRepository.GetByIdAsync(previousStudentId);
+                                if (prevStudent != null)
+                                {
+                                        await _signalR.SendNotificationToUserAsync(prevStudent.UserId,
+                                                new DTOs.HNotificationDto
+                                                {
+                                                        Title = "Dodjela poništena",
+                                                        Body = "Admin vam je uklonio dodijeljenu narudžbu.",
+                                                        Type = NotificationType.AssignmentRevoked,
+                                                        CreatedAt = DateTime.UtcNow
+                                                });
+                                }
+                        }
+                }
+
+                // Notify student about new pending assignment
+                var assignedStudent = await _studentRepository.GetByIdAsync(dto.StudentId);
+                if (assignedStudent != null)
+                {
+                        await _signalR.SendNotificationToUserAsync(assignedStudent.UserId,
+                                new DTOs.HNotificationDto
+                                {
+                                        Title = "Nova narudžba",
+                                        Body = "Dodijeljena vam je nova narudžba. Otvorite aplikaciju za prihvaćanje.",
+                                        Type = NotificationType.AssignmentPending,
+                                        CreatedAt = DateTime.UtcNow
+                                });
+                }
+
+                // Generate JobInstances immediately so senior sees the schedule
                 await GenerateJobInstancesForAssignmentAsync(assignment, orderSchedule);
 
                 // Update order status (Pending → FullAssigned if all schedules now have assignments)
                 await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
+        }
+
+        /// <summary>
+        /// Admin terminates the existing assignment on a schedule without creating a new one.
+        /// Used when skipping a day in partial-availability assignment.
+        /// </summary>
+        public async Task AdminTerminateAssignmentAsync(int orderScheduleId)
+        {
+                _logger.LogInformation("Admin terminate assignment on schedule {ScheduleId}", orderScheduleId);
+
+                var existing = await _repository.GetAssignmentForOrderScheduleAsync(orderScheduleId);
+                if (existing == null || (existing.Status != AssignmentStatus.Accepted
+                        && existing.Status != AssignmentStatus.PendingAcceptance))
+                {
+                        _logger.LogInformation("No active/pending assignment on schedule {ScheduleId} — nothing to terminate", orderScheduleId);
+                        return;
+                }
+
+                var previousStudentId = existing.StudentId;
+                existing.Status = AssignmentStatus.Terminated;
+                existing.TerminationReason = TerminationReason.AdminIntervention;
+                existing.TerminatedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(existing);
+
+                // Cancel any existing JobInstances for this assignment
+                var jobInstances = await _jobInstanceRepository.GetByAssignmentAsync(existing.Id);
+                foreach (var ji in jobInstances)
+                {
+                        if (ji.Status == JobInstanceStatus.Upcoming)
+                        {
+                                ji.Status = JobInstanceStatus.Cancelled;
+                                await _jobInstanceRepository.UpdateAsync(ji);
+                        }
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Terminated assignment {AssignmentId} on schedule {ScheduleId}",
+                        existing.Id, orderScheduleId);
+
+                // Notify old student
+                var student = await _studentRepository.GetByIdAsync(previousStudentId);
+                if (student != null)
+                {
+                        await _signalR.SendNotificationToUserAsync(student.UserId,
+                                new DTOs.HNotificationDto
+                                {
+                                        Title = "Dodjela poništena",
+                                        Body = "Admin vam je uklonio dodijeljenu narudžbu.",
+                                        Type = NotificationType.AssignmentRevoked,
+                                        CreatedAt = DateTime.UtcNow
+                                });
+                }
+
+                // Update order status
+                var orderSchedule = await _orderScheduleRepository.GetByIdAsync(orderScheduleId);
+                if (orderSchedule != null)
+                {
+                        await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
+                }
         }
 
         private async Task<int> GetTravelBufferMinutesAsync()
@@ -163,11 +286,22 @@ public class ScheduleAssignmentService
                         return;
                 }
 
+                // Look up active contract for the assigned student
+                DateOnly? contractEnd = null;
+                var contracts = await _contractRepository.GetByStudentIdAsync(assignment.StudentId);
+                var activeContract = contracts
+                        .Where(c => c.Status == Domain.Enums.ContractStatus.Active)
+                        .OrderByDescending(c => c.ExpirationDate)
+                        .FirstOrDefault();
+                if (activeContract != null)
+                        contractEnd = activeContract.ExpirationDate;
+
                 // Build navigation properties needed by GenerateInstancesForAssignment
                 assignment.OrderSchedule = orderSchedule;
                 assignment.JobInstances = new List<JobInstance>();
 
-                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
+                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(
+                        assignment, pricingConfig, contractEndDate: contractEnd);
 
                 if (jobInstances.Any())
                 {
@@ -226,6 +360,225 @@ public class ScheduleAssignmentService
 
                         return (false, "fail");
                 }
+        }
+
+        /// <summary>
+        /// Student accepts a pending assignment. Generates job instances and updates order status.
+        /// </summary>
+        public async Task<ScheduleAssignmentDto> AcceptAssignmentAsync(int assignmentId, int studentUserId)
+        {
+                var assignment = await _repository.GetByIdAsync(assignmentId)
+                        ?? throw new DomainException($"Assignment {assignmentId} not found.");
+
+                // Verify the student owns this assignment
+                var student = await _studentRepository.GetByIdAsync(assignment.StudentId)
+                        ?? throw new DomainException("Student not found.");
+                if (student.UserId != studentUserId)
+                        throw new DomainException("You are not authorized to accept this assignment.");
+
+                if (assignment.Status != AssignmentStatus.PendingAcceptance)
+                        throw new DomainException($"Assignment is not pending acceptance. Current status: {assignment.Status}");
+
+                assignment.Status = AssignmentStatus.Accepted;
+                assignment.AcceptedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(assignment);
+                await _unitOfWork.SaveChangesAsync();
+
+                // Load order schedule for job instance generation
+                var orderSchedule = await _orderScheduleRepository.GetByIdAsync(assignment.OrderScheduleId)
+                        ?? throw new DomainException($"OrderSchedule {assignment.OrderScheduleId} not found.");
+
+                // Generate JobInstances if not already created (admin-assign creates them immediately)
+                var existingJobs = await _jobInstanceRepository.GetByAssignmentAsync(assignment.Id);
+                if (!existingJobs.Any())
+                {
+                        await GenerateJobInstancesForAssignmentAsync(assignment, orderSchedule);
+                }
+
+                // Update order status (Pending → FullAssigned if all schedules have accepted assignments)
+                await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
+
+                // Only notify admins once — when ALL schedules are covered (order → FullAssigned)
+                var updatedOrder = await _orderRepository.GetByIdAsync(orderSchedule.OrderId);
+                if (updatedOrder?.Status == OrderStatus.FullAssigned)
+                {
+                        var seniorName = orderSchedule.Order?.Senior?.Contact?.FullName ?? "—";
+                        var orderNum = orderSchedule.Order?.OrderNumber ?? 0;
+                        var adminIds = await _userRepository.GetAdminIdsAsync();
+                        await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                                adminId => new HNotification
+                                {
+                                        RecieverUserId = adminId,
+                                        Title = "Student prihvatio narudžbu",
+                                        Body = $"{student.Contact?.FullName}, {seniorName}, Narudžba #{orderNum}",
+                                        TranslationKey = "Notifications.AssignmentAccepted",
+                                        Type = NotificationType.AssignmentAccepted,
+                                        CreatedAt = DateTime.UtcNow,
+                                        OrderId = orderSchedule.OrderId,
+                                        StudentId = assignment.StudentId,
+                                        SeniorId = orderSchedule.Order?.SeniorId,
+                                });
+                }
+
+                _logger.LogInformation("Student {StudentId} accepted assignment {AssignmentId}", assignment.StudentId, assignmentId);
+                return _mapper.Map<ScheduleAssignmentDto>(assignment);
+        }
+
+        /// <summary>
+        /// Student declines a pending assignment. Admin gets notified to reassign.
+        /// </summary>
+        public async Task DeclineAssignmentAsync(int assignmentId, int studentUserId)
+        {
+                var assignment = await _repository.GetByIdAsync(assignmentId)
+                        ?? throw new DomainException($"Assignment {assignmentId} not found.");
+
+                // Verify the student owns this assignment
+                var student = await _studentRepository.GetByIdAsync(assignment.StudentId)
+                        ?? throw new DomainException("Student not found.");
+                if (student.UserId != studentUserId)
+                        throw new DomainException("You are not authorized to decline this assignment.");
+
+                if (assignment.Status != AssignmentStatus.PendingAcceptance)
+                        throw new DomainException($"Assignment is not pending acceptance. Current status: {assignment.Status}");
+
+                // Decline THIS assignment
+                assignment.Status = AssignmentStatus.Declined;
+                assignment.TerminatedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(assignment);
+
+                // Cancel JobInstances for the declined assignment
+                var declinedJobs = await _jobInstanceRepository.GetByAssignmentAsync(assignment.Id);
+                foreach (var ji in declinedJobs)
+                {
+                        if (ji.Status == JobInstanceStatus.Upcoming)
+                        {
+                                ji.Status = JobInstanceStatus.Cancelled;
+                                await _jobInstanceRepository.UpdateAsync(ji);
+                        }
+                }
+
+                // Auto-decline ALL other pending assignments for same student + same order
+                var orderSchedule = await _orderScheduleRepository.GetByIdAsync(assignment.OrderScheduleId);
+                var orderId = orderSchedule?.OrderId;
+                if (orderId != null)
+                {
+                        // Get all OrderScheduleIds for this order
+                        var orderSchedules = await _orderScheduleRepository.GetByOrderAsync(orderId.Value);
+                        var osIds = orderSchedules.Select(os => os.Id).ToHashSet();
+
+                        // Find other pending assignments for same student on same order's schedules
+                        var allForStudent = await _repository.GetByStudentAsync(assignment.StudentId);
+                        var otherPending = allForStudent
+                                .Where(a => a.Id != assignmentId
+                                        && a.Status == AssignmentStatus.PendingAcceptance
+                                        && osIds.Contains(a.OrderScheduleId))
+                                .ToList();
+                        foreach (var other in otherPending)
+                        {
+                                other.Status = AssignmentStatus.Declined;
+                                other.TerminatedAt = DateTime.UtcNow;
+                                await _repository.UpdateAsync(other);
+
+                                // Cancel JobInstances for sibling declined assignment
+                                var siblingJobs = await _jobInstanceRepository.GetByAssignmentAsync(other.Id);
+                                foreach (var sji in siblingJobs)
+                                {
+                                        if (sji.Status == JobInstanceStatus.Upcoming)
+                                        {
+                                                sji.Status = JobInstanceStatus.Cancelled;
+                                                await _jobInstanceRepository.UpdateAsync(sji);
+                                        }
+                                }
+                        }
+                        _logger.LogInformation("Auto-declined {Count} sibling assignments for order {OrderId}", otherPending.Count, orderId);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+
+                // Update order status back to Pending
+                if (orderSchedule != null)
+                        await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
+
+                // Send ONE notification for the entire order decline
+                var seniorNameD = orderSchedule?.Order?.Senior?.Contact?.FullName ?? "—";
+                var orderNumD = orderSchedule?.Order?.OrderNumber ?? 0;
+                var adminIds = await _userRepository.GetAdminIdsAsync();
+                await _notificationService.StoreAndNotifyAdminsAsync(adminIds,
+                        adminId => new HNotification
+                        {
+                                RecieverUserId = adminId,
+                                Title = "Student odbio narudžbu",
+                                Body = $"{student.Contact?.FullName}, {seniorNameD}, Narudžba #{orderNumD}",
+                                TranslationKey = "Notifications.AssignmentDeclined",
+                                Type = NotificationType.AssignmentDeclined,
+                                CreatedAt = DateTime.UtcNow,
+                                OrderId = orderSchedule?.OrderId,
+                                StudentId = assignment.StudentId,
+                                SeniorId = orderSchedule?.Order?.SeniorId,
+                        });
+
+                _logger.LogInformation("Student {StudentId} declined all assignments for order {OrderId} (triggered by assignment {AssignmentId})",
+                        assignment.StudentId, orderId, assignmentId);
+        }
+
+        /// <summary>
+        /// Gets all pending assignments for a student (used by mobile app overlay).
+        /// </summary>
+        public async Task<List<object>> GetPendingAssignmentsByStudentUserIdAsync(int studentUserId)
+        {
+                var student = await _studentRepository.GetByUserIdAsync(studentUserId);
+                if (student == null) return new List<object>();
+
+                var allAssignments = await _repository.GetByStudentWithDetailsAsync(student.UserId);
+                var pending = allAssignments
+                        .Where(a => a.Status == AssignmentStatus.PendingAcceptance)
+                        .ToList();
+
+                // Group by order — one entry per order with schedule items
+                var grouped = pending
+                        .GroupBy(a => a.OrderId)
+                        .Select(g =>
+                        {
+                                var first = g.OrderBy(a => a.Id).First();
+                                return (object)new
+                                {
+                                        Id = first.Id,
+                                        OrderId = first.OrderId,
+                                        SeniorName = first.OrderSchedule?.Order?.Senior?.Contact?.FullName ?? "—",
+                                        Address = first.OrderSchedule?.Order?.Senior?.Contact?.FullAddress ?? "",
+                                        StartDate = first.OrderSchedule?.Order?.StartDate.ToString("yyyy-MM-dd"),
+                                        EndDate = first.OrderSchedule?.Order?.EndDate.ToString("yyyy-MM-dd"),
+                                        first.AssignedAt,
+                                        AssignmentIds = g.Select(a => a.Id).ToList(),
+                                        ScheduleItems = g.Select(a => new
+                                        {
+                                                a.OrderScheduleId,
+                                                DayOfWeek = (int)(a.OrderSchedule?.DayOfWeek ?? 0),
+                                                StartTime = a.OrderSchedule?.StartTime.ToString("HH:mm"),
+                                                EndTime = a.OrderSchedule?.EndTime.ToString("HH:mm"),
+                                        }).ToList(),
+                                };
+                        })
+                        .ToList();
+
+                return grouped;
+        }
+
+        public async Task<List<object>> GetAllPendingAcceptanceForAdminAsync()
+        {
+                var assignments = await _repository.GetAllPendingAcceptanceAsync();
+                return assignments.Select(a => new
+                {
+                        a.Id,
+                        a.OrderId,
+                        a.OrderScheduleId,
+                        a.AssignedAt,
+                        MinutesPending = (int)(DateTime.UtcNow - a.AssignedAt).TotalMinutes,
+                        StudentName = a.Student?.Contact?.FullName ?? "—",
+                        StudentId = a.StudentId,
+                        SeniorName = a.OrderSchedule?.Order?.Senior?.Contact?.FullName ?? "—",
+                        SeniorId = a.OrderSchedule?.Order?.SeniorId ?? 0,
+                }).Cast<object>().ToList();
         }
 
 }

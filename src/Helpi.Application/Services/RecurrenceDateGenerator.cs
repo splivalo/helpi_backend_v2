@@ -27,7 +27,8 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
         DateOnly? endDate,
         RecurrencePattern? pattern,
         DayOfWeek isoDayOfWeek,
-        int horizonMonths = 3)
+        int horizonMonths = 3,
+        DateOnly? contractEndDate = null)
     {
 
         /// .net uses 0 - 6 ... WE store 1 -7
@@ -35,11 +36,13 @@ public class RecurrenceDateGenerator : IRecurrenceDateGenerator
 
         var dates = new List<DateOnly>();
 
-        // Calculate the furthest date allowed (effectiveEndDate), which is the smaller of endDate or the horizon
+        // Calculate the furthest date allowed (effectiveEndDate), which is the smallest of endDate, contractEndDate, or the horizon
         var maxHorizonDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(horizonMonths));
-        var effectiveEndDate = endDate.HasValue && endDate.Value < maxHorizonDate
-            ? endDate.Value
-            : maxHorizonDate;
+        var effectiveEndDate = maxHorizonDate;
+        if (endDate.HasValue && endDate.Value < effectiveEndDate)
+            effectiveEndDate = endDate.Value;
+        if (contractEndDate.HasValue && contractEndDate.Value < effectiveEndDate)
+            effectiveEndDate = contractEndDate.Value;
 
         // Align the current date to the first occurrence of the scheduled dayOfWeek after or on startDate
         var daysToAdd = ((int)dayOfWeek - (int)startDate.DayOfWeek + 7) % 7;

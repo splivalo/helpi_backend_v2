@@ -21,6 +21,7 @@ public class JobRequestService
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
 
         private readonly IReassignmentService _reassignmentService;
+        private readonly IStudentContractRepository _contractRepository;
 
         public JobRequestService(
                 IJobRequestRepository jobRequestRepository,
@@ -30,7 +31,8 @@ public class JobRequestService
                  IHangfireRecurringJobService recurringJobService,
                  IPricingConfigurationRepository pricingConfigRepo,
                   ILogger<JobRequestService> logger,
-                     IReassignmentService reassignmentService
+                     IReassignmentService reassignmentService,
+                     IStudentContractRepository contractRepository
                      )
         {
                 _jobRequestRepository = jobRequestRepository;
@@ -41,6 +43,7 @@ public class JobRequestService
                 _pricingConfigRepo = pricingConfigRepo;
                 _logger = logger;
                 _reassignmentService = reassignmentService;
+                _contractRepository = contractRepository;
         }
 
         public async Task<List<JobRequestDto>> GetStudentPendingRequests(int studentId)
@@ -117,7 +120,18 @@ public class JobRequestService
                 /// this is okay because there is only 1 assignment
                 var assignment = jobRequest.OrderSchedule.Assignments.First();
 
-                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
+                // Look up active contract for the assigned student
+                DateOnly? contractEnd = null;
+                var contracts = await _contractRepository.GetByStudentIdAsync(assignment.StudentId);
+                var activeContract = contracts
+                        .Where(c => c.Status == Domain.Enums.ContractStatus.Active)
+                        .OrderByDescending(c => c.ExpirationDate)
+                        .FirstOrDefault();
+                if (activeContract != null)
+                        contractEnd = activeContract.ExpirationDate;
+
+                var jobInstances = _recurringJobService.GenerateInstancesForAssignment(
+                        assignment, pricingConfig, contractEndDate: contractEnd);
 
                 await _jobInstanceRepository.AddRangeAsync(jobInstances);
 

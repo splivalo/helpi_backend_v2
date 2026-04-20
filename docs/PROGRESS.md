@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-18
+> Zadnja izmjena: 2026-04-19
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV) + **Chat system (real-time + REST)** + **PromoCode→Coupon unification** + **CouponType simplification (3 hour-based types only)**
+## Overall Status: 100% backend gaps resolved + suspension + holidays + admin notifications + contract renewal auto-trigger + reschedule notifications + admin dashboard legacy cleanup + invoice retry system + dynamic pricing (student rates + intermediary margin) + travel buffer reconciliation + historical student payout snapshots + zero-warning backend cleanup + notification content overhaul + Google Drive archive (single master CSV) + **Chat system (real-time + REST)** + **PromoCode→Coupon unification** + **CouponType simplification (3 hour-based types only)** + **Student assignment acceptance (PendingAcceptance flow)** + **Cancel/Availability admin toggles**
 
 ---
 
@@ -398,6 +398,23 @@
 1. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
 2. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
 3. **Push notifikacije** — Firebase FCM za sve uloge
+
+---
+
+## 2026-04-20 — Session date range filter + OrderStatusUpdater revision
+
+### Session date range filter
+- `GET /api/sessions/order/{orderId}?from=&to=` — opcionalni date range filter
+- Implementirano kroz sve slojeve: `IJobInstanceRepository` → `JobInstanceRepository` → `IJobInstanceService` → `JobInstanceService` → `SessionsController`
+- Frontend šalje `from`/`to` za tekući mjesec kad prikazuje order detail; backend filtrira samo sesije u tom periodu
+
+### OrderStatusUpdater revision
+- `OrderStatusUpdater.cs` — potpuno revidirana logika automatskog zaključivanja statusa narudžbi:
+  - Ako postoje sesije ali nijedna nije Upcoming: ako bar 1 je Completed → order = **Completed**
+  - Ako su SVE sesije Cancelled AND `IsRecurring=false` (one-time) → order = **Cancelled**
+  - Ako su SVE sesije Cancelled AND `IsRecurring=true` → order ostaje **Active** (novi termini mogu doći produžetkom ugovora)
+  - Recurring order bez Upcoming sesija "pada kroz" na assignment-based logiku (postojeća putanja)
+- **Fix:** Jednokratne narudžbe s otkazanim terminima sada ispravno prelaze u Cancelled status automatski
 4. **Per-user preferencije** — SharedPreferences s userId u admin appu
 5. **Sponzor sustav** — SponsorConfiguration entity + admin UI + app badge (branding)
 
@@ -553,6 +570,43 @@ Dva odvojena sustava popusta: PromoCode (%, fiksni, per-order) i Coupon (sat-bas
 - `Order.PromoCodeId` → `Order.CouponId` (FK na Coupons tablicu)
 - Novi endpointi: `POST /api/coupons/validate`, `POST /api/coupons/apply`
 - DB migracija: `20260418073312_RemovePromoCodeSystem`
+- `dotnet build` = 0 errors, 0 warnings
+
+### Student assignment acceptance + cancel/availability toggles (2026-04-19)
+
+**PricingConfiguration:**
+
+- `StudentCancelEnabled` (bool, default true) — ON/OFF za studentsko otkazivanje sesija
+- `AvailabilityChangeEnabled` (bool, default true) — ON/OFF za promjenu dostupnosti
+- `AvailabilityChangeCutoffHours` (int, default 24) — sati prije sesije za promjenu dostupnosti
+- DB migracija: `20260418210332_AddStudentSettingsAndPendingAcceptance`
+
+**AssignmentStatus enum:**
+
+- Dodan `PendingAcceptance` — assignment čeka odgovor studenta
+
+**NotificationType enum:**
+
+- `AssignmentPending(33)`, `AssignmentAccepted(34)`, `AssignmentDeclined(35)`, `AssignmentRevoked(36)`
+
+**ScheduleAssignmentService:**
+
+- `AdminDirectAssignAsync` sada kreira assignment kao `PendingAcceptance`, NE generira JobInstances
+- Ako admin reassigna drugog studenta → prethodni dobije `AssignmentRevoked` SignalR notifikaciju
+- `AcceptAssignmentAsync` — prihvaća, generira JobInstances, notificira admine
+- `DeclineAssignmentAsync` — odbija, notificira admine
+- `GetPendingAssignmentsByStudentUserIdAsync` — vraća pending assignments za overlay
+
+**Novi endpointi:**
+
+- `POST /api/schedule-assignments/{id}/accept` (Student role)
+- `POST /api/schedule-assignments/{id}/decline` (Student role)
+- `GET /api/schedule-assignments/pending` (Student role)
+
+**Cancel/Availability enforcement:**
+
+- `OrdersService.CancelOrderAsync` — blokira kad je `StudentCancelEnabled` OFF
+- `StudentAvailabilitySlotService.HandleAvailabilityConflicts` — blokira kad je `AvailabilityChangeEnabled` OFF, koristi `AvailabilityChangeCutoffHours`
 - `dotnet build` = 0 errors, 0 warnings
 
 ### CouponType simplifikacija (2026-04-18)

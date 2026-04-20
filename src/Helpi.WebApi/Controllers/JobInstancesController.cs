@@ -28,9 +28,12 @@ public class SessionsController : ControllerBase
                 return Ok(sessions);
         }
         [HttpGet("order/{orderId}")]
-        public async Task<ActionResult<List<SessionDto>>> GetByOrder(int orderId)
+        public async Task<ActionResult<List<SessionDto>>> GetByOrder(
+            int orderId,
+            [FromQuery] DateOnly? from = null,
+            [FromQuery] DateOnly? to = null)
         {
-                var sessions = await _jobInstanceService.GetJobInstancesByOrderAsync(orderId);
+                var sessions = await _jobInstanceService.GetJobInstancesByOrderAsync(orderId, from, to);
                 await _jobInstanceService.StampCanCancelAsync(sessions, CallerRole);
                 return Ok(sessions);
         }

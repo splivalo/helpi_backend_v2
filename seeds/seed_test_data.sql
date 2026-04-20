@@ -10,9 +10,9 @@
 -- Those are all defined in seed_mock_data.sql.
 --
 -- DB state from seed_mock_data.sql:
---   Order 1 (FullAssigned): Ana (102) -> Senior 1, Job 29 (Upcoming)
---   Order 3 (FullAssigned): Petra (104) -> Senior 1, Job 30 (Upcoming)
---   Order 4 (FullAssigned): Luka (101) -> Senior 3, Job 31 (Upcoming)
+--   Order 1 (Completed): Ana (102) -> Senior 1, Job 29 (Completed)
+--   Order 3 (Completed): Petra (104) -> Senior 1, Job 30 (Completed)
+--   Order 4 (Completed): Luka (101) -> Senior 3, Job 31 (Completed)
 --   Order 5 (FullAssigned): Luka (101) -> Senior 6, Job 32 (Upcoming)
 --   Order 6 (FullAssigned): Ana (102) -> Senior 2, Jobs 1-6 (all Upcoming)
 --   Order 7 (FullAssigned): Ivan (103) -> Senior 3, Jobs 7-8 (Completed), 9-12 (Upcoming)

@@ -9,6 +9,7 @@ public interface IJobInstanceService
 
     Task<List<SessionDto>> GetJobInstancesByAssignmentAsync(int assignmentId);
     Task<List<SessionDto>> GetJobInstancesByOrderAsync(int orderId);
+    Task<List<SessionDto>> GetJobInstancesByOrderAsync(int orderId, DateOnly? from, DateOnly? to);
     Task<List<SessionDto>> GetJobInstancesByStudentAsync(int studentId);
     Task<List<SessionDto>> GetJobInstances();
     Task<List<SessionDto>> GetSeniorCompletedJobInstances(int seniorId);

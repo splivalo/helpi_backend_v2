@@ -42,6 +42,20 @@ public class ScheduleCancellationHandler
             return;
         }
 
+        // Terminate all active/pending assignments on this schedule
+        var activeAssignments = schedule.Assignments
+            .Where(a => a.Status == AssignmentStatus.Accepted || a.Status == AssignmentStatus.PendingAcceptance)
+            .ToList();
+
+        foreach (var assignment in activeAssignments)
+        {
+            assignment.Status = AssignmentStatus.Terminated;
+            assignment.TerminationReason = TerminationReason.OrderCancelled;
+            assignment.TerminatedAt = DateTime.UtcNow;
+            _logger.LogDebug("Terminated assignment {AssignmentId} (Student {StudentId}) on schedule {ScheduleId}",
+                assignment.Id, assignment.StudentId, schedule.Id);
+        }
+
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
         var futureJobInstances = await _jobInstanceRepository.GetFromDateForScheduleAsync(now, schedule.Id);
         var pendingJobs = futureJobInstances.Where(j => j.Status != JobInstanceStatus.Completed);
@@ -54,6 +68,7 @@ public class ScheduleCancellationHandler
             request.Status = JobRequestStatus.Cancelled;
         }
 
-        _logger.LogDebug("Cancelled future jobs for schedule {ScheduleId}", schedule.Id);
+        _logger.LogDebug("Cancelled future jobs and terminated {AssignmentCount} assignment(s) for schedule {ScheduleId}",
+            activeAssignments.Count, schedule.Id);
     }
 }

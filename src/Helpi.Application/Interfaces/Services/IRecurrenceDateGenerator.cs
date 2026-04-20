@@ -10,5 +10,6 @@ public interface IRecurrenceDateGenerator
         DateOnly? endDate,
         RecurrencePattern? pattern,
         DayOfWeek dayOfWeek,
-        int horizonMonths = 3);
+        int horizonMonths = 3,
+        DateOnly? contractEndDate = null);
 }

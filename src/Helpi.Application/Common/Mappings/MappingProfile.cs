@@ -117,68 +117,55 @@ public class MappingProfile : Profile
              .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.OrderServices.Select(os => os.Service)))
              .ForMember(dest => dest.Schedules, opt => opt.MapFrom(src => src.Schedules))
              .ForMember(dest => dest.AssignedStudentName, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.FullName : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentId, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => (int?)a.StudentId)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentEmail, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.Email : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentPhone, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.Phone : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentAddress, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.FullAddress : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentFaculty, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Faculty != null ? a.Student.FacultyId : (int?)null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentDateOfBirth, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? (DateOnly?)a.Student.Contact.DateOfBirth : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentGender, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null ? (int?)a.Student.Contact.Gender : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentCity, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null && a.Student.Contact != null ? a.Student.Contact.CityName : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentStatus, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null ? (int?)a.Student.Status : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentAverageRating, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null ? (decimal?)a.Student.AverageRating : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentTotalReviews, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null ? (int?)a.Student.TotalReviews : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.AssignedStudentDaysToContractExpire, opt => opt.MapFrom(src =>
-                 src.Schedules.SelectMany(s => s.Assignments)
-                     .Where(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted || a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed)
+                 MappingHelpers.PrimaryAssignment(src)
                      .Select(a => a.Student != null ? a.Student.DaysToContractExpire : null)
                      .FirstOrDefault()))
              .ForMember(dest => dest.CouponCode, opt => opt.MapFrom(src => src.Coupon != null ? src.Coupon.Code : null));
@@ -305,4 +292,41 @@ public class MappingProfile : Profile
     }
 
 
+}
+
+/// <summary>
+/// Helper to pick the "primary" student assignment for an order.
+/// Priority: Accepted > Completed > PendingAcceptance.
+/// Tie-breaker: student covering MORE schedules wins.
+/// </summary>
+internal static class MappingHelpers
+{
+    private static readonly Helpi.Domain.Enums.AssignmentStatus[] ActiveStatuses =
+    {
+        Helpi.Domain.Enums.AssignmentStatus.Accepted,
+        Helpi.Domain.Enums.AssignmentStatus.Completed,
+        Helpi.Domain.Enums.AssignmentStatus.PendingAcceptance,
+    };
+
+    public static IEnumerable<ScheduleAssignment> PrimaryAssignment(Order src)
+    {
+        var active = src.Schedules
+            .SelectMany(s => s.Assignments)
+            .Where(a => ActiveStatuses.Contains(a.Status))
+            .ToList();
+
+        if (active.Count == 0)
+            return Enumerable.Empty<ScheduleAssignment>();
+
+        // Count how many schedules each student covers
+        var scheduleCounts = active
+            .GroupBy(a => a.StudentId)
+            .ToDictionary(g => g.Key, g => g.Select(a => a.OrderScheduleId).Distinct().Count());
+
+        return active
+            .OrderBy(a => a.Status == Helpi.Domain.Enums.AssignmentStatus.Accepted ? 0
+                        : a.Status == Helpi.Domain.Enums.AssignmentStatus.Completed ? 1 : 2)
+            .ThenByDescending(a => scheduleCounts.GetValueOrDefault(a.StudentId, 0))
+            .Take(1);
+    }
 }

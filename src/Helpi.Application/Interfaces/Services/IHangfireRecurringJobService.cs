@@ -10,8 +10,8 @@ namespace Helpi.Application.Interfaces.Services
     List<JobInstance> GenerateInstancesForAssignment(ScheduleAssignment assignment,
       PricingConfiguration pricingConfiguration,
     int horizonMonths = 3,
-    int generationThresholdDays = 14
-
+    int generationThresholdDays = 14,
+    DateOnly? contractEndDate = null
     );
 
 

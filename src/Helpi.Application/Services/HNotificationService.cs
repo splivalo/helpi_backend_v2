@@ -148,8 +148,22 @@ public class HNotificationService : IHNotificationService
             NotificationType.AvailabilityChanged,
         };
 
+        // Types whose Title AND Body are fully formatted — keep both as-is
+        var keepOriginalTitleAndBodyList = new[]
+        {
+            NotificationType.AssignmentAccepted,
+            NotificationType.AssignmentDeclined,
+        };
+
         foreach (var dto in notifications)
         {
+            // Skip title/body translation for types that arrive fully formatted
+            if (keepOriginalTitleAndBodyList.Contains(dto.Type))
+            {
+                list.Add(dto);
+                continue;
+            }
+
             dto.Title = _localizer.GetString($"{dto.TranslationKey}.Title", languageCode);
 
             if (dto.Type == NotificationType.NewStudentAdded)

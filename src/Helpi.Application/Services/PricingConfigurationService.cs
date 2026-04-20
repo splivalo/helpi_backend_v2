@@ -35,8 +35,11 @@ public class PricingConfigurationService
             StudentSundayHourlyRate = c.StudentSundayHourlyRate,
             CompanyPercentage = c.CompanyPercentage,
             ServiceProviderPercentage = c.ServiceProviderPercentage,
+            StudentCancelEnabled = c.StudentCancelEnabled,
             StudentCancelCutoffHours = c.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = c.SeniorCancelCutoffHours,
+            AvailabilityChangeEnabled = c.AvailabilityChangeEnabled,
+            AvailabilityChangeCutoffHours = c.AvailabilityChangeCutoffHours,
             TravelBufferMinutes = c.TravelBufferMinutes,
             PaymentTimingMinutes = c.PaymentTimingMinutes,
             IntermediaryPercentage = c.IntermediaryPercentage,
@@ -59,8 +62,11 @@ public class PricingConfigurationService
             StudentSundayHourlyRate = config.StudentSundayHourlyRate,
             CompanyPercentage = config.CompanyPercentage,
             ServiceProviderPercentage = config.ServiceProviderPercentage,
+            StudentCancelEnabled = config.StudentCancelEnabled,
             StudentCancelCutoffHours = config.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = config.SeniorCancelCutoffHours,
+            AvailabilityChangeEnabled = config.AvailabilityChangeEnabled,
+            AvailabilityChangeCutoffHours = config.AvailabilityChangeCutoffHours,
             TravelBufferMinutes = config.TravelBufferMinutes,
             PaymentTimingMinutes = config.PaymentTimingMinutes,
             IntermediaryPercentage = config.IntermediaryPercentage,
@@ -84,8 +90,11 @@ public class PricingConfigurationService
             StudentSundayHourlyRate = configDto.StudentSundayHourlyRate,
             CompanyPercentage = configDto.CompanyPercentage,
             ServiceProviderPercentage = configDto.ServiceProviderPercentage,
+            StudentCancelEnabled = configDto.StudentCancelEnabled,
             StudentCancelCutoffHours = configDto.StudentCancelCutoffHours,
             SeniorCancelCutoffHours = configDto.SeniorCancelCutoffHours,
+            AvailabilityChangeEnabled = configDto.AvailabilityChangeEnabled,
+            AvailabilityChangeCutoffHours = configDto.AvailabilityChangeCutoffHours,
             TravelBufferMinutes = configDto.TravelBufferMinutes,
             PaymentTimingMinutes = configDto.PaymentTimingMinutes,
             IntermediaryPercentage = configDto.IntermediaryPercentage,
@@ -124,8 +133,11 @@ public class PricingConfigurationService
         existingConfig.StudentSundayHourlyRate = configDto.StudentSundayHourlyRate;
         existingConfig.CompanyPercentage = configDto.CompanyPercentage;
         existingConfig.ServiceProviderPercentage = configDto.ServiceProviderPercentage;
+        existingConfig.StudentCancelEnabled = configDto.StudentCancelEnabled;
         existingConfig.StudentCancelCutoffHours = configDto.StudentCancelCutoffHours;
         existingConfig.SeniorCancelCutoffHours = configDto.SeniorCancelCutoffHours;
+        existingConfig.AvailabilityChangeEnabled = configDto.AvailabilityChangeEnabled;
+        existingConfig.AvailabilityChangeCutoffHours = configDto.AvailabilityChangeCutoffHours;
         existingConfig.TravelBufferMinutes = configDto.TravelBufferMinutes;
         existingConfig.PaymentTimingMinutes = configDto.PaymentTimingMinutes;
         existingConfig.IntermediaryPercentage = configDto.IntermediaryPercentage;

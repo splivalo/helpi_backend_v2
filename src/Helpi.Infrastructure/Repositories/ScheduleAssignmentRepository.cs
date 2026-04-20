@@ -28,6 +28,17 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 .Where(sa => sa.StudentId == studentId)
                 .ToListAsync();
 
+        public async Task<IEnumerable<ScheduleAssignment>> GetByStudentWithDetailsAsync(int studentId)
+            => await _context.ScheduleAssignments
+                .Include(sa => sa.OrderSchedule)
+                    .ThenInclude(os => os.Order)
+                        .ThenInclude(o => o.Senior)
+                            .ThenInclude(s => s.Contact)
+                .Where(sa => sa.StudentId == studentId)
+                .AsNoTracking()
+                .AsSplitQuery()
+                .ToListAsync();
+
         public async Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationAsync()
         {
 
@@ -164,7 +175,8 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                 var activeStatuses = new[]
                {
                         AssignmentStatus.Completed,
-                        AssignmentStatus.Accepted
+                        AssignmentStatus.Accepted,
+                        AssignmentStatus.PendingAcceptance
                 };
 
                 return await _context.ScheduleAssignments
@@ -173,7 +185,6 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .Where(sa => !sa.IsJobInstanceSub)
                     .OrderByDescending(sa => sa.AssignedAt) // Get most recent
                     .Include(sa => sa.Student).ThenInclude(s => s.Contact)
-                    .AsNoTracking()
                     .FirstOrDefaultAsync();
         }
 
@@ -265,11 +276,12 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
 
         public async Task<List<ScheduleAssignment>> GetActiveAssignmentsByStudentId(int studentId)
         {
+                var activeStatuses = new[] { AssignmentStatus.Accepted, AssignmentStatus.PendingAcceptance };
                 return await _context.ScheduleAssignments
                                 .Include(a => a.OrderSchedule)
                                     .ThenInclude(os => os.Order)
                                 .Where(a => a.StudentId == studentId
-                                    && a.Status == AssignmentStatus.Accepted
+                                    && activeStatuses.Contains(a.Status)
                                     && a.OrderSchedule.Order.Status != OrderStatus.Completed
                                     && a.OrderSchedule.Order.Status != OrderStatus.Cancelled)
                                 .ToListAsync();
@@ -309,6 +321,22 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .Where(sa => sa.StudentId == studentId &&
                                  removedDays.Contains(sa.OrderSchedule.DayOfWeek) &&
                                  sa.Status == AssignmentStatus.Accepted)
+                    .ToListAsync();
+        }
+
+        public async Task<List<ScheduleAssignment>> GetAllPendingAcceptanceAsync()
+        {
+                return await _context.ScheduleAssignments
+                    .Include(sa => sa.Student).ThenInclude(s => s.Contact)
+                    .Include(sa => sa.OrderSchedule)
+                        .ThenInclude(os => os.Order)
+                            .ThenInclude(o => o.Senior)
+                                .ThenInclude(s => s.Contact)
+                    .Where(sa => sa.Status == AssignmentStatus.PendingAcceptance)
+                    .Where(sa => sa.OrderSchedule.Order.Status == OrderStatus.Pending)
+                    .OrderBy(sa => sa.AssignedAt)
+                    .AsNoTracking()
+                    .AsSplitQuery()
                     .ToListAsync();
         }
 

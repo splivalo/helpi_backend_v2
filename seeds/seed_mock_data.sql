@@ -14,7 +14,8 @@
 --   107 Dino  = Expired (3)      — Tue/Thu 09-13, Services: 21,41 (but expired!)
 --
 -- ORDER STATUS MATRIX:
---   2, 12-15 = Pending (5 orders)
+--   2, 15    = Pending, NO assignment (2 orders)
+--   12-14    = Pending, WITH PendingAcceptance assignments (3 orders, for testing accept/decline)
 --   5-9     = FullAssigned (5 orders, with ScheduleAssignment rows + JobInstances)
 --   1, 3, 4, 10 = Completed (4 orders, with completed assignments + JobInstances)
 --   11       = Cancelled (1 order)
@@ -41,6 +42,11 @@ VALUES
 
 INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
 SELECT 1, "Id" FROM "AspNetRoles" WHERE "NormalizedName" = 'ADMIN';
+
+-- Assign Student role to all seed students
+INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
+VALUES (101, 2), (102, 2), (103, 2), (104, 2), (105, 2), (106, 2), (107, 2)
+ON CONFLICT DO NOTHING;
 
 -- ============================================
 -- 1. USERS - STUDENTS (7 studenata)
@@ -348,56 +354,75 @@ INSERT INTO "StudentAvailabilitySlots" ("StudentId", "DayOfWeek", "StartTime", "
 -- ============================================
 -- 14. SCHEDULE ASSIGNMENTS (for FullAssigned + Completed orders)
 -- ============================================
--- AssignmentStatus: 0=Accepted, 1=Declined, 2=Terminated, 3=Completed
+-- AssignmentStatus: 0=PendingAcceptance, 1=Accepted, 2=Declined, 3=Terminated, 4=Completed
 
 -- Order 6 (FullAssigned) → Ana (102) assigned to both schedules
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
 VALUES
-(1, 6, 6, 102, 0, false, '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
-(2, 7, 6, 102, 0, false, '2026-03-10 09:05:00', '2026-03-10 09:05:00');
+(1, 6, 6, 102, 1, false, '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
+(2, 7, 6, 102, 1, false, '2026-03-10 09:05:00', '2026-03-10 09:05:00');
 
 -- Order 7 (FullAssigned) → Ivan (103) assigned to both schedules
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
 VALUES
-(3, 8, 7, 103, 0, false, '2026-03-12 10:00:00', '2026-03-12 10:00:00'),
-(4, 9, 7, 103, 0, false, '2026-03-12 10:05:00', '2026-03-12 10:05:00');
+(3, 8, 7, 103, 1, false, '2026-03-12 10:00:00', '2026-03-12 10:00:00'),
+(4, 9, 7, 103, 1, false, '2026-03-12 10:05:00', '2026-03-12 10:05:00');
 
 -- Order 10 (Completed) → Petra (104) assigned + completed both schedules
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
 VALUES
-(5, 13, 10, 104, 3, false, '2026-01-02 08:00:00', '2026-01-02 08:00:00', '2026-02-28 18:00:00'),
-(6, 14, 10, 104, 3, false, '2026-01-02 08:05:00', '2026-01-02 08:05:00', '2026-02-28 18:00:00');
+(5, 13, 10, 104, 4, false, '2026-01-02 08:00:00', '2026-01-02 08:00:00', '2026-02-28 18:00:00'),
+(6, 14, 10, 104, 4, false, '2026-01-02 08:05:00', '2026-01-02 08:05:00', '2026-02-28 18:00:00');
 
 -- Order 1 (Completed, one-time) → Ana (102) assigned + completed, Thu 10-12
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
 VALUES
-(7, 1, 1, 102, 3, false, '2026-03-10 10:00:00', '2026-03-10 10:00:00', '2026-03-20 12:00:00');
+(7, 1, 1, 102, 4, false, '2026-03-10 10:00:00', '2026-03-10 10:00:00', '2026-03-20 12:00:00');
 
 -- Order 3 (Completed, one-time) → Petra (104) assigned + completed, Tue 14-17
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
 VALUES
-(8, 3, 3, 104, 3, false, '2026-03-12 09:00:00', '2026-03-12 09:00:00', '2026-03-25 17:00:00');
+(8, 3, 3, 104, 4, false, '2026-03-12 09:00:00', '2026-03-12 09:00:00', '2026-03-25 17:00:00');
 
 -- Order 4 (Completed, one-time) → Luka (101) assigned + completed, Wed 10-12
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt", "CompletedAt")
 VALUES
-(9, 4, 4, 101, 3, false, '2026-03-12 10:00:00', '2026-03-12 10:00:00', '2026-04-01 12:00:00');
+(9, 4, 4, 101, 4, false, '2026-03-12 10:00:00', '2026-03-12 10:00:00', '2026-04-01 12:00:00');
 
 -- Order 5 (FullAssigned, one-time) → Luka (101) assigned, Fri 08-11
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
 VALUES
-(10, 5, 5, 101, 0, false, '2026-03-15 08:00:00', '2026-03-15 08:00:00');
+(10, 5, 5, 101, 1, false, '2026-03-15 08:00:00', '2026-03-15 08:00:00');
 
 -- Order 8 (FullAssigned, recurring) → Petra (104) assigned, Tue 08:30-12:30
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
 VALUES
-(11, 10, 8, 104, 0, false, '2026-03-10 11:00:00', '2026-03-10 11:00:00');
+(11, 10, 8, 104, 1, false, '2026-03-10 11:00:00', '2026-03-10 11:00:00');
 
 -- Order 9 (FullAssigned, recurring) → Petra (104) assigned, Mon 09-11 + Thu 09-11
 INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt", "AcceptedAt")
 VALUES
-(12, 11, 9, 104, 0, false, '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
-(13, 12, 9, 104, 0, false, '2026-03-10 12:05:00', '2026-03-10 12:05:00');
+(12, 11, 9, 104, 1, false, '2026-03-10 12:00:00', '2026-03-10 12:00:00'),
+(13, 12, 9, 104, 1, false, '2026-03-10 12:05:00', '2026-03-10 12:05:00');
+
+-- ── PendingAcceptance assignments on Pending orders (for testing) ──
+-- Order 12 (Pending, Mon+Thu 09-12) → Luka (101), assigned 2h ago
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt")
+VALUES
+(14, 17, 12, 101, 0, false, NOW() - INTERVAL '2 hours'),
+(15, 18, 12, 101, 0, false, NOW() - INTERVAL '2 hours');
+
+-- Order 13 (Pending, Mon+Thu 11-13) → Ivan (103), assigned 45 min ago
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt")
+VALUES
+(16, 19, 13, 103, 0, false, NOW() - INTERVAL '45 minutes'),
+(17, 20, 13, 103, 0, false, NOW() - INTERVAL '45 minutes');
+
+-- Order 14 (Pending, Tue+Sat 09-12) → Ana (102), assigned 6h ago
+INSERT INTO "ScheduleAssignments" ("Id", "OrderScheduleId", "OrderId", "StudentId", "Status", "IsJobInstanceSub", "AssignedAt")
+VALUES
+(18, 21, 14, 102, 0, false, NOW() - INTERVAL '6 hours'),
+(19, 22, 14, 102, 0, false, NOW() - INTERVAL '6 hours');
 
 -- ============================================
 -- 15. JOB INSTANCES (sessions)

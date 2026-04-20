@@ -73,6 +73,11 @@ IPricingConfigurationRepository pricingConfigRepo
                 return _mapper.Map<List<SessionDto>>(await _jobInstanceRepository.GetByOrderIdAsync(orderId));
         }
 
+        public async Task<List<SessionDto>> GetJobInstancesByOrderAsync(int orderId, DateOnly? from, DateOnly? to)
+        {
+                return _mapper.Map<List<SessionDto>>(await _jobInstanceRepository.GetByOrderIdAsync(orderId, from, to));
+        }
+
         public async Task<List<SessionDto>> GetJobInstancesByStudentAsync(int studentId)
         {
                 var jobInstances = await _jobInstanceRepository.GetJobInstancesByStudentAsync(studentId);

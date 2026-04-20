@@ -18,6 +18,7 @@ public class OrderScheduleRepository : IOrderScheduleRepository
                 return await _context.OrderSchedules
              .Include(os => os.Order)
                 .ThenInclude(o => o.Senior)
+                        .ThenInclude(s => s.Contact)
              .SingleOrDefaultAsync(os => os.Id == id);
         }
         public async Task<List<OrderSchedule>> LoadWithIncudes(int? scheduleId, OrderScheduleInculdes inculdes)

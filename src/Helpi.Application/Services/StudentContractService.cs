@@ -226,7 +226,18 @@ public class StudentContractService
                 var allInstances = new List<JobInstance>();
                 foreach (var assignment in assignments)
                 {
-                        var instances = _recurringJobService.GenerateInstancesForAssignment(assignment, pricingConfig);
+                        // Use contract end date for this student
+                        DateOnly? contractEnd = null;
+                        var contracts = await _repository.GetByStudentIdAsync(studentId);
+                        var activeContract = contracts
+                                .Where(c => c.Status == Domain.Enums.ContractStatus.Active)
+                                .OrderByDescending(c => c.ExpirationDate)
+                                .FirstOrDefault();
+                        if (activeContract != null)
+                                contractEnd = activeContract.ExpirationDate;
+
+                        var instances = _recurringJobService.GenerateInstancesForAssignment(
+                                assignment, pricingConfig, contractEndDate: contractEnd);
                         allInstances.AddRange(instances);
                 }
 

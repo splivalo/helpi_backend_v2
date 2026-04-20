@@ -99,6 +99,7 @@ namespace Helpi.Domain.Enums
 
     public enum AssignmentStatus
     {
+        PendingAcceptance,
         Accepted,
         Declined,
         Terminated,
@@ -115,7 +116,8 @@ namespace Helpi.Domain.Enums
         SeniorCanceled,
         SystemTerminated,
         AdminIntervention,
-        AvailabilityConflict
+        AvailabilityConflict,
+        OrderCancelled
     }
 
     public enum JobInstanceStatus
@@ -225,6 +227,10 @@ namespace Helpi.Domain.Enums
         NewOrderAdded,
         AvailabilityChanged,       // 31 — admin: student changed availability affecting orders
         OrderBackToProcessing,     // 32 — senior: order moved back to processing
+        AssignmentPending,         // 33 — student: new assignment awaiting acceptance
+        AssignmentAccepted,        // 34 — admin: student accepted assignment
+        AssignmentDeclined,        // 35 — admin: student declined assignment
+        AssignmentRevoked,         // 36 — student: admin revoked pending assignment
 
     }
 

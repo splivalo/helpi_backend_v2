@@ -11,6 +11,7 @@ public interface IJobInstanceRepository
     Task<JobInstance> GetByIdAsync(int id);
     Task<IEnumerable<JobInstance>> GetByAssignmentAsync(int assignmentId);
     Task<IEnumerable<JobInstance>> GetByOrderIdAsync(int orderId);
+    Task<IEnumerable<JobInstance>> GetByOrderIdAsync(int orderId, DateOnly? from, DateOnly? to);
     Task<IEnumerable<JobInstance>> GetJobInstancesByStudentAsync(int studentId);
 
     Task<IEnumerable<JobInstance>> GetJobInstances();

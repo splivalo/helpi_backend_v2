@@ -9,6 +9,7 @@ public interface IScheduleAssignmentRepository
 
     Task<ScheduleAssignment?> LoadAssignmentWithIncludes(int assignmentId, AssignmentIncludeOptions options);
     Task<IEnumerable<ScheduleAssignment>> GetByStudentAsync(int studentId);
+    Task<IEnumerable<ScheduleAssignment>> GetByStudentWithDetailsAsync(int studentId);
     Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationAsync();
     Task<List<ScheduleAssignment>> GetAssignmentsNeedingJobGenerationForStudentAsync(int studentId);
     Task<ScheduleAssignment> AddAsync(ScheduleAssignment assignment);
@@ -26,6 +27,8 @@ public interface IScheduleAssignmentRepository
     Task<bool> HasActiveAssignmentsForSlotsAsync(int studentId, List<StudentAvailabilitySlotCreateDto> dtos);
 
     Task<List<ScheduleAssignment>> GetConflictingAssignmentsAsync(int studentId, List<byte> removedDays);
+
+    Task<List<ScheduleAssignment>> GetAllPendingAcceptanceAsync();
 
     void Detach(ScheduleAssignment assignment);
 

@@ -35,6 +35,14 @@ public class StudentRepository : IStudentRepository
 
     }
 
+    public async Task<Student?> GetByUserIdAsync(int userId)
+    {
+        return await _context.Students
+            .Where(s => s.DeletedAt == null)
+            .Include(s => s.Contact)
+            .SingleOrDefaultAsync(s => s.UserId == userId);
+    }
+
     public async Task<IEnumerable<Student>> GetByVerificationStatusAsync(StudentStatus status)
         => await _context.Students.Where(s => s.Status == status).ToListAsync();
 
@@ -227,14 +235,13 @@ public class StudentRepository : IStudentRepository
             query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
         }
 
-        // Overlap filter: return students whose availability slot
-        // overlaps the requested time window on the target day.
-        // Frontend classifies full-coverage vs partial (differentTimes).
+        // Full-containment filter: only return students whose availability slot
+        // fully covers the requested time window on the target day.
         query = query.Where(s =>
             s.AvailabilitySlots.Any(a =>
                 a.DayOfWeek == isoTargetDay &&
-                a.StartTime < targetEnd &&
-                a.EndTime > targetStart
+                a.StartTime <= targetStart &&
+                a.EndTime >= targetEnd
             )
         );
 
@@ -243,9 +250,12 @@ public class StudentRepository : IStudentRepository
         // Services (6 categories) are informational for senior only.
 
         // ✅ Conflict detection 1: Check generated JobInstances with travel buffer
+        // Only consider assignments on active orders (not Completed/Cancelled)
         query = query.Where(s =>
             !s.ScheduleAssignments
-                .Where(sa => sa.Status == AssignmentStatus.Accepted)
+                .Where(sa => sa.Status == AssignmentStatus.Accepted
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Completed
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled)
                 .SelectMany(sa => sa.JobInstances)
                 .Any(j =>
                     (

@@ -174,7 +174,15 @@ public class StudentAvailabilitySlotService
                 if (!isAdmin)
                 {
                         var config = await _pricingConfigRepo.GetByIdAsync(1);
-                        var cutoffHours = config?.StudentCancelCutoffHours ?? 6;
+
+                        // If availability change is completely disabled, always block when affecting sessions
+                        if (config != null && !config.AvailabilityChangeEnabled)
+                        {
+                                throw new DomainException(
+                                        "Promjena dostupnosti koja utječe na zakazane termine nije dozvoljena.");
+                        }
+
+                        var cutoffHours = config?.AvailabilityChangeCutoffHours ?? 24;
                         var cutoff = DateTime.UtcNow.AddHours(cutoffHours);
 
                         foreach (var assignment in conflicting)
@@ -187,7 +195,7 @@ public class StudentAvailabilitySlotService
                                 if (imminentSession)
                                 {
                                         throw new DomainException(
-                                                $"Cannot change availability — an affected session starts within {cutoffHours} hour(s)");
+                                                $"Promjena dostupnosti nije moguća — termin počinje za manje od {cutoffHours} sati.");
                                 }
                         }
                 }

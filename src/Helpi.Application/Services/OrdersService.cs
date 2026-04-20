@@ -326,6 +326,15 @@ public class OrdersService
                         if (!isAdmin)
                         {
                                 var config = await _pricingConfigRepo.GetByIdAsync(1);
+                                var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
+                                var isStudent = string.Equals(callerRole, "Student", StringComparison.OrdinalIgnoreCase);
+
+                                // If student cancel is disabled, block completely
+                                if (isStudent && config != null && !config.StudentCancelEnabled)
+                                {
+                                        throw new DomainException("Otkazivanje nije dozvoljeno.");
+                                }
+
                                 var now = DateTime.UtcNow;
                                 var nearestUpcoming = order.Schedules
                                         .SelectMany(s => s.Assignments)
@@ -336,7 +345,6 @@ public class OrdersService
                                         .OrderBy(dt => dt)
                                         .FirstOrDefault();
 
-                                var isSenior = string.Equals(callerRole, "Customer", StringComparison.OrdinalIgnoreCase);
                                 var cutoffHours = isSenior
                                         ? (config?.SeniorCancelCutoffHours ?? 1)
                                         : (config?.StudentCancelCutoffHours ?? 6);
