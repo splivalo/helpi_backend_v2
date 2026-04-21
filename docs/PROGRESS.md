@@ -401,7 +401,20 @@
 
 ---
 
-## 2026-04-20 — Session date range filter + OrderStatusUpdater revision
+## 2026-04-20 — Student Settings, PendingAcceptance, canCancel stamping, session date range filter + OrderStatusUpdater revision
+
+### Student Settings permissions (PricingConfiguration)
+
+- `PricingConfiguration` — 3 nova polja (migracija `20260418210332_AddStudentSettingsAndPendingAcceptance`):
+  - `StudentCancelEnabled` (bool) — admin uključuje/isključuje mogućnost otkazivanja termina od strane studenta
+  - `AvailabilityChangeEnabled` (bool) — admin uključuje/isključuje mogućnost promjene dostupnosti od strane studenta
+  - `AvailabilityChangeCutoffHours` (int) — cutoff u satima unutar kojih student ne smije mijenjati dostupnost
+- `AssignmentStatus.PendingAcceptance` — novi enum status: student mora potvrditi dodjelu
+- `GET /api/schedule-assignments/pending` — student dohvaća sve dodjele na kojima mora kliknuti Prihvati/Odbij
+- `POST /api/schedule-assignments/{id}/accept` i `/decline` — student prihvaća/odbija dodjelu
+- `StampCanCancelAsync(sessions, callerRole)` — backend stampa `canCancel: true/false` na svaku sesiju ovisno o: `StudentCancelEnabled`, cutoff sati, ulozi pozivatelja (senior/student/admin)
+- Role-based cutoff u `CancelJobInstance`: senior koristi `SeniorCancelCutoffHours`, student koristi `StudentCancelCutoffHours`
+- `SessionDto.CanCancel` — novo bool polje na DTO-u; frontend čita direktno, ne računa lokalno
 
 ### Session date range filter
 
