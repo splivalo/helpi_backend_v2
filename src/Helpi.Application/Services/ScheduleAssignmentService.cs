@@ -420,6 +420,26 @@ public class ScheduleAssignmentService
                                 });
                 }
 
+                // Notify senior that their order is now active (student accepted)
+                if (updatedOrder?.Senior != null)
+                {
+                        var culture = updatedOrder.Senior.Contact?.LanguageCode ?? "hr";
+                        var isHr = string.Equals(culture, "hr", StringComparison.OrdinalIgnoreCase);
+                        await _notificationService.StoreAndNotifyAsync(new HNotification
+                        {
+                                RecieverUserId = updatedOrder.Senior.CustomerId,
+                                Title = isHr ? "Narudžba aktivna" : "Order active",
+                                Body = isHr
+                                        ? $"Student {student.Contact?.FullName ?? "—"} je prihvatio vaš termin. Vaša narudžba je sada aktivna."
+                                        : $"Student {student.Contact?.FullName ?? "—"} has accepted your session. Your order is now active.",
+                                TranslationKey = "Notifications.AssignmentAccepted",
+                                Type = NotificationType.AssignmentAccepted,
+                                CreatedAt = DateTime.UtcNow,
+                                SeniorId = updatedOrder.SeniorId,
+                                OrderId = updatedOrder.Id,
+                        });
+                }
+
                 _logger.LogInformation("Student {StudentId} accepted assignment {AssignmentId}", assignment.StudentId, assignmentId);
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
         }
