@@ -158,6 +158,18 @@ if (!Directory.Exists(uploadsPath))
     Directory.CreateDirectory(uploadsPath);
 }
 
+// Serve /uploads with aggressive caching — filenames contain a content hash
+// so a new upload always gets a new URL, making long-term caching safe.
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    },
+});
+
 // Short-circuit OPTIONS requests
 app.Use(async (context, next) =>
 {
