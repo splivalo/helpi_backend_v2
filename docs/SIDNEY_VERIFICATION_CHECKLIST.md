@@ -1,37 +1,37 @@
 # Sidney Verification Checklist — 2026-04-24
 
-> Svi backend tasking su gotovi. Ovo je lista što trebam PROVJERITI / INTEGRIRATI za produkciju.
+> All backend tasks are complete. This is the verification/integration checklist for production.
 
 ---
 
-## 📋 Za Sidney-a — 7 Vanjskih Integracija + Testiranje
+## 📋 For Sidney — 7 External Integrations + Testing
 
 ### 1. ✅ Backend All Green
-- [ ] `dotnet build` u `src/` folder — **0 errors** (samo 80 legacy warninga očekivani)
-- [ ] Svi 11+1 faze implementirane (provjerite `PROGRESS.md`)
-- [ ] `flutter analyze` u admin/app — **0 issues**
+- [ ] `dotnet build` in `src/` folder — **0 errors** (only 80 legacy warnings expected)
+- [ ] All 11+1 phases implemented (verify `PROGRESS.md`)
+- [ ] `flutter analyze` in admin/app — **0 issues**
 
 ---
 
-## 🔑 Vanjske Integracije (Trebaju produkcijski credentials)
+## 🔑 External Integrations (Require production credentials)
 
 ### 2. **Stripe** — Payment Processing
 
-**Što trebam:**
+**What you need:**
 - [ ] Stripe production API Key (Secret key)
-- [ ] Stripe Webhook Secret (za fee tracking)
+- [ ] Stripe Webhook Secret (for fee tracking)
 
-**Što trebam napraviti:**
-1. Otvori `credentials/stripe.json` (prod folder ili env var)
-2. Ažuriraj s produkcijskim keyom
-3. Backend már ima `PaymentService.InitiatePaymentAsync()` + `StripeWebhookHandler` implementiran
-4. **Testiranje:** 
-   - [ ] Kreiraj test senior + test student
-   - [ ] Napravi order s plaćanjem
-   - [ ] Provjeri da se provizija obračunala (17% za Helpi, ostatak senioru)
-   - [ ] Provjeri u Stripe dashboard je li transakcija vidljiva
+**What to do:**
+1. Open `credentials/stripe.json` (prod folder or env var)
+2. Update with production API key
+3. Backend already has `PaymentService.InitiatePaymentAsync()` + `StripeWebhookHandler` implemented
+4. **Testing:**
+   - [ ] Create test senior + test student
+   - [ ] Create order with payment
+   - [ ] Verify fee is calculated correctly (17% for Helpi, rest to senior)
+   - [ ] Check Stripe dashboard to confirm transaction is visible
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/Services/PaymentService.cs`
 - `Helpi.WebApi/Controllers/PaymentsController.cs`
 - `Helpi.Infrastructure/ExternalIntegrations/Stripe/StripeWebhookHandler.cs`
@@ -40,124 +40,124 @@
 
 ### 3. **Minimax** — SMS / Phone Validation
 
-**Što trebam:**
+**What you need:**
 - [ ] Minimax API credentials (API key / auth token)
 
-**Što trebam napraviti:**
-1. Otvori `credentials/minimax.json`
-2. Ažuriraj s produkcijskim keyom
-3. Backend već ima `MinimaxService.ValidatePhoneAsync()` implementiran
-4. **Testiranje:**
-   - [ ] Registracija novog seniora s brojem 🇭🇷 format (+385...)
-   - [ ] Provjeri Minimax je li validirao broj
+**What to do:**
+1. Open `credentials/minimax.json`
+2. Update with production API key
+3. Backend already has `MinimaxService.ValidatePhoneAsync()` implemented
+4. **Testing:**
+   - [ ] Register new senior with 🇭🇷 phone format (+385...)
+   - [ ] Verify Minimax validated the phone number
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/ExternalIntegrations/Minimax/MinimaxService.cs`
-- `Helpi.Application/Services/UserService.cs` (gdje se poziva validacija)
+- `Helpi.Application/Services/UserService.cs` (where validation is called)
 
 ---
 
 ### 4. **Mailgun** — Email Service
 
-**Što trebam:**
+**What you need:**
 - [ ] Mailgun API Key
-- [ ] Mailgun Domain (npr. `mg.helpi.hr` ili slično)
+- [ ] Mailgun Domain (e.g., `mg.helpi.hr` or similar)
 - [ ] DNS MX records pointing to Mailgun
 
-**Što trebam napraviti:**
-1. Otvori `credentials/mailgun.json`
-2. Ažuriraj s produkcijskim keyom + domain
-3. Backend već ima `MailgunService.SendEmailAsync()` implementiran
-4. **Testiranje:**
-   - [ ] Reset password → provjeri je li email stigao
-   - [ ] Invoice generation → provjeri je li email sa PDF-om stigao
-   - [ ] Admin notification → provjeri je li email stigao
+**What to do:**
+1. Open `credentials/mailgun.json`
+2. Update with production API key + domain
+3. Backend already has `MailgunService.SendEmailAsync()` implemented
+4. **Testing:**
+   - [ ] Password reset → verify email arrived
+   - [ ] Invoice generation → verify email with PDF arrived
+   - [ ] Admin notification → verify email arrived
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/ExternalIntegrations/Mailgun/MailgunService.cs`
 
 ---
 
 ### 5. **MailerLite** — Newsletter / Marketing
 
-**Što trebam:**
+**What you need:**
 - [ ] MailerLite API Token
-- [ ] Audience Group ID-ove (za različite email liste)
+- [ ] Audience Group IDs (for different email lists)
 
-**Što trebam napraviti:**
-1. Otvori `credentials/mailerlite.json`
-2. Ažuriraj s produkcijskim keyom
-3. Backend ima `MailerLiteService` za dodavanje kontakata u groupe
-4. **Testiranje:**
-   - [ ] Registracija novog seniora → provjeri je li dodan u MailerLite audience
-   - [ ] Registracija novog studenta → provjeri je li dodan u pravi group
+**What to do:**
+1. Open `credentials/mailerlite.json`
+2. Update with production API token
+3. Backend has `MailerLiteService` for adding contacts to groups
+4. **Testing:**
+   - [ ] Register new senior → verify added to MailerLite audience
+   - [ ] Register new student → verify added to correct group
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/ExternalIntegrations/MailerLite/MailerLiteService.cs`
 
 ---
 
 ### 6. **Firebase** — Push Notifications + Suspend Notifications
 
-**Što trebam:**
-- [ ] Firebase service account JSON (za FCM)
+**What you need:**
+- [ ] Firebase service account JSON (for FCM)
 - [ ] Firebase project ID
 
-**Što trebam napraviti:**
-1. Otvori `credentials/helpi-firebase-service-account.json`
-2. Ažuriraj s produkcijskim Firebase service accountom
-3. Backend ima `FirebaseService.SendPushNotificationAsync()` implementiran
-4. App ima FCM token registration implementiran
-5. **Testiranje:**
-   - [ ] Senior dobija push notifikaciju na novo narudžbu
-   - [ ] Student dobija push notifikaciju kad je dodijeljen
-   - [ ] Ako je korisnik suspendiran → push + email notifikacija
+**What to do:**
+1. Open `credentials/helpi-firebase-service-account.json`
+2. Update with production Firebase service account
+3. Backend has `FirebaseService.SendPushNotificationAsync()` implemented
+4. App has FCM token registration implemented
+5. **Testing:**
+   - [ ] Senior receives push notification on new order
+   - [ ] Student receives push notification when assigned
+   - [ ] If user is suspended → push + email notification
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/ExternalIntegrations/Firebase/FirebaseService.cs`
 - `Helpi.Application/Services/NotificationService.cs` (SuspendUserAsync)
 - Admin app: `lib/features/settings/screens/settings_screen.dart` (notification testing)
 
 ---
 
-### 7. **Stripe Webhook** — Fee Tracking (Ovisi o Stripe)
+### 7. **Stripe Webhook** — Fee Tracking (Depends on Stripe)
 
-**Što trebam:**
+**What you need:**
 - [ ] Stripe production webhook endpoint URL
-- [ ] Database migration za fee tracking tablica
+- [ ] Database migration for fee tracking table
 
-**Što trebam napraviti:**
-1. Provjerite je li migracija `AddStripeWebhookFeeTracking` primijenjena na prod DB
-2. Postavite webhook u Stripe dashboard → `https://api.helpi.hr/webhooks/stripe`
-3. Backend Hangfire job `ProcessStripeWebhookFeeAsync` će periodički provjeravati Stripe fees
-4. **Testiranje:**
-   - [ ] Kreiraj test transakciju
-   - [ ] Provjerite je li fee pravilno snimljen u DB `StripeWebhookEvents` tablica
-   - [ ] Provjeri je li Hangfire job pokrenut
+**What to do:**
+1. Verify migration `AddStripeWebhookFeeTracking` is applied to prod DB
+2. Set webhook in Stripe dashboard → `https://api.helpi.hr/webhooks/stripe`
+3. Backend Hangfire job `ProcessStripeWebhookFeeAsync` will periodically check Stripe fees
+4. **Testing:**
+   - [ ] Create test transaction
+   - [ ] Verify fee is correctly saved in DB `StripeWebhookEvents` table
+   - [ ] Verify Hangfire job executed
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Infrastructure/ExternalIntegrations/Stripe/StripeWebhookHandler.cs`
 - `Helpi.Infrastructure/Hangfire/Jobs/StripeWebhookProcessingJob.cs`
 
 ---
 
-## 📱 Push Notifications (Ovisi o Firebase #6)
+## 📱 Push Notifications (Depends on Firebase #6)
 
 ### Suspend User Notifications
 
-**Što trebam:**
-- [ ] Firebase credentials (iz #6 gore)
+**What you need:**
+- [ ] Firebase credentials (from #6 above)
 
-**Što trebam napraviti:**
-1. Provjerite `UserService.SuspendUserAsync()` — pošalje push + email
-2. App već ima `notification_provider.dart` koji slušaj push
-3. **Testiranje:**
-   - [ ] Admin suspendira seniora
-   - [ ] Provjeri senior dobija push notifikaciju
-   - [ ] Provjeri senior dobija email notifikaciju
-   - [ ] Senior vidi suspension notice na login ekranu
+**What to do:**
+1. Verify `UserService.SuspendUserAsync()` — sends push + email
+2. App already has `notification_provider.dart` listening for push
+3. **Testing:**
+   - [ ] Admin suspends senior
+   - [ ] Verify senior receives push notification
+   - [ ] Verify senior receives email notification
+   - [ ] Senior sees suspension notice on login screen
 
-**Datoteke što trebam pregledati:**
+**Files to review:**
 - `Helpi.Application/Services/UserService.cs` (SuspendUserAsync)
 - `Helpi.Application/Services/NotificationService.cs` (PushNotification)
 
@@ -167,84 +167,84 @@
 
 ### Before Production:
 
-- [ ] Svi credentials su u `credentials/dev/` folder (NIKADA hardcoded)
-- [ ] Svi env vars su dostupni na prod deployment
-- [ ] Rate limiting je aktivan (Hangfire, API endpoints)
-- [ ] HTTPS je obavezna za prod (JWT sigurnost)
-- [ ] CORS je ograničen samo na `https://helpi.example.com` (ne `*`)
-- [ ] Sensitive debugPrint() su uklonjeni (checked ✅ u Faza 11)
-- [ ] DomainException-i ne curre raw exception details korisniku (checked ✅)
-- [ ] IDOR vulnerability riješena (PUT /orders/{id} → admin only) ✅
+- [ ] All credentials are in `credentials/dev/` folder (NEVER hardcoded)
+- [ ] All env vars are available on prod deployment
+- [ ] Rate limiting is active (Hangfire, API endpoints)
+- [ ] HTTPS is mandatory for prod (JWT security)
+- [ ] CORS is restricted to `https://helpi.example.com` only (not `*`)
+- [ ] Sensitive debugPrint() removed (checked ✅ in Phase 11)
+- [ ] DomainException-s do not leak raw exception details to user (checked ✅)
+- [ ] IDOR vulnerability fixed (PUT /orders/{id} → admin only) ✅
 
 ---
 
-## ✅ Što Trebam da Testira Sidney — E2E Tok
+## ✅ What Sidney Needs to Test — E2E Flow
 
 ### Scenario 1: Senior Registration + First Order
 
-1. [ ] **Registracija seniora**
-   - Upiši ime, prezime, email, tel, lokacija
-   - Minimaxvalidira telefon (credentials OK)
-   - Email poslane
-   - Kreira se Senior profil u DB
+1. [ ] **Senior Registration**
+   - Enter name, last name, email, phone, location
+   - Minimax validates phone number (credentials OK)
+   - Email sent
+   - Senior profile created in DB
 
-2. [ ] **Student vidi seniora + naručuje**
-   - Student pretraži studente
-   - Odaberi seniora
-   - Kreiraj order s datumom/vremenom
-   - Odaberi payment method (Stripe)
+2. [ ] **Student Sees Senior + Orders**
+   - Student searches seniors
+   - Select senior
+   - Create order with date/time
+   - Select payment method (Stripe)
 
-3. [ ] **Plaćanje**
-   - Klikni "Plati"
-   - Redirect na Stripe payment form
-   - Unesi test karticu `4242 4242 4242 4242` (future date, CVC 123)
-   - Potvrdi plaćanje
-   - Provjerite je li transakcija u `JobInstances` + `Invoices` tablica
-   - Provjerite je li obračun seniorova zarade točan (17% Helpi provizija)
+3. [ ] **Payment**
+   - Click "Pay"
+   - Redirect to Stripe payment form
+   - Enter test card `4242 4242 4242 4242` (future date, CVC 123)
+   - Confirm payment
+   - Verify transaction in `JobInstances` + `Invoices` table
+   - Verify senior's earning calculation is correct (17% Helpi fee)
 
-4. [ ] **Notifikacije**
-   - Senior dobija push: "Nova narudžba, Student Name"
-   - Senior dobija email s detalja
-   - Student dobija confirmation email
+4. [ ] **Notifications**
+   - Senior receives push: "New order, Student Name"
+   - Senior receives email with details
+   - Student receives confirmation email
 
 5. [ ] **Session + Invoice**
-   - Admin može vidjeti sesiju u narudžbi (scheduled time)
-   - Provjeri je li invoice generiran i emajliran senioru/studentu
+   - Admin can see session in order (scheduled time)
+   - Verify invoice generated and emailed to senior/student
 
 ---
 
 ### Scenario 2: Suspend User (Firebase Test)
 
-1. [ ] Admin suspendira seniora
-2. [ ] Senior dobija push notifikaciju
-3. [ ] Senior dobija email s razlogom
-4. [ ] Senior pokušaj login → vidiokaz suspension notice
-5. [ ] Senior ne može više vidjeti narudžbe/sessions
+1. [ ] Admin suspends senior
+2. [ ] Senior receives push notification
+3. [ ] Senior receives email with reason
+4. [ ] Senior attempts login → sees suspension notice
+5. [ ] Senior cannot see orders/sessions anymore
 
 ---
 
 ### Scenario 3: Google Drive Archive (Notifications)
 
-1. [ ] Admin ide na Notifikacije ekran
-2. [ ] Klikne "Arhiviraj" 
-3. [ ] Provjeri se nova datoteka kreira ili append na Google Drive: `notifications-archive.csv`
-4. [ ] Provjeri CSV format: `Datum,Naslov,Poruka`
+1. [ ] Admin goes to Notifications screen
+2. [ ] Click "Archive"
+3. [ ] Verify new file created or appended to Google Drive: `notifications-archive.csv`
+4. [ ] Verify CSV format: `Date,Title,Message`
 
 ---
 
-## 📞 Ako Trebam Pomoć
+## 📞 If You Need Help
 
-Ako `flutter analyze` ili `dotnet build` baca errore, javi:
-- [ ] Točan error message (copy-paste iz terminala)
-- [ ] Koji fajl?
-- [ ] Koji redak?
+If `flutter analyze` or `dotnet build` throws errors, report:
+- [ ] Exact error message (copy-paste from terminal)
+- [ ] Which file?
+- [ ] Which line?
 
-Ako integracija ne radi, provjeri:
-- [ ] Je li credentials JSON validan? (Try paste u JSON validator)
-- [ ] Je li API key točan? (Test u Postman)
-- [ ] Je li firewall/VPN blokirajući zahtjev?
+If integration doesn't work, verify:
+- [ ] Is credentials JSON valid? (Paste in JSON validator)
+- [ ] Is API key correct? (Test in Postman)
+- [ ] Is firewall/VPN blocking the request?
 
 ---
 
-**Status za Sidney:** Backend je 100% gotov. Sada trebam samo credentials + E2E testiranje. ✅
+**Status for Sidney:** Backend is 100% complete. Now we need only credentials + E2E testing. ✅
 
