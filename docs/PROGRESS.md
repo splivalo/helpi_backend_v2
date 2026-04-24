@@ -1,6 +1,6 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-19
+> Zadnja izmjena: 2026-04-24
 
 ## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
 
@@ -374,6 +374,49 @@
 
 ---
 
+---
+
+## Faza 11 — Security & Code Quality ✅ (2026-04-24)
+
+### Task 33: IDOR Fix — ScheduleAssignmentsController ✅
+
+- `GET /api/schedule-assignments/student/{studentId}` nije imao auth provjeru — svaki student mogao čitati tuđe dodjele
+- Fix: Caller mora biti Admin ILI caller's userId mora matchati `studentId`
+- `AcceptAssignment`, `DeclineAssignment`, `GetPendingAssignments` — svi `int.Parse(claim!)` → `int.TryParse` s Unauthorized fallbackom (crash zaštita kad JWT claim fali)
+- **Files:** `ScheduleAssignmentsController.cs`
+
+### Task 34: ExceptionHandlingMiddleware — Info Leak Fix ✅
+
+- `details` polje je uvijek vraćalo `exception.Message` klijentima (leaks internal error info u produkciji)
+- Fix: `details = _env.IsDevelopment() ? exception.Message : "Please contact support."`
+- Uklonjeno `source = exception.Source` polje (interna informacija)
+- **Files:** `ExceptionHandlingMiddleware.cs`
+
+### Task 35: ChatService KeyNotFoundException → DomainException ✅
+
+- `KeyNotFoundException` u `ChatService` bubblao kao 500 umjesto 400 DomainException
+- Fix: Zamijenjeni `throw new KeyNotFoundException(...)` s `throw new DomainException(...)`
+- **Files:** `ChatService.cs`
+
+### Task 36: ContactInfoService Generic Exception → DomainException ✅
+
+- `throw new Exception("City resolution failed...")` nije hvatao globalni handler
+- Fix: `throw new DomainException(...)`
+- **Files:** `ContactInfoService.cs`
+
+### Task 37: OrdersController — Useless Catch Removed ✅
+
+- `CreateOrder` imao `try { ... } catch { throw; }` — apsolutno beskoristan pattern
+- Fix: Uklonjen wrapper
+- **Files:** `OrdersController.cs`
+
+### Task 38: PaymentTransactionService Dead Code Removed ✅
+
+- Sve commented-out metode uklonjene iz servisa (nije kompajlirano, samo smeće)
+- **Files:** `PaymentTransactionService.cs`
+
+---
+
 ## Next Steps
 
 - All 9 backend gap analysis items COMPLETE
@@ -391,6 +434,7 @@
 - **Notification content overhaul** — COMPLETE (FormatSafe, TranslateNotifications refactor, NewOrderAdded)
 - **Google Drive archive (single master CSV)** — COMPLETE (find/download/append/update flow, 3 new GoogleDriveService methods)
 - **Chat system** — COMPLETE (ChatRoom, ChatMessage, ChatService, ChatController, ChatHub, NotificationHub broadcast, auto-room, welcome message, GetByIdWithContactAsync)
+- **Security & Code Quality** — COMPLETE (IDOR fix, exception info leak, DomainException unification, dead code removal)
 - **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
 
 ### Preostalo (iz ROADMAP.md):
