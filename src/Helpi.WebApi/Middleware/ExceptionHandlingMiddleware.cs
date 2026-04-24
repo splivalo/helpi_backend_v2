@@ -59,9 +59,8 @@ namespace Helpi.WebApi.Middleware
             var response = new
             {
                 error = "An unexpected error occurred.",
-                details = exception.Message,
+                details = _env.IsDevelopment() ? exception.Message : "Please contact support.",
                 stackTrace = _env.IsDevelopment() ? exception.StackTrace : null,
-                source = exception.Source
             };
 
             return context.Response.WriteAsJsonAsync(response);

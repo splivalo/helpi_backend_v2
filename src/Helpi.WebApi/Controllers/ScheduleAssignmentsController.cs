@@ -18,7 +18,18 @@ public class ScheduleAssignmentsController : ControllerBase
 
         public ScheduleAssignmentsController(ScheduleAssignmentService service) => _service = service;
 
-        [HttpGet("student/{studentId}")] public async Task<ActionResult<List<ScheduleAssignmentDto>>> GetByStudent(int studentId) => Ok(await _service.GetAssignmentsByStudentAsync(studentId));
+        [HttpGet("student/{studentId}")]
+        public async Task<ActionResult<List<ScheduleAssignmentDto>>> GetByStudent(int studentId)
+        {
+                var isAdmin = User.IsInRole("Admin");
+                if (!isAdmin)
+                {
+                        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var callerId)
+                            || callerId != studentId)
+                                return Forbid();
+                }
+                return Ok(await _service.GetAssignmentsByStudentAsync(studentId));
+        }
 
         [HttpGet("order-schedule/{orderScheduleId}/active-student")]
         public async Task<ActionResult<StudentDto>> GetActiveStudentForOrderScheduleAsync(int orderScheduleId)
@@ -84,9 +95,10 @@ public class ScheduleAssignmentsController : ControllerBase
         [HttpPost("{id}/accept")]
         public async Task<ActionResult<ScheduleAssignmentDto>> AcceptAssignment(int id)
         {
+                if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                        return Unauthorized(new { message = "Invalid user identity" });
                 try
                 {
-                        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                         var result = await _service.AcceptAssignmentAsync(id, userId);
                         return Ok(result);
                 }
@@ -100,9 +112,10 @@ public class ScheduleAssignmentsController : ControllerBase
         [HttpPost("{id}/decline")]
         public async Task<IActionResult> DeclineAssignment(int id)
         {
+                if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                        return Unauthorized(new { message = "Invalid user identity" });
                 try
                 {
-                        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                         await _service.DeclineAssignmentAsync(id, userId);
                         return Ok(new { message = "Assignment declined" });
                 }
@@ -116,7 +129,8 @@ public class ScheduleAssignmentsController : ControllerBase
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingAssignments()
         {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                        return Unauthorized(new { message = "Invalid user identity" });
                 var result = await _service.GetPendingAssignmentsByStudentUserIdAsync(userId);
                 return Ok(result);
         }

@@ -4,6 +4,7 @@ using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
+using Helpi.Domain.Exceptions;
 
 namespace Helpi.Application.Services;
 
@@ -38,9 +39,9 @@ public class ChatService
 
         // Load both users to get names and roles
         var currentUser = await _userRepo.GetByIdAsync(currentUserId)
-            ?? throw new KeyNotFoundException($"User {currentUserId} not found");
+            ?? throw new DomainException($"User {currentUserId} not found");
         var otherUser = await _userRepo.GetByIdAsync(otherUserId)
-            ?? throw new KeyNotFoundException($"User {otherUserId} not found");
+            ?? throw new DomainException($"User {otherUserId} not found");
 
         room = new ChatRoom
         {

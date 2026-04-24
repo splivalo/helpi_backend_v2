@@ -4,6 +4,7 @@ using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
+using Helpi.Domain.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -75,7 +76,7 @@ public class ContactInfoService
                         }
                         else
                         {
-                                throw new Exception("City resolution failed from GooglePlaceId.");
+                                throw new DomainException("City resolution failed from GooglePlaceId.");
                         }
                 }
 

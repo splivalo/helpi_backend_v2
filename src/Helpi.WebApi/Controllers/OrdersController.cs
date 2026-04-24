@@ -29,15 +29,8 @@ public class OrdersController : ControllerBase
         [HttpPost]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] OrderCreateDto orderCreateDto)
         {
-                try
-                {
-                        var order = await _ordersService.CreateOrderAsync(orderCreateDto);
-                        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
-                }
-                catch
-                {
-                        throw;
-                }
+                var order = await _ordersService.CreateOrderAsync(orderCreateDto);
+                return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
         }
 
         [HttpGet("{id}")]
