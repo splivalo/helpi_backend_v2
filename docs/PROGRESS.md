@@ -1,20 +1,20 @@
 # Helpi Backend v2 — Progress
 
-> Zadnja izmjena: 2026-04-24
+> Last updated: 2026-04-24
 
-## 📖 Za Sidney-a — Što čitati (sva 3 repoa)
+## 📖 For Sidney — What to Read (all 3 repos)
 
-| GitHub repo (splivalo/) | Fajl                             | Sadržaj                                          |
+| GitHub repo (splivalo/) | File                             | Content                                          |
 | ----------------------- | -------------------------------- | ------------------------------------------------ |
-| **helpi_administrator** | **docs/ROADMAP.md**              | **Svi preostali TODO-ovi (START HERE)**          |
+| **helpi_administrator** | **docs/ROADMAP.md**              | **All remaining TODOs (START HERE)**             |
 | helpi_administrator     | docs/PROGRESS.md                 | Admin app status (98% frontend done)             |
-| helpi_administrator     | docs/ARCHITECTURE.md             | Admin tech stack, folder structure, UI standardi |
-| helpi_administrator     | docs/PROJECT_HISTORY.md          | Kronologija odluka (Feb→Mart 2026)               |
-| **helpi_backend_v2**    | **docs/PROGRESS.md (ovaj fajl)** | Backend task tracking (29 taskova ✅)            |
+| helpi_administrator     | docs/ARCHITECTURE.md             | Admin tech stack, folder structure, UI standards |
+| helpi_administrator     | docs/PROJECT_HISTORY.md          | Chronology of decisions (Feb→March 2026)         |
+| **helpi_backend_v2**    | **docs/PROGRESS.md (this file)** | Backend task tracking (29 tasks ✅)              |
 | helpi_backend_v2        | README.md                        | DB schema, use case flows, 19 LINQ queries       |
 | helpi_backend_v2        | seeds/README.md                  | Test data, login credentials, promo codes        |
 | helpi_apps              | README.md                        | App tech stack, Riverpod/SignalR info            |
-| helpi_apps              | docs/ARCHITECTURE.md             | Folder structure, 64 fajlova, providers          |
+| helpi_apps              | docs/ARCHITECTURE.md             | Folder structure, 64 files, providers            |
 
 ---
 
@@ -22,7 +22,7 @@
 
 ---
 
-## Faza 1 — Security & Core Fixes ✅
+## Phase 1 — Security & Core Fixes ✅
 
 ### Task 1: Senior Edit Prevention ✅
 
@@ -36,7 +36,7 @@
 
 ---
 
-## Faza 2 — Core Business Logic ✅
+## Phase 2 — Core Business Logic ✅
 
 ### Task 3: Admin Manual Assignment ✅
 
@@ -60,7 +60,7 @@
 
 ---
 
-## Faza 3 — Extended Features ✅
+## Phase 3 — Extended Features ✅
 
 ### Task 7: Bidirectional Reviews ✅
 
@@ -73,26 +73,18 @@
 - `ReviewsController`: New endpoints `GET /senior/{seniorId}`, `GET /student/{studentId}/pending`
 - `JobInstanceService.RequestJobReviewAsync`: Creates 2 reviews per completion (one per direction)
 - Migration: `20260313133641_AddBidirectionalReviews` — drops unique index, adds Type + Senior rating cols
-- **Files modified:** 12 files across Domain, Application, Infrastructure, WebApi
 
 ### Task 8: Dashboard Per-Role ✅
 
 - Admin: `GET /api/dashboard/admin` — cleaned to 4 v2 KPI tiles only:
-  - `adminProcessingOrders`
-  - `adminActiveOrders`
-  - `adminTotalStudents`
-  - `adminTotalSeniors`
-- Dashboard tile `type` i `changeType` sada izlaze kao string enum nazivi, tako da frontend više nije vezan uz krhke numeričke enum vrijednosti
+  - `adminProcessingOrders`, `adminActiveOrders`, `adminTotalStudents`, `adminTotalSeniors`
+- Dashboard tile `type` and `changeType` now output as string enum names
 - Student: `GET /api/dashboard/student/{studentId}` — 6 tiles:
   - `upcomingSessions`, `completedSessionsStudent`, `totalEarnings`, `myRating`, `contractDaysRemaining`, `workedHoursStudent`
 - Senior: `GET /api/dashboard/senior/{seniorId}` — 4 tiles:
   - `activeOrders`, `completedSessionsSenior`, `totalSpent`, `myRatingSenior`
-- Old `GET /api/dashboard` removed, replaced with role-specific endpoints
-- Old placeholder/admin-v1 tile builders removed from `DashboardService`
-- Legacy admin `DashboardTileType` enum članovi uklonjeni nakon stabilizacije string contracta
-- Added ISeniorRepository dependency to DashboardService
+- Legacy admin `DashboardTileType` enum members removed after stabilizing string contract
 - Current month vs last month comparison with percentage change
-- **Files modified:** 4 files (enums.cs, DashboardController, IDashboardService, DashboardService)
 
 ### Task 9: Session Terminology ✅
 
@@ -101,46 +93,36 @@
 - DTO renames: `JobInstanceDto` → `SessionDto`, `CompletedJobInstanceDto` → `CompletedSessionDto`, `JobInstanceUpdateDto` → `SessionUpdateDto`, `JobInstanceIncludeOptions` → `SessionIncludeOptions`, `ManageJobInstanceRequestDto` → `ManageSessionRequestDto`
 - Property rename: `StudentContractDto.JobInstances` → `Sessions` (with explicit AutoMapper mapping)
 - Domain entity remains `JobInstance` (internal), API speaks "Session"
-- **Files modified:** 14 files across Application + Infrastructure + WebApi
 
 ### Task 6: Promo Code System ✅
 
-- **Entities:** `PromoCode` (code, type, discount, max uses, validity dates) + `PromoCodeUsage` (tracking per customer per order)
+- **Entities:** `PromoCode` + `PromoCodeUsage`
 - **Enum:** `PromoCodeType { Percentage, FixedAmount }`
 - **Order integration:** `Order.PromoCodeId` optional FK
-- **DTOs:** `PromoCodeDto`, `PromoCodeCreateDto`, `PromoCodeUpdateDto`, `PromoCodeValidationResultDto`, `PromoCodeUsageDto`
-- **Repository:** `IPromoCodeRepository` — CRUD + `GetByCodeAsync`, `HasCustomerUsedCodeAsync`, usage tracking
-- **Service:** `IPromoCodeService` — validate code (checks active, dates, max uses, already used), apply code (creates usage record, increments counter)
-- **Controller:** `api/promo-codes` — Admin CRUD (GET, POST, PUT, DELETE) + public validate/apply endpoints
+- **Controller:** `api/promo-codes` — Admin CRUD + public validate/apply endpoints
 - **Validation logic:** percentage ≤ 100%, one use per customer per code, date range, max uses
-- **DB config:** Unique index on `Code`, `decimal(18,2)` for monetary fields
-- **Migration:** `20260313140442_AddPromoCodeSystem` — 2 new tables + FK on Orders
-- **Files created:** 7 new files | **Files modified:** 5 existing files
+- **Migration:** `20260313140442_AddPromoCodeSystem`
 
 ---
 
-## Faza 4 — Admin Assign & Distance Improvements ✅
+## Phase 4 — Admin Assign & Distance Improvements ✅
 
 ### Task 10: OrderDto Senior Lat/Lng ✅ (2026-03-18)
 
 - Added `SeniorLatitude`/`SeniorLongitude` to `OrderDto`
-- AutoMapper `ForMember` mappings from `Order.Senior.Contact.Latitude/Longitude`
 - Enables Haversine distance calculation in admin app
-- **Commit:** `80d418e`
 
 ### Task 11: StudentQueryBuilder Lat/Lng Fix ✅ (2026-03-19)
 
 - `StudentQueryBuilder.ExecuteWithDetailsAsync()` was missing `Latitude`/`Longitude` in `ContactInfoDto` projection
 - Fixed: added `Latitude = s.Contact.Latitude, Longitude = s.Contact.Longitude`
-- Resolved 5331 km distance bug (was showing ~5331 km because lat/lng were 0)
+- Resolved 5331 km distance bug
 
 ### Task 12: AdminDirectAssign — Instant JobInstance Generation ✅ (2026-03-20)
 
 - `AdminDirectAssignAsync()` now generates `JobInstance` records immediately on assignment
-- Added 3 new dependencies: `IHangfireRecurringJobService`, `IPricingConfigurationRepository`, `IJobInstanceRepository`
 - New private method `GenerateJobInstancesForAssignmentAsync()` — loads pricing config, builds navigation props, calls `GenerateInstancesForAssignment`, saves via `AddRangeAsync`
-- `OrderScheduleRepository.GetByIdAsync()` — added `.ThenInclude(o => o.Senior)` (needed for `order.Senior.CustomerId`)
-- **Tested:** Order 9 → assigned student → 21 sessions generated immediately, status Pending → FullAssigned
+- **Tested:** Order 9 → assigned student → 21 sessions generated immediately
 
 ### Task 13: StudentDashboard DurationHours Bug Fix ✅ (2026-03-18)
 
@@ -149,271 +131,161 @@
 
 ---
 
-## Faza 5 — Suspension & Holidays ✅ (2026-03-22)
+## Phase 5 — Suspension & Holidays ✅ (2026-03-22)
 
 ### Task 14: Suspension Check Middleware ✅
 
-- `SuspensionCheckMiddleware.cs` — vraća 403 JSON za suspendirane korisnike
-- Preskače: `/api/auth/*`, `/api/suspensions/*`, Admin role
-- Registriran u `Program.cs` između Authentication i Authorization
-- **Commit:** `a652bff`
+- `SuspensionCheckMiddleware.cs` — returns 403 JSON for suspended users
+- Skips: `/api/auth/*`, `/api/suspensions/*`, Admin role
 
 ### Task 15: Suspension Check in CreateOrder ✅
 
-- `OrdersService.CreateOrderAsync()` — provjera na vrhu: `Senior→Customer→User→IsSuspended`
-- Throw-a `ForbiddenException` ako je korisnik suspendiran
-- **Commit:** `a652bff`
+- `OrdersService.CreateOrderAsync()` — check at top: `Senior→Customer→User→IsSuspended`
+- Throws `ForbiddenException` if user suspended
 
-### Task 16: Croatian Holidays (Blagdani) ✅
+### Task 16: Croatian Holidays ✅
 
-- `CroatianHolidays.cs` — 13 fiksnih praznika + Computus algoritam za Uskrsni ponedjeljak i Tijelovo
-- `HangfireRecurringJobService` koristi `isOvertimeDay = Sunday || CroatianHolidays.IsPublicHoliday(date)`
-- Label promijenjen: "Nedjeljna satnica" → "Povećana satnica"
-- **Commit:** `a652bff`
+- `CroatianHolidays.cs` — 13 fixed holidays + Computus algorithm for Easter Monday and Corpus Christi
+- `HangfireRecurringJobService` uses `isOvertimeDay = Sunday || CroatianHolidays.IsPublicHoliday(date)`
+- Label changed: "Sunday rate" → "Increased rate"
 
 ---
 
-## Faza 6 — Admin Notifications ✅ (2026-03-23)
+## Phase 6 — Admin Notifications ✅ (2026-03-23)
 
 ### Task 17: Admin Notification Creation for 7 Business Events ✅
 
-- **Problem:** Backend had full notification infrastructure (HNotification entity, 31 NotificationTypes, HNotificationsController, SignalR NotificationHub, INotificationService) but NO business logic ever called `CreateAsync()` — notification table was always EMPTY
-- **New infrastructure:**
-  - `IUserRepository.GetAdminIdsAsync()` — efficient SQL query `WHERE UserType == Admin SELECT Id`
-  - `INotificationService.StoreAndNotifyAdminsAsync(adminIds, builder)` — loops admin IDs, creates per-admin notification via factory, stores to DB + sends via SignalR
 - **7 notification types wired:**
-  1. `newStudentAdded` — AuthService (student registration)
-  2. `newSeniorAdded` — AuthService (senior registration)
-  3. `orderCancelled` — OrdersService (order cancel)
-  4. `jobCancelled` — JobInstanceService (session cancel)
-  5. `contractExpired` — StudentStatusService (contract expiry)
-  6. `paymentSuccess` — PaymentService (successful charge)
-  7. `paymentFailed` — PaymentService (failed charge)
-- **Hardcoded adminId=1 replaced** — All 6 occurrences of `adminId = 1` replaced with `GetAdminIdsAsync()` for multi-admin support
-- **Files modified:** 9 (2 interfaces, 5 services, 1 repository, 1 notification service)
-- **Build:** 0 errors, 74 warnings (identical to baseline)
-- **Commit:** `69aec15`
+  1. `newStudentAdded` — AuthService
+  2. `newSeniorAdded` — AuthService
+  3. `orderCancelled` — OrdersService
+  4. `jobCancelled` — JobInstanceService
+  5. `contractExpired` — StudentStatusService
+  6. `paymentSuccess` — PaymentService
+  7. `paymentFailed` — PaymentService
+- **Multi-admin support** — `GetAdminIdsAsync()` replaces hardcoded `adminId = 1`
 
 ### Task 18: Reschedule & Reassignment Notifications ✅ (2026-04-01)
 
-- Added `NotificationFactory.JobRescheduledNotification()` with HR/EN localization keys
-- `JobInstanceService.HandleSimpleReschedule()` now stores+sends `JobRescheduled` to senior, assigned student, and admins
-- `JobInstanceService.HandleReschedule()` now stores+sends `JobRescheduled` to senior and admins after full reschedule flow starts
-- `NotificationFactory.ReassignmentStartNotification()` now localizes both `ReassignmentStarted` and `ReassignmentCompleted`
-- `ReassignmentService` now emits admin `ReassignmentStarted` when manual admin action is needed and `ReassignmentCompleted` when replacement is finalized
-- Verification: `Helpi.Application.csproj` build passed; full solution build was blocked only by local `Helpi.WebApi` DLL file lock
+- Added `NotificationFactory.JobRescheduledNotification()`
+- `JobInstanceService.HandleSimpleReschedule()` now stores+sends `JobRescheduled` to senior, student, and admins
+- `ReassignmentService` now emits admin `ReassignmentStarted` and `ReassignmentCompleted`
 
 ---
 
-## Migrations Applied
-
-1. `20260313130245_AddSundayHourlyRate` — SundayHourlyRate column + pricing history columns
-2. `20260313133641_AddBidirectionalReviews` — ReviewType, Senior rating fields, one-to-many relationship
-3. `20260313140442_AddPromoCodeSystem` — PromoCodes + PromoCodeUsages tables, Order.PromoCodeId FK
-4. `20260402085244_AddInvoiceTrackingFields` — InvoiceCreationStatus, MinimaxInvoiceId, InvoiceRetryCount on PaymentTransactions
-
----
-
-## Faza 7 — Invoice Retry System ✅ (2026-04-02)
+## Phase 7 — Invoice Retry System ✅ (2026-04-02)
 
 ### Task 19: Invoice Creation Tracking ✅
 
-- **Problem:** Kad Stripe uspješno naplati, a Minimax API padne (server down), invoice se tiho izgubi — `HandlePaymentSuccess` progutava exception bez zapisa
-- **Novo enum:** `InvoiceCreationStatus { NotAttempted, Created, Failed }` u `enums.cs`
-- **Nova polja na `PaymentTransaction`:**
-  - `InvoiceCreationStatus` — prati je li Minimax invoice kreiran
-  - `MinimaxInvoiceId` — sprema Minimax invoice ID (zaštita od duplikata)
-  - `InvoiceRetryCount` — broji pokušaje (max 3)
-- **Fix `HandlePaymentSuccess`:** Sad zapisuje `Failed` status ako Minimax padne, umjesto da tiho proguta error
-- **Migration:** `20260402085244_AddInvoiceTrackingFields`
+- **New enum:** `InvoiceCreationStatus { NotAttempted, Created, Failed }`
+- **New fields on `PaymentTransaction`:** `InvoiceCreationStatus`, `MinimaxInvoiceId`, `InvoiceRetryCount`
+- **Fix `HandlePaymentSuccess`:** Now records `Failed` status if Minimax fails, instead of swallowing error
 
 ### Task 20: Invoice Auto-Retry ✅
 
-- **`RetryInvoiceAsync(transactionId)`** — siguran retry: provjeri `Status == Paid` (ne ponavlja Stripe), provjeri `InvoiceCreationStatus == Created` (ne kreira dupli invoice)
-- **`RetryFailedInvoicesAsync()`** — Hangfire poziva, iterira sve `Paid + Failed + RetryCount < 3`
-- **Hangfire job:** `retry-failed-invoices` — trči svaki sat na :15
-- **Registered u `Program.cs`** i `IJobInstanceJobs` interface
+- **`RetryFailedInvoicesAsync()`** — Hangfire job calls every hour at :15, iterates `Paid + Failed + RetryCount < 3`
 
 ### Task 21: Admin Invoice Management Endpoint ✅
 
-- **Novi controller:** `AdminPaymentController` (`api/admin/payments`)
-- `POST /api/admin/payments/{id}/retry-invoice` — ručni retry za specifičnu transakciju
-- `GET /api/admin/payments/failed-invoices` — lista svih failed invoicea
-- Oba endpointa `[Authorize(Roles = "Admin")]`
-- **Files:** 10 modified/created across Domain, Application, Infrastructure, WebApi
+- `POST /api/admin/payments/{id}/retry-invoice` — manual retry
+- `GET /api/admin/payments/failed-invoices` — list all failed invoices
 
 ---
 
-## Faza 8 — Dynamic Pricing (Student Rates) ✅ (2026-04-04)
+## Phase 8 — Dynamic Pricing (Student Rates) ✅ (2026-04-04)
 
 ### Task 22: StudentHourlyRate + StudentSundayHourlyRate ✅
 
-- **PricingConfiguration entity** — Dodani `StudentHourlyRate` (default 7.40m), `StudentSundayHourlyRate` (default 11.10m)
-- **DTO** — Oba polja dodana u `PricingConfigurationDto`
-- **Validator** — `RuleFor(x => x.StudentHourlyRate).GreaterThan(0)` + isto za Sunday
-- **Service** — Mapiranje u sva 4 metoda (GetAll, GetById, Add, Update) u `PricingConfigurationService`
-- **AppDbContext** — `decimal(18,2)` column types za oba polja
-- **Seeder** — Default 7.40m / 11.10m
-- **Migracije:** `AddStudentRatesToPricingConfig`, `AddStudentRatesToPricingConfiguration`
-- **Build:** 0 errors, ~73 warnings (baseline)
+- **PricingConfiguration entity** — Added `StudentHourlyRate` (default 7.40m), `StudentSundayHourlyRate` (default 11.10m)
+- **Migrations:** `AddStudentRatesToPricingConfig`, `AddStudentRatesToPricingConfiguration`
 
-### Task 23: IntermediaryPercentage (Marža posrednika) ✅
+### Task 23: IntermediaryPercentage (Student Service Fee) ✅
 
-- **PricingConfiguration entity** — Dodano `IntermediaryPercentage` (default 18m, raspon 0-100)
-- **DTO + Validator** — `.GreaterThanOrEqualTo(0).LessThanOrEqualTo(100)`
-- **Removed obsolete validation** — CompanyPercentage + ServiceProviderPercentage = 100 rule removed (legacy fields)
+- **PricingConfiguration entity** — Added `IntermediaryPercentage` (default 18m, range 0-100)
 - **Migration:** `AddIntermediaryPercentageToPricingConfig`
 
 ### Task 24: Dynamic Travel Buffer Reconciliation ✅
 
-- **AdminDirectAssignAsync** — više ne koristi hardkodirani `15`, nego čita `TravelBufferMinutes` iz `PricingConfiguration`
-- **New service:** `TravelBufferReconciliationService`
-- **Trigger point:** `PricingConfigurationService.UpdateConfigurationAsync()` nakon spremanja configa i history zapisa
-- **Behaviour:** Ako je novi buffer veći od starog, servis grupira buduće `Upcoming` sesije po studentu i danu te za kasniji konfliktni accepted assignment pokreće postojeći `ReassignAssignment(..., CompleteTakeover, ...)`
-- **Safety:** Reconciliation logira pojedinačne failove po assignmentu i ne ruši cijeli settings update
-- **Live verification:** potvrđen realni lokalni DB scenarij za studenta Luku Perića na 2026-04-10: slot 11:15-12:15 prolazi s bufferom 15, pada s bufferom 20
+- **AdminDirectAssignAsync** — now reads `TravelBufferMinutes` from `PricingConfiguration`
+- **New service:** `TravelBufferReconciliationService` — triggered on configuration update. If new buffer is larger, checks future sessions and starts reassignment for conflicts.
 
 ### Task 25: Historical Student Payout Snapshot ✅
 
-- **New field:** `JobInstance.StudentHourlyRate`
-- **DTO contract:** `SessionDto` i `CompletedSessionDto` sada vraćaju `StudentHourlyRate`
-- **Generation path:** `HangfireRecurringJobService` snapshota student weekday/sunday rate pri stvaranju novih `JobInstance` zapisa
-- **Reschedule path:** `JobInstanceService` prenosi `StudentHourlyRate` pri cloneanju rescheduled sesije
-- **Reason:** promjena studentske satnice u settingsu više ne smije prepisivati stare isplate, analytics ili student summary obračune
+- **New field:** `JobInstance.StudentHourlyRate` — snapshots rate at creation time.
+- **Reason:** changing student rates in settings must not overwrite past payouts or analytics.
 - **Migration:** `20260404103424_AddStudentHourlyRateSnapshotToJobInstances`
-- **Validation:** snapshot field migriran i runtime potvrđen kroz `GET /api/sessions`
 
 ### Task 26: Backend Warning Cleanup to 0 ✅
 
-- **Repository contracts aligned:** `GetById` / `GetByEmail` / `GetByContactId` / `GetDefaultPaymentMethod` potpisi usklađeni su s realnim nullable ponašanjem umjesto da backend lažno obećava non-null rezultat
-- **Application services hardened:** `UserService`, `ContactInfoService`, `ReviewService`, `StudentsService`, `OrdersService` sada fail-fast prijavljuju missing entitete umjesto da se oslanjaju na implicitne null dereference
-- **Infrastructure cleanup:** uklonjeni preostali EF false-positive include warningi i Minimax required-string assignment warning
-- **Package/security debt:** AutoMapper upgrade i backend cleanup završeni bez regresije builda
-- **Validation:** `dotnet build src\helpi_backend.sln` sada prolazi s `0` warninga; `flutter analyze` za admin i dalje vraća `No issues found!`
+- **Repository contracts aligned:** Fixed nullable behavior for `GetById`, `GetByEmail`, etc.
+- **Application services hardened:** Added null checks and fail-fast DomainExceptions.
+- **Validation:** `dotnet build src\helpi_backend.sln` now passes with `0` warnings.
 
 ---
 
-## Faza 9 — Notification Content Overhaul & Archive ✅ (2026-04-05)
+## Phase 9 — Notification Content Overhaul & Archive ✅ (2026-04-05)
 
 ### Task 27: FormatSafe Localization Fix ✅
 
-- **Problem:** `JsonLocalizationService.GetString` crashao jer `String.Format` dobio `{0}` placeholder bez argumenata → 500 error na notification endpoint
-- **Fix:** Dodan `FormatSafe(template, args)` helper — vraća template unchanged kad args prazni, wrappa `String.Format` u try/catch
-- **File:** `JsonLocalizationService.cs`
+- **Fix:** Added `FormatSafe(template, args)` helper — returns template unchanged when args empty, wraps `String.Format` in try/catch.
 
 ### Task 28: TranslateNotifications Refactor ✅
 
-- **Problem:** Monolitni if-else u `TranslateNotifications` s generičkim body formatom za sve tipove notifikacija
-- **Refaktoriran** u specijalizirane grane:
-  - `seniorAndOrderList` (JobCancelled, OrderCancelled, OrderScheduleCancelled, NewOrderAdded) → body `"{seniorName}, Narudžba #{orderId}"`
-  - `reassignmentList` (ReassignmentStarted, ReassignmentCompleted) → isti format
-  - `descList` (NoEligibleStudents, AllEligibleStudentNotified) → GetEntityDescription za body
-  - `userDeletedList` → parse Payload JSON za deletedUserName/deletedUserId
-  - `NewStudentAdded` / `NewSeniorAdded` → pravo ime iz dto.Student/Senior.Contact.FullName
-- **NewOrderAdded dodano** — Novi lokalizacijski ključ u hr.json ("Nova narudžba") i en.json ("New Order")
-- **NotificationsFactory fix** — `JobCancelledNotification` sad uključuje `OrderId = jobInstance.OrderId`
-- **Files:** HNotificationService.cs, NotificationsFactory.cs, hr.json, en.json
+- **Refactored** into specialized branches: `seniorAndOrderList`, `reassignmentList`, `descList`, `userDeletedList`, etc.
+- **NewOrderAdded added** — New localization keys in hr.json and en.json.
 
 ### Task 29: Single Master CSV Archive ✅
 
-- **Problem:** Svaki archive poziv kreirao novi fajl na Google Drive → proliferacija fajlova
-- **Refaktoriran** `HNotificationsController.Archive`:
-  - `FindFileInFolderAsync(folderId, "notifications-archive.csv")` → traži postojeći fajl
-  - Ako postoji: `DownloadFileAsync` → strip BOM → append novi redovi → `UpdateFileAsync` (isti file ID)
-  - Ako ne postoji: create novi fajl s headerom
-  - CSV format: `Datum,Naslov,Poruka` (uklonjen Type stupac)
-- **3 nove metode na IGoogleDriveService / GoogleDriveService:**
-  - `FindFileInFolderAsync(folderId, fileName)` → vraća fileId ili null
-  - `DownloadFileAsync(fileId)` → vraća byte[]
-  - `UpdateFileAsync(fileId, data, mimeType)` → vraća webViewLink
-- **DependencyInjection.cs** — Dodano mapiranje `NotificationsArchiveFolderId` iz konfiguracije (bilo propušteno)
-- **HNotificationRepository** — Dodano `GetReadNotificationsByUserIdAsync(userId)` za dohvat pročitanih
-- **HNotificationDto** — Dodan `SeniorName` property za CSV export
-- **Files:** 13 files across Application + Infrastructure + WebApi
-- **Testirano:** Prvi poziv kreira fajl, drugi poziv appendira na isti file ID
-- **Build:** 0 errors, 0 new warnings
+- **Refactored** `HNotificationsController.Archive`: now appends to a single `notifications-archive.csv` on Google Drive instead of creating new files.
+- **3 new methods on IGoogleDriveService:** `FindFileInFolderAsync`, `DownloadFileAsync`, `UpdateFileAsync`.
 
 ---
 
-## Migrations Applied
-
-1. `20260313130245_AddSundayHourlyRate`
-2. `20260313133641_AddBidirectionalReviews`
-3. `20260313140442_AddPromoCodeSystem`
-4. `20260402085244_AddInvoiceTrackingFields`
-5. `20260404085343_AddIntermediaryPercentageToPricingConfig`
-6. `20260404093048_AddStudentRatesToPricingConfig`
-7. `20260404093111_AddStudentRatesToPricingConfiguration`
-8. `20260404103424_AddStudentHourlyRateSnapshotToJobInstances`
-9. `20260412_AddChatSystem` — ChatRooms + ChatMessages tables
-
----
-
-## Faza 10 — Chat System ✅ (2026-04-12)
+## Phase 10 — Chat System ✅ (2026-04-12)
 
 ### Task 30: Chat Entities + Migration ✅
 
-- **ChatRoom entity** — Id, Participant1Id, Participant1Name, Participant2Id, Participant2Name, LastMessageContent, LastMessageAt, UnreadCount1, UnreadCount2, CreatedAt
-- **ChatMessage entity** — Id, RoomId, SenderId, SenderName, Content, SentAt, IsRead
-- **Migration** applied to PostgreSQL
-- **DbContext** — ChatRooms, ChatMessages DbSets configured
+- **ChatRoom** and **ChatMessage** entities created and migrated.
 
 ### Task 31: ChatService + ChatRepository ✅
 
-- **ChatRepository** — CRUD, GetUserRooms, GetRoomMessages (paged), IncrementUnread, ResetUnread
-- **ChatService** — GetUserRoomsAsync (auto-creates admin room), GetOrCreateRoomAsync (welcome message), SendMessageAsync, MarkRoomAsReadAsync, GetUnreadCountAsync
-- **GetUserDisplayNameAsync** — Admin shows as "Helpi", other users resolved via `GetByIdWithContactAsync` (eager includes Student.Contact + Customer.Contact)
-- **Auto-room creation** — When user fetches rooms and has no admin room, one is created with welcome message
+- **Auto-room creation** — Admin room created automatically for new users with welcome message.
+- **GetUserDisplayNameAsync** — Admin shows as "Helpi", others resolved via `GetByIdWithContactAsync`.
 
 ### Task 32: ChatController + ChatHub ✅
 
-- **ChatController** (`api/chat`) — GET /rooms, POST /rooms, GET /rooms/{id}/messages, POST /rooms/{id}/messages, PUT /rooms/{id}/read, GET /unread-count
-- **ChatHub** (`/hubs/chat`) — SignalR hub, JoinRoom/LeaveRoom groups
-- **NotificationHub broadcast** — ChatController.SendMessage also broadcasts `ReceiveChatMessage` via NotificationHub to `user_{otherUserId}` group (both apps connect to NotificationHub, not ChatHub)
-- **GetByIdWithContactAsync** — Added to IUserRepository/UserRepository for proper name resolution
+- **ChatHub** (`/hubs/chat`) for real-time messages.
+- **NotificationHub broadcast** — Sends `ReceiveChatMessage` to both apps.
 
 ---
 
----
-
-## Faza 11 — Security & Code Quality ✅ (2026-04-24)
+## Phase 11 — Security & Code Quality ✅ (2026-04-24)
 
 ### Task 33: IDOR Fix — ScheduleAssignmentsController ✅
 
-- `GET /api/schedule-assignments/student/{studentId}` nije imao auth provjeru — svaki student mogao čitati tuđe dodjele
-- Fix: Caller mora biti Admin ILI caller's userId mora matchati `studentId`
-- `AcceptAssignment`, `DeclineAssignment`, `GetPendingAssignments` — svi `int.Parse(claim!)` → `int.TryParse` s Unauthorized fallbackom (crash zaštita kad JWT claim fali)
-- **Files:** `ScheduleAssignmentsController.cs`
+- Added auth checks: Caller must be Admin or the Student owning the data.
+- Fixed `int.Parse` crash potential in JWT claims.
 
 ### Task 34: ExceptionHandlingMiddleware — Info Leak Fix ✅
 
-- `details` polje je uvijek vraćalo `exception.Message` klijentima (leaks internal error info u produkciji)
-- Fix: `details = _env.IsDevelopment() ? exception.Message : "Please contact support."`
-- Uklonjeno `source = exception.Source` polje (interna informacija)
-- **Files:** `ExceptionHandlingMiddleware.cs`
+- Exception messages only returned to client in Development mode.
+- Removed internal `source` field from error response.
 
 ### Task 35: ChatService KeyNotFoundException → DomainException ✅
 
-- `KeyNotFoundException` u `ChatService` bubblao kao 500 umjesto 400 DomainException
-- Fix: Zamijenjeni `throw new KeyNotFoundException(...)` s `throw new DomainException(...)`
-- **Files:** `ChatService.cs`
+- Standardized error handling to 400 DomainException.
 
 ### Task 36: ContactInfoService Generic Exception → DomainException ✅
 
-- `throw new Exception("City resolution failed...")` nije hvatao globalni handler
-- Fix: `throw new DomainException(...)`
-- **Files:** `ContactInfoService.cs`
+- Standardized city resolution failures.
 
 ### Task 37: OrdersController — Useless Catch Removed ✅
 
-- `CreateOrder` imao `try { ... } catch { throw; }` — apsolutno beskoristan pattern
-- Fix: Uklonjen wrapper
-- **Files:** `OrdersController.cs`
+- Removed empty try-catch wrappers.
 
 ### Task 38: PaymentTransactionService Dead Code Removed ✅
 
-- Sve commented-out metode uklonjene iz servisa (nije kompajlirano, samo smeće)
-- **Files:** `PaymentTransactionService.cs`
+- Cleaned up commented-out methods.
 
 ---
 
@@ -421,62 +293,37 @@
 
 - All 9 backend gap analysis items COMPLETE
 - Suspension middleware + Croatian holidays COMPLETE
-- Admin notifications (7 types) — COMPLETE, SignalR delivery works
-- Contract renewal auto-trigger — COMPLETE (JobInstances generated on upload)
+- Admin notifications (7 types) — COMPLETE
+- Contract renewal auto-trigger — COMPLETE
 - Reschedule and reassignment notifications — COMPLETE
-- Smooth transition protection — COMPLETE (ReassignmentService won't expire students with next contract)
-- Invoice retry system — COMPLETE (auto Hangfire hourly + admin manual endpoint)
-- Seed data realistic overhaul — COMPLETE (admin user, 4 completed + 5 active + 5 pending, 47 sessions)
-- Ready for frontend-backend integration
-- Travel buffer reconciliation — COMPLETE
-- Historical student payout snapshots — COMPLETE
-- Backend warning cleanup to 0 — COMPLETE
-- **Notification content overhaul** — COMPLETE (FormatSafe, TranslateNotifications refactor, NewOrderAdded)
-- **Google Drive archive (single master CSV)** — COMPLETE (find/download/append/update flow, 3 new GoogleDriveService methods)
-- **Chat system** — COMPLETE (ChatRoom, ChatMessage, ChatService, ChatController, ChatHub, NotificationHub broadcast, auto-room, welcome message, GetByIdWithContactAsync)
-- **Security & Code Quality** — COMPLETE (IDOR fix, exception info leak, DomainException unification, dead code removal)
-- **Za Sidney-a:** Preostali TODO-ovi su u `helpi_admin/docs/ROADMAP.md`
+- Invoice retry system — COMPLETE
+- Chat system (real-time + REST) — COMPLETE
+- Security & Code Quality — COMPLETE
+- **For Sidney:** Remaining TODOs are in `helpi_admin/docs/ROADMAP.md`
 
-### Preostalo (iz ROADMAP.md):
+### Remaining (from ROADMAP.md):
 
-1. **Integracije** — Stripe, Minimax, Mailgun, MailerLite, Firebase (produkcijski credentials potrebni)
-2. **Suspension notifikacije** — Push + email kad se korisnik suspendira (ovisi o Firebase)
-3. **Push notifikacije** — Firebase FCM za sve uloge
+1. **Integrations** — Stripe, Minimax, Mailgun, MailerLite, Firebase (production credentials needed)
+2. **Suspension notifications** — Push + email when user suspended (depends on Firebase)
+3. **Push notifications** — Firebase FCM for all roles
 
 ---
 
-## 2026-04-20 — Student Settings, PendingAcceptance, canCancel stamping, session date range filter + OrderStatusUpdater revision
+## 2026-04-20 — Student Settings, PendingAcceptance, canCancel stamping
 
 ### Student Settings permissions (PricingConfiguration)
 
-- `PricingConfiguration` — 3 nova polja (migracija `20260418210332_AddStudentSettingsAndPendingAcceptance`):
-  - `StudentCancelEnabled` (bool) — admin uključuje/isključuje mogućnost otkazivanja termina od strane studenta
-  - `AvailabilityChangeEnabled` (bool) — admin uključuje/isključuje mogućnost promjene dostupnosti od strane studenta
-  - `AvailabilityChangeCutoffHours` (int) — cutoff u satima unutar kojih student ne smije mijenjati dostupnost
-- `AssignmentStatus.PendingAcceptance` — novi enum status: student mora potvrditi dodjelu
-- `GET /api/schedule-assignments/pending` — student dohvaća sve dodjele na kojima mora kliknuti Prihvati/Odbij
-- `POST /api/schedule-assignments/{id}/accept` i `/decline` — student prihvaća/odbija dodjelu
-- `StampCanCancelAsync(sessions, callerRole)` — backend stampa `canCancel: true/false` na svaku sesiju ovisno o: `StudentCancelEnabled`, cutoff sati, ulozi pozivatelja (senior/student/admin)
-- Role-based cutoff u `CancelJobInstance`: senior koristi `SeniorCancelCutoffHours`, student koristi `StudentCancelCutoffHours`
-- `SessionDto.CanCancel` — novo bool polje na DTO-u; frontend čita direktno, ne računa lokalno
+- `PricingConfiguration` — 3 new fields: `StudentCancelEnabled`, `AvailabilityChangeEnabled`, `AvailabilityChangeCutoffHours`.
+- `AssignmentStatus.PendingAcceptance` — new status: student must confirm assignment.
+- `StampCanCancelAsync(sessions, callerRole)` — backend stamps `canCancel: true/false` on each session based on rules.
 
 ### Session date range filter
 
-- `GET /api/sessions/order/{orderId}?from=&to=` — opcionalni date range filter
-- Implementirano kroz sve slojeve: `IJobInstanceRepository` → `JobInstanceRepository` → `IJobInstanceService` → `JobInstanceService` → `SessionsController`
-- Frontend šalje `from`/`to` za tekući mjesec kad prikazuje order detail; backend filtrira samo sesije u tom periodu
+- `GET /api/sessions/order/{orderId}?from=&to=` — optional date range filter for order details.
 
 ### OrderStatusUpdater revision
 
-- `OrderStatusUpdater.cs` — potpuno revidirana logika automatskog zaključivanja statusa narudžbi:
-  - Ako postoje sesije ali nijedna nije Upcoming: ako bar 1 je Completed → order = **Completed**
-  - Ako su SVE sesije Cancelled AND `IsRecurring=false` (one-time) → order = **Cancelled**
-  - Ako su SVE sesije Cancelled AND `IsRecurring=true` → order ostaje **Active** (novi termini mogu doći produžetkom ugovora)
-  - Recurring order bez Upcoming sesija "pada kroz" na assignment-based logiku (postojeća putanja)
-- **Fix:** Jednokratne narudžbe s otkazanim terminima sada ispravno prelaze u Cancelled status automatski
-
-4. **Per-user preferencije** — SharedPreferences s userId u admin appu
-5. **Sponzor sustav** — SponsorConfiguration entity + admin UI + app badge (branding)
+- Automatically concludes order status (Completed/Cancelled) based on session states.
 
 ---
 
@@ -484,196 +331,12 @@
 
 ### Delete Account Notification — Real Name ✅
 
-- **Problem:** Admin notification on user deletion showed generic "Student 133" / "Customer 42" instead of real name
-- **Fix:** `StudentsService.PermanentlyDeleteStudent()` — `originalUserName` now uses `student.Contact?.FullName`
-- **Fix:** `CustomerService.DeleteCustomerAsync()` — `originalName` now uses `customer.Contact?.FullName`
-- **Result:** Admin notification now shows e.g. "Student: Ivan Marković (ID: 133) je trajno izbrisan"
-- **TODO:** This must be visible in admin app notifications panel (frontend integration pending)
+- Notifications now show student/senior full name instead of ID only.
 
 ### Email Availability Check Endpoint ✅
 
-- **New endpoint:** `GET /api/auth/check-email?email=xxx` — returns `{ "exists": true/false }`
-- **AuthService:** `CheckEmailExistsAsync(string email)` — uses `UserManager.FindByEmailAsync`
-- **AuthController:** `[HttpGet("check-email")]` — validates email param, returns existence status
-- **Purpose:** Flutter app checks email BEFORE user fills registration form (better UX)
-- **No auth required** — public endpoint for pre-registration validation
+- `GET /api/auth/check-email?email=xxx` — public endpoint for pre-registration validation.
 
 ### Swagger v2 ✅
 
-- **Changed:** Swagger doc from v1 to v2 in Program.cs
-- **SwaggerDoc:** `"v2"` with title "Helpi API", version "v2", description "Helpi v2 Backend API"
-- **SwaggerEndpoint:** `/swagger/v2/swagger.json`
-- **Build:** Verified — 0 errors
-
-### PricingConfiguration Authorization Smoke Test ✅ (2026-04-04)
-
-- **Problem found during live API test:** običan authenticated customer mogao je čitati `GET /api/PricingConfiguration`
-- **Fix:** `PricingConfigurationController` promijenjen na `[Authorize(Roles = "Admin")]`
-- **Runtime verification:** Swagger v2 dokument učitan (`159` pathova), customer token vraća `403`, disposable admin token vraća `200` i ispravan pricing payload
-- **Regression check:** `GET /api/sessions` i dalje vraća `studentHourlyRate` u runtime JSON contractu
-
-### Student Dashboard DurationHours Fix ✅ (2026-03-18)
-
-- **Problem:** `GET /api/dashboard/student/{id}` returned 500 Internal Server Error
-- **Root cause:** `JobInstanceRepository.GetTotalCompletedHoursForPeriodAsync()` used `.SumAsync(ji => ji.DurationHours)` in LINQ, but `DurationHours` is a computed C# property (`EndTime - StartTime`), not a DB column — EF Core cannot translate it to SQL
-- **Fix:** Changed to `ToListAsync()` + in-memory `.Sum(ji => ji.DurationHours)` — filters still run server-side, only Sum computed in memory on already-filtered results
-- **File:** `Helpi.Infrastructure/Repositories/JobInstanceRepository.cs` line 338
-- **Build:** 0 errors, no new warnings
-
-### GET /api/reviews Endpoint Fix ✅ (2026-03-23)
-
-- **Problem:** Admin app `GET /api/reviews` returned 405 Method Not Allowed — ReviewsController had NO root `[HttpGet]` endpoint
-- **Fix:** Added `GetAllAsync()` across 4 layers:
-  - `IReviewRepository.cs` — `Task<IEnumerable<Review>> GetAllAsync()`
-  - `ReviewRepository.cs` — filters `IsPending == false`, includes Student + Senior, orders by CreatedAt desc
-  - `ReviewService.cs` — `GetAllAsync()` maps to `List<ReviewDto>`
-  - `ReviewsController.cs` — `[HttpGet] GetAll()` endpoint
-- **Build:** 0 errors
-
-### EnsureCompletedAsync — Bulletproof Review Flow ✅ (2026-04-15)
-
-- **Problem:** Hangfire auto-completion sometimes hasn't run when user opens session — review button shows "not ready" because session is still InProgress/Upcoming even though time has passed
-- **New endpoint:** `POST /api/sessions/{id}/ensure-completed` — idempotent, safe to call repeatedly
-- **Logic (JobInstanceService.EnsureCompletedAsync):**
-  1. If session already Completed but reviews MISSING → re-creates 2 pending reviews (SeniorToStudent + StudentToSenior)
-  2. If session Upcoming/InProgress and `now > endUtc` → marks Completed, creates 2 pending reviews
-  3. Guards: rejects Cancelled/Rescheduled, rejects if time hasn't passed yet, requires assignment
-- **Variable naming:** Uses `re` prefix (reStudentId, reSeniorReview, reStudentReview) for the re-creation branch to avoid scope conflicts
-- **Interface:** `IJobInstanceService.EnsureCompletedAsync(int jobInstanceId)` — returns `Task<bool>`
-- **Controller:** `JobInstancesController` — `[HttpPost("{jobInstanceId}/ensure-completed")]`
-- **Frontend integration:** helpi_app calls this as 3rd fallback step in `_resolvePendingReviewId` (local cache → re-fetch → ensureCompleted → re-fetch)
-- **Build:** 0 errors
-
-### Travel Buffer Conflict Detection — Dual Check Fix ✅ (2026-04-15)
-
-- **Problem:** Available students endpoint (`FindEligibleStudentsCore`) only checked **JobInstances** for time conflicts. If Hangfire hadn't generated JobInstances for a future date, students with conflicting recurring schedules still appeared as available. Then `AdminDirectAssignAsync` (which checks **OrderSchedule patterns**) would reject the assignment → confusing UX (student shown as available but assign fails).
-- **Second bug:** Both `FindEligibleStudentsCore` and `AdminDirectAssignAsync` checked `ScheduleAssignment.Status == Accepted` but NEVER checked **Order status**. When an order was Cancelled/Completed, its assignments stayed `Accepted` → phantom conflicts blocking valid assignments.
-- **Fix 1 (StudentRepository.cs):** Added second `.Where()` filter in `FindEligibleStudentsCore` — checks `OrderSchedule.DayOfWeek + StartTime/EndTime` with travel buffer, filtered by `Order.Status != Completed && != Cancelled`
-- **Fix 2 (ScheduleAssignmentRepository.cs):** `GetActiveAssignmentsByStudentId()` now includes `OrderSchedule → Order` and filters `Order.Status != Completed && != Cancelled`
-- **Result:** Available students list now matches what `AdminDirectAssignAsync` allows — no more false negatives or false positives
-- **Build:** 0 errors
-
-### Backend Binding for Android Emulator ✅ (2026-03-23)
-
-- **Problem:** `localhost:5142` only binds to 127.0.0.1 — Android emulator can't reach host via `10.0.2.2`
-- **Fix:** Changed `launchSettings.json` applicationUrl from `http://localhost:5142` to `http://0.0.0.0:5142`
-
----
-
-## Faza 7 — Contract Renewal & Service Continuity ✅ (2026-03-23)
-
-### Task 18: Auto-generate JobInstances on Contract Upload ✅
-
-- **Problem:** When student uploads a new contract (e.g. month-to-month renewal), NO new JobInstances were generated — only admin manual assign or Hangfire recurring batch triggered generation
-- **Fix:** `StudentContractService.CreateContractAsync()` now calls `GenerateJobInstancesForStudentAssignmentsAsync()` after `ProcessStudentStatus()`
-- **New method:** `GenerateJobInstancesForStudentAssignmentsAsync(studentId)` — fetches all active recurring assignments for the student, generates instances using `IHangfireRecurringJobService.GenerateInstancesForAssignment()`, saves via `AddRangeAsync`
-- **3 new dependencies** added to StudentContractService: `IScheduleAssignmentRepository`, `IHangfireRecurringJobService`, `IPricingConfigurationRepository`
-- **New repository method:** `IScheduleAssignmentRepository.GetAssignmentsNeedingJobGenerationForStudentAsync(studentId)` — same logic as `GetAssignmentsNeedingJobGenerationAsync()` but filtered by student, includes OrderSchedule→Order→Senior + latest JobInstance
-- **Files modified:** 4 (StudentContractService.cs, IScheduleAssignmentRepository.cs, ScheduleAssignmentRepository.cs)
-- **Build:** 0 errors
-
-### Task 19: Smooth Transition Protection (Contract Renewal) ✅
-
-- **Problem:** When student's contract expires but a new one starts immediately (gap ≤ 1 day), `StudentStatusService.HandleTrulyExpired()` would still mark student as Expired and trigger `ReassignExpiredContractJobs()` — reassigning all sessions even though student has valid next contract
-- **Fix:** Added early return check in `HandleTrulyExpired()`: if `eval.NextContract != null && !eval.HasGap`, student stays Active and no reassignment occurs
-- **Leverages existing:** `ContractEvaluationService.Evaluate()` already computes `HasGap` (gap > 1 day between contracts)
-- **File modified:** StudentStatusService.cs
-- **Build:** 0 errors
-
----
-
-## Fresh Validation Report (2026-03-18)
-
-### Compile Status
-
-- `flutter analyze` helpi_app: **0 issues**
-- `flutter analyze` helpi_admin: **0 issues**
-- `dotnet build` backend: **0 errors**, 63 warnings (all pre-existing nullability)
-
-### Live API Endpoint Testing (all with admin JWT)
-
-- ✅ Auth login (admin@test.com)
-- ✅ Dashboard admin / senior
-- ✅ Students, Seniors, Orders, Cities, Faculties, PricingConfiguration
-- ✅ Sessions, Reviews, Availability, Student Contracts, Coupons
-- ✅ Service Categories, Suspensions, Admin Notes
-- ✅ Session cancel route exists (400 = valid route, needs body)
-- ✅ Coupon validate/apply routes exist (PromoCode system removed, unified into Coupons)
-- ⚠️ Dashboard student — 500 (DurationHours bug, fixed above, needs backend restart)
-
-### Known Issues (not bugs — by design)
-
-- Seed users (students 101-107, seniors 201-206) have fake password hashes — cannot login. Admin (Id=13) has real hash. Students/seniors will be created via register endpoint for testing.
-- HNotifications table empty — backend doesn't auto-create notifications yet (feature, not bug)
-- Chat backend not implemented (placeholder screens)
-
----
-
-## Faza 7 Task Summary
-
-| #   | Task                                            | Status | Date       |
-| --- | ----------------------------------------------- | ------ | ---------- |
-| 18  | Auto-generate JobInstances on contract upload   | ✅     | 2026-03-23 |
-| 19  | Smooth transition protection (contract renewal) | ✅     | 2026-03-23 |
-
----
-
-## Faza 8 — PromoCode→Coupon Unification ✅ (2026-04-18)
-
-### Problem
-
-Dva odvojena sustava popusta: PromoCode (%, fiksni, per-order) i Coupon (sat-based s balanceom, per-assignment). Redundantno.
-
-### Rješenje
-
-- Obrisano 8 PromoCode fajlova (entity, DTO, service, repo, controller, interfaces)
-- `Order.PromoCodeId` → `Order.CouponId` (FK na Coupons tablicu)
-- Novi endpointi: `POST /api/coupons/validate`, `POST /api/coupons/apply`
-- DB migracija: `20260418073312_RemovePromoCodeSystem`
-- `dotnet build` = 0 errors, 0 warnings
-
-### Student assignment acceptance + cancel/availability toggles (2026-04-19)
-
-**PricingConfiguration:**
-
-- `StudentCancelEnabled` (bool, default true) — ON/OFF za studentsko otkazivanje sesija
-- `AvailabilityChangeEnabled` (bool, default true) — ON/OFF za promjenu dostupnosti
-- `AvailabilityChangeCutoffHours` (int, default 24) — sati prije sesije za promjenu dostupnosti
-- DB migracija: `20260418210332_AddStudentSettingsAndPendingAcceptance`
-
-**AssignmentStatus enum:**
-
-- Dodan `PendingAcceptance` — assignment čeka odgovor studenta
-
-**NotificationType enum:**
-
-- `AssignmentPending(33)`, `AssignmentAccepted(34)`, `AssignmentDeclined(35)`, `AssignmentRevoked(36)`
-
-**ScheduleAssignmentService:**
-
-- `AdminDirectAssignAsync` sada kreira assignment kao `PendingAcceptance`, NE generira JobInstances
-- Ako admin reassigna drugog studenta → prethodni dobije `AssignmentRevoked` SignalR notifikaciju
-- `AcceptAssignmentAsync` — prihvaća, generira JobInstances, notificira admine
-- `DeclineAssignmentAsync` — odbija, notificira admine
-- `GetPendingAssignmentsByStudentUserIdAsync` — vraća pending assignments za overlay
-
-**Novi endpointi:**
-
-- `POST /api/schedule-assignments/{id}/accept` (Student role)
-- `POST /api/schedule-assignments/{id}/decline` (Student role)
-- `GET /api/schedule-assignments/pending` (Student role)
-
-**Cancel/Availability enforcement:**
-
-- `OrdersService.CancelOrderAsync` — blokira kad je `StudentCancelEnabled` OFF
-- `StudentAvailabilitySlotService.HandleAvailabilityConflicts` — blokira kad je `AvailabilityChangeEnabled` OFF, koristi `AvailabilityChangeCutoffHours`
-- `dotnet build` = 0 errors, 0 warnings
-
-### CouponType simplifikacija (2026-04-18)
-
-- Uklonjeni `Percentage(3)` i `FixedPerSession(4)` iz `CouponType` enuma
-- Ostaju samo 3 sat-based tipa: `MonthlyHours(0)`, `WeeklyHours(1)`, `OneTimeHours(2)`
-- Uklonjena validacija za percentage > 100 u `CreateAsync`/`UpdateAsync`
-- Uklonjena kalkulacija za percentage/fixedBased u `CalculateCoverageAsync`
-- Uklonjen switch za Percentage/FixedPerSession u `ValidateCodeForOrderAsync`
-- `dotnet build` = 0 errors, 0 warnings
+- Changed Swagger doc from v1 to v2.

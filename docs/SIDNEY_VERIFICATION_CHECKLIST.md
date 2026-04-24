@@ -7,6 +7,7 @@
 ## 📋 For Sidney — 7 External Integrations + Testing
 
 ### 1. ✅ Backend All Green
+
 - [ ] `dotnet build` in `src/` folder — **0 errors** (only 80 legacy warnings expected)
 - [ ] All 11+1 phases implemented (verify `PROGRESS.md`)
 - [ ] `flutter analyze` in admin/app — **0 issues**
@@ -18,10 +19,12 @@
 ### 2. **Stripe** — Payment Processing
 
 **What you need:**
+
 - [ ] Stripe production API Key (Secret key)
 - [ ] Stripe Webhook Secret (for fee tracking)
 
 **What to do:**
+
 1. Open `credentials/stripe.json` (prod folder or env var)
 2. Update with production API key
 3. Backend already has `PaymentService.InitiatePaymentAsync()` + `StripeWebhookHandler` implemented
@@ -32,6 +35,7 @@
    - [ ] Check Stripe dashboard to confirm transaction is visible
 
 **Files to review:**
+
 - `Helpi.Infrastructure/Services/PaymentService.cs`
 - `Helpi.WebApi/Controllers/PaymentsController.cs`
 - `Helpi.Infrastructure/ExternalIntegrations/Stripe/StripeWebhookHandler.cs`
@@ -41,9 +45,11 @@
 ### 3. **Minimax** — SMS / Phone Validation
 
 **What you need:**
+
 - [ ] Minimax API credentials (API key / auth token)
 
 **What to do:**
+
 1. Open `credentials/minimax.json`
 2. Update with production API key
 3. Backend already has `MinimaxService.ValidatePhoneAsync()` implemented
@@ -52,6 +58,7 @@
    - [ ] Verify Minimax validated the phone number
 
 **Files to review:**
+
 - `Helpi.Infrastructure/ExternalIntegrations/Minimax/MinimaxService.cs`
 - `Helpi.Application/Services/UserService.cs` (where validation is called)
 
@@ -60,11 +67,13 @@
 ### 4. **Mailgun** — Email Service
 
 **What you need:**
+
 - [ ] Mailgun API Key
 - [ ] Mailgun Domain (e.g., `mg.helpi.hr` or similar)
 - [ ] DNS MX records pointing to Mailgun
 
 **What to do:**
+
 1. Open `credentials/mailgun.json`
 2. Update with production API key + domain
 3. Backend already has `MailgunService.SendEmailAsync()` implemented
@@ -74,6 +83,7 @@
    - [ ] Admin notification → verify email arrived
 
 **Files to review:**
+
 - `Helpi.Infrastructure/ExternalIntegrations/Mailgun/MailgunService.cs`
 
 ---
@@ -81,10 +91,12 @@
 ### 5. **MailerLite** — Newsletter / Marketing
 
 **What you need:**
+
 - [ ] MailerLite API Token
 - [ ] Audience Group IDs (for different email lists)
 
 **What to do:**
+
 1. Open `credentials/mailerlite.json`
 2. Update with production API token
 3. Backend has `MailerLiteService` for adding contacts to groups
@@ -93,6 +105,7 @@
    - [ ] Register new student → verify added to correct group
 
 **Files to review:**
+
 - `Helpi.Infrastructure/ExternalIntegrations/MailerLite/MailerLiteService.cs`
 
 ---
@@ -100,10 +113,12 @@
 ### 6. **Firebase** — Push Notifications + Suspend Notifications
 
 **What you need:**
+
 - [ ] Firebase service account JSON (for FCM)
 - [ ] Firebase project ID
 
 **What to do:**
+
 1. Open `credentials/helpi-firebase-service-account.json`
 2. Update with production Firebase service account
 3. Backend has `FirebaseService.SendPushNotificationAsync()` implemented
@@ -114,6 +129,7 @@
    - [ ] If user is suspended → push + email notification
 
 **Files to review:**
+
 - `Helpi.Infrastructure/ExternalIntegrations/Firebase/FirebaseService.cs`
 - `Helpi.Application/Services/NotificationService.cs` (SuspendUserAsync)
 - Admin app: `lib/features/settings/screens/settings_screen.dart` (notification testing)
@@ -123,10 +139,12 @@
 ### 7. **Stripe Webhook** — Fee Tracking (Depends on Stripe)
 
 **What you need:**
+
 - [ ] Stripe production webhook endpoint URL
 - [ ] Database migration for fee tracking table
 
 **What to do:**
+
 1. Verify migration `AddStripeWebhookFeeTracking` is applied to prod DB
 2. Set webhook in Stripe dashboard → `https://api.helpi.hr/webhooks/stripe`
 3. Backend Hangfire job `ProcessStripeWebhookFeeAsync` will periodically check Stripe fees
@@ -136,6 +154,7 @@
    - [ ] Verify Hangfire job executed
 
 **Files to review:**
+
 - `Helpi.Infrastructure/ExternalIntegrations/Stripe/StripeWebhookHandler.cs`
 - `Helpi.Infrastructure/Hangfire/Jobs/StripeWebhookProcessingJob.cs`
 
@@ -146,9 +165,11 @@
 ### Suspend User Notifications
 
 **What you need:**
+
 - [ ] Firebase credentials (from #6 above)
 
 **What to do:**
+
 1. Verify `UserService.SuspendUserAsync()` — sends push + email
 2. App already has `notification_provider.dart` listening for push
 3. **Testing:**
@@ -158,6 +179,7 @@
    - [ ] Senior sees suspension notice on login screen
 
 **Files to review:**
+
 - `Helpi.Application/Services/UserService.cs` (SuspendUserAsync)
 - `Helpi.Application/Services/NotificationService.cs` (PushNotification)
 
@@ -235,11 +257,13 @@
 ## 📞 If You Need Help
 
 If `flutter analyze` or `dotnet build` throws errors, report:
+
 - [ ] Exact error message (copy-paste from terminal)
 - [ ] Which file?
 - [ ] Which line?
 
 If integration doesn't work, verify:
+
 - [ ] Is credentials JSON valid? (Paste in JSON validator)
 - [ ] Is API key correct? (Test in Postman)
 - [ ] Is firewall/VPN blocking the request?
@@ -247,4 +271,3 @@ If integration doesn't work, verify:
 ---
 
 **Status for Sidney:** Backend is 100% complete. Now we need only credentials + E2E testing. ✅
-
