@@ -263,6 +263,7 @@ public class StudentQueryBuilder
                 Id = s.Contact.Id,
                 FullName = s.Contact.FullName,
                 Gender = s.Contact.Gender,
+                DateOfBirth = s.Contact.DateOfBirth,
                 Phone = s.Contact.Phone,
                 Email = s.Contact.Email,
                 FullAddress = s.Contact.FullAddress,

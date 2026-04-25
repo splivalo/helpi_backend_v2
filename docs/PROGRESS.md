@@ -1,6 +1,12 @@
 # Helpi Backend v2 — Progress
 
-> Last updated: 2026-04-24
+> Last updated: 2026-04-25
+
+## 2026-04-25 - Student DateOfBirth Fix
+
+- ✅ **BUG FIX**: `StudentQueryBuilder.ExecuteWithDetailsAsync()` was missing `DateOfBirth` in the manual `ContactInfoDto` projection
+- **Root cause**: Seniors use AutoMapper (maps all properties automatically), students use hand-written LINQ projection which forgot `DateOfBirth`
+- **Result**: Student date of birth now properly returned via `GET /api/students` endpoint
 
 ## 📖 For Sidney — What to Read (all 3 repos)
 
