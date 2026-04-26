@@ -37,7 +37,7 @@ public class AdminNotesController : ControllerBase
                 Text = n.Text,
                 CreatedAt = n.CreatedAt,
                 CreatedByUserId = n.CreatedByUserId,
-                CreatedByName = n.CreatedBy != null ? n.CreatedBy.Email : null
+                CreatedByName = n.CreatedBy != null ? "Admin" : null
             })
             .ToListAsync();
 

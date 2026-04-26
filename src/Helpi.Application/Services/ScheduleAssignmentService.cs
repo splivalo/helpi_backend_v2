@@ -364,6 +364,8 @@ public class ScheduleAssignmentService
 
         /// <summary>
         /// Student accepts a pending assignment. Generates job instances and updates order status.
+        /// Uses double-check pattern: re-reads status after SaveChanges to guard against
+        /// concurrent accept requests (double-tap / race condition).
         /// </summary>
         public async Task<ScheduleAssignmentDto> AcceptAssignmentAsync(int assignmentId, int studentUserId)
         {
@@ -382,7 +384,16 @@ public class ScheduleAssignmentService
                 assignment.Status = AssignmentStatus.Accepted;
                 assignment.AcceptedAt = DateTime.UtcNow;
                 await _repository.UpdateAsync(assignment);
+
                 await _unitOfWork.SaveChangesAsync();
+
+                // Double-check: re-read to confirm we won the race (guard against concurrent double-tap).
+                // If another request accepted the same assignment concurrently, the status will differ.
+                var confirmed = await _repository.GetByIdAsync(assignmentId);
+                if (confirmed == null || confirmed.Status != AssignmentStatus.Accepted)
+                {
+                        throw new DomainException("Assignment was already processed by another request.");
+                }
 
                 // Load order schedule for job instance generation
                 var orderSchedule = await _orderScheduleRepository.GetByIdAsync(assignment.OrderScheduleId)
