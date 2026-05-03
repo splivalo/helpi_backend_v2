@@ -33,6 +33,10 @@
             "Title": "Termin otkazan",
             "Body": "{0}, Narudžba #{1}"
         },
+        "JobReactivated": {
+            "Title": "Termin obnovljen",
+            "Body": "{0}, Narudžba #{1}"
+        },
         "JobRescheduled": {
             "Title": "Termin promijenjen",
             "Body": "Termin {0} u {1} prebačen je na {2} u {3}"

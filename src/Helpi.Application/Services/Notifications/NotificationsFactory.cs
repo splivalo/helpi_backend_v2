@@ -170,14 +170,15 @@ public class NotificationFactory : INotificationFactory
     int recieverId,
     JobInstance jobInstance, string culture)
     {
-        var date = jobInstance.ScheduledDate;
+        var seniorName = jobInstance.Senior?.Contact?.FullName ?? "?";
+        var orderNumber = jobInstance.Order?.OrderNumber ?? jobInstance.OrderId;
 
         return new HNotification
         {
             RecieverUserId = recieverId,
             TranslationKey = "Notifications.JobCancelled",
             Title = _loc.GetString("Notifications.JobCancelled.Title", culture),
-            Body = _loc.GetString("Notifications.JobCancelled.Body", culture, date),
+            Body = _loc.GetString("Notifications.JobCancelled.Body", culture, seniorName, orderNumber),
             Type = NotificationType.JobCancelled,
             SeniorId = jobInstance.SeniorId,
             OrderId = jobInstance.OrderId,
@@ -185,6 +186,32 @@ public class NotificationFactory : INotificationFactory
             {
                 jobInstanceId = jobInstance.Id,
                 SeniorId = jobInstance.SeniorId,
+                orderNumber = jobInstance.OrderId,
+            })
+        };
+    }
+
+    public HNotification JobReactivatedNotification(
+        int recieverId,
+        JobInstance jobInstance, string culture)
+    {
+        var seniorName = jobInstance.Senior?.Contact?.FullName ?? "?";
+        var orderNumber = jobInstance.Order?.OrderNumber ?? jobInstance.OrderId;
+
+        return new HNotification
+        {
+            RecieverUserId = recieverId,
+            TranslationKey = "Notifications.JobReactivated",
+            Title = _loc.GetString("Notifications.JobReactivated.Title", culture),
+            Body = _loc.GetString("Notifications.JobReactivated.Body", culture, seniorName, orderNumber),
+            Type = NotificationType.JobReactivated,
+            SeniorId = jobInstance.SeniorId,
+            OrderId = jobInstance.OrderId,
+            Payload = JsonSerializer.Serialize(new
+            {
+                jobInstanceId = jobInstance.Id,
+                SeniorId = jobInstance.SeniorId,
+                orderNumber = jobInstance.OrderId,
             })
         };
     }

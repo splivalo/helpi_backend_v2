@@ -1,7 +1,6 @@
 using AutoMapper;
 using Helpi.Application.DTOs;
 using Helpi.Application.Interfaces;
-using Helpi.Application.Interfaces.Services;
 using Helpi.Domain.Entities;
 using Helpi.Domain.Enums;
 using Helpi.Domain.Exceptions;
@@ -12,18 +11,15 @@ public class ChatService
 {
     private readonly IChatRepository _chatRepo;
     private readonly IUserRepository _userRepo;
-    private readonly ISignalRNotificationService _signalR;
     private readonly IMapper _mapper;
 
     public ChatService(
         IChatRepository chatRepo,
         IUserRepository userRepo,
-        ISignalRNotificationService signalR,
         IMapper mapper)
     {
         _chatRepo = chatRepo;
         _userRepo = userRepo;
-        _signalR = signalR;
         _mapper = mapper;
     }
 
@@ -167,18 +163,9 @@ public class ChatService
 
         var dto = _mapper.Map<ChatMessageDto>(message);
 
-        // Broadcast to the other participant via SignalR
-        var recipientUserId = room.Participant1UserId == senderUserId
-            ? room.Participant2UserId
-            : room.Participant1UserId;
-
-        await _signalR.SendNotificationToUserAsync(recipientUserId,
-            new HNotificationDto
-            {
-                Title = senderName,
-                Body = content.Length > 100 ? content[..100] + "…" : content,
-                Type = NotificationType.General,
-            });
+        // Chat has its own ReceiveChatMessage + ChatUnreadUpdate SignalR events —
+        // do NOT send ReceiveNotification here as it would incorrectly bump the
+        // notification bell badge on the recipient's app.
 
         return dto;
     }

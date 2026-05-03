@@ -231,6 +231,7 @@ namespace Helpi.Domain.Enums
         AssignmentAccepted,        // 34 — admin: student accepted assignment
         AssignmentDeclined,        // 35 — admin: student declined assignment
         AssignmentRevoked,         // 36 — student: admin revoked pending assignment
+        JobReactivated,             // 37 — senior/student: cancelled session restored by admin
 
     }
 

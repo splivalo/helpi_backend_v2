@@ -33,6 +33,10 @@
             "Title": "Session Cancelled",
             "Body": "{0}, Order #{1}"
         },
+        "JobReactivated": {
+            "Title": "Session Restored",
+            "Body": "{0}, Order #{1}"
+        },
         "JobRescheduled": {
             "Title": "Session Rescheduled",
             "Body": "Session on {0} at {1} moved to {2} at {3}"

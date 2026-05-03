@@ -135,6 +135,7 @@ public class HNotificationService : IHNotificationService
         var seniorAndOrderList = new[]
         {
             NotificationType.JobCancelled,
+            NotificationType.JobReactivated,
             NotificationType.OrderCancelled,
             NotificationType.OrderScheduleCancelled,
             NotificationType.ScheduleAssignmentCancelled,

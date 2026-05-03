@@ -27,6 +27,7 @@ namespace Helpi.Application.Common.Interfaces
             string culture);
 
         HNotification JobCancelledNotification(int recieverId, JobInstance jobInstance, string culture);
+        HNotification JobReactivatedNotification(int recieverId, JobInstance jobInstance, string culture);
         HNotification ScheduleAssignmentCancelledNotification(
         int recieverId, ScheduleAssignment scheduleAssignment, int seniorId, string culture);
 

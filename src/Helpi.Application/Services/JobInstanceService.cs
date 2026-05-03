@@ -892,6 +892,8 @@ IGoogleCalendarService? calendarService = null
                         // auto-cancel logic in JobInstanceStatusUpdater must not override it.
                         await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId, skipJobInstanceUpdate: true);
 
+                        await NotifyUsersJobInstanceReactivated(job);
+
                         return _mapper.Map<SessionDto>(job);
                 }
                 catch (Exception ex)
@@ -929,6 +931,31 @@ IGoogleCalendarService? calendarService = null
 
         }
 
+        private async Task NotifyUsersJobInstanceReactivated(JobInstance jobInstance)
+        {
+                try
+                {
+                        var senior = jobInstance.Senior;
+                        var customerId = senior.CustomerId;
+                        var culture = senior.Contact.LanguageCode ?? "hr";
+                        var noti = _notificationFactory.JobReactivatedNotification(customerId, jobInstance, culture);
+                        await _notificationService.StoreAndNotifyAsync(noti, viaSignalR: true, viaFcm: true);
+
+                        if (jobInstance.ScheduleAssignment != null)
+                        {
+                                var student = jobInstance.ScheduleAssignment.Student;
+                                var studentId = student.UserId;
+                                var studentCulture = student.Contact.LanguageCode ?? "hr";
+                                var studentNoti = _notificationFactory.JobReactivatedNotification(studentId, jobInstance, studentCulture);
+                                await _notificationService.StoreAndNotifyAsync(studentNoti, viaSignalR: true, viaFcm: true);
+                        }
+                }
+                catch (Exception)
+                {
+                        _logger.LogError("❌ Notify reactivate error JobInstance {jobInstanceId} .", jobInstance.Id);
+                }
+        }
+
 
         private async Task NotifyJobInstanceCancelled(int recieverId, JobInstance jobInstance, string culture)
         {
@@ -938,10 +965,9 @@ IGoogleCalendarService? calendarService = null
                             recieverId,
                             jobInstance,
                             culture: culture
-
                             );
 
-                        await _notificationService.SendNotificationAsync(recieverId, noti);
+                        await _notificationService.StoreAndNotifyAsync(noti, viaSignalR: true, viaFcm: true);
                 }
                 catch (Exception)
                 {
