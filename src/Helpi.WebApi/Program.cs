@@ -236,6 +236,7 @@ using (var scope = app.Services.CreateScope())
     jobInstanceJobs.ScheduleDailyStatusUpdates();
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
     jobInstanceJobs.RetryFailedInvoices();
+    jobInstanceJobs.SyncGoogleCalendar();
 }
 
 // ------------------------------------------------------------

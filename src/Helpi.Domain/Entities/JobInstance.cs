@@ -75,7 +75,8 @@ namespace Helpi.Domain.Entities
         public string? HangFirePaymentJobId { get; set; }
         public string? HangFireRemindStudentJobId { get; set; }
 
-
+        // Google Calendar integration
+        public string? GoogleCalendarEventId { get; set; }
 
         public bool IsTerminal
         {

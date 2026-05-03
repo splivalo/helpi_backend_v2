@@ -40,4 +40,12 @@ public class JobInstanceJobs : IJobInstanceJobs
         Cron.Hourly(15)); // Every hour at :15
     }
 
+    public void SyncGoogleCalendar()
+    {
+        RecurringJob.AddOrUpdate<IGoogleCalendarService>(
+        "sync-google-calendar",
+        s => s.SyncUpcomingInstancesAsync(false),
+        Cron.Daily(2, 0)); // Every day at 02:00 UTC — incremental (only new instances)
+    }
+
 }

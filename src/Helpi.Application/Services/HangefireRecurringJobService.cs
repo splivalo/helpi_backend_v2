@@ -14,8 +14,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
     private readonly IRecurrenceDateGenerator _dateGenerator;
     private readonly ILogger<HangfireRecurringJobService> _logger;
     private readonly IStudentContractRepository _contractRepository;
-
     private readonly IHangfireService _hangfireService;
+    private readonly IGoogleCalendarService? _calendarService;
 
     public HangfireRecurringJobService(
         IJobInstanceRepository jobInstanceRepository,
@@ -24,7 +24,8 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         IRecurrenceDateGenerator dateGenerator,
         ILogger<HangfireRecurringJobService> logger,
         IHangfireService hangfireService,
-        IStudentContractRepository contractRepository
+        IStudentContractRepository contractRepository,
+        IGoogleCalendarService? calendarService = null
     )
     {
         _jobInstanceRepository = jobInstanceRepository;
@@ -34,6 +35,7 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         _logger = logger;
         _hangfireService = hangfireService;
         _contractRepository = contractRepository;
+        _calendarService = calendarService;
     }
 
     public async Task GenerateFutureJobInstances()
@@ -92,6 +94,10 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
             _logger.LogInformation("💾 Saving {Count} new job instances...", jobInstances.Count);
             await _jobInstanceRepository.AddRangeAsync(jobInstances);
             _logger.LogInformation("🎉 Job instance generation complete!");
+
+            // Sync to Google Calendar (fire-and-forget)
+            if (_calendarService != null)
+                _ = Task.Run(() => _calendarService.SyncUpcomingInstancesAsync());
         }
         else
         {

@@ -7,4 +7,5 @@ public interface IJobInstanceJobs
     public void ScheduleDailyStatusUpdates();
     public void ScheduleDailyJobInstancePayments();
     public void RetryFailedInvoices();
+    public void SyncGoogleCalendar();
 }

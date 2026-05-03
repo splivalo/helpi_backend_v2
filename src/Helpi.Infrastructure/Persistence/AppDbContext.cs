@@ -99,6 +99,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     // Sponsors
     public DbSet<Sponsor> Sponsors { get; set; }
 
+    // Google Calendar
+    public DbSet<GoogleCalendarToken> GoogleCalendarTokens { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 

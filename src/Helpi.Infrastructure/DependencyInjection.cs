@@ -130,6 +130,9 @@ public static class DependencyInjection
         services.AddScoped<ISuspensionLogRepository, SuspensionLogRepository>();
         services.AddScoped<IChatRepository, ChatRepository>();
         services.AddScoped<AdminService>();
+
+        // Google Calendar
+        services.AddSingleton<IGoogleCalendarService, GoogleCalendarService>();
         /// NOTE TO SELF: Alternative Approach - Automatic Registration (For large number of repositories):
         //         var repositoryTypes = Assembly.GetAssembly(typeof(AppDbContext))!
         //     .GetTypes()

@@ -29,6 +29,7 @@ public class JobInstanceService : IJobInstanceService
         private readonly ILogger<JobInstanceService> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
+        private readonly IGoogleCalendarService? _calendarService;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
@@ -43,7 +44,8 @@ INotificationFactory notificationFactory,
 
 ICustomerRepository customerRepo,
 IUserRepository userRepository,
-IPricingConfigurationRepository pricingConfigRepo
+IPricingConfigurationRepository pricingConfigRepo,
+IGoogleCalendarService? calendarService = null
                 )
         {
                 _jobInstanceRepository = repository;
@@ -59,6 +61,7 @@ IPricingConfigurationRepository pricingConfigRepo
                 _customerRepo = customerRepo;
                 _userRepository = userRepository;
                 _pricingConfigRepo = pricingConfigRepo;
+                _calendarService = calendarService;
         }
 
 
@@ -630,6 +633,11 @@ IPricingConfigurationRepository pricingConfigRepo
                 originalInstance.RescheduledAt = DateTime.UtcNow;
 
                 await _jobInstanceRepository.UpdateAsync(originalInstance);
+
+                // Google Calendar: update event with new date/time
+                if (_calendarService != null && originalInstance.GoogleCalendarEventId != null)
+                        _ = Task.Run(() => _calendarService.TryUpdateEventAsync(originalInstance.Id));
+
                 await NotifyUsersJobInstanceRescheduled(previousJobState, originalInstance, notifyAssignedStudent: true);
                 await NotifyAdminsJobInstanceRescheduled(previousJobState, originalInstance);
 
@@ -720,6 +728,14 @@ IPricingConfigurationRepository pricingConfigRepo
                 originalInstance.RescheduledAt = DateTime.UtcNow;
                 await _jobInstanceRepository.UpdateAsync(originalInstance);
 
+                // Google Calendar: delete old event, create new one for rescheduled instance
+                if (_calendarService != null)
+                {
+                        if (!string.IsNullOrEmpty(originalInstance.GoogleCalendarEventId))
+                                _ = Task.Run(() => _calendarService.TryDeleteEventAsync(originalInstance.GoogleCalendarEventId));
+                        _ = Task.Run(() => _calendarService.TryCreateEventAndSaveAsync(rescheduledInstance.Id));
+                }
+
 
 
                 // Initiate reassignment with preferred student (if specified)
@@ -805,8 +821,9 @@ IPricingConfigurationRepository pricingConfigRepo
 
                         await _jobInstanceRepository.UpdateAsync(job);
 
-
-
+                        // Google Calendar: delete event if connected
+                        if (_calendarService != null && !string.IsNullOrEmpty(job.GoogleCalendarEventId))
+                                _ = Task.Run(() => _calendarService.TryDeleteEventAsync(job.GoogleCalendarEventId));
 
                         await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
 
