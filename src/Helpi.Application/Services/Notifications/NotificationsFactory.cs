@@ -300,6 +300,19 @@ public class NotificationFactory : INotificationFactory
             Payload = JsonSerializer.Serialize(new { studentId, contractId })
         };
     }
+    public HNotification StudentContractExpired(int studentId, int contractId, string culture)
+    {
+        return new HNotification
+        {
+            RecieverUserId = studentId,
+            TranslationKey = "Notifications.ContractExpired",
+            Title = _loc.GetString("Notifications.ContractExpired.Title", culture),
+            Body = _loc.GetString("Notifications.ContractExpired.Body", culture),
+            Type = NotificationType.ContractExpired,
+            StudentId = studentId,
+            Payload = JsonSerializer.Serialize(new { studentId, contractId })
+        };
+    }
     public HNotification ReviewRequestNotification(int recieverId, Review review, JobInstance jobInstance, string culture)
     {
         return new HNotification

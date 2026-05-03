@@ -36,6 +36,7 @@ namespace Helpi.Application.Common.Interfaces
         HNotification StudentContractAdded(int studentId, int contractId, string culture);
         HNotification StudentContractUpdated(int studentId, int contractId, string culture);
         HNotification StudentContractDeleted(int studentId, int contractId, string culture);
+        HNotification StudentContractExpired(int studentId, int contractId, string culture);
 
         HNotification ReviewRequestNotification(int recieverId, Review review, JobInstance jobInstance, string culture);
 

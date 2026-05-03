@@ -208,12 +208,17 @@ IUserRepository userRepository
         {
             student.Status = StudentStatus.Expired;
             // v2: NO automatic reassignment — admin manually reassigns via UI
-            // Admin already gets contract-expired notification below
             await _studentRepo.UpdateAsync(student);
-            // send initial expired notification (day 0)
+            // send initial expired notification to student (day 0)
             if (eval.DaysSinceExpiry == 0 || eval.DaysSinceExpiry == null)
             {
-                // Log expiration - admin sees expired status in UI, no notification spam needed
+                var lastContract = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
+                if (lastContract != null)
+                {
+                    var culture = student.Contact?.LanguageCode ?? "en";
+                    var notification = _notificationFactory.StudentContractExpired(student.UserId, lastContract.Id, culture);
+                    await _notificationService.StoreAndNotifyAsync(notification, viaFcm: true);
+                }
                 _logger.LogInformation("Student {StudentId} contract expired", student.UserId);
             }
             return;

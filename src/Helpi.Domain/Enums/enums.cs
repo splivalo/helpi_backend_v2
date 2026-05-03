@@ -197,7 +197,7 @@ namespace Helpi.Domain.Enums
         PaymentSuccess,
         PaymentFailed,
         PaymentRefunded,
-        JobRequest,
+        JobRequest, // v1 only — in v2 student receives AssignmentPending (type 33) via UI modal; this value is unused in v2 runtime
         JobStartReminder,
         JobInProgress,
         JobCompleted,
