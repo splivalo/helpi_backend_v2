@@ -36,9 +36,25 @@ public class ScheduleCancellationHandler
 
         if (!schedule.Assignments.Any())
         {
-            _jobRequestRepository.MarkForDeleteRange(schedule.JobRequests);
-            _scheduleRepository.MarkForsDelete(schedule);
-            _logger.LogDebug("Deleted schedule {ScheduleId} with no assignments", schedule.Id);
+            var now0 = DateOnly.FromDateTime(DateTime.UtcNow);
+            var futureJobs0 = await _jobInstanceRepository.GetFromDateForScheduleAsync(now0, schedule.Id);
+            var pendingJobs0 = futureJobs0.Where(j => j.Status != JobInstanceStatus.Completed).ToList();
+            foreach (var ji in pendingJobs0)
+                ji.Status = JobInstanceStatus.Cancelled;
+
+            // Mark schedule itself as cancelled (do not hard-delete — FK constraints may prevent it
+            // and IsCancelled=false is what causes the app to keep displaying 'Planirano' sessions)
+            schedule.IsCancelled = true;
+            schedule.CancellationReason = cancellationReason;
+            schedule.AllowAutoScheduling = false;
+            schedule.AutoScheduleDisableReason = AutoScheduleDisableReason.admin;
+
+            var unassignedJobRequests = schedule.JobRequests.Where(j => j.Status == JobRequestStatus.Pending);
+            foreach (var req in unassignedJobRequests)
+                req.Status = JobRequestStatus.Cancelled;
+
+            _logger.LogDebug("Cancelled {JobCount} job instances and schedule {ScheduleId} (no assignments)",
+                pendingJobs0.Count, schedule.Id);
             return;
         }
 

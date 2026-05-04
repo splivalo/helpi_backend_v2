@@ -490,7 +490,7 @@ public class OrdersService
                                         order: order,
                                         culture: order.Senior.Contact.LanguageCode ?? "hr");
 
-                        await _notificationService.SendNotificationAsync(recieverId, notification);
+                        await _notificationService.StoreAndNotifyAsync(notification);
                 }
                 catch (Exception ex)
                 {
@@ -528,9 +528,7 @@ public class OrdersService
                                         seniorId: order.SeniorId,
                                         culture: student.Contact.LanguageCode ?? "hr");
 
-                                await _notificationService.SendNotificationAsync(
-                                    student.UserId,
-                                    notification);
+                                await _notificationService.StoreAndNotifyAsync(notification);
                         }
                         catch (Exception ex)
                         {
