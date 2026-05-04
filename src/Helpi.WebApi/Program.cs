@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Hangfire;
 using Helpi.Application;
 using Helpi.Application.Interfaces;
 using Helpi.Application.Interfaces.Services;
@@ -237,6 +238,10 @@ using (var scope = app.Services.CreateScope())
     jobInstanceJobs.ScheduleDailyJobInstancePayments();
     jobInstanceJobs.RetryFailedInvoices();
     jobInstanceJobs.SyncGoogleCalendar();
+
+    // On startup, immediately run today's scheduling so sessions missed while
+    // the backend was offline (e.g. dev restarts mid-day) get processed right away.
+    BackgroundJob.Enqueue<IHangfireRecurringJobService>(s => s.ScheduleDailyJobInstanceStatusUpdates());
 }
 
 // ------------------------------------------------------------

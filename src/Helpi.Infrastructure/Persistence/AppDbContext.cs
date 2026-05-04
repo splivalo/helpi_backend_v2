@@ -6,26 +6,16 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
-using NetTopologySuite;
 using Npgsql;
 
 namespace Helpi.Infrastructure.Persistence;
 
 public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 {
-
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
-
     }
-
-
-    // public AppDbContext() { }
-
-    // Core Identity & Authentication
-    // public DbSet<User> Users { get; set; }
-    // public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<HNotification> HNotifications { get; set; }
     public DbSet<PricingConfiguration> PricingConfigurations { get; set; }
@@ -104,31 +94,16 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-
-        // Connection string
-
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
             .AddEnvironmentVariables()
             .Build();
 
-
-
         var connectionString = configuration.GetConnectionString("Default");
-
-
-        /// todo: remove 
-        // using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        // var logger = loggerFactory.CreateLogger("DbContext");
-        // logger.LogInformation($"🔥 DB connection -> {connectionString}");
-
-
-
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
         dataSourceBuilder.EnableDynamicJson();
-        // dataSourceBuilder.UseNetTopologySuite();
 
         var dataSource = dataSourceBuilder.Build();
 
@@ -136,257 +111,18 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             dataSource,
             o => o.UseNetTopologySuite()
         );
-
-
-
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
-
-
-
-
-        // // Configure entity mappings here
-        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        // base.OnModelCreating(modelBuilder);
-
         base.OnModelCreating(modelBuilder);
 
-        // Automatically make all int PKs value-generated
-        // foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        // {
-        //     var key = entityType.FindPrimaryKey();
-        //     if (key != null)
-        //     {
-        //         foreach (var property in key.Properties)
-        //         {
-        //             if (property.ClrType == typeof(int))
-        //             {
-        //                 property.ValueGenerated = ValueGenerated.OnAdd;
-        //             }
-        //         }
-        //     }
-        // }
-        /// ====
-
-
-
-        //     modelBuilder.Entity<ContactInfo>()
-        //    .Property(c => c.DateOfBirth)
-        //    .HasConversion(
-        //        v => v.ToUniversalTime(), // Convert to UTC before saving
-        //        v => DateTime.SpecifyKind(v, DateTimeKind.Utc) // Convert to UTC when reading
-        //    );
-
-
-
-        // Apply all entity configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // Spatial configuration for PostgreSQL
         modelBuilder.HasPostgresExtension("postgis");
 
-        modelBuilder.Entity<ServiceCategory>(entity =>
-        {
-            entity.Property(c => c.Translations)
-                       .HasColumnType("jsonb");
-        });
-
-
-
-
-        modelBuilder.Entity<Service>(entity =>
-          {
-              // Configure JSON conversion for Translations
-              entity.Property(e => e.Translations)
-                    .HasColumnType("jsonb");
-          });
-
-        // Configure composite primary key
-        modelBuilder.Entity<OrderService>().HasKey(os => new
-        {
-            os.OrderId,
-            os.ServiceId
-        });
-
-        modelBuilder.Entity<Order>(entity =>
-           {
-               entity.Property(o => o.Notes)
-                .HasMaxLength(1000)
-                .IsUnicode(true);
-           });
-
-
-
-
-        // fcm token
-        modelBuilder.Entity<FcmToken>()
-     .HasKey(t => new { t.UserId, t.Token });
-
-
-
-
-        modelBuilder.Entity<StudentAvailabilitySlot>()
-        .HasKey(s => new { s.StudentId, s.DayOfWeek });
-
-        modelBuilder.Entity<StudentAvailabilitySlot>()
-            .HasOne(s => s.Student)
-            .WithMany(st => st.AvailabilitySlots)
-            .HasForeignKey(s => s.StudentId);
-
-
-        modelBuilder.Entity<StudentService>()
-            .HasKey(ss => new { ss.StudentId, ss.ServiceId });
-
-        // Configure spatial index for Cities
-        modelBuilder.Entity<City>(entity =>
-           {
-               entity.HasIndex(c => c.GooglePlaceId).IsUnique();
-               //    entity.HasIndex(c => c.Bounds).HasMethod("GIST");
-               //    entity.Property(e => e.Bounds).HasColumnType("geometry (Polygon)");
-               //    entity.Property(c => c.Bounds).IsRequired(false);
-           });
-
-        // Configure JSON column for Senior special requirements
-        modelBuilder.Entity<Senior>()
-            .Property(s => s.SpecialRequirements)
-            .HasColumnType("jsonb");
-
-        modelBuilder.Entity<ServiceRegion>(entity =>
-            {
-                entity.HasIndex(sr => new { sr.CityId, sr.ServiceId }).IsUnique();
-            });
-
-        modelBuilder.Entity<JobInstance>(entity =>
-        {
-            entity.HasOne(j => j.ScheduleAssignment)          // JobInstance has one ScheduleAssignment
-              .WithMany(s => s.JobInstances)      // ScheduleAssignment has many JobInstances
-              .HasForeignKey(j => j.ScheduleAssignmentId); // Foreign key
-
-            entity.Property(p => p.HourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.StudentHourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
-            entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
-
-            entity.Property(j => j.Notes)
-            .HasMaxLength(1000)
-            .IsUnicode(true);
-
-            entity.HasOne(j => j.PaymentTransaction)
-                    .WithOne(p => p.JobInstance)
-                    .HasForeignKey<PaymentTransaction>(p => p.JobInstanceId)
-                    .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<PricingConfiguration>(entity =>
-        {
-            entity.Property(p => p.JobHourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.SundayHourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.StudentHourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.StudentSundayHourlyRate).HasColumnType("decimal(18,2)");
-            entity.Property(p => p.CompanyPercentage).HasColumnType("decimal(5,2)");
-            entity.Property(p => p.ServiceProviderPercentage).HasColumnType("decimal(5,2)");
-            entity.Property(p => p.VatPercentage).HasColumnType("decimal(5,2)");
-            entity.Property(p => p.IntermediaryPercentage).HasColumnType("decimal(5,2)");
-        });
-
-        // Sponsor system
-        modelBuilder.Entity<Sponsor>(entity =>
-        {
-            entity.Property(s => s.Name).HasMaxLength(200);
-            entity.Property(s => s.LogoUrl).HasMaxLength(2000);
-            entity.Property(s => s.DarkLogoUrl).HasMaxLength(2000);
-            entity.Property(s => s.LinkUrl).HasMaxLength(2000);
-            entity.Property(s => s.Label).HasColumnType("jsonb");
-        });
-
-        // Coupon system
-        modelBuilder.Entity<Coupon>(entity =>
-        {
-            entity.HasIndex(c => c.Code).IsUnique();
-            entity.Property(c => c.Code).HasMaxLength(50);
-            entity.Property(c => c.Name).HasMaxLength(200);
-            entity.Property(c => c.Description).HasMaxLength(500);
-            entity.Property(c => c.Value).HasColumnType("decimal(18,2)");
-
-            entity.HasOne(c => c.City)
-                .WithMany()
-                .HasForeignKey(c => c.CityId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<CouponAssignment>(entity =>
-        {
-            entity.Property(a => a.RemainingValue).HasColumnType("decimal(18,2)");
-
-            entity.HasOne(a => a.Coupon)
-                .WithMany(c => c.Assignments)
-                .HasForeignKey(a => a.CouponId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(a => a.Senior)
-                .WithMany()
-                .HasForeignKey(a => a.SeniorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasOne(a => a.AssignedByAdmin)
-                .WithMany()
-                .HasForeignKey(a => a.AssignedByAdminId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<CouponUsage>(entity =>
-        {
-            entity.Property(u => u.CoveredAmount).HasColumnType("decimal(18,2)");
-            entity.Property(u => u.CoveredHours).HasColumnType("decimal(18,2)");
-
-            entity.HasOne(u => u.CouponAssignment)
-                .WithMany(a => a.Usages)
-                .HasForeignKey(u => u.CouponAssignmentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(u => u.JobInstance)
-                .WithMany()
-                .HasForeignKey(u => u.JobInstanceId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-
-
-
-        // modelBuilder.Entity<User>()
-        //           .HasOne(u => u.Customer)
-        //           .WithOne(c => c.User)
-        //           .HasForeignKey<Customer>(c => c.Id)
-        //           .OnDelete(DeleteBehavior.Cascade);
-
-        // modelBuilder.Entity<User>()
-        // .HasOne(s => s.Student)
-        // .WithOne(s => s.User)
-        // .HasForeignKey<Student>(s => s.Id)
-        // .OnDelete(DeleteBehavior.Cascade);
-
-        // SuspensionLog — two FKs to User, restrict to avoid cascade cycles
-        modelBuilder.Entity<SuspensionLog>(entity =>
-        {
-            entity.HasOne(s => s.User)
-                .WithMany(u => u.SuspensionLogs)
-                .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasOne(s => s.AdminUser)
-                .WithMany()
-                .HasForeignKey(s => s.AdminId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        /// Indexing
         modelBuilder.AddCustomIndexes();
     }
-
-
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

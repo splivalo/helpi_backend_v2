@@ -247,16 +247,26 @@ public class HangfireRecurringJobService : IHangfireRecurringJobService
         {
 
 
+            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
+            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
+
+            if (instance.Status == JobInstanceStatus.InProgress && DateTime.UtcNow >= endTime)
+            {
+                // Stale InProgress: end time has passed but completion never fired (e.g. backend was offline).
+                // Re-schedule completion immediately.
+                _logger.LogInformation("⚡[Stale] Job #{id} is InProgress past end time — re-scheduling completion.", instance.Id);
+                instance.HangFireEndStatusJobId = _hangfireService.Schedule<IJobInstanceService>(
+                    s => s.UpdateToCompletedAsync(instance.Id),
+                    DateTimeOffset.UtcNow
+                );
+                continue;
+            }
+
             if (instance.Status != JobInstanceStatus.Upcoming)
             {
                 _logger.LogInformation("🚫[Skip] Job #{id} -> status {status} != Upcoming", instance.Id, instance.Status);
                 continue;
             }
-
-
-
-            var startTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.StartTime);
-            var endTime = DateTimeUtils.ToUtc(instance.ScheduledDate, instance.EndTime);
 
 
             _logger.LogDebug("⏳ Scheduling JobInstance #{Id}: ▶️ InProgress at {StartTime}, ✅ Completed at {EndTime}.",

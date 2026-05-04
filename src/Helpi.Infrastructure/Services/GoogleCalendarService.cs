@@ -454,8 +454,8 @@ public class GoogleCalendarService : IGoogleCalendarService
             Summary = seniorName,
             Description = description,
             Location = seniorAddress,
-            Start = new EventDateTime { DateTime = startDt, TimeZone = "Europe/Zagreb" },
-            End = new EventDateTime { DateTime = endDt, TimeZone = "Europe/Zagreb" }
+            Start = new EventDateTime { DateTimeDateTimeOffset = startDt, TimeZone = "Europe/Zagreb" },
+            End = new EventDateTime { DateTimeDateTimeOffset = endDt, TimeZone = "Europe/Zagreb" }
         };
     }
 

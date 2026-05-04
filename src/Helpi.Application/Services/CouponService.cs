@@ -211,8 +211,12 @@ public class CouponService : ICouponService
         foreach (var a in assignments)
         {
             var coupon = await _repo.GetByIdAsync(a.CouponId);
-            if (coupon != null)
-                dtos.Add(MapAssignmentDto(a, coupon));
+            if (coupon == null) continue;
+            var dto = MapAssignmentDto(a, coupon);
+            // For periodic coupons, compute the actual remaining for the current period
+            if (coupon.Type == CouponType.MonthlyHours || coupon.Type == CouponType.WeeklyHours)
+                dto.RemainingValue = await GetAvailableHoursAsync(a, coupon);
+            dtos.Add(dto);
         }
         return dtos;
     }
@@ -338,17 +342,21 @@ public class CouponService : ICouponService
             };
             await _repo.AddUsageAsync(usage);
 
-            // Update RemainingValue for one_time_hours
+            // Update RemainingValue only for one_time_hours — monthly/weekly reset per period
             var assignment = await _repo.GetAssignmentByIdAsync(detail.CouponAssignmentId);
-            if (assignment != null && detail.CoveredHours.HasValue && assignment.RemainingValue.HasValue)
+            if (assignment != null && detail.CoveredHours.HasValue)
             {
-                assignment.RemainingValue -= detail.CoveredHours.Value;
-                if (assignment.RemainingValue <= 0)
+                var coupon = await _repo.GetByIdAsync(assignment.CouponId);
+                if (coupon?.Type == CouponType.OneTimeHours && assignment.RemainingValue.HasValue)
                 {
-                    assignment.RemainingValue = 0;
-                    assignment.IsActive = false;
+                    assignment.RemainingValue -= detail.CoveredHours.Value;
+                    if (assignment.RemainingValue <= 0)
+                    {
+                        assignment.RemainingValue = 0;
+                        assignment.IsActive = false;
+                    }
+                    await _repo.UpdateAssignmentAsync(assignment);
                 }
-                await _repo.UpdateAssignmentAsync(assignment);
             }
         }
     }

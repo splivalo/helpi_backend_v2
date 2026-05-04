@@ -30,6 +30,7 @@ public class JobInstanceService : IJobInstanceService
         private readonly IUserRepository _userRepository;
         private readonly IPricingConfigurationRepository _pricingConfigRepo;
         private readonly IGoogleCalendarService? _calendarService;
+        private readonly ICouponService _couponService;
         public JobInstanceService(
                 IJobInstanceRepository repository,
                 IMapper mapper,
@@ -45,6 +46,7 @@ INotificationFactory notificationFactory,
 ICustomerRepository customerRepo,
 IUserRepository userRepository,
 IPricingConfigurationRepository pricingConfigRepo,
+ICouponService couponService,
 IGoogleCalendarService? calendarService = null
                 )
         {
@@ -61,6 +63,7 @@ IGoogleCalendarService? calendarService = null
                 _customerRepo = customerRepo;
                 _userRepository = userRepository;
                 _pricingConfigRepo = pricingConfigRepo;
+                _couponService = couponService;
                 _calendarService = calendarService;
         }
 
@@ -163,10 +166,21 @@ IGoogleCalendarService? calendarService = null
                                 return;
                         }
 
+                        if (instance.Status == JobInstanceStatus.Completed)
+                                return; // already done
+
                         if (instance.Status != JobInstanceStatus.InProgress)
                         {
-                                LogJobInstanceNotInProgress(jobInstanceId, instance.Status);
-                                return;
+                                // Race condition: Hangfire may fire UpdateToCompleted before UpdateToInProgress
+                                // when both are past-due (e.g. backend was offline). If end time has passed,
+                                // proceed directly — don't require InProgress as intermediate state.
+                                var endUtc = instance.ScheduledDate.ToDateTime(instance.EndTime, DateTimeKind.Utc);
+                                if (DateTime.UtcNow < endUtc)
+                                {
+                                        LogJobInstanceNotInProgress(jobInstanceId, instance.Status);
+                                        return;
+                                }
+                                _logger.LogInformation("⚡ JobInstance {Id} was {Status} but end time has passed — completing directly.", jobInstanceId, instance.Status);
                         }
 
                         if (instance.ScheduleAssignmentId == null)
@@ -193,11 +207,11 @@ IGoogleCalendarService? calendarService = null
                         if (studentActiveContract == null)
                         {
                                 LogStudentNoActiveContract(assignment.Student.UserId, jobInstanceId);
-                                return;
+                                // Log but continue — contract recording is optional, job must still complete
                         }
 
                         // Apply completion updates
-                        instance.ContractId = studentActiveContract.Id;
+                        instance.ContractId = studentActiveContract?.Id;
                         instance.Status = JobInstanceStatus.Completed;
 
                         await _jobInstanceRepository.UpdateAsync(instance);
@@ -263,6 +277,23 @@ IGoogleCalendarService? calendarService = null
                             reviewRequestTime
                         );
                         LogReviewScheduled(jobInstanceId, reviewRequestTime);
+
+                        // Record coupon usage so remaining hours are correctly tracked
+                        try
+                        {
+                                var coverage = await _couponService.CalculateCoverageAsync(
+                                    instance.SeniorId,
+                                    instance.DurationHours,
+                                    instance.TotalAmount,
+                                    instance.HourlyRate,
+                                    cityId: null);
+                                if (coverage.UsedCoupons.Any())
+                                        await _couponService.RecordUsageAsync(instance.SeniorId, jobInstanceId, coverage);
+                        }
+                        catch (Exception couponEx)
+                        {
+                                _logger.LogError(couponEx, "⚠️ Failed to record coupon usage for JobInstance {JobInstanceId}", jobInstanceId);
+                        }
                 }
                 catch (Exception ex)
                 {
@@ -367,6 +398,23 @@ IGoogleCalendarService? calendarService = null
                 await _jobInstanceRepository.UpdateAsync(instance);
 
                 await _statusMaintenanceService.MaintainOrderStatuses(instance.OrderId);
+
+                // Record coupon usage so remaining hours are correctly tracked
+                try
+                {
+                        var coverage = await _couponService.CalculateCoverageAsync(
+                            instance.SeniorId,
+                            instance.DurationHours,
+                            instance.TotalAmount,
+                            instance.HourlyRate,
+                            cityId: null);
+                        if (coverage.UsedCoupons.Any())
+                                await _couponService.RecordUsageAsync(instance.SeniorId, jobInstanceId, coverage);
+                }
+                catch (Exception couponEx)
+                {
+                        _logger.LogError(couponEx, "⚠️ Failed to record coupon usage for JobInstance {JobInstanceId}", jobInstanceId);
+                }
 
                 // Create pending reviews (same logic as UpdateToCompletedAsync)
                 var studentId = instance.ScheduleAssignment!.StudentId;
