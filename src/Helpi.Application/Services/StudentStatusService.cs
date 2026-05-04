@@ -232,36 +232,9 @@ IUserRepository userRepository
         //     if (last != null) await SendContractExpiredNotification(student, last);
         // }
 
-        // lifecycle actions at 90 and 180 days
-        const int ThreeMonthsInDays = 90;
-        const int SixMonthsInDays = 180;
-        const int SevenDaysBeforeSixMonths = SixMonthsInDays - 7; // 173
-
-        switch (daysSinceExpiry)
-        {
-            case SevenDaysBeforeSixMonths:
-                var lc = student.Contracts.OrderByDescending(c => c.ExpirationDate).FirstOrDefault();
-                if (lc != null) await SendFinalAccountDeletionWarningEmail(student, lc);
-                break;
-            case ThreeMonthsInDays:
-                await _studentService.SoftDeleteStudent(student.UserId);
-                break;
-            case SixMonthsInDays:
-                await _studentService.PermanentlyDeleteStudent(student.UserId);
-                break;
-            default:
-                if (daysSinceExpiry < ThreeMonthsInDays)
-                {
-                    _logger.LogInformation("Student {StudentId} expired {Days} days ago - within grace period",
-                        student.UserId, daysSinceExpiry);
-                }
-                else if (daysSinceExpiry < SixMonthsInDays)
-                {
-                    _logger.LogInformation("Student {StudentId} soft-deleted, {Days} days until permanent deletion",
-                        student.UserId, SixMonthsInDays - daysSinceExpiry);
-                }
-                break;
-        }
+        // Automatic deletion is disabled — admin manages student lifecycle manually.
+        _logger.LogInformation("Student {StudentId} has been expired for {Days} days — no automatic action taken",
+            student.UserId, daysSinceExpiry);
     }
 
     private async Task HandleContractRenewalReminder(Student student, StudentContract contract)
