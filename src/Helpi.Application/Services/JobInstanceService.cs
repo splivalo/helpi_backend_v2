@@ -873,6 +873,10 @@ IGoogleCalendarService? calendarService = null
                         // the next reactivate sees a clean slate. This also makes the student's
                         // pending-acceptance modal disappear immediately.
                         int? revokedStudentUserId = null;
+                        // Only skip "Termin otkazan" for the student when the sub was still
+                        // PendingAcceptance — if they already accepted, they need the full
+                        // cancellation notification (AssignmentRevoked alone is not enough).
+                        bool revokedWasPending = false;
                         if (job.ScheduleAssignmentId.HasValue)
                         {
                                 var subAssignment = await _assignmentRepository.LoadAssignmentWithIncludes(
@@ -884,7 +888,8 @@ IGoogleCalendarService? calendarService = null
                                         || subAssignment.Status == AssignmentStatus.Accepted))
                                 {
                                         revokedStudentUserId = subAssignment.Student?.UserId;
-                                        subAssignment.Status = subAssignment.Status == AssignmentStatus.PendingAcceptance
+                                        revokedWasPending = subAssignment.Status == AssignmentStatus.PendingAcceptance;
+                                        subAssignment.Status = revokedWasPending
                                             ? AssignmentStatus.Declined
                                             : AssignmentStatus.Terminated;
                                         subAssignment.TerminationReason = TerminationReason.AdminIntervention;
@@ -937,7 +942,11 @@ IGoogleCalendarService? calendarService = null
 
                         await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
 
-                        await NotifyUsersJobInstanceCancelled(job, skipStudentNotification: revokedStudentUserId.HasValue);
+                        // Skip the generic "Termin otkazan" for the student only when the
+                        // sub-assignment was still pending — they already got AssignmentRevoked
+                        // above to dismiss the modal, which is sufficient feedback.
+                        // If the student had already accepted, they need the full notification.
+                        await NotifyUsersJobInstanceCancelled(job, skipStudentNotification: revokedWasPending);
                         await NotifyAdminsJobInstanceCancelled(job);
 
                         return _mapper.Map<SessionDto>(job);
