@@ -35,6 +35,19 @@ public interface IJobInstanceService
     Task<SessionDto?> ReactivateJobInstance(int jobInstanceId);
 
     /// <summary>
+    /// Atomically reactivates a cancelled session and — optionally — updates
+    /// its date/time in-place and/or assigns a new student (PendingAcceptance).
+    /// Replaces the two-call (reactivate → manage) pattern that created orphaned
+    /// "Rescheduled" sessions when both date and student changed together.
+    /// </summary>
+    Task<SessionDto?> ReactivateAndManageJobInstance(
+        int jobInstanceId,
+        DateOnly? newDate,
+        TimeOnly? newStartTime,
+        TimeOnly? newEndTime,
+        int? preferredStudentId);
+
+    /// <summary>
     /// Stamp CanCancel on each SessionDto based on caller role and PricingConfiguration cutoffs.
     /// </summary>
     Task StampCanCancelAsync(IEnumerable<SessionDto> sessions, string callerRole);

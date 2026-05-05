@@ -867,6 +867,20 @@ IGoogleCalendarService? calendarService = null
 
                         job.Status = JobInstanceStatus.Cancelled;
 
+                        // If this session had a PendingAcceptance IsJobInstanceSub assignment,
+                        // decline it so the student's acceptance modal disappears immediately.
+                        if (job.ScheduleAssignmentId.HasValue)
+                        {
+                                var assignment = await _assignmentRepository.GetByIdAsync(job.ScheduleAssignmentId.Value);
+                                if (assignment != null
+                                    && assignment.IsJobInstanceSub
+                                    && assignment.Status == AssignmentStatus.PendingAcceptance)
+                                {
+                                        assignment.Status = AssignmentStatus.Declined;
+                                        await _assignmentRepository.UpdateAsync(assignment);
+                                }
+                        }
+
                         await _jobInstanceRepository.UpdateAsync(job);
 
                         // Google Calendar: delete event if connected
@@ -948,6 +962,199 @@ IGoogleCalendarService? calendarService = null
                 {
                         _logger.LogError("❌ [failed] Reactivate JobInstance {jobInstanceId}. {error}", jobInstanceId, ex);
                         return null;
+                }
+        }
+
+        /// <summary>
+        /// Atomically reactivates a cancelled session and — optionally — updates its
+        /// date/time in-place and/or assigns a new student (PendingAcceptance).
+        ///
+        /// Unlike the old two-call flow (reactivate → manage), this method never creates
+        /// a sibling "Rescheduled" session.  Date/time updates are always in-place; a new
+        /// student gets a PendingAcceptance assignment + AssignmentPending notification.
+        /// </summary>
+        public async Task<SessionDto?> ReactivateAndManageJobInstance(
+            int jobInstanceId,
+            DateOnly? newDate,
+            TimeOnly? newStartTime,
+            TimeOnly? newEndTime,
+            int? preferredStudentId)
+        {
+                try
+                {
+                        var job = await _jobInstanceRepository.GetByIdAsync(jobInstanceId);
+
+                        if (job == null)
+                                throw new ArgumentException($"Job instance {jobInstanceId} not found");
+
+                        // Upcoming = already active (stale UI state) — return as-is silently
+                        if (job.Status == JobInstanceStatus.Upcoming)
+                                return _mapper.Map<SessionDto>(job);
+
+                        // Rescheduled is shown as "Otkazan" in UI — cancel any leftover sibling first
+                        if (job.Status == JobInstanceStatus.Rescheduled)
+                        {
+                                if (job.RescheduledToId.HasValue)
+                                {
+                                        var sibling = await _jobInstanceRepository.GetByIdAsync(job.RescheduledToId.Value);
+                                        if (sibling != null && sibling.Status == JobInstanceStatus.Upcoming)
+                                        {
+                                                sibling.Status = JobInstanceStatus.Cancelled;
+                                                sibling.NeedsSubstitute = true;
+                                                await _jobInstanceRepository.UpdateAsync(sibling);
+                                        }
+                                }
+                                job.RescheduledToId = null;
+                                job.RescheduledAt = null;
+                                job.NeedsSubstitute = false;
+                                // fall through to reactivation logic below
+                        }
+                        else if (job.Status != JobInstanceStatus.Cancelled)
+                        {
+                                throw new ArgumentException(
+                                    $"Cannot reactivate job instance {jobInstanceId}: status is {job.Status}");
+                        }
+
+                        // ── 1. Compute effective date/time ───────────────────────────────────────
+                        DateOnly effectiveDate = newDate ?? job.ScheduledDate;
+                        TimeOnly effectiveStartTime = newStartTime ?? job.StartTime;
+                        TimeOnly effectiveEndTime = newEndTime ?? job.EndTime;
+
+                        // ── 2. Senior conflict check for new slot ────────────────────────────────
+                        if (newDate.HasValue || newStartTime.HasValue || newEndTime.HasValue)
+                        {
+                                var sessionsOnDate = await _jobInstanceRepository.GetByDateAsync(effectiveDate);
+                                var seniorConflict = sessionsOnDate.Any(j =>
+                                    j.Id != jobInstanceId
+                                    && j.SeniorId == job.SeniorId
+                                    && j.Status != JobInstanceStatus.Cancelled
+                                    && j.Status != JobInstanceStatus.Rescheduled
+                                    && j.StartTime < effectiveEndTime
+                                    && j.EndTime > effectiveStartTime);
+
+                                if (seniorConflict)
+                                        throw new InvalidOperationException(
+                                            $"Senior already has another session on {effectiveDate} that overlaps with {effectiveStartTime}-{effectiveEndTime}.");
+                        }
+
+                        // ── 3. Reactivate + update date/time in-place ────────────────────────────
+                        job.Status = JobInstanceStatus.Upcoming;
+                        job.ScheduledDate = effectiveDate;
+                        job.StartTime = effectiveStartTime;
+                        job.EndTime = effectiveEndTime;
+
+                        // ── 4. Handle student assignment ─────────────────────────────────────────
+                        // We ALWAYS create a new per-session (IsJobInstanceSub) PendingAcceptance
+                        // assignment for this one restored session.
+                        //
+                        // We must NEVER mutate the shared ScheduleAssignment because all other
+                        // sessions in the recurring series point to the same record — changing its
+                        // status to PendingAcceptance would incorrectly flag every one of them.
+                        bool studentChanged = preferredStudentId.HasValue
+                            && preferredStudentId.Value != job.ScheduleAssignment?.StudentId;
+
+                        // Determine which student gets the restored session
+                        int? targetStudentId = studentChanged
+                            ? preferredStudentId!.Value
+                            : job.ScheduleAssignment?.StudentId;
+
+                        int? notifyAssignmentId = null;
+
+                        if (targetStudentId.HasValue)
+                        {
+                                int? prevAssignmentId = job.ScheduleAssignmentId;
+
+                                // Detach the shared assignment from this session.
+                                // The shared assignment itself is NOT modified — other sessions keep it.
+                                job.ScheduleAssignmentId = null;
+                                job.PrevAssignmentId = prevAssignmentId;
+                                job.NeedsSubstitute = false;
+
+                                // Create a new per-session PendingAcceptance assignment.
+                                var newAssignment = new ScheduleAssignment
+                                {
+                                        OrderScheduleId = job.OrderScheduleId,
+                                        OrderId = job.OrderId,
+                                        StudentId = targetStudentId.Value,
+                                        Status = AssignmentStatus.PendingAcceptance,
+                                        IsJobInstanceSub = true,
+                                        PrevAssignmentId = prevAssignmentId,
+                                        AssignedAt = DateTime.UtcNow,
+                                };
+
+                                await _assignmentRepository.AddAsync(newAssignment);
+                                job.ScheduleAssignmentId = newAssignment.Id;
+                                notifyAssignmentId = newAssignment.Id;
+                        }
+
+                        // Notify the assigned student via FCM push only.
+                        // No stored in-app notification — the app shows an acceptance modal
+                        // automatically via pendingAssignmentsProvider when the student opens it.
+                        if (notifyAssignmentId.HasValue)
+                        {
+                                try
+                                {
+                                        var assignment = await _assignmentRepository.LoadAssignmentWithIncludes(
+                                            notifyAssignmentId.Value,
+                                            new AssignmentIncludeOptions { IncludeStudent = true });
+
+                                        if (assignment?.Student != null)
+                                        {
+                                                var studentUserId = assignment.Student.UserId;
+                                                var studentCulture = assignment.Student.Contact?.LanguageCode ?? "hr";
+                                                var isHr = string.Equals(studentCulture, "hr", StringComparison.OrdinalIgnoreCase);
+                                                await _notificationService.StoreAndNotifyAsync(
+                                                    new HNotification
+                                                    {
+                                                            RecieverUserId = studentUserId,
+                                                            Title = isHr ? "Novi termin" : "New session",
+                                                            Body = isHr
+                                                                ? "Dodijeljen vam je termin koji čeka vaše prihvaćanje."
+                                                                : "A session has been assigned to you and is awaiting acceptance.",
+                                                            Type = NotificationType.AssignmentPending,
+                                                            CreatedAt = DateTime.UtcNow,
+                                                            OrderId = job.OrderId,
+                                                            SeniorId = job.SeniorId,
+                                                    },
+                                                    viaSignalR: true,
+                                                    viaFcm: true);
+                                        }
+                                }
+                                catch (Exception notifyEx)
+                                {
+                                        _logger.LogError(notifyEx,
+                                            "⚠️ Failed to push-notify student for reactivated session {JobInstanceId}",
+                                            jobInstanceId);
+                                }
+                        }
+
+                        await _jobInstanceRepository.UpdateAsync(job);
+
+                        // Google Calendar: create/update event
+                        if (_calendarService != null)
+                        {
+                                if (job.GoogleCalendarEventId != null)
+                                        _ = Task.Run(() => _calendarService.TryUpdateEventAsync(job.Id));
+                                else
+                                        _ = Task.Run(() => _calendarService.TryCreateEventAndSaveAsync(job.Id));
+                        }
+
+                        await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId, skipJobInstanceUpdate: true);
+
+                        // Do NOT notify senior here — the session is pending student acceptance.
+                        // Senior will be notified in AcceptAssignmentAsync once the student confirms.
+
+                        _logger.LogInformation(
+                            "✅ ReactivateAndManage JobInstance {Id}: date={Date} {Start}-{End}, studentChanged={StudentChanged}",
+                            jobInstanceId, effectiveDate, effectiveStartTime, effectiveEndTime, studentChanged);
+
+                        return _mapper.Map<SessionDto>(job);
+                }
+                catch (Exception ex)
+                {
+                        _logger.LogError(ex,
+                            "❌ [failed] ReactivateAndManage JobInstance {jobInstanceId}", jobInstanceId);
+                        throw;
                 }
         }
 

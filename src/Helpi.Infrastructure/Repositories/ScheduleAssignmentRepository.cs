@@ -332,8 +332,14 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                         .ThenInclude(os => os.Order)
                             .ThenInclude(o => o.Senior)
                                 .ThenInclude(s => s.Contact)
+                    .Include(sa => sa.JobInstances)
                     .Where(sa => sa.Status == AssignmentStatus.PendingAcceptance)
-                    .Where(sa => sa.OrderSchedule.Order.Status == OrderStatus.Pending)
+                    .Where(sa =>
+                        // Regular assignment: order still awaiting full assignment
+                        (!sa.IsJobInstanceSub && sa.OrderSchedule.Order.Status == OrderStatus.Pending)
+                        ||
+                        // Per-session (reactivated) assignment: always show regardless of order status
+                        sa.IsJobInstanceSub)
                     .OrderBy(sa => sa.AssignedAt)
                     .AsNoTracking()
                     .AsSplitQuery()

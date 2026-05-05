@@ -195,7 +195,8 @@ public class StudentRepository : IStudentRepository
             requiredServiceIds: serviceIds,
             notifiedStudentIds: null,
             preferedStudentId: preferedStudentId,
-            excludeJobInstanceIds: excludeJobInstanceIds ?? new List<int> { }
+            excludeJobInstanceIds: excludeJobInstanceIds ?? new List<int> { },
+            excludeOrderId: orderId
         );
     }
 
@@ -209,7 +210,8 @@ public class StudentRepository : IStudentRepository
     List<int>? notifiedStudentIds,
     int? preferedStudentId,
     int? seniorId,
-    List<int> excludeJobInstanceIds
+    List<int> excludeJobInstanceIds,
+    int? excludeOrderId = null
 )
     {
         bool isDateRange = startDate != endDate;
@@ -251,11 +253,13 @@ public class StudentRepository : IStudentRepository
 
         // ✅ Conflict detection 1: Check generated JobInstances with travel buffer
         // Only consider assignments on active orders (not Completed/Cancelled)
+        // Exclude assignments for the same order we're searching for (student already assigned there)
         query = query.Where(s =>
             !s.ScheduleAssignments
                 .Where(sa => sa.Status == AssignmentStatus.Accepted
                     && sa.OrderSchedule.Order.Status != OrderStatus.Completed
-                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled)
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled
+                    && (excludeOrderId == null || sa.OrderId != excludeOrderId))
                 .SelectMany(sa => sa.JobInstances)
                 .Any(j =>
                     (
@@ -277,11 +281,13 @@ public class StudentRepository : IStudentRepository
         // ✅ Conflict detection 2: Check recurring OrderSchedule patterns
         // Catches conflicts even when JobInstances haven't been generated yet
         // Only consider assignments whose parent Order is still active (Pending/FullAssigned)
+        // Exclude the same order — student already belongs to it, shouldn't self-block
         query = query.Where(s =>
             !s.ScheduleAssignments
                 .Where(sa => sa.Status == AssignmentStatus.Accepted
                     && sa.OrderSchedule.Order.Status != OrderStatus.Completed
-                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled)
+                    && sa.OrderSchedule.Order.Status != OrderStatus.Cancelled
+                    && (excludeOrderId == null || sa.OrderId != excludeOrderId))
                 .Any(sa =>
                     sa.OrderSchedule.DayOfWeek == isoTargetDay
                     && sa.OrderSchedule.StartTime < bufferedEnd

@@ -448,7 +448,34 @@ public class ScheduleAssignmentService
                                 CreatedAt = DateTime.UtcNow,
                                 SeniorId = updatedOrder.SeniorId,
                                 OrderId = updatedOrder.Id,
-                        });
+                        }, viaSignalR: true, viaFcm: true);
+                }
+
+                // For single-session (IsJobInstanceSub) reactivated assignments, additionally
+                // notify the senior that their specific session is now confirmed.
+                if (assignment.IsJobInstanceSub && existingJobs.Any())
+                {
+                        var job = existingJobs.First();
+                        var senior = job.Senior;
+                        if (senior != null)
+                        {
+                                var seniorCulture = senior.Contact?.LanguageCode ?? "hr";
+                                var isHr = string.Equals(seniorCulture, "hr", StringComparison.OrdinalIgnoreCase);
+                                var sessionDate = job.ScheduledDate.ToString("dd.MM.yyyy");
+                                await _notificationService.StoreAndNotifyAsync(new HNotification
+                                {
+                                        RecieverUserId = senior.CustomerId,
+                                        Title = isHr ? "Termin potvrđen" : "Session confirmed",
+                                        Body = isHr
+                                            ? $"Student {student.Contact?.FullName ?? "—"} je prihvatio vaš termin {sessionDate}."
+                                            : $"Student {student.Contact?.FullName ?? "—"} accepted your session on {sessionDate}.",
+                                        TranslationKey = "Notifications.AssignmentAccepted",
+                                        Type = NotificationType.AssignmentAccepted,
+                                        CreatedAt = DateTime.UtcNow,
+                                        SeniorId = job.SeniorId,
+                                        OrderId = job.OrderId,
+                                }, viaSignalR: true, viaFcm: true);
+                        }
                 }
 
                 _logger.LogInformation("Student {StudentId} accepted assignment {AssignmentId}", assignment.StudentId, assignmentId);
@@ -604,6 +631,10 @@ public class ScheduleAssignmentService
                         a.OrderId,
                         a.OrderScheduleId,
                         a.AssignedAt,
+                        a.IsJobInstanceSub,
+                        JobInstanceId = a.IsJobInstanceSub
+                            ? a.JobInstances.FirstOrDefault()?.Id
+                            : (int?)null,
                         MinutesPending = (int)(DateTime.UtcNow - a.AssignedAt).TotalMinutes,
                         StudentName = a.Student?.Contact?.FullName ?? "—",
                         StudentId = a.StudentId,

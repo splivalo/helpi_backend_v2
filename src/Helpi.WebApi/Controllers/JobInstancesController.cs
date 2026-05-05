@@ -168,6 +168,44 @@ public class SessionsController : ControllerBase
         }
 
         /// <summary>
+        /// Atomically reactivates a cancelled session with optional in-place date/time update
+        /// and/or student change (creates PendingAcceptance assignment + notifies student).
+        /// Use this instead of the two-call pattern (reactivate → manage).
+        /// </summary>
+        [HttpPost("{jobInstanceId}/reactivate-manage")]
+        public async Task<ActionResult<SessionDto>> ReactivateAndManageJobInstance(
+            int jobInstanceId,
+            [FromBody] ReactivateAndManageRequestDto request)
+        {
+                try
+                {
+                        var result = await _jobInstanceService.ReactivateAndManageJobInstance(
+                            jobInstanceId,
+                            request.NewDate,
+                            request.NewStartTime,
+                            request.NewEndTime,
+                            request.PreferredStudentId);
+
+                        if (result == null)
+                                return BadRequest(new { message = "Failed to reactivate session." });
+
+                        return Ok(result);
+                }
+                catch (ArgumentException ex)
+                {
+                        return BadRequest(new { message = ex.Message });
+                }
+                catch (InvalidOperationException ex)
+                {
+                        return BadRequest(new { message = ex.Message });
+                }
+                catch (Exception ex)
+                {
+                        return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+                }
+        }
+
+        /// <summary>
         /// Ensure a session is completed (idempotent). Used when frontend detects
         /// session time has passed but Hangfire hasn't completed it yet.
         /// Creates pending reviews if they don't exist.
