@@ -1265,15 +1265,17 @@ IGoogleCalendarService? calendarService = null
                         {
                                 try
                                 {
-                                        await _notificationService.StoreAndNotifyAsync(new HNotification
-                                        {
-                                                RecieverUserId = studentUserId.Value,
-                                                Title = "Dodjela poništena",
-                                                Body = "Admin je promijenio dodjelu termina.",
-                                                TranslationKey = "Notifications.AssignmentRevoked",
-                                                Type = NotificationType.AssignmentRevoked,
-                                                CreatedAt = DateTime.UtcNow,
-                                        }, viaSignalR: true, viaFcm: true);
+                                        await _notificationService.SendNotificationAsync(
+                                            studentUserId.Value,
+                                            new HNotification
+                                            {
+                                                    RecieverUserId = studentUserId.Value,
+                                                    Title = "Dodjela poništena",
+                                                    Body = "Admin je promijenio dodjelu termina.",
+                                                    TranslationKey = "Notifications.AssignmentRevoked",
+                                                    Type = NotificationType.AssignmentRevoked,
+                                                    CreatedAt = DateTime.UtcNow,
+                                            }, viaSignalR: true, viaFcm: true);
                                 }
                                 catch (Exception ex)
                                 {
