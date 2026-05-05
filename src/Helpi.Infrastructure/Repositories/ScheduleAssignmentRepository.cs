@@ -346,6 +346,44 @@ public class ScheduleAssignmentRepository : IScheduleAssignmentRepository
                     .ToListAsync();
         }
 
+        public async Task<List<ScheduleAssignment>> GetActiveSubAssignmentsForJobInstanceAsync(int jobInstanceId)
+        {
+                // Active sub-assignments currently attached to this JI, OR sub-assignments
+                // referenced by JIs that share the same (OrderScheduleId, ScheduledDate)
+                // — i.e. earlier sub assignments for the same calendar slot that were
+                // detached on a later cancel without being terminated.
+                var slotInfo = await _context.JobInstances
+                        .Where(ji => ji.Id == jobInstanceId)
+                        .Select(ji => new { ji.OrderScheduleId, ji.ScheduledDate })
+                        .FirstOrDefaultAsync();
+
+                if (slotInfo == null) return new List<ScheduleAssignment>();
+
+                var activeStatuses = new[]
+                {
+                        AssignmentStatus.PendingAcceptance,
+                        AssignmentStatus.Accepted,
+                };
+
+                // Collect candidate assignment IDs from (a) JIs in the same slot and
+                // (b) any sub-assignment whose JobInstances reference this exact JI.
+                var candidateIds = await _context.JobInstances
+                        .Where(ji => ji.OrderScheduleId == slotInfo.OrderScheduleId
+                                  && ji.ScheduledDate == slotInfo.ScheduledDate
+                                  && ji.ScheduleAssignmentId.HasValue)
+                        .Select(ji => ji.ScheduleAssignmentId!.Value)
+                        .ToListAsync();
+
+                if (candidateIds.Count == 0) return new List<ScheduleAssignment>();
+
+                return await _context.ScheduleAssignments
+                        .Where(sa => candidateIds.Contains(sa.Id)
+                                  && sa.IsJobInstanceSub
+                                  && activeStatuses.Contains(sa.Status))
+                        .Include(sa => sa.Student).ThenInclude(s => s.Contact)
+                        .ToListAsync();
+        }
+
         public void Detach(ScheduleAssignment assignment)
         {
                 _context.DetachEntity(assignment);

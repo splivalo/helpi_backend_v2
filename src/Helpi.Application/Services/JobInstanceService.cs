@@ -867,21 +867,69 @@ IGoogleCalendarService? calendarService = null
 
                         job.Status = JobInstanceStatus.Cancelled;
 
-                        // If this session had a PendingAcceptance IsJobInstanceSub assignment,
-                        // decline it so the student's acceptance modal disappears immediately.
+                        // If this session is currently routed through an IsJobInstanceSub
+                        // assignment (created by a previous "Vrati termin"), terminate that sub
+                        // and re-attach the JobInstance to the original shared assignment so
+                        // the next reactivate sees a clean slate. This also makes the student's
+                        // pending-acceptance modal disappear immediately.
+                        int? revokedStudentUserId = null;
                         if (job.ScheduleAssignmentId.HasValue)
                         {
-                                var assignment = await _assignmentRepository.GetByIdAsync(job.ScheduleAssignmentId.Value);
-                                if (assignment != null
-                                    && assignment.IsJobInstanceSub
-                                    && assignment.Status == AssignmentStatus.PendingAcceptance)
+                                var subAssignment = await _assignmentRepository.LoadAssignmentWithIncludes(
+                                        job.ScheduleAssignmentId.Value,
+                                        new AssignmentIncludeOptions { IncludeStudent = true });
+
+                                if (subAssignment != null && subAssignment.IsJobInstanceSub
+                                    && (subAssignment.Status == AssignmentStatus.PendingAcceptance
+                                        || subAssignment.Status == AssignmentStatus.Accepted))
                                 {
-                                        assignment.Status = AssignmentStatus.Declined;
-                                        await _assignmentRepository.UpdateAsync(assignment);
+                                        revokedStudentUserId = subAssignment.Student?.UserId;
+                                        subAssignment.Status = subAssignment.Status == AssignmentStatus.PendingAcceptance
+                                            ? AssignmentStatus.Declined
+                                            : AssignmentStatus.Terminated;
+                                        subAssignment.TerminationReason = TerminationReason.AdminIntervention;
+                                        subAssignment.TerminatedAt = DateTime.UtcNow;
+                                        await _assignmentRepository.UpdateAsync(subAssignment);
+
+                                        // Restore the JobInstance to its previous shared assignment so we
+                                        // never end up with stale per-session sub assignments lingering.
+                                        if (job.PrevAssignmentId.HasValue)
+                                        {
+                                                job.ScheduleAssignmentId = job.PrevAssignmentId;
+                                                job.PrevAssignmentId = null;
+                                        }
                                 }
                         }
 
                         await _jobInstanceRepository.UpdateAsync(job);
+
+                        // Notify the previously-assigned student so the acceptance modal in the
+                        // app dismisses immediately (handled in app via AssignmentRevoked → load()).
+                        if (revokedStudentUserId.HasValue)
+                        {
+                                try
+                                {
+                                        await _notificationService.SendNotificationAsync(
+                                            revokedStudentUserId.Value,
+                                            new HNotification
+                                            {
+                                                    RecieverUserId = revokedStudentUserId.Value,
+                                                    Title = "Dodjela poništena",
+                                                    Body = "Admin je otkazao termin koji je čekao Vaše prihvaćanje.",
+                                                    TranslationKey = "Notifications.AssignmentRevoked",
+                                                    Type = NotificationType.AssignmentRevoked,
+                                                    CreatedAt = DateTime.UtcNow,
+                                                    OrderId = job.OrderId,
+                                                    SeniorId = job.SeniorId,
+                                            }, viaSignalR: true, viaFcm: true);
+                                }
+                                catch (Exception notifyEx)
+                                {
+                                        _logger.LogError(notifyEx,
+                                            "⚠️ Failed to notify student {UserId} about revoked sub-assignment for JI {JobInstanceId}",
+                                            revokedStudentUserId.Value, jobInstanceId);
+                                }
+                        }
 
                         // Google Calendar: delete event if connected
                         if (_calendarService != null && !string.IsNullOrEmpty(job.GoogleCalendarEventId))
@@ -889,7 +937,7 @@ IGoogleCalendarService? calendarService = null
 
                         await _statusMaintenanceService.MaintainOrderStatuses(job.OrderId);
 
-                        await NotifyUsersJobInstanceCancelled(job);
+                        await NotifyUsersJobInstanceCancelled(job, skipStudentNotification: revokedStudentUserId.HasValue);
                         await NotifyAdminsJobInstanceCancelled(job);
 
                         return _mapper.Map<SessionDto>(job);
@@ -1042,33 +1090,53 @@ IGoogleCalendarService? calendarService = null
                         job.ScheduledDate = effectiveDate;
                         job.StartTime = effectiveStartTime;
                         job.EndTime = effectiveEndTime;
+                        job.NeedsSubstitute = false;
 
                         // ── 4. Handle student assignment ─────────────────────────────────────────
-                        // We ALWAYS create a new per-session (IsJobInstanceSub) PendingAcceptance
-                        // assignment for this one restored session.
+                        // We ALWAYS route this single restored session through a per-session
+                        // (IsJobInstanceSub) PendingAcceptance assignment.
                         //
                         // We must NEVER mutate the shared ScheduleAssignment because all other
                         // sessions in the recurring series point to the same record — changing its
                         // status to PendingAcceptance would incorrectly flag every one of them.
+
+                        // Resolve the canonical "shared" assignment for this session: walk the
+                        // PrevAssignmentId chain back until we hit the shared (non-sub) one.
+                        ScheduleAssignment? sharedAssignment = job.ScheduleAssignment;
+                        if (sharedAssignment != null && sharedAssignment.IsJobInstanceSub)
+                        {
+                                var walker = sharedAssignment;
+                                while (walker != null && walker.IsJobInstanceSub && walker.PrevAssignmentId.HasValue)
+                                {
+                                        walker = await _assignmentRepository.GetByIdAsync(walker.PrevAssignmentId.Value);
+                                }
+                                sharedAssignment = walker;
+                        }
+                        int? sharedAssignmentId = sharedAssignment?.Id;
+
                         bool studentChanged = preferredStudentId.HasValue
-                            && preferredStudentId.Value != job.ScheduleAssignment?.StudentId;
+                            && preferredStudentId.Value != sharedAssignment?.StudentId;
 
                         // Determine which student gets the restored session
                         int? targetStudentId = studentChanged
                             ? preferredStudentId!.Value
-                            : job.ScheduleAssignment?.StudentId;
+                            : sharedAssignment?.StudentId;
 
                         int? notifyAssignmentId = null;
 
+                        // Terminate any leftover per-session sub-assignments that still point
+                        // (directly or transitively) at this JobInstance/shared assignment.
+                        // This makes repeated Cancel→Restore cycles idempotent — without it,
+                        // each cycle would leave behind stale Pending/Accepted sub-assignments
+                        // and the next student-accept would generate a duplicate session.
+                        await TerminateStaleSubAssignmentsAsync(jobInstanceId, sharedAssignmentId);
+
                         if (targetStudentId.HasValue)
                         {
-                                int? prevAssignmentId = job.ScheduleAssignmentId;
-
                                 // Detach the shared assignment from this session.
                                 // The shared assignment itself is NOT modified — other sessions keep it.
                                 job.ScheduleAssignmentId = null;
-                                job.PrevAssignmentId = prevAssignmentId;
-                                job.NeedsSubstitute = false;
+                                job.PrevAssignmentId = sharedAssignmentId;
 
                                 // Create a new per-session PendingAcceptance assignment.
                                 var newAssignment = new ScheduleAssignment
@@ -1078,7 +1146,7 @@ IGoogleCalendarService? calendarService = null
                                         StudentId = targetStudentId.Value,
                                         Status = AssignmentStatus.PendingAcceptance,
                                         IsJobInstanceSub = true,
-                                        PrevAssignmentId = prevAssignmentId,
+                                        PrevAssignmentId = sharedAssignmentId,
                                         AssignedAt = DateTime.UtcNow,
                                 };
 
@@ -1103,7 +1171,11 @@ IGoogleCalendarService? calendarService = null
                                                 var studentUserId = assignment.Student.UserId;
                                                 var studentCulture = assignment.Student.Contact?.LanguageCode ?? "hr";
                                                 var isHr = string.Equals(studentCulture, "hr", StringComparison.OrdinalIgnoreCase);
-                                                await _notificationService.StoreAndNotifyAsync(
+                                                // Send SignalR + FCM without storing in notification list:
+                                                // the app modal is triggered by pendingAssignmentsProvider
+                                                // reloading on AssignmentPending SignalR event.
+                                                await _notificationService.SendNotificationAsync(
+                                                    studentUserId,
                                                     new HNotification
                                                     {
                                                             RecieverUserId = studentUserId,
@@ -1111,6 +1183,7 @@ IGoogleCalendarService? calendarService = null
                                                             Body = isHr
                                                                 ? "Dodijeljen vam je termin koji čeka vaše prihvaćanje."
                                                                 : "A session has been assigned to you and is awaiting acceptance.",
+                                                            TranslationKey = "Notifications.AssignmentPending",
                                                             Type = NotificationType.AssignmentPending,
                                                             CreatedAt = DateTime.UtcNow,
                                                             OrderId = job.OrderId,
@@ -1128,7 +1201,11 @@ IGoogleCalendarService? calendarService = null
                                 }
                         }
 
-                        await _jobInstanceRepository.UpdateAsync(job);
+                        // Use SaveChangesAsync (not UpdateAsync) to avoid re-attaching the
+                        // graph-loaded entity via DbSet.Update(), which can cause EF Core to
+                        // mark related navigation entities as Modified unnecessarily.
+                        // The job is already tracked with pending changes from GetByIdAsync.
+                        await _jobInstanceRepository.SaveChangesAsync();
 
                         // Google Calendar: create/update event
                         if (_calendarService != null)
@@ -1159,7 +1236,56 @@ IGoogleCalendarService? calendarService = null
         }
 
 
-        private async Task NotifyUsersJobInstanceCancelled(JobInstance jobInstance)
+        /// <summary>
+        /// Terminates any leftover per-session sub-assignments tied to a JobInstance
+        /// that has just been cancelled or is being reactivated. This prevents
+        /// repeated Cancel→Restore cycles from leaving stale Pending/Accepted
+        /// sub-assignments which cause duplicate sessions when the student finally
+        /// accepts the most recent one.
+        /// Sends an AssignmentRevoked SignalR/FCM notification to each affected
+        /// student so the in-app acceptance modal dismisses immediately.
+        /// </summary>
+        private async Task TerminateStaleSubAssignmentsAsync(int jobInstanceId, int? newSharedAssignmentId)
+        {
+                var stale = await _assignmentRepository.GetActiveSubAssignmentsForJobInstanceAsync(jobInstanceId);
+                if (stale.Count == 0) return;
+
+                foreach (var sub in stale)
+                {
+                        var prevStatus = sub.Status;
+                        sub.Status = prevStatus == AssignmentStatus.PendingAcceptance
+                            ? AssignmentStatus.Declined
+                            : AssignmentStatus.Terminated;
+                        sub.TerminationReason = TerminationReason.AdminIntervention;
+                        sub.TerminatedAt = DateTime.UtcNow;
+                        await _assignmentRepository.UpdateAsync(sub);
+
+                        var studentUserId = sub.Student?.UserId;
+                        if (studentUserId.HasValue)
+                        {
+                                try
+                                {
+                                        await _notificationService.StoreAndNotifyAsync(new HNotification
+                                        {
+                                                RecieverUserId = studentUserId.Value,
+                                                Title = "Dodjela poništena",
+                                                Body = "Admin je promijenio dodjelu termina.",
+                                                TranslationKey = "Notifications.AssignmentRevoked",
+                                                Type = NotificationType.AssignmentRevoked,
+                                                CreatedAt = DateTime.UtcNow,
+                                        }, viaSignalR: true, viaFcm: true);
+                                }
+                                catch (Exception ex)
+                                {
+                                        _logger.LogError(ex,
+                                            "⚠️ Failed to notify student {UserId} about revoked stale sub-assignment {AssignmentId}",
+                                            studentUserId.Value, sub.Id);
+                                }
+                        }
+                }
+        }
+
+        private async Task NotifyUsersJobInstanceCancelled(JobInstance jobInstance, bool skipStudentNotification = false)
         {
                 try
                 {       // senior
@@ -1169,7 +1295,7 @@ IGoogleCalendarService? calendarService = null
                         await NotifyJobInstanceCancelled(customerId, jobInstance, culture);
 
                         // student
-                        if (jobInstance.ScheduleAssignment != null)
+                        if (!skipStudentNotification && jobInstance.ScheduleAssignment != null)
                         {
                                 var student = jobInstance.ScheduleAssignment.Student;
                                 var studentId = student.UserId;

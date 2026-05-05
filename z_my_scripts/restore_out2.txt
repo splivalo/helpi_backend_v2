@@ -1,0 +1,108 @@
+﻿BEGIN
+             section              
+----------------------------------
+ ReassignmentRecords for order 35
+(1 row)
+
+ Id | ReassignJobInstanceId | ReassignAssignmentId | CurrentAssignmentId | OrderScheduleId | OrderId | ReassignmentType | Trigger |       Reason       | Status |          RequestedAt          |          CompletedAt          | RequestedByUserId | OriginalStudentId | NewStudentId | PreferredStudentId 
+----+-----------------------+----------------------+---------------------+-----------------+---------+------------------+---------+--------------------+--------+-------------------------------+-------------------------------+-------------------+-------------------+--------------+--------------------
+  5 |                  1014 |                      |                 104 |              46 |      35 |                0 |       3 | requested by admin |      2 | 2026-05-04 10:23:22.811075+02 | 2026-05-04 10:23:22.888474+02 |                 1 |               104 |          101 |                101
+  6 |                  1020 |                      |                 104 |              46 |      35 |                0 |       3 | requested by admin |      2 | 2026-05-05 11:21:59.794124+02 | 2026-05-05 11:21:59.86663+02  |                 1 |               104 |          101 |                101
+  7 |                  1002 |                      |                   0 |              46 |      35 |                0 |       3 | requested by admin |      2 | 2026-05-05 13:31:25.574339+02 | 2026-05-05 13:31:25.641742+02 |                 1 |                   |          101 |                101
+  8 |                  1002 |                      |                   0 |              46 |      35 |                0 |       3 | requested by admin |      2 | 2026-05-05 13:31:34.719687+02 | 2026-05-05 13:31:34.728041+02 |                 1 |                   |          101 |                101
+(4 rows)
+
+DELETE 4
+UPDATE 44
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:48: ERROR:  update or delete on table "JobInstances" violates RESTRICT setting of foreign key constraint "FK_CouponUsages_JobInstances_JobInstanceId" on table "CouponUsages"
+DETAIL:  Key (Id)=(1014) is referenced from table "CouponUsages".
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:51: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:56: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:63: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:68: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:73: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:77: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:82: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:85: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:88: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:c:/Programiranje/helpi/v2/backend/helpi_backend/z_my_scripts/restore_order35_v2.sql:89: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+          section           
+----------------------------
+ JobInstances after cleanup
+(1 row)
+
+  Id  | ScheduleAssignmentId | ScheduledDate | StartTime | EndTime  | Status | NeedsSubstitute 
+------+----------------------+---------------+-----------+----------+--------+-----------------
+  994 |                  104 | 2026-04-21    | 08:15:00  | 09:15:00 |      3 | f
+ 1021 |                  111 | 2026-04-21    | 08:15:00  | 09:15:00 |      3 | f
+ 1037 |                  117 | 2026-04-21    | 08:15:00  | 09:15:00 |      3 | f
+ 1053 |                  119 | 2026-04-21    | 08:15:00  | 09:15:00 |      3 | f
+ 1069 |                  120 | 2026-04-21    | 08:15:00  | 09:15:00 |      3 | f
+  995 |                  104 | 2026-04-25    | 08:15:00  | 09:15:00 |      2 | f
+  996 |                  104 | 2026-04-28    | 08:15:00  | 09:15:00 |      3 | f
+ 1022 |                  111 | 2026-04-28    | 08:15:00  | 09:15:00 |      3 | f
+ 1038 |                  117 | 2026-04-28    | 08:15:00  | 09:15:00 |      3 | f
+ 1054 |                  119 | 2026-04-28    | 08:15:00  | 09:15:00 |      3 | f
+ 1070 |                  120 | 2026-04-28    | 08:15:00  | 09:15:00 |      3 | f
+ 1001 |                  104 | 2026-05-04    | 09:00:00  | 10:00:00 |      2 | f
+ 1014 |                  105 | 2026-05-04    | 10:15:00  | 11:15:00 |      2 | f
+ 1023 |                  111 | 2026-05-05    | 08:15:00  | 09:15:00 |      2 | f
+ 1055 |                      | 2026-05-05    | 08:15:00  | 09:15:00 |      0 | f
+ 1071 |                  120 | 2026-05-05    | 08:15:00  | 09:15:00 |      0 | f
+ 1002 |                      | 2026-05-12    | 08:15:00  | 09:15:00 |      3 | t
+ 1056 |                  119 | 2026-05-12    | 08:15:00  | 09:15:00 |      0 | f
+ 1072 |                  120 | 2026-05-12    | 08:15:00  | 09:15:00 |      0 | f
+ 1020 |                  106 | 2026-05-12    | 10:30:00  | 11:30:00 |      3 | t
+ 1057 |                  119 | 2026-05-19    | 08:15:00  | 09:15:00 |      0 | f
+ 1073 |                  120 | 2026-05-19    | 08:15:00  | 09:15:00 |      0 | f
+ 1058 |                  119 | 2026-05-26    | 08:15:00  | 09:15:00 |      0 | f
+ 1074 |                  120 | 2026-05-26    | 08:15:00  | 09:15:00 |      0 | f
+ 1059 |                  119 | 2026-06-02    | 08:15:00  | 09:15:00 |      0 | f
+ 1075 |                  120 | 2026-06-02    | 08:15:00  | 09:15:00 |      0 | f
+ 1060 |                  119 | 2026-06-09    | 08:15:00  | 09:15:00 |      0 | f
+ 1076 |                  120 | 2026-06-09    | 08:15:00  | 09:15:00 |      0 | f
+ 1061 |                  119 | 2026-06-16    | 08:15:00  | 09:15:00 |      0 | f
+ 1077 |                  120 | 2026-06-16    | 08:15:00  | 09:15:00 |      0 | f
+ 1062 |                  119 | 2026-06-23    | 08:15:00  | 09:15:00 |      0 | f
+ 1078 |                  120 | 2026-06-23    | 08:15:00  | 09:15:00 |      0 | f
+ 1063 |                  119 | 2026-06-30    | 08:15:00  | 09:15:00 |      0 | f
+ 1079 |                  120 | 2026-06-30    | 08:15:00  | 09:15:00 |      0 | f
+ 1064 |                  119 | 2026-07-07    | 08:15:00  | 09:15:00 |      0 | f
+ 1080 |                  120 | 2026-07-07    | 08:15:00  | 09:15:00 |      0 | f
+ 1065 |                  119 | 2026-07-14    | 08:15:00  | 09:15:00 |      0 | f
+ 1081 |                  120 | 2026-07-14    | 08:15:00  | 09:15:00 |      0 | f
+ 1066 |                  119 | 2026-07-21    | 08:15:00  | 09:15:00 |      0 | f
+ 1082 |                  120 | 2026-07-21    | 08:15:00  | 09:15:00 |      0 | f
+ 1067 |                  119 | 2026-07-28    | 08:15:00  | 09:15:00 |      0 | f
+ 1083 |                  120 | 2026-07-28    | 08:15:00  | 09:15:00 |      0 | f
+ 1068 |                  119 | 2026-08-04    | 08:15:00  | 09:15:00 |      0 | f
+ 1084 |                  120 | 2026-08-04    | 08:15:00  | 09:15:00 |      0 | f
+(44 rows)
+
+              section              
+-----------------------------------
+ ScheduleAssignments after cleanup
+(1 row)
+
+ Id  | StudentId | Status | IsJobInstanceSub |         TerminatedAt          
+-----+-----------+--------+------------------+-------------------------------
+ 104 |       104 |      3 | f                | 2026-05-05 14:02:52.097362+02
+ 105 |       101 |      4 | t                | 
+ 106 |       101 |      3 | t                | 2026-05-05 14:24:52.237907+02
+ 107 |       104 |      3 | t                | 2026-05-05 14:02:52.097362+02
+ 108 |       104 |      2 | t                | 
+ 109 |       104 |      2 | t                | 
+ 110 |       104 |      3 | t                | 2026-05-05 14:02:52.097362+02
+ 111 |       104 |      3 | t                | 2026-05-05 14:02:52.097362+02
+ 112 |       101 |      2 | t                | 2026-05-05 13:30:48.817738+02
+ 113 |       101 |      2 | t                | 2026-05-05 13:30:49.09178+02
+ 114 |       101 |      2 | t                | 2026-05-05 13:30:49.114361+02
+ 115 |       101 |      3 | t                | 2026-05-05 14:24:52.237907+02
+ 116 |       101 |      3 | t                | 2026-05-05 14:24:52.237907+02
+ 117 |       104 |      3 | t                | 2026-05-05 14:22:45.992947+02
+ 118 |       104 |      2 | t                | 2026-05-05 14:07:36.875764+02
+ 119 |       104 |      1 | t                | 
+ 120 |       104 |      1 | t                | 
+(17 rows)
+

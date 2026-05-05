@@ -399,11 +399,21 @@ public class ScheduleAssignmentService
                 var orderSchedule = await _orderScheduleRepository.GetByIdAsync(assignment.OrderScheduleId)
                         ?? throw new DomainException($"OrderSchedule {assignment.OrderScheduleId} not found.");
 
-                // Generate JobInstances if not already created (admin-assign creates them immediately)
+                // Generate JobInstances if not already created (admin-assign creates them immediately).
+                // SAFETY: per-session (IsJobInstanceSub) assignments must NEVER generate a recurring
+                // series — they always cover exactly one existing JobInstance that was reactivated
+                // in-place by the admin. Generating from scratch here would create a full duplicate
+                // series and corrupt the schedule.
                 var existingJobs = await _jobInstanceRepository.GetByAssignmentAsync(assignment.Id);
-                if (!existingJobs.Any())
+                if (!existingJobs.Any() && !assignment.IsJobInstanceSub)
                 {
                         await GenerateJobInstancesForAssignmentAsync(assignment, orderSchedule);
+                }
+                else if (!existingJobs.Any() && assignment.IsJobInstanceSub)
+                {
+                        _logger.LogWarning(
+                                "⚠️ Sub-assignment {AssignmentId} accepted but no JobInstance is attached — skipping series generation to avoid duplicates.",
+                                assignment.Id);
                 }
 
                 // Update order status (Pending → FullAssigned if all schedules have accepted assignments)

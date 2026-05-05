@@ -30,6 +30,15 @@ public interface IScheduleAssignmentRepository
 
     Task<List<ScheduleAssignment>> GetAllPendingAcceptanceAsync();
 
+    /// <summary>
+    /// Returns active (PendingAcceptance / Accepted) per-session sub-assignments that
+    /// are linked to a specific JobInstance — either directly (the sub-assignment is
+    /// currently attached to the JI) or transitively (an earlier JI version pointed
+    /// at it via PrevAssignmentId). Used during cancel/restore cycles to terminate
+    /// stale leftovers and avoid duplicate sessions on student-accept.
+    /// </summary>
+    Task<List<ScheduleAssignment>> GetActiveSubAssignmentsForJobInstanceAsync(int jobInstanceId);
+
     void Detach(ScheduleAssignment assignment);
 
 }
