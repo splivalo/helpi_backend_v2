@@ -457,9 +457,8 @@ public class ScheduleAssignmentService
                 // Update order status (Pending → FullAssigned if all schedules have accepted assignments)
                 await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
-                // Only notify admins once — when ALL schedules are covered (order → FullAssigned)
+                // Notify admins every time a student accepts (regardless of order status)
                 var updatedOrder = await _orderRepository.GetByIdAsync(orderSchedule.OrderId);
-                if (updatedOrder?.Status == OrderStatus.FullAssigned)
                 {
                         var seniorName = orderSchedule.Order?.Senior?.Contact?.FullName ?? "—";
                         var orderNum = orderSchedule.Order?.OrderNumber ?? 0;
