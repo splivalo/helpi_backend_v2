@@ -232,6 +232,15 @@ public class StudentRepository : IStudentRepository
             .AsNoTracking()
             .AsQueryable();
 
+        // ✅ Real-time contract check: student.Status is updated by a daily job
+        // and may be stale. Always verify directly against contract dates so students
+        // with recently-expired contracts are never offered, regardless of job timing.
+        query = query.Where(s => s.Contracts.Any(c =>
+            c.DeletedOn == null &&
+            c.EffectiveDate <= startDate &&
+            c.ExpirationDate >= startDate
+        ));
+
         if (notifiedStudentIds?.Any() == true)
         {
             query = query.Where(s => !notifiedStudentIds.Contains(s.UserId));
