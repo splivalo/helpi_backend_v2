@@ -58,7 +58,7 @@ public class SeniorRepository : ISeniorRepository
 
         public async Task<List<Senior>> GetSeniorsAsync(SeniorFilterDto? filter = null)
         {
-                var builder = new SeniorQueryBuilder(_context);
+                var builder = new SeniorQueryBuilder(_context).ExcludeArchived();
 
                 if (filter != null)
                 {
@@ -82,5 +82,12 @@ public class SeniorRepository : ISeniorRepository
                 }
 
                 return await builder.OrderByName().ExecuteWithExtraDetailsAsync();
+        }
+
+        public async Task<Senior?> GetByIdIncludingArchivedAsync(int id)
+        {
+                return await _context.Seniors
+                        .Include(s => s.Contact)
+                        .SingleOrDefaultAsync(s => s.Id == id);
         }
 }

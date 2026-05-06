@@ -430,7 +430,7 @@ public class SeniorService
         {
                 _logger.LogInformation("📦 Unarchiving senior {SeniorId}", seniorId);
 
-                var senior = await _repository.GetByIdAsync(seniorId);
+                var senior = await _repository.GetByIdIncludingArchivedAsync(seniorId);
                 if (senior == null)
                 {
                         return new ArchiveResultDto { Success = false, Message = "Senior not found" };

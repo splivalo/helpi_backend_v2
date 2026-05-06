@@ -13,11 +13,20 @@ public class SeniorQueryBuilder
     public SeniorQueryBuilder(AppDbContext context)
     {
         _context = context;
-        _query = context.Seniors.Where(s => s.DeletedAt == null)
+        _query = context.Seniors
             .Include(s => s.Contact)
             .Include(s => s.Customer)
                 .ThenInclude(c => c.Contact)
             .AsNoTracking();
+    }
+
+    /// <summary>
+    /// Excludes archived seniors (DeletedAt != null). Use for non-admin queries.
+    /// </summary>
+    public SeniorQueryBuilder ExcludeArchived()
+    {
+        _query = _query.Where(s => s.DeletedAt == null);
+        return this;
     }
 
     public SeniorQueryBuilder FilterByCity(int? cityId)
@@ -122,6 +131,7 @@ public class SeniorQueryBuilder
                 : null,
             Relationship = s.Relationship,
             SpecialRequirements = s.SpecialRequirements,
+            DeletedAt = s.DeletedAt,
 
             // Extra information
             OrderStatuses = s.Orders
