@@ -186,7 +186,7 @@ public class NotificationFactory : INotificationFactory
             {
                 jobInstanceId = jobInstance.Id,
                 SeniorId = jobInstance.SeniorId,
-                orderNumber = jobInstance.OrderId,
+                orderNumber = jobInstance.Order?.OrderNumber ?? jobInstance.OrderId,
             })
         };
     }
@@ -334,6 +334,25 @@ public class NotificationFactory : INotificationFactory
             })
         };
     }
+    public HNotification StudentOrderCancelledNotification(int receiverId, string seniorName, Order order, string culture)
+    {
+        return new HNotification
+        {
+            RecieverUserId = receiverId,
+            TranslationKey = "Notifications.OrderCancelled",
+            Title = _loc.GetString("Notifications.OrderCancelled.Title", culture),
+            Body = _loc.GetString("Notifications.OrderCancelled.Body", culture, seniorName, order.OrderNumber),
+            Type = NotificationType.OrderCancelled,
+            SeniorId = order.SeniorId,
+            OrderId = order.Id,
+            Payload = JsonSerializer.Serialize(new
+            {
+                orderId = order.Id,
+                orderNumber = order.OrderNumber,
+            })
+        };
+    }
+
     public HNotification SeniorOrderCancelledNotification(int receiverUserId, Order order, string culture)
     {
 

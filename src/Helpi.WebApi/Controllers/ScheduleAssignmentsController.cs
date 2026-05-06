@@ -64,6 +64,16 @@ public class ScheduleAssignmentsController : ControllerBase
         }
 
         [Authorize(Roles = "Admin")]
+        [HttpPost("admin-bulk-assign")]
+        public async Task<IActionResult> AdminBulkAssign([FromBody] List<ScheduleAssignmentCreateDto> dtos)
+        {
+                if (dtos == null || dtos.Count == 0)
+                        return BadRequest("No assignments provided.");
+                await _service.AdminBulkAssignAsync(dtos);
+                return Ok(new { message = $"{dtos.Count} assignment(s) created." });
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost("admin-terminate/{orderScheduleId}")]
         public async Task<IActionResult> AdminTerminateAssignment(int orderScheduleId)
         {

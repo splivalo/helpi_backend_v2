@@ -72,7 +72,11 @@ public class JobInstanceRepository : IJobInstanceRepository
                      .Where(j => j.ScheduleAssignment != null && j.ScheduleAssignment.StudentId == studentId)
                      .Where(j => j.ScheduleAssignment!.Status == AssignmentStatus.Accepted
                                || j.ScheduleAssignment!.Status == AssignmentStatus.PendingAcceptance
-                               || j.ScheduleAssignment!.Status == AssignmentStatus.Completed)
+                               || j.ScheduleAssignment!.Status == AssignmentStatus.Completed
+                               // Include Terminated assignments so cancelled sessions remain visible
+                               // in the student app with "Otkazano" status instead of disappearing.
+                               || (j.ScheduleAssignment!.Status == AssignmentStatus.Terminated
+                                   && j.Status == JobInstanceStatus.Cancelled))
                      .Include(j => j.Senior).ThenInclude(s => s.Contact)
                      .Include(j => j.ScheduleAssignment!).ThenInclude(a => a.Student).ThenInclude(s => s.Contact)
                      .Include(j => j.Order).ThenInclude(o => o.OrderServices).ThenInclude(os => os.Service)

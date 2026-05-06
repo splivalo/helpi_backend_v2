@@ -74,9 +74,12 @@ public class ScheduleCancellationHandler
 
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
         var futureJobInstances = await _jobInstanceRepository.GetFromDateForScheduleAsync(now, schedule.Id);
-        var pendingJobs = futureJobInstances.Where(j => j.Status != JobInstanceStatus.Completed);
+        var pendingJobs = futureJobInstances.Where(j => j.Status != JobInstanceStatus.Completed).ToList();
 
-        _jobInstanceRepository.MarkForDeleteRange(pendingJobs);
+        // Soft-cancel so students still see "Otkazano" in their schedule
+        // (hard delete would make the sessions disappear entirely from the app).
+        foreach (var job in pendingJobs)
+            job.Status = JobInstanceStatus.Cancelled;
 
         var pendingJobRequests = schedule.JobRequests.Where(j => j.Status == JobRequestStatus.Pending);
         foreach (var request in pendingJobRequests)

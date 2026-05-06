@@ -70,7 +70,7 @@ public class ScheduleAssignmentService
         /// Admin directly assigns a student to an order schedule.
         /// Validates travel buffer conflicts and terminates any existing active assignment.
         /// </summary>
-        public async Task<ScheduleAssignmentDto> AdminDirectAssignAsync(ScheduleAssignmentCreateDto dto)
+        public async Task<ScheduleAssignmentDto> AdminDirectAssignAsync(ScheduleAssignmentCreateDto dto, bool notifyStudent = true)
         {
                 _logger.LogInformation("Admin direct assign: Student {StudentId} → Schedule {ScheduleId}",
                         dto.StudentId, dto.OrderScheduleId);
@@ -185,17 +185,20 @@ public class ScheduleAssignmentService
                 }
 
                 // Notify student about new pending assignment
-                var assignedStudent = await _studentRepository.GetByIdAsync(dto.StudentId);
-                if (assignedStudent != null)
+                if (notifyStudent)
                 {
-                        await _signalR.SendNotificationToUserAsync(assignedStudent.UserId,
-                                new DTOs.HNotificationDto
-                                {
-                                        Title = "Nova narudžba",
-                                        Body = "Dodijeljena vam je nova narudžba. Otvorite aplikaciju za prihvaćanje.",
-                                        Type = NotificationType.AssignmentPending,
-                                        CreatedAt = DateTime.UtcNow
-                                });
+                        var assignedStudent = await _studentRepository.GetByIdAsync(dto.StudentId);
+                        if (assignedStudent != null)
+                        {
+                                await _signalR.SendNotificationToUserAsync(assignedStudent.UserId,
+                                        new DTOs.HNotificationDto
+                                        {
+                                                Title = "Nova narudžba",
+                                                Body = "Dodijeljena vam je nova narudžba. Otvorite aplikaciju za prihvaćanje.",
+                                                Type = NotificationType.AssignmentPending,
+                                                CreatedAt = DateTime.UtcNow
+                                        });
+                        }
                 }
 
                 // Generate JobInstances immediately so senior sees the schedule
@@ -205,6 +208,41 @@ public class ScheduleAssignmentService
                 await _statusMaintenanceService.MaintainOrderStatuses(orderSchedule.OrderId);
 
                 return _mapper.Map<ScheduleAssignmentDto>(assignment);
+        }
+
+        /// <summary>
+        /// Admin bulk-assigns students to multiple schedules of the same order in one call.
+        /// Creates all assignments first, then sends ONE AssignmentPending notification per
+        /// unique student — prevents the race condition where the student loads the modal
+        /// after the first schedule is assigned and sees an incomplete schedule list.
+        /// </summary>
+        public async Task AdminBulkAssignAsync(List<ScheduleAssignmentCreateDto> dtos)
+        {
+                if (dtos == null || dtos.Count == 0) return;
+
+                // Create all assignments without notifying students yet
+                foreach (var dto in dtos)
+                {
+                        await AdminDirectAssignAsync(dto, notifyStudent: false);
+                }
+
+                // Send one notification per unique student
+                var studentIds = dtos.Select(d => d.StudentId).Distinct();
+                foreach (var studentId in studentIds)
+                {
+                        var student = await _studentRepository.GetByIdAsync(studentId);
+                        if (student != null)
+                        {
+                                await _signalR.SendNotificationToUserAsync(student.UserId,
+                                        new DTOs.HNotificationDto
+                                        {
+                                                Title = "Nova narudžba",
+                                                Body = "Dodijeljena vam je nova narudžba. Otvorite aplikaciju za prihvaćanje.",
+                                                Type = NotificationType.AssignmentPending,
+                                                CreatedAt = DateTime.UtcNow
+                                        });
+                        }
+                }
         }
 
         /// <summary>

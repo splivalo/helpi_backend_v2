@@ -33,6 +33,8 @@ namespace Helpi.Application.Common.Interfaces
 
         HNotification SeniorOrderCancelledNotification(
                  int receiverUserId, Order order, string culture);
+        HNotification StudentOrderCancelledNotification(
+                 int receiverId, string seniorName, Order order, string culture);
         HNotification StudentContractAdded(int studentId, int contractId, string culture);
         HNotification StudentContractUpdated(int studentId, int contractId, string culture);
         HNotification StudentContractDeleted(int studentId, int contractId, string culture);

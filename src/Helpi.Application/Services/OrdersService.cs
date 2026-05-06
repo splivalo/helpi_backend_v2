@@ -506,8 +506,13 @@ public class OrdersService
      List<int> cancelledScheduleIds)
         {
                 var cancelledScheduleSet = cancelledScheduleIds.ToHashSet();
-
                 var assignments = order.Schedules.SelectMany(s => s.Assignments);
+                var seniorName = order.Senior?.Contact?.FullName ?? "?";
+
+                // Send one notification per student — a student may be assigned
+                // to multiple schedules (e.g. Thu + Sat) but should only get one
+                // "Narudžba otkazana" notification, not one per schedule.
+                var notifiedStudentIds = new HashSet<int>();
 
                 foreach (var assignment in assignments)
                 {
@@ -517,16 +522,16 @@ public class OrdersService
                         if (assignment.Student == null)
                                 continue;
 
+                        if (!notifiedStudentIds.Add(assignment.StudentId))
+                                continue; // already notified this student
+
                         try
                         {
-                                var student = assignment.Student;
-
-                                var notification =
-                                    _notificationFactory.ScheduleAssignmentCancelledNotification(
-                                        recieverId: assignment.StudentId,
-                                        scheduleAssignment: assignment,
-                                        seniorId: order.SeniorId,
-                                        culture: student.Contact.LanguageCode ?? "hr");
+                                var notification = _notificationFactory.StudentOrderCancelledNotification(
+                                        receiverId: assignment.StudentId,
+                                        seniorName: seniorName,
+                                        order: order,
+                                        culture: assignment.Student.Contact.LanguageCode ?? "hr");
 
                                 await _notificationService.StoreAndNotifyAsync(notification);
                         }
@@ -534,8 +539,8 @@ public class OrdersService
                         {
                                 _logger.LogError(
                                     ex,
-                                    "❌  Failed to send cancellation notification. AssignmentId={AssignmentId}",
-                                    assignment.Id);
+                                    "❌ Failed to send order cancel notification to student {StudentId}. OrderId={OrderId}",
+                                    assignment.StudentId, order.Id);
                         }
                 }
         }
