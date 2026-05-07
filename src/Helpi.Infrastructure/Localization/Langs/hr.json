@@ -59,7 +59,7 @@
         },
         "ContractAdded": {
             "Title": "Ugovor dodan",
-            "Body": "Ugovor je dodan"
+            "Body": "Vaš radni ugovor je aktivan. Možete početi prihvaćati termine."
         },
         "ContractUpdated": {
             "Title": "Ugovor ažuriran",

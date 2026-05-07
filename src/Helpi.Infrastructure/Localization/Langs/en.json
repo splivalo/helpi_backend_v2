@@ -59,7 +59,7 @@
         },
         "ContractAdded": {
             "Title": "Contract Added",
-            "Body": "Contract added"
+            "Body": "Your work contract is now active. You can start accepting assignments."
         },
         "ContractUpdated": {
             "Title": "Contract Updated",

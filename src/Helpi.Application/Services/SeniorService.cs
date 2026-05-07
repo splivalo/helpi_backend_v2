@@ -304,10 +304,18 @@ public class SeniorService
                         return;
                 }
 
-                _logger.LogInformation("Notifying {Count} affected students for senior {SeniorId} deletion", assignments.Count, seniorId);
+                _logger.LogInformation("Notifying affected students for senior {SeniorId} deletion", seniorId);
+
+                // One notification per (student, order) — a student assigned to 9 schedules
+                // in the same order should receive only one cancellation notification.
+                var notifiedKeys = new HashSet<(int StudentId, int OrderId)>();
 
                 foreach (var assignment in assignments)
                 {
+                        var key = (assignment.StudentId, assignment.OrderId);
+                        if (!notifiedKeys.Add(key))
+                                continue;
+
                         try
                         {
                                 var culture = assignment.Student?.Contact?.LanguageCode ?? "hr";
@@ -317,8 +325,8 @@ public class SeniorService
                                         seniorId: seniorId,
                                         culture: culture
                                 );
-                                await _notificationService.SendNotificationAsync(assignment.StudentId, notification);
-                                _logger.LogInformation("Notified student {StudentId} of assignment cancellation", assignment.StudentId);
+                                await _notificationService.StoreAndNotifyAsync(notification);
+                                _logger.LogInformation("Notified student {StudentId} of assignment cancellation for order {OrderId}", assignment.StudentId, assignment.OrderId);
                         }
                         catch (Exception ex)
                         {

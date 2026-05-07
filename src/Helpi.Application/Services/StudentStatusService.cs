@@ -147,7 +147,7 @@ IUserRepository userRepository
                 active.Id,
                 culture: student.Contact.LanguageCode ?? "en");
 
-            await _notificationService.SendNotificationAsync(student.UserId, notification);
+            await _notificationService.StoreAndNotifyAsync(notification);
         }
     }
 
