@@ -126,6 +126,13 @@ public class OrdersService
 
         public async Task<OrderDto> CreateOrderAsync(OrderCreateDto orderCreateDto)
         {
+                // Archive check: prevent archived seniors from creating orders
+                var seniorIncludingArchived = await _seniorRepository.GetByIdIncludingArchivedAsync(orderCreateDto.SeniorId);
+                if (seniorIncludingArchived == null)
+                        throw new DomainException("❌ Senior not found.");
+                if (seniorIncludingArchived.DeletedAt != null)
+                        throw new DomainException("Vaš korisnički račun je neaktivan. Za više informacija kontaktirajte Helpi tim.");
+
                 // Suspension check: prevent suspended users from creating orders
                 var senior = await _seniorRepository.GetByIdAsync(orderCreateDto.SeniorId);
                 if (senior == null)
